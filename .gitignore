@@ -1,0 +1,31 @@
+# R
+*.Rproj.user
+*.Rhistory
+*.RData
+*.RDataTmp
+*.Ruserdata
+*.Rproj
+
+# Project-specific
+shiny/sim_cache
+env.R
+
+R_scripts/master_scripts
+R_scripts/setup_scripts
+R_scripts/run_scripts
+
+# User-specific
+## joeflack4
+_dev
+_archive
+
+# Project-specific
+/temp/
+*git-ignored/
+
+# OS-specific
+.DS_Store
+cleaned_data
+result_summaries
+~$*
+.Rproj.user
