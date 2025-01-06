@@ -1,0 +1,92 @@
+
+.overview, .contact {
+    border: 1px solid black;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 5px 5px 5px 1px #696969;
+    
+    vertical-align: middle;
+    min-width: 750px;
+    max-width: 850px;
+    
+    font-size: 140%;
+    text-align: left;
+}
+
+.overview table, .contact table {
+    width: 100%;
+}
+
+.overview tbody, .contact tbody {
+    width: 100%;
+}
+
+.overview .overview_header, .contact .contact_header {
+    padding: 10px 20px 10px 20px;
+}
+
+.overview td, .contact td {
+    padding: 20px 20px 5px 0px;
+    vertical-align: top;
+    border-radius: 10px 10px 0px 0px;
+}
+
+.overview td:first-child, .contact td:first-child {
+    padding-left: 20px;
+}
+
+.overview img {
+    border: 1px solid black;
+    margin: 0px;
+}
+
+.overview a {
+    cursor: pointer;
+    font-weight: bold;
+    
+    color: #002d72;
+/*    text-shadow: 0.5px 0.5px #696969; */
+}
+
+.overview a:hover {
+    text-decoration: underline;
+}
+
+.overview h1, .contact h1 {
+    font-size: 150%;
+    font-weight: 800;
+    
+    text-align: center;
+    margin: 0px;
+}
+
+.overview h2, .contact h2 {
+    font-size: 110%;
+    font-style: italic;
+    
+    text-align: center;
+    margin: 5px 0px 0px 0px;
+}
+
+.overview h3, .contact h3 {
+    font-size: 125%;
+    font-weight: bold;
+    
+    margin-top: 0;
+}
+
+
+.overview p, .contact p {
+}
+
+.overview .figure_title {
+    font-weight: bold;
+    font-size: 100%;
+    margin: 0;
+    
+}
+
+.overview .caption {
+    font-size: 70%;
+    margin: 0;
+}

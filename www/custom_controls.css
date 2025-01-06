@@ -1,0 +1,68 @@
+
+
+.specify_custom table {
+}
+
+.specify_custom th {
+    width: 50%;
+    vertical-align: top;
+    border-left: 1px solid #E0E0E0;
+    padding: 10px;
+    font-size: 125%;
+    font-weight: normal;
+    font-style: italic;
+}
+.specify_custom td {
+    width: 50%;
+    vertical-align: top;
+    border-left: 1px solid #E0E0E0;
+    padding: 10px;
+}
+
+.specify_custom td:first-child {
+    border-left: none;
+    border-right: 1px solid #E0E0E0;
+}
+.specify_custom th:first-child {
+    border-left: none;
+    border-right: 1px solid #E0E0E0;
+}
+
+.specify_custom tr:first-child{
+    border-bottom: 1px solid #E0E0E0;
+}
+
+
+.tmp {
+    
+    box-shadow: inset 2px 2px 2px #E0E0E0;
+    border-style: solid;
+    border-color: #E0E0E0;
+    border-width: 1px;
+    background: #F0F0F0;
+}
+
+.inline_select table {
+    margin-bottom: 10px;
+}
+
+.inline_select td {
+    vertical-align: middle;
+    text-align: left;
+    padding-right:10px;
+}
+
+.inline_select div {
+    vertical-align: middle;
+    padding: 0;
+    margin: 0;
+}
+
+.uploading_custom h1 {
+    font-size: 140%;
+}
+
+.uploading_custom h2 {
+    font-style: italic;
+    font-size: 125%;
+}

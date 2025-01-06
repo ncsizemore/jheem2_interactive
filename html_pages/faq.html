@@ -1,0 +1,50 @@
+
+<table class='faq_table fill_page3'><tbody><tr>
+    
+<td class='faq_td'><div class='faq_sidebar controls_color'> 
+    <p><a onclick='document.getElementById("city_missing").scrollIntoView({behavior: "smooth", block: "start"});'>Why is my city missing?</a></p>   
+    <p><a onclick='document.getElementById("baseline_values").scrollIntoView({behavior: "smooth", block: "start"});'>What are the baseline values for HIV testing, PrEP uptake, and viral suppression?</a></p>   
+</div></td>    
+    
+    
+<td class='faq_td'><div class='faq_main content_color'>
+    
+    <div style='height: 30px' id='city_missing'></div>
+    <div class='faq_header_padding header_color'>
+        <h1>Frequently Asked Questions</h1>
+        <h2>About the Johns Hopkins Epidemiologic and Economic Model (JHEEM)</h2>
+    </div>
+    
+    <div class='faq_padding'>
+    <div>
+        <h3>Why is my city not an option?</h3>
+        <p>
+            To begin, we have calibrated our model to the 32 metropolitan statistical areas (MSAs) that encompass the 48 high-burden counties plus Washington DC identified in the Ending the HIV Epidemic Initiative.
+        </p>
+        <p>
+            However, the calibration process is semi-automated, meaning that new locations can be fitted if we have the epidemiologic data to fit to (data like reported diagnoses, estimated prevalence, proportion of PWH who are suppressed). Please <a onclick='Shiny.setInputValue("link_from_overview", "contact_us", {priority: "event"})'>contact us</a> if you are interested in having the JHEEM calibrated to a new location.
+        </p>
+    </div>
+    
+    <div id='baseline_values'>
+        <h3>What are the baseline values for HIV testing rates, PrEP uptake, and viral suppression?</h3>
+        <p>
+            The baseline values for HIV testing, PrEP uptake, and viral suppression are different for each subgroup (each combination of age, race, sex, and risk factor). They also change over time (generally speaking, they increase). You can look at what we use by selecting &quot;HIV Testing&quot;, &quot;PrEP Uptake&quot;, or &quot;Viral Suppression&quot; as Outcomes in the Figure Settings. (Note that these values are weighted averages of all the subgroup values).
+        </p>
+        <p>
+            We treat these as uncertain quantities in our calibration process. In other words, because we don't know exactly what, say, PrEP uptake is among 13-24 year-old Black MSM in Atlanta, we allow it vary from simulation to simulation. The calibration process selects values that are consistent with local data on each type of parameter:
+            <ul>
+                <li>For <b>HIV Testing</b>, we calibrate to (a) the proportion of PWH aware of their diagnosis (estimated at the state level by the CDC) and (b) the proportion of individuals who report ever having an HIV test, as gathered by the ehavioral Risk Factor Surveillance System (BRFSS). Proportions tested for the total population are available at the MSA-level, and proportions by age, sex, and race are available at the state level.</li>
+                <li>For <b>PrEP Uptake</b>, we calibrate to the number of prescriptions for emtricitabine-tenofovir as collated by <a href="https://aidsvu.org/prep/" target="_blank">AidsVu</a> (total and stratified by age and sex).</li>
+                <li>For <b>Viral Suppression</b>, we calibrate to the proportion of PWH who are virally suppressed as reported by local health departments. When available, we use data stratified by age, race, sex, and risk factor in addition to total proportions.</li>
+            </ul>
+        </p>
+        <p>
+            This process lets us explore a range of possible values for baseline testing rates, PrEP uptake, and suppression that are consistent with the data we observe in each city.
+        </p>
+    </div>
+    
+    
+</div></td>
+
+</tr></tbody></table>

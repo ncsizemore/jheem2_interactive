@@ -1,0 +1,29 @@
+.shiny-notification {
+    position: fixed;
+    top: 10%;
+    left: 25%;
+    color: black;
+    font-size: 20px;
+    font-style: normal;
+    padding-left: 50px;
+    padding-right: 50px;
+}
+.yellow-box {
+    background: #FFF3CD;
+        color: #856405;
+        margin-top: 10px;
+    margin-bottom: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.modebar-container: {
+    background: 'black';
+    border-style: solid;
+    border-color: black
+}
+.modebar: {
+    orientation: 'v';
+    position: 'right'
+}

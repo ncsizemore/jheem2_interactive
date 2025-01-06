@@ -1,0 +1,4 @@
+Anthony Fojo
+Fojo
+tfojo
+Dr. Anthony Fojo, MD, MHS is an Assistant Professor in the Division of General Internal Medicine at the Johns Hopkins School of Medicine. His research centers on improving the individual- and population-level health of persons with HIV using innovative statistical and machine learning algorithms, with a focus on the intersection of HIV and mental health. He has a particular interest in using Bayesian methods and constructing likelihoods to calibrate complex models. Dr. Fojo is currently supported on a K08 award from NIMH focused on the effects of mental health comorbidities on the health of people with HIV and transmission of HIV in the general population.

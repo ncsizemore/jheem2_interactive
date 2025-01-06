@@ -1,0 +1,23 @@
+
+.table_select {
+}
+
+.table_select td {
+    vertical-align: middle;
+    text-align: left;
+    padding-right:5px;
+}
+
+.table_select td:first-child {
+    text-align: right;
+}
+
+.table_select div {
+    vertical-align: middle;
+    padding: 0;
+    margin: 0;
+}
+
+.squish_up {
+    margin-top: -10px;
+}

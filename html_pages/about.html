@@ -1,0 +1,99 @@
+
+<table class='about_table fill_page3'><tbody><tr>
+    
+<td class='about_td'><div class='about_sidebar controls_color'> 
+    <p><a onclick='document.getElementById("about_overview").scrollIntoView({behavior: "smooth", block: "start"});'>Overview</a></p>   
+    <p><a onclick='document.getElementById("about_model_structure").scrollIntoView({behavior: "smooth", block: "start"});'>Model&nbsp;Structure</a></p>   
+    <p><a onclick='document.getElementById("about_calibration").scrollIntoView({behavior: "smooth", block: "start"});'>Calibration</a></p>   
+    <p><a onclick='document.getElementById("about_interventions").scrollIntoView({behavior: "smooth", block: "start"});'>Interventions</a></p>   
+    <p><a onclick='document.getElementById("about_publications").scrollIntoView({behavior: "smooth", block: "start"});'>Publications</a></p>    
+    <p><a onclick='document.getElementById("about_funding").scrollIntoView({behavior: "smooth", block: "start"});'>Funding&nbsp;Sources</a></p>   
+</div></td>    
+    
+    
+<td class='about_td'><div class='about_main content_color'>
+    
+    <div style='height: 30px' id='about_overview'></div>
+    <div class='about_header_padding header_color'>
+        <h1>The Johns Hopkins Epidemiologic and Economic Model (JHEEM)</h1>
+        <h2>A Mathematical Model in Service of Ending the HIV Epidemic in the US</h2>
+    </div>
+    
+    <div class='about_padding'>
+        <h3>Overview</h3>
+        
+        The JHEEM is a dynamic, compartmental model of HIV. We have calibrated the model to recapitulate the HIV Epidemic in 32 cities identified by the Ending the HIV Epidemic Initiative (EtE). In each of these cities, we can experiment with different levels of the EtE pillars - HIV testing, viral suppression among people with HIV (PWH), and pre-exposure prophylaxis (PrEP) among individuals at risk for HIV - to project their effect on future transmission.
+        
+    <div id='about_model_structure'>
+        <h3>Model Structure</h3>
+        
+        
+        <table class='about_image_table'><tr>
+            <td>
+                <img src="images/model_unit.png" alt="Schematic of Model Structure" width="400px" style="float: left;"/>
+        The JHEEM represents the adult population (13 years old and older) as stratified into seven compartments with respect to HIV.
+        <BR><BR>
+        The population is further stratified by age (13-24, 25-34, 35-44, 45-54, and ≥55 years old), race/ethnicity (Black, Hispanic, and other), sex/sexual behavior (female, heterosexual male, and MSM), and IV drug use (never use, active use, and prior use), for a total of 945 compartments across 135 strata of age, race, sex, and IV drug use.
+        
+            </td>
+        </tr></table>
+        
+    </div>
+
+    <div id='about_calibration'>
+        <h3>Calibration</h3>
+The JHEEM includes 131 variable parameters. Running the model with one set of parameter values yields a simulation, which comprises simulated numbers of infections past and future.
+
+We calibrated the model separately for 32 cities to 10 calibration targets:
+        <ol>
+            <li><b>Reported Diagnoses</b> from 2009 to 2017 from the CDC.</li>
+            <li>Estimated <b>Prevalence</b> from 2008 to 2016 from the CDC.</li>
+            <li><b>Mortality</b> in PWH from 2009 to 2016.</li>
+            <li>The proportion of <b>PWH aware of their diagnosis</b> from 2010 to 2018, from state-level estimates provided by the CDC (except where local health departments provided publicly available estimates).</li>
+            <li>The number of PWH who were <b>virally suppressed</b> as reported by local health departments. We included all values from 2010 to 2018 which were publicly available.</li>
+            <li>The number of individuals receiving a <b>prescription for emtricitabine/tenofovir</b>, as reported by AIDSVu.</li>
+            <li>The probability of receiving <b>HIV testing</b></li>
+            <li>The prevalence of <b>injection drug use</b>, estimated from NSDUH</li>
+            <li>The <b>cumulative mortality</b> of HIV up to 2002, obtained from CDC Wonder.</li>
+            <li>Reported <b>AIDS diagnoses</b> from 1998-2002, obtained from CDC Wonder.</li>
+        </ol>
+        
+The statistical procedure that implements the calibration is Adaptive Metropolis Sampling, a Bayesian method that simulates the model parameters tens of thousands of times to approximate their probability distributions.
+This web tool generates projections using a random subsample of 80 simulations.
+
+    </div>
+    
+        
+    <div id='about_interventions'>
+        <h3>Interventions</h3>
+        Interventions may be targeted to any of the 135 combinations of age, race, sex/sexual behavior, and IDU status. We allow interventions to affect three aspects of HIV management:
+    
+        <ol>
+            <li><b>HIV Testing</b> – The rate at which undiagnosed PWH are diagnosed</li>
+            <li><b>Viral Suppression</b> among PWH with diagnosed HIV – The proportion of PWH (aware of their diagnoses) who are virally suppressed. We assume that suppressed PWH do not transmit HIV, so the transmission of HIV from a demographic stratum decreases with increasing proportion suppressed in the stratum.</li>
+            <li><b>Pre-Exposure Prophylaxis (PrEP)</b> – For each demographic stratum of the uninfected population we set a proportion of individuals <i>who are at risk for acquiring HIV</i> who are enrolled in a PrEP program, which we conceive of as both a prescription for emtricitabine/tenofovir and laboratory monitoring every three months. This parameter has two effects: (a) for those on PrEP, the rate of acquisition of HIV is reduced by 86% for male-to-male sexual transmission, 75% for heterosexual transmission, and 49% for IV transmission, and (b) those who were infected while on PrEP move from undiagnosed to diagnosed HIV at an average rate of every three months.</li>
+        </ol>
+    
+    </div>
+    
+    
+    <div id='about_publications'>
+        <h3>Publications on the JHEEM</h3>
+        
+        <ul>
+            <li>Perry A, Kasaie P, Dowdy DW, Shah M. What Will It Take to Reduce HIV Incidence in the United States: A Mathematical Modeling Analysis. Open Forum Infect Dis. 2018;5(2):ofy008.</li>
+            <li>Shah M, Perry A, Risher K, et al. Effect of the US National HIV/AIDS Strategy targets for improved HIV care engagement: a modelling study. Lancet HIV. 2016;3(3):e140-146.</li>
+            <li>Shah M, Risher K, Berry SA, Dowdy DW. The Epidemiologic and Economic Impact of Improving HIV Testing, Linkage, and Retention in Care in the United States. Clin Infect Dis. 2016;62(2):220-229.</li>
+        </ul>
+    </div>
+    
+    <div id='about_funding'>
+        <h3>Funding Sources</h3>
+        This project is supported by grants from the National Institute of Mental Health (K08MH118094) and the 
+National Institute of Allergy and Infectious Diseases (K01AI138853).
+    </div>
+    
+    </div>
+</div></td>
+
+</tr></tbody></table>

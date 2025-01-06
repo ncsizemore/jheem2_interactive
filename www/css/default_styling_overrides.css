@@ -1,0 +1,32 @@
+
+
+/** MAKE SURE SPACING FOR NAVBAR WORKS OK **/
+    
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+
+.navbar {
+    margin-bottom: 0;
+}
+.navbar-brand {
+    /* Was -15px, but that eliminated centering 'padding' */
+        margin-left: 0 !important;
+}
+
+.row {
+    margin: 0 !important;
+}
+
+
+.col-sm-12 {
+    /* Box and column w/ width=12 */
+        padding-left: 0;
+    padding-right: 0;       
+}
+
+.col-sm-12 > .box {
+    margin: 0 !important;
+}

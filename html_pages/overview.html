@@ -1,0 +1,34 @@
+
+
+
+<center>
+<div style='height: 25px'></div>
+<div class='overview'><table>
+    <tr>
+        <td colspan="2" class='overview_header header_color'>
+            <h1>The Johns Hopkins Epidemiologic and Economic Model</h1>
+            <h2>A Mathematical Model in Service of Ending the HIV Epidemic in the US</h2>
+        </td>
+    </tr>
+    <tr>
+        <td colspan='2'>
+            <p>The JHEEM is a mathematical model of HIV transmission calibrated to 32 US cities. It generates local predictions of the HIV epidemic under potential interventions that include HIV testing, viral suppression among people with HIV (PWH), and pre-exposure prophylaxis (PrEP).</p>
+        </td>
+   </tr>
+   <tr>
+       <td>
+            <p class='figure_title'>Projected HIV Incidence for Baltimore, MD</p>
+            <img src="images/baltimore_demo.png" alt="Sample Projections" width='400px'>
+            <p class='caption' style='width: 400px'>The modeled intervention achieves 90% viral suppression among people  with HIV who are aware of their diagnosis</p>
+       </td>
+       <td>
+           <div style='height: 10px'></div>
+            <h3>Getting Started:</h3>
+            <p><a class='overview_link' onclick='Shiny.setInputValue("link_from_overview", "prerun_interventions", {priority: "event"})'>Prerun Interventions</a> let you quickly visualize projections for interventions that we have already defined and run ahead of time.</p>
+            <p>
+                <a class='overview_link' onclick='Shiny.setInputValue("link_from_overview", "custom_interventions", {priority: "event"})'>Custom Interventions</a> let you simulate in real time any combination of HIV testing, viral suppression among PWH, and/or PrEP, targeted to demographic subgroups of your choosing.
+            </p>
+        </td>
+    </tr>
+</table></div>
+</center>

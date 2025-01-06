@@ -1,0 +1,198 @@
+/** Override the Navbar  **/
+.nav.navbar-nav.shiny-tab-input a {
+  background-color: #1c4882;
+  color: white;
+  font-size: 110%;
+}
+
+.nav.navbar-nav.shiny-tab-input a:hover {
+  background-color: #dce8f8;/*#dceef2;*/
+  color: black;
+}
+
+.nav.navbar-nav.shiny-tab-input>.active a {
+  background-color: #4F7BB5;
+  color: white;
+}
+
+.nav.navbar-nav.shiny-tab-input>.active a:hover {
+  background-color: #dce8f8;
+  color: black;
+}
+
+.navbar-static-top {
+  background-color: #1c4882;
+}
+
+
+
+
+body {
+    background-color: #f8f8f8;
+}
+
+.header_color {
+    background-color: #dce8f8;
+    color: black;
+    border-color: black;
+}
+
+.controls_color {
+    background-color: #f8f8f8;
+    border-color: black;
+}
+
+.content_color {
+    background-color: #ffffff;
+    border-color: black;
+}
+
+/** CTAs **/
+.cta_color {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    text-shadow: 1px 1px black;
+    
+    box-shadow: 2px 1px 2px 0px #696969;
+}
+
+.cta_color:hover {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    
+    color: white;
+}
+
+.cta_color:focus {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    
+    box-shadow: 2px 1px 2px 0px #696969;
+}
+
+
+.cta_color:active {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    
+    box-shadow: inset 2px 1px 2px 0px black;
+}
+
+.cta_color:active:hover {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    
+    box-shadow: inset 2px 1px 2px 0px black;
+}
+
+.cta_color:active:focus {
+    background: #1c4882; /*#03427c;*/
+    color: white;
+    border-color: black;
+    border: none;
+    
+    box-shadow: inset 2px 1px 2px 0px black;
+}
+
+
+.cta_color:disabled {
+    background: #C0C0C0; /*#03427c;*/
+    box-shadow: none;
+    border: 1px solid black;
+    color: #505050;
+    text-shadow: none;
+}
+
+
+.cta_color:disabled:hover {
+    background: #C0C0C0; /*#03427c;*/
+    box-shadow: none;
+    border: 1px solid #505050;
+}
+
+.cta_color:disabled:focus {
+    background: #C0C0C0; /*#03427c;*/
+    box-shadow: none;
+    border: 1px solid black;
+}
+
+.cta_background_color {
+    background-color: #f8f8f8;
+    border-color: black;
+}
+
+
+
+/* To Override the Boostrap Info Box */
+
+.box.box-solid.box-info>.box-header {
+  color:#000000;
+  background:#dce8f8
+                    }
+
+.box.box-solid.box-info{
+    border-bottom-color:#000000;
+    border-left-color:#000000;
+    border-right-color:#000000;
+    border-top-color:#000000;
+}
+
+.box-info .box-body {
+    background: #f8f8f8;
+}
+
+.box.box-info>.box-header {
+  color:#000000;
+  background:#ffffff
+}
+
+.box.box-info{
+    border-bottom-color:#f8f8f8;
+    border-left-color:#f8f8f8;
+    border-right-color:#f8f8f8;
+    border-top-color:#f8f8f8;
+}
+
+.box-info .fa{
+      font-weight: 900;
+      color: #000000;
+    }
+    
+  /* This allows click to expand anywhere in the header */
+.box-header {
+  padding: 0 10px 0 0;
+}
+
+.box-header h3 {
+  width: 100%;
+  padding: 10px;
+}
+
+
+.shaded_dropdown ul {
+  background: #f8f8f8;
+  border: 1px dotted black;
+}
+
+.shaded_dropdown li {
+  font-size: 120%;
+}
+
+/** NOT USING - but to override share button, do this: 
+.btn-info.action-button {
+  background:#dce8f8;
+  color: black;
+
+  box-shadow: 2px 1px 2px 0px black;
+}
+**/

@@ -1,0 +1,343 @@
+
+
+html {
+    width: 100%;
+    height: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    font-family: "Trebuchet MS", Sans-Serif;
+}
+
+/*
+.container-fluid {
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+}*/
+
+.tabbable {
+    width: 100%;
+    height: 100%;
+    /* this IS filling */
+}
+
+.tab-content {
+    width: 100%;
+    height: 100%;
+    /* this IS filling */
+}
+
+.tab-pane {
+    width: 100%;
+    height: 100%;
+    /* this IS filling */
+}
+
+.fill_div {
+    width: 100%;
+    height: 100%;
+    /* this IS filling */
+}
+
+.shiny-spinner-output-container {
+ /*   width: 100%;
+    height: 100%; */
+}
+
+/** THE MAIN TABLE **/
+
+.display_table {
+    margin: 0;
+    padding: 0;
+    border-collapse: separate;
+    border-spacing: 0.5px 0px;
+}
+
+.fill_page1, .fill_page2, .fill_page3 {
+    width: 100%;
+    height: calc(100vh - 5.1rem);
+}
+
+    /* Targets Firefox */
+/*
+@supports (-moz-appearance:none) {
+    .fill_page1 { 
+        width: 100%;
+        height: calc(100vh - 21.5rem);
+    } 
+    .fill_page2 { 
+        width: 100%;
+        height: calc(100vh - 16rem);
+    } 
+    .fill_page3 { 
+        width: 100%;
+        height: calc(100vh - 6rem);
+    } 
+}
+
+	
+@media not all and (min-resolution:.001dpcm) { 
+    @media {
+        .fill_page1, .fill_page2, .fill_page3 {
+            width: 100%;
+            height: calc(100vh - 15rem);
+        }
+    }
+}
+*/
+    /* This fixes the layout in firefox */
+.display_tbody {
+    width: 100%;
+    height: 100%;
+}
+
+
+/** DISPLAY and HOLDERS **/
+
+.display {
+    min-height:100px; 
+    vertical-align: text-top;
+    padding:0px;
+    margin: 0px;  
+}
+
+.display_td {
+    position: relative;
+    
+    border-top: 1px solid;
+    border-left: 1px solid;
+    border-right: 1px solid;
+    
+    padding: 0; 
+    margin: 0;
+    height: 100%;
+    
+    vertical-align: top;
+}
+
+.under_display_td {
+    position: relative;
+    
+    border-bottom: 1px solid;
+    border-left: 1px solid;
+    border-right: 1px solid;
+    
+    padding: 0; 
+    margin: 0;
+    height: 100%;
+}
+
+.display_narrow {
+    width: calc(100vw - 750px);
+    min-width: calc(100vw - 750px);
+}
+
+.display_wide {
+    width: calc(100vw - 500px);
+    min-width: calc(100vw - 500px);
+}
+
+.display_narrow_smaller {
+    width: calc(100vw - 750px - 30px);
+    min-width: calc(100vw - 750px - 30px);
+}
+
+.display_wide_smaller {
+    width: calc(100vw - 500px - 30px);
+    min-width: calc(100vw - 500px - 30px);
+}
+
+/** CONTROLS and HOLDERS **/
+
+
+.controls {
+    height: 100%; /*80vh;/*100%;*/
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    vertical-align: text-top;
+    padding:10px;
+    
+    white-space: normal;
+    
+}
+
+.controls_wide {
+    width: 500px;
+    max-width: 500px;
+}
+
+.controls_narrow {
+    width: 250px;
+    max-width: 250px;
+}
+
+.collapsed {
+    max-width: 0px;
+    width: 0px;
+    overflow: hidden;
+    
+    padding: 0px;
+    margin: 0px;
+    
+    white-space: nowrap;
+}
+
+.collapsible {
+    transition: 0.5s;
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+
+
+.controls_td {
+    border-left: 1px solid;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+    
+    height: 100%;
+    padding: 0;
+}
+
+
+.controls_header_td {
+    border-left: 1px solid;
+    border-right: 1px solid;
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    
+    overflow: hidden;
+    
+    white-space: nowrap;
+    
+    height: 2em;
+}
+
+/** CALL-TO-ACTION and HOLDERS **/
+
+
+.cta {
+    width: 210px;
+    height: 45px;
+    
+    font-size: 140%;
+    margin: 0px;
+}
+
+.cta_sub_td {
+    margin: 0px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.cta_td {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    
+    text-align: center;
+    vertical-align: middle;
+    
+    margin: 0px;
+    padding: 0px;
+}
+
+.cta_text { /** put this padding here so it can collapse **/
+    
+    width: 210px;
+    height: 45px;
+    max-height: 45px;
+    
+    text-align: left;
+    
+    font-style: italic;
+    margin: 0 auto;
+}
+
+.cta_text_sub_td {
+    padding: 8px 0px 0px 0px;
+    margin: 0px;
+}
+
+.cta_text_td {
+    padding: 0px;
+
+    border-top: 1px solid;
+    border-left: 1px solid;
+    border-right: 1px solid;
+    
+    text-align: center;
+}
+
+.cta_text_wrapper {
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+}
+
+.cta_text_wrapper td {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    
+    text-align: left;
+    vertical-align: middle;
+    
+    width: 50%;
+}
+
+.cta_text_wrapper td:first-child {
+    text-align: right;
+}
+
+/** MAKE SURE SPACING FOR NAVBAR WORKS OK **/
+
+ .container-fluid {
+   padding-left: 0;
+   padding-right: 0;
+ }
+ 
+ 
+ .navbar {
+   margin-bottom: 0;
+ }
+ .navbar-brand {
+   /* Was -15px, but that eliminated centering 'padding' */
+   margin-left: 0 !important;
+ }
+ 
+ /** This keeps the navbar from showing the title **/
+ .navbar-header {
+     display: none;
+ }
+ 
+ .row {
+   margin: 0 !important;
+ }
+ 
+ 
+ .col-sm-12 {
+   /* Box and column w/ width=12 */
+   padding-left: 0;
+   padding-right: 0;       
+ }
+ 
+ .col-sm-12 > .box {
+   margin: 0 !important;
+ }
+
+/** OTHER **/
+
+.checkbox_wrapper {
+    margin-top: -10px;
+    margin-bottom: -10px;
+}
