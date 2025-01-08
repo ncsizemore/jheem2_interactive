@@ -1,8 +1,8 @@
 # in the future, make this from the specification
 
 OUTCOME.OPTIONS <- list(
-    values = c('incidence','new','prevalence','mortality','testing.rate','prep','suppression','diagnosed'),
-    names = c("Incidence", "Reported Diagnoses", "Prevalence (Diagnosed)", "HIV Mortality","HIV Testing Rates","PrEP Coverage","Viral Suppression","Knowledge of Status"),
+    values = c('incidence','new','diagnosed.prevalence','hiv.mortality','testing','prep.uptake','suppression','awareness'),
+    names = c("Incidence", "Reported Diagnoses", "Prevalence (Diagnosed)", "HIV Mortality","HIV Testing Rates","PrEP Coverage","Viral Suppression","Knowledge of Status"), # ask Todd: does "PrEP Coverage" mean outcome "prep.uptake", and "Knowledge of Status" mean "awareness"?
     code = 'outcome',
     label = "Outcome"
 )

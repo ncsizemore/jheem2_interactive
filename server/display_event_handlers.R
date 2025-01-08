@@ -42,7 +42,8 @@ add.display.event.handlers <- function(session, input, output, suffixes=c('preru
         int.settings = NULL
         do.run(suffix='prerun',
                int.settings)
-        browser()
+        # browser()
+        simset = get(load("simulations/run_results/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
         # library(aws.iam)
         # library(aws.s3)
         # simset = s3load("1.0/12060/1.0_12060_baseline.Rdata", bucket='endinghiv.sims')
