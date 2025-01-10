@@ -16,33 +16,6 @@ CONFIG <- get_intervention_config()
 #' Create the main pre-run interventions panel
 #' @return A shiny UI element containing the complete pre-run interface
 make.prerun.content <- function() {
-    # Intervention aspect options
-    intervention_aspects <- list(
-        none = list(
-            id = "none",
-            label = "None"
-        ),
-        testing = list(
-            id = "hivtesting",
-            label = "HIV Testing"
-        ),
-        prep = list(
-            id = "prep", 
-            label = "PrEP Coverage"
-        ),
-        viral = list(
-            id = "viralsuppression",
-            label = "Viral Suppression"
-        ),
-        exchange = list(
-            id = "needleexchange",
-            label = "Needle Exchange"
-        ),
-        moud = list(
-            id = "moud",
-            label = "MOUDs"
-        )
-    )
     
     PRERUN.CONTENT = tags$table(id='prerun_table',
                                 class='display_table fill_page1', 
@@ -106,7 +79,7 @@ make.prerun.content <- function() {
                                                        class='controls_td controls_narrow controls_color collapsible',
                                                        tags$div(class='controls controls_narrow',
                                                                 tags$div(
-                                                                    create.intervention.aspect.selector('prerun', intervention_aspects),
+                                                                    create.intervention.aspect.selector('prerun', CONFIG$INTERVENTION_ASPECTS),
                                                                     create.target.population.selector('prerun'),
                                                                     create.time.frame.selector('prerun'),
                                                                     create.intensity.selector('prerun')
