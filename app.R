@@ -16,7 +16,7 @@ library(shinyjs)
 library(shinycssloaders) # used for "withSpinner"
 
 #-- OTHER --#
-source('env.R')
+#source('env.R')
 
 #-- MASTER SETTINGS --#
 source('master_settings/options.R') # later will have specification generate this stuff.
@@ -169,6 +169,24 @@ server <- function(input, output, session) {
     
     # Print an initial message - useful for debugging on shinyapps.io servers
     print(paste0("Launching server() function - ", Sys.time()))
+    
+    observeEvent(input$int_aspect_prerun, {
+        print(paste("Intervention aspect selected:", input$int_aspect_prerun))
+    })
+    
+    # Add new observer
+    observeEvent(input$int_tpop_prerun, {
+        print(paste("Target population selected:", input$int_tpop_prerun))
+    })
+    
+    observeEvent(input$int_timeframe_prerun, {
+        print(paste("Time frame selected:", input$int_timeframe_prerun))
+    })
+    
+    # Add new observer
+    observeEvent(input$int_intensity_prerun, {
+        print(paste("Intensity selected:", input$int_intensity_prerun))
+    })
     
     #-- Make our session cache --#
     # mem.cache = cachem::cache_mem(max_size = 300e6, evict='lru')
