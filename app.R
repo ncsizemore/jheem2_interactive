@@ -37,10 +37,15 @@ source('server/display_event_handlers.R')
 source('ui/popovers.R')
 source('ui/contact.R')
 source('ui/display_helpers.R')
-source('ui/prerun_interventions.R')
+source('ui/pages/prerun_interventions.R')
 source('ui/custom_interventions.R')
 source('ui/team.R')
 source('ui/control_panel.R')
+
+# New source for plot panel component
+source('components/display/plot_panel.R')
+# Component files
+source('components/layout/panel.R')  # Add this line
 
 #-- SPECIFICATION AND MODEL --#
 # source('../jheem_analyses/source_code.R')
@@ -86,6 +91,10 @@ ui <- function() {
                   tags$link(rel = "stylesheet", type = "text/css", href = "css/overview.css"),
                   tags$link(rel = "stylesheet", type = "text/css", href = "css/contact.css"),
                   tags$link(rel = "stylesheet", type = "text/css", href = "css/Andrew_additions.css"), ## added for trying CSS grid
+                  # Shared layout styles
+                  tags$link(rel = "stylesheet", type = "text/css", href = "css/layout/three-panel.css"),
+                  # Page-specific styles
+                  tags$link(rel = "stylesheet", type = "text/css", href = "css/pages/prerun.css"),
                   
                   # tags$script(src = 'window_sizes.js'),
                   # tags$script(src = 'window_sizes2.js'),
@@ -94,6 +103,7 @@ ui <- function() {
                   tags$script(src = 'box_expansion.js'),
                   tags$script(src = 'copy_to_clipboard.js'),
                   tags$script(src = 'concertina.js'),
+                  tags$script(src = 'js/layout/panel-controls.js')
                   # tags$script(src = 'do_the_thing.js')
               ),
               
@@ -116,7 +126,7 @@ ui <- function() {
                             tabPanel(
                                 title = 'Pre-Run',
                                 value = 'prerun_interventions',
-                                make.prerun.content()
+                                create_prerun_layout()  # This calls our new layout function
                             ),
                             tabPanel(
                                 title = 'Custom',
@@ -170,6 +180,52 @@ server <- function(input, output, session) {
     # Print an initial message - useful for debugging on shinyapps.io servers
     print(paste0("Launching server() function - ", Sys.time()))
     
+    observeEvent(input$int_location_prerun, {
+        print(paste("Location selected:", input$int_location_prerun))
+        
+        # Reset intervention selections if location changes to 'none'
+        if (input$int_location_prerun == 'none') {
+            # This matches our pattern of resetting downstream selections
+            updateRadioButtons(session, "int_aspect_prerun", selected = "none")
+        }
+    })
+    
+    observeEvent(input$generate_projections_prerun, {
+        # Safely check input values
+        location <- isolate(input$int_location_prerun)
+        aspect <- isolate(input$int_aspect_prerun)
+        
+        # Ensure required values exist and are valid
+        if (!is.null(location) && !is.null(aspect) && 
+            location != 'none' && aspect != 'none') {
+            
+            print("Generating projections with settings:")
+            print(paste("Location:", location))
+            print(paste("Intervention:", aspect))
+            
+            # Only try to print these if they exist
+            if (!is.null(input$int_tpop_prerun)) {
+                print(paste("Population:", input$int_tpop_prerun))
+            }
+            if (!is.null(input$int_timeframe_prerun)) {
+                print(paste("Timeframe:", input$int_timeframe_prerun))
+            }
+            if (!is.null(input$int_intensity_prerun)) {
+                print(paste("Intensity:", input$int_intensity_prerun))
+            }
+            
+            showNotification(
+                "Starting projection generation...",
+                type = "message"
+            )
+        } else {
+            showNotification(
+                "Please select a location and intervention settings first",
+                type = "warning"
+            )
+        }
+    })
+    
     observeEvent(input$int_aspect_prerun, {
         print(paste("Intervention aspect selected:", input$int_aspect_prerun))
     })
@@ -200,6 +256,24 @@ server <- function(input, output, session) {
     
     # in server/display_event_handlers.R
     add.display.event.handlers(session, input, output)
+    
+    # Load test simset
+    load('simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata')
+    
+    # Initialize plot panel with settings from control panel
+    plot_panel_server("prerun", 
+                      data = reactive({
+                          simset  # Use our test simset
+                      }),
+                      settings = reactive({
+                          settings <- get.control.settings(input, "prerun")
+                          # Ensure we only use available outcomes
+                          if (!is.null(settings$outcomes)) {
+                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
+                          }
+                          settings
+                      })
+    )
     
     ##------------------##
     ##-- CONTACT FORM --##

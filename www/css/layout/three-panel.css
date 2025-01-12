@@ -1,0 +1,102 @@
+/* Base layout */
+.three-panel-container {
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
+  min-height: calc(100vh - 50px);
+  background: #fff;
+  position: relative;
+  transition: grid-template-columns 0.3s ease;
+}
+
+/* Panel sections */
+.panel-section {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Side panels */
+.side-panel {
+  width: 300px;
+  transition: all 0.3s ease;
+}
+
+.left-panel {
+  border-right: 1px solid #ddd;
+}
+
+.right-panel {
+  border-left: 1px solid #ddd;
+}
+
+/* Panel collapsed states */
+.side-panel.collapsed {
+  width: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Headers */
+.panel-header {
+  padding: 12px 15px;
+  background: #f8f9fa;
+  font-weight: 500;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px;
+}
+
+/* Content areas */
+.panel-content {
+  padding: 15px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Main panel */
+.main-panel {
+  background: white;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Toggle buttons */
+.toggle-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.toggle-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Toggle button positions */
+.toggle-left {
+  left: 290px;
+}
+
+.side-panel.collapsed .toggle-left {
+  left: 0;
+}
+
+.toggle-right {
+  right: 290px;
+}
+
+.side-panel.collapsed .toggle-right {
+  right: 0;
+}
