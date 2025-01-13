@@ -38,7 +38,7 @@ selectors:
         id: "C.47900"
         label: "Washington-Arlington-Alexandria, DC-VA-MD-WV"
     ui:
-      type: "radio"
+      type: "select"
       label: "Select Location:"
       popover:
         title: "Which Location to Analyze?"

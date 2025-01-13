@@ -37,7 +37,7 @@ source('server/display_event_handlers.R')
 source('ui/popovers.R')
 source('ui/contact.R')
 source('ui/display_helpers.R')
-source('ui/pages/prerun_interventions.R')
+source('ui/prerun_interventions.R')
 source('ui/custom_interventions.R')
 source('ui/team.R')
 source('ui/control_panel.R')
@@ -46,6 +46,12 @@ source('ui/control_panel.R')
 source('components/display/plot_panel.R')
 # Component files
 source('components/layout/panel.R')  # Add this line
+
+# Load configuration handlers
+source('config/load_config.R')
+
+# Load custom components
+source('components/selectors/custom_components.R')
 
 #-- SPECIFICATION AND MODEL --#
 # source('../jheem_analyses/source_code.R')
@@ -95,6 +101,7 @@ ui <- function() {
                   tags$link(rel = "stylesheet", type = "text/css", href = "css/layout/three-panel.css"),
                   # Page-specific styles
                   tags$link(rel = "stylesheet", type = "text/css", href = "css/pages/prerun.css"),
+                  tags$link(rel = "stylesheet", type = "text/css", href = "css/pages/custom.css"),
                   
                   # tags$script(src = 'window_sizes.js'),
                   # tags$script(src = 'window_sizes2.js'),
@@ -131,7 +138,7 @@ ui <- function() {
                             tabPanel(
                                 title = 'Custom',
                                 value = 'custom_interventions',
-                                make.custom.content()
+                                create_custom_layout()
                             ),
                             tabPanel(
                                 title = 'FAQ',
@@ -177,60 +184,133 @@ server <- function(input, output, session) {
     ##-- INITIAL SET-UP --##
     ##--------------------##
     
-    # Print an initial message - useful for debugging on shinyapps.io servers
+    # Initial setup
     print(paste0("Launching server() function - ", Sys.time()))
     
-    observeEvent(input$int_location_prerun, {
-        print(paste("Location selected:", input$int_location_prerun))
-        
-        # Reset intervention selections if location changes to 'none'
-        if (input$int_location_prerun == 'none') {
-            # This matches our pattern of resetting downstream selections
-            updateRadioButtons(session, "int_aspect_prerun", selected = "none")
-        }
-    })
+    # Hide visualizations and right panels initially
+    shinyjs::hide("visualization-area-prerun")
+    shinyjs::hide("visualization-area-custom")
+    shinyjs::hide("settings-settings-panel")
+    shinyjs::hide("settings-custom-settings-panel")
     
-    observeEvent(input$generate_projections_prerun, {
-        # Safely check input values
+    # Load test simset once
+    load('simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata')
+    
+    # Initialize plot panels for both pages
+    plot_panel_server("prerun", 
+                      data = reactive({ simset }),
+                      settings = reactive({
+                          settings <- get.control.settings(input, "prerun")
+                          if (!is.null(settings$outcomes)) {
+                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
+                          }
+                          settings
+                      })
+    )
+    
+    plot_panel_server("custom", 
+                      data = reactive({ simset }),
+                      settings = reactive({
+                          settings <- get.control.settings(input, "custom")
+                          if (!is.null(settings$outcomes)) {
+                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
+                          }
+                          settings
+                      })
+    )
+    
+    ##-----------------------##
+    ##-- HELPER FUNCTIONS --##
+    ##-----------------------##
+    
+    validate_prerun_inputs <- function() {
         location <- isolate(input$int_location_prerun)
         aspect <- isolate(input$int_aspect_prerun)
         
-        # Ensure required values exist and are valid
-        if (!is.null(location) && !is.null(aspect) && 
-            location != 'none' && aspect != 'none') {
-            
-            print("Generating projections with settings:")
-            print(paste("Location:", location))
-            print(paste("Intervention:", aspect))
-            
-            # Only try to print these if they exist
-            if (!is.null(input$int_tpop_prerun)) {
-                print(paste("Population:", input$int_tpop_prerun))
-            }
-            if (!is.null(input$int_timeframe_prerun)) {
-                print(paste("Timeframe:", input$int_timeframe_prerun))
-            }
-            if (!is.null(input$int_intensity_prerun)) {
-                print(paste("Intensity:", input$int_intensity_prerun))
-            }
-            
-            showNotification(
-                "Starting projection generation...",
-                type = "message"
-            )
-        } else {
+        if (is.null(location) || is.null(aspect) || 
+            location == 'none' || aspect == 'none') {
             showNotification(
                 "Please select a location and intervention settings first",
                 type = "warning"
             )
+            return(FALSE)
+        }
+        return(TRUE)
+    }
+    
+    validate_custom_inputs <- function() {
+        location <- isolate(input$int_location_custom)
+        
+        if (is.null(location) || location == 'none') {
+            showNotification(
+                "Please select a location first",
+                type = "warning"
+            )
+            return(FALSE)
+        }
+        return(TRUE)
+    }
+    
+    collect_prerun_settings <- function() {
+        list(
+            location = isolate(input$int_location_prerun),
+            aspect = isolate(input$int_aspect_prerun),
+            population = isolate(input$int_tpop_prerun),
+            timeframe = isolate(input$int_timeframe_prerun),
+            intensity = isolate(input$int_intensity_prerun)
+        )
+    }
+    
+    collect_custom_subgroup_settings <- function(group_num) {
+        list(
+            demographics = list(
+                age_groups = isolate(input[[paste0("int_age_groups_", group_num, "_custom")]]),
+                race_ethnicity = isolate(input[[paste0("int_race_ethnicity_", group_num, "_custom")]]),
+                biological_sex = isolate(input[[paste0("int_biological_sex_", group_num, "_custom")]]),
+                risk_factor = isolate(input[[paste0("int_risk_factor_", group_num, "_custom")]])
+            ),
+            interventions = list(
+                dates = list(
+                    start = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_start")]]),
+                    end = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_end")]])
+                ),
+                testing = if (isolate(input[[paste0("int_testing_", group_num, "_custom_enabled")]])) {
+                    list(frequency = isolate(input[[paste0("int_testing_", group_num, "_custom_frequency")]]))
+                },
+                prep = if (isolate(input[[paste0("int_prep_", group_num, "_custom_enabled")]])) {
+                    list(coverage = isolate(input[[paste0("int_prep_", group_num, "_custom_coverage")]]))
+                },
+                suppression = if (isolate(input[[paste0("int_suppression_", group_num, "_custom_enabled")]])) {
+                    list(proportion = isolate(input[[paste0("int_suppression_", group_num, "_custom_proportion")]]))
+                },
+                needle_exchange = if (isolate(input[[paste0("int_needle_exchange_", group_num, "_custom_enabled")]])) {
+                    list(proportion = isolate(input[[paste0("int_needle_exchange_", group_num, "_custom_proportion")]]))
+                },
+                moud = if (isolate(input[[paste0("int_moud_", group_num, "_custom_enabled")]])) {
+                    list(proportion = isolate(input[[paste0("int_moud_", group_num, "_custom_proportion")]]))
+                }
+            )
+        )
+    }
+    
+    ##------------------------##
+    ##-- PRERUN PAGE HANDLERS --##
+    ##------------------------##
+    
+    # Reset downstream selections when location changes
+    observeEvent(input$int_location_prerun, {
+        print(paste("Location selected:", input$int_location_prerun))
+        
+        if (input$int_location_prerun == 'none') {
+            updateRadioButtons(session, "int_aspect_prerun", selected = "none")
         }
     })
     
+    # Log selection changes for debugging
     observeEvent(input$int_aspect_prerun, {
         print(paste("Intervention aspect selected:", input$int_aspect_prerun))
     })
     
-    # Add new observer
     observeEvent(input$int_tpop_prerun, {
         print(paste("Target population selected:", input$int_tpop_prerun))
     })
@@ -239,48 +319,77 @@ server <- function(input, output, session) {
         print(paste("Time frame selected:", input$int_timeframe_prerun))
     })
     
-    # Add new observer
     observeEvent(input$int_intensity_prerun, {
         print(paste("Intensity selected:", input$int_intensity_prerun))
     })
     
-    #-- Make our session cache --#
-    # mem.cache = cachem::cache_mem(max_size = 300e6, evict='lru')
-    # cache = create.multi.cache(mem.cache=mem.cache,
-    #                            disk.caches=list(DISK.CACHE.1, DISK.CACHE.2),
-    #                            directories = 'sim_cache')
+    # Handle prerun generate button
+    observeEvent(input$generate_projections_prerun, {
+        if (validate_prerun_inputs()) {
+            settings <- collect_prerun_settings()
+            
+            # Log settings
+            print("Generating projections with settings:")
+            print(settings)
+            
+            # Show visualization
+            shinyjs::show(id = "visualization-area-prerun")
+            shinyjs::show(id = "settings-settings-panel")
+            
+            showNotification(
+                "Starting projection generation...",
+                type = "message"
+            )
+        }
+    })
     
-    ##-----------------------------------------##
-    ##-- EVENT HANDLERS FOR UPDATING DISPLAY --##
-    ##-----------------------------------------##
+    ##------------------------##
+    ##-- CUSTOM PAGE HANDLERS --##
+    ##------------------------##
     
-    # in server/display_event_handlers.R
+    # Handle subgroup count changes
+    observeEvent(input$subgroups_count_custom, {
+        print(paste("Subgroups count changed:", input$subgroups_count_custom))
+    })
+    
+    # Render dynamic subgroup panels
+    output$subgroup_panels_custom <- renderUI({
+        req(input$subgroups_count_custom)
+        
+        panels <- lapply(1:input$subgroups_count_custom, function(i) {
+            create_subgroup_panel(i, "custom")
+        })
+        
+        do.call(tagList, panels)
+    })
+    
+    # Handle custom generate button
+    observeEvent(input$generate_custom, {
+        if (validate_custom_inputs()) {
+            # Get subgroup count and settings
+            subgroup_count <- isolate(input$subgroups_count_custom)
+            settings <- lapply(1:subgroup_count, collect_custom_subgroup_settings)
+            
+            # Show visualization
+            shinyjs::show(id = "visualization-area-custom")
+            shinyjs::show(id = "settings-custom-settings-panel")
+            
+            showNotification(
+                "Custom projections starting...",
+                type = "message"
+            )
+        }
+    })
+    
+    ##---------------------------##
+    ##-- SHARED EVENT HANDLERS --##
+    ##---------------------------##
+    
+    # Add display event handlers
     add.display.event.handlers(session, input, output)
     
-    # Load test simset
-    load('simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata')
-    
-    # Initialize plot panel with settings from control panel
-    plot_panel_server("prerun", 
-                      data = reactive({
-                          simset  # Use our test simset
-                      }),
-                      settings = reactive({
-                          settings <- get.control.settings(input, "prerun")
-                          # Ensure we only use available outcomes
-                          if (!is.null(settings$outcomes)) {
-                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-                          }
-                          settings
-                      })
-    )
-    
-    ##------------------##
-    ##-- CONTACT FORM --##
-    ##------------------##
-    
+    # Add contact form handlers
     add.contact.handlers(session, input, output)
-    
 }
 
 # Run the application 

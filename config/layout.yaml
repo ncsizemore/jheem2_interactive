@@ -1,9 +1,10 @@
+# config/layout.yaml - Shared panel structure
 layout:
   panels:
     left:
       id: "intervention-panel"
       width: 300
-      header: "Select Intervention"
+      header: "Specify Intervention"
       collapsible: true
       defaultVisible: true
     right:

@@ -15,8 +15,8 @@ create_prerun_layout <- function() {
             position = "left"
         ),
         
-        # Main visualization
-        create_visualization_panel(),
+        # Main visualization - add page_type here
+        create_visualization_panel(page_type = "prerun"),  # <- Add this parameter
         
         # Right panel using base component
         create_panel(
@@ -51,10 +51,10 @@ create_intervention_content <- function() {
 }
 
 #' Creates the main visualization panel
-create_visualization_panel <- function() {
+create_visualization_panel <- function(page_type) {
     tags$div(
         class = "visualization-panel panel-section",
-        id = "visualization-area",
-        create_plot_panel('prerun')
+        id = paste0("visualization-area-", page_type),
+        create_plot_panel(id = page_type)  # Pass page_type as the module ID
     )
 }

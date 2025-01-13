@@ -5,24 +5,13 @@
 
 create.display.panel <- function(suffix)
 {
-    
-    # if (suffix=='custom')
-    #     css.class = 'display_panel_table display_narrow_smaller'
-    # else
-    #     css.class = 'display_panel_table display_wide_smaller'
-    
-    
     tabsetPanel(
         id=paste0('nav_', suffix),
         tabPanel(
             title="Figure",
             uiOutput(outputId = paste0('figure_', suffix), class='fill_div')
-        ),
-        # tabPanel(
-        #     title="Table",
-        #     uiOutput(outputId = paste0('table_', suffix), class='fill_div')
-        # )
-    )  # </tabsetPanel>
+        )
+    )  
 }
 
 ##-----------------------------##
@@ -48,6 +37,15 @@ set.plot <- function(input,
                      suffix,
                      plot.and.table)
 {
+    print(paste("set.plot called with suffix:", suffix))
+    print("plot_and_table contents:")
+    str(plot.and.table)
+    
+    holder.id = paste0('figure_', suffix)
+    plot.id = get.plot.id(suffix)
+    
+    print(paste("Holder ID:", holder.id))
+    print(paste("Plot ID:", plot.id))
     holder.id = paste0('figure_', suffix)
     plot.id = get.plot.id(suffix)
     
@@ -81,6 +79,10 @@ do.render.plot <- function(input,
                            suffix,
                            plot.and.table)
 {
+    print(paste("do.render.plot called with suffix:", suffix))
+    print("Control settings:")
+    str(plot.and.table$control.settings)
+    
     control.settings = plot.and.table$control.settings
     settings = calculate.optimal.nrows.and.label.size(plot.and.table, input, suffix)
     
@@ -94,9 +96,8 @@ do.render.plot <- function(input,
     output[[plot.id]] = renderPlot(the.plot)
 }
 
-get.plot.id <- function(suffix)
-{
-    paste0('plot_', suffix)
+get.plot.id <- function(suffix) {
+    paste0(suffix, "-mainPlot")  # This will match the HTML structure
 }
 
 set.intervention.panel <- function(output,
@@ -229,4 +230,57 @@ get.num.panels.to.plot <- function(control.settings)
         })
     
     n.selected.outcomes * prod(n.facet)
+}
+
+#' Show visualization with debugging
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param page_type String: page type (e.g., "prerun" or "custom")
+#' @param simset Simulation data to display
+show_visualization <- function(input, output, page_type, simset) {
+    print("Starting show_visualization")
+    
+    # Get control settings with defaults if needed
+    control_settings <- get.control.settings(input, page_type)
+    print("Control settings:")
+    print(control_settings)
+    
+    # Show the visualization area
+    print("Attempting to show visualization area")
+    panel_id <- paste0("display-panel-", page_type)
+    print(paste("Showing panel:", panel_id))
+    shinyjs::show(id = panel_id, anim = TRUE)
+    
+    # Initialize display size inputs if needed
+    if (is.null(input[[paste0('left_width_', page_type)]])) {
+        print("Initializing panel widths")
+        updateTextInput(session, 
+                        paste0('left_width_', page_type), 
+                        value = LEFT.PANEL.SIZE[page_type]
+        )
+        updateTextInput(session,
+                        paste0('right_width_', page_type),
+                        value = RIGHT.PANEL.SIZE[page_type]
+        )
+    }
+    
+    # Create display data
+    display_data <- list(
+        plot = simset,
+        control.settings = control_settings
+    )
+    
+    print("Calling set.display")
+    # Update the display
+    set.display(input, output, page_type, display_data)
+    print("Finished show_visualization")
+}
+
+# Add at the bottom of display_helpers.R
+toggle_visualization <- function(show = FALSE) {
+    if (show) {
+        shinyjs::show("visualization-area")
+    } else {
+        shinyjs::hide("visualization-area")
+    }
 }

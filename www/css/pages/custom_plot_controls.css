@@ -1,0 +1,81 @@
+/* Plot Control Sections */
+.plot-control-section {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.plot-control-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.plot-control-section > label {
+    color: #495057;
+    display: block;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+/* Outcomes and Stratification */
+.outcomes .checkbox-group,
+.stratification .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Time Range Controls */
+.time-range {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.range-input {
+    flex: 1;
+}
+
+.range-input label {
+    color: #6c757d;
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Display Options */
+.display .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Adjust Controls */
+.adjust-controls {
+    text-align: center;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .time-range {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .plot-control-section {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+    }
+}
