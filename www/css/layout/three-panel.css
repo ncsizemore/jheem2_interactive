@@ -54,7 +54,6 @@
   flex: 1;
 }
 
-/* Main panel */
 .main-panel {
   background: white;
   position: relative;
@@ -64,9 +63,8 @@
 
 /* Toggle buttons */
 .toggle-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  position: fixed;
+  top: 100px;
   width: 24px;
   height: 24px;
   background: white;
@@ -77,7 +75,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: left 0.3s ease, right 0.3s ease;
 }
 
 .toggle-button:hover {

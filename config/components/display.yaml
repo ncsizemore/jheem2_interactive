@@ -1,0 +1,16 @@
+# config/components/display.yaml - Display/visualization settings
+display:
+  plot:
+    height: "600px"
+    defaultType: "static"
+    loading:
+      message: "Generating plot..."
+      class: "loading-indicator"
+  
+  visualization:
+    container:
+      class: "visualization-panel panel-section"
+      
+  controls:
+    defaultCollapsed: true
+    width: 300

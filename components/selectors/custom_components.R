@@ -3,8 +3,17 @@
 #' @param config UI configuration from YAML
 #' @param container_class Additional CSS class for container
 create_compound_input <- function(id, config, container_class = NULL) {
-    # Extract configuration
-    label <- config$label
+    # Debug print
+    print("Creating compound input with config:")
+    print(str(config))
+    
+    # Extract configuration - handle both direct and nested label cases
+    label <- if (!is.null(config$label)) {
+        config$label
+    } else if (!is.null(config$ui$label)) {
+        config$ui$label
+    }
+    
     inputs <- config$inputs
     
     # Create container classes
@@ -20,7 +29,7 @@ create_compound_input <- function(id, config, container_class = NULL) {
         # Main checkbox
         checkboxInput(
             inputId = paste0(id, "_enabled"),
-            label = label,
+            label = label,  # This should now have the correct label
             value = FALSE
         ),
         
@@ -69,9 +78,30 @@ create_compound_input <- function(id, config, container_class = NULL) {
 #' @param config Date range configuration from YAML
 #' @param container_class Additional CSS class for container
 create_date_range <- function(id, config, container_class = NULL) {
+    # Debug print
+    print("Creating date range with config:")
+    print(str(config))
+    
     # Extract configuration
     start_config <- config$start
     end_config <- config$end
+    
+    # Validate configuration
+    if (is.null(start_config) || is.null(end_config)) {
+        print("Missing start or end configuration")
+        return(NULL)
+    }
+    
+    # Ensure we have numeric values for the sequence
+    from_year <- as.numeric(start_config$options$from)
+    to_year <- as.numeric(end_config$options$to)
+    
+    if (is.na(from_year) || is.na(to_year)) {
+        print("Invalid year values:")
+        print(paste("from:", from_year))
+        print(paste("to:", to_year))
+        return(NULL)
+    }
     
     # Create container classes
     classes <- c("date-range")
@@ -92,11 +122,8 @@ create_date_range <- function(id, config, container_class = NULL) {
             selectInput(
                 inputId = paste0(id, "_start"),
                 label = NULL,
-                choices = seq(
-                    start_config$options$from,
-                    start_config$options$to
-                ),
-                selected = start_config$options$from
+                choices = seq(from_year, to_year),
+                selected = from_year
             )
         ),
         
@@ -107,37 +134,98 @@ create_date_range <- function(id, config, container_class = NULL) {
             selectInput(
                 inputId = paste0(id, "_end"),
                 label = NULL,
-                choices = seq(
-                    end_config$options$from,
-                    end_config$options$to
-                ),
-                selected = end_config$options$to
+                choices = seq(from_year, to_year),
+                selected = to_year
             )
         )
     )
 }
 
-#' Create an intervention settings component
+#' Create an intervention setting component
 #' @param type Intervention type (e.g., "testing", "prep")
 #' @param group_num Subgroup number
-#' @param suffix Page suffix (usually "custom")
-create_intervention_setting <- function(type, group_num, suffix = "custom") {
+#' @param suffix Page suffix
+create_intervention_setting <- function(type, group_num, suffix) {
+    # Debug print
+    print(paste("Creating intervention setting:", type, "group:", group_num, "suffix:", suffix))
+    
     # Get configuration
     config <- get_selector_config(type, suffix, group_num)
-    id <- config$id
+    print("Got config:")
+    print(str(config))
     
-    # Create compound input with type-specific configuration
+    # Create compound input with full configuration
     create_compound_input(
-        id = id,
-        config = config$ui,
+        id = config$id,
+        config = config,  # Pass the full config
         container_class = paste0("intervention-", type)
+    )
+}
+
+#' Create a complete subgroup panel
+#' @param group_num Subgroup number
+#' @param config_or_suffix Configuration object or page suffix
+create_subgroup_panel <- function(group_num, config_or_suffix) {
+    # Ensure we have a string for the page type
+    suffix <- if (is.character(config_or_suffix)) {
+        config_or_suffix
+    } else {
+        "custom"  # Default to custom if not a string
+    }
+    
+    # Get config to check available interventions
+    config <- get_page_complete_config(suffix)
+    available_interventions <- names(config$interventions$components)
+    
+    # Get date range config
+    date_config <- get_selector_config("intervention_dates", suffix, group_num)
+    
+    tags$div(
+        class = "subgroup-panel",
+        id = paste0("subgroup-", group_num),
+        
+        tags$h4(paste("Subgroup", group_num, "Characteristics:")),
+        
+        # Characteristics (demographics)
+        tags$div(
+            class = "characteristics-section",
+            create_subgroup_characteristics(group_num, suffix)
+        ),
+        
+        # Intervention components
+        tags$div(
+            class = "intervention-components",
+            tags$h4("Intervention Components:"),
+            
+            # Date range
+            tags$div(
+                class = "intervention-dates",
+                create_date_range(
+                    id = date_config$id,
+                    config = date_config
+                )
+            ),
+            
+            # Intervention settings in a grid
+            tags$div(
+                class = "intervention-settings-grid",
+                # Only create settings for available interventions
+                lapply(
+                    available_interventions,
+                    function(type) create_intervention_setting(type, group_num, suffix)
+                )
+            )
+        )
     )
 }
 
 #' Create the subgroup characteristic selectors
 #' @param group_num Subgroup number
 #' @param suffix Page suffix (usually "custom")
-create_subgroup_characteristics <- function(group_num, suffix = "custom") {
+create_subgroup_characteristics <- function(group_num, suffix) {
+    # Debug print
+    print(paste("Creating characteristics for group:", group_num, "suffix:", suffix))
+    
     characteristics <- c("age_groups", "race_ethnicity", "biological_sex", "risk_factor")
     
     # Create container for all characteristics
@@ -160,41 +248,5 @@ create_subgroup_characteristics <- function(group_num, suffix = "custom") {
                 )
             )
         })
-    )
-}
-
-#' Create a complete subgroup panel
-#' @param group_num Subgroup number
-#' @param suffix Page suffix (usually "custom")
-create_subgroup_panel <- function(group_num, suffix = "custom") {
-    # Get date range config
-    date_config <- get_selector_config("intervention_dates", suffix, group_num)
-    
-    tags$div(
-        class = "subgroup-panel",
-        id = paste0("subgroup-", group_num),
-        
-        tags$h4(paste("Subgroup", group_num, "Characteristics:")),
-        
-        # Characteristics (demographics)
-        create_subgroup_characteristics(group_num, suffix),
-        
-        # Intervention components
-        tags$div(
-            class = "intervention-components",
-            tags$h4("Intervention Components:"),
-            
-            # Date range
-            create_date_range(
-                id = date_config$id,
-                config = date_config$ui
-            ),
-            
-            # Intervention settings
-            lapply(
-                c("testing", "prep", "suppression", "needle_exchange", "moud"),
-                function(type) create_intervention_setting(type, group_num, suffix)
-            )
-        )
     )
 }

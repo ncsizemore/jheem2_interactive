@@ -167,3 +167,34 @@ table.intervention_summary {
     font-style: italic;
     color: red;
 }
+
+.main-panel-plot {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.plot-panel-container {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.plot_holder {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border: 1px dotted;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.plot-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}

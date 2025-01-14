@@ -1,394 +1,322 @@
-# x
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-## USE THIS LINE IF DEVELOPING CSS
-renv::refresh()
-
 library(shiny)
 library(shinyBS)
 library(shinyjs)
-library(shinycssloaders) # used for "withSpinner"
+library(shinycssloaders)
+library(cachem)
 
-#-- OTHER --#
-#source('env.R')
+# Source configuration system
+source('config/load_config.R')
 
-#-- MASTER SETTINGS --#
-source('master_settings/options.R') # later will have specification generate this stuff.
+# Source components and helpers
+source('components/display/plot_panel.R')
+source('components/layout/panel.R')
+source('components/selectors/base.R')
+source('components/selectors/custom_components.R')
+source('components/pages/prerun_interventions.R')
+source('components/pages/custom_interventions.R')
+# Add to your app.R source list
+source('ui/popovers.R')
+make_popover <- function(id,
+                         title,
+                         content,
+                         placement)
+{
+    shinyBS::bsPopover(id, 
+                       title=paste0("<b>", title, "</b>"),
+                       content=content,
+                       trigger = "hover",
+                       placement=placement,
+                       options=list(container="body", html=T))
+}
 
-#-- PLOT INTERFACE --#
-source('plotting/generate_plot.R')
+# Source server handlers
+source('server/handlers/prerun_handlers.R')
+source('server/handlers/custom_handlers.R')
 
-#-- HELPERS --#
+# Source other required files
 source('helpers/accordion.R')
 source('helpers/concertina.R')
 source('helpers/display_size.R')
-
-#-- SERVER FILES --#
-source('server/contact_handlers.R')
+source('plotting/generate_plot.R')
 source('server/display_event_handlers.R')
+source('server/contact_handlers.R')
 
-#-- UI FILES --#
-source('ui/popovers.R')
-source('ui/contact.R')
-source('ui/display_helpers.R')
-source('ui/prerun_interventions.R')
-source('ui/custom_interventions.R')
-source('ui/team.R')
-source('ui/control_panel.R')
-
-# New source for plot panel component
-source('components/display/plot_panel.R')
-# Component files
-source('components/layout/panel.R')  # Add this line
-
-# Load configuration handlers
-source('config/load_config.R')
-
-# Load custom components
-source('components/selectors/custom_components.R')
-
-#-- SPECIFICATION AND MODEL --#
-# source('../jheem_analyses/source_code.R')
-library(jheem2)
-source('../jheem_analyses/applications/EHE/ehe_specification.R') # ONLY WAY?'
-
+# UI Creation
 ui <- function() {
+    # Load base configuration
+    config <- get_base_config()
     
-    selected.tab = 'custom_interventions'
-    app.title = 'jheem2'
     
-    #----------------------------#
-    #-- RENDER THE MAIN UI TAB --#
-    #----------------------------#
+    # Default selections from config
+    selected_tab <- config$application$defaults$selected_tab %||% 'custom_interventions'
+    app_title <- config$application$name
     
-    tags$html(style='height:100%',
-              
-              tags$title("JHEEM 2 - Ending HIV"),
-              
-              # Add js scripts to shinyjs
-              shinyjs::useShinyjs(),
-              # extendShinyjs(script = 'window_sizes.js', functions = c('ping_display_size', 'ping_display_size_onload', 'set_input_value')),
-              extendShinyjs(script = 'window_sizes2.js', functions = c('ping_display_size', 'ping_display_size_onload', 'set_input_value')),
-              extendShinyjs(script = 'download_plotly.js', functions = c('download_plotly')),
-              extendShinyjs(script = 'sounds.js', functions = c('chime', 'chime_if_checked')),
-              extendShinyjs(script = 'accordion.js', functions = c('trigger_accordion')),
-              extendShinyjs(script = 'concertina.js', functions = c('trigger_concertina')),
-              # extendShinyjs(script = 'do_the_thing.js', functions = c('do_the_thing', 'ping_display_size_onload')),
-              
-              # Add CSS Files
-              tags$head(
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/main_layout.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "display_panel.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "custom_controls.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "plot_controls.css"),
-                  #tags$link(rel = "stylesheet", type = "text/css", href = "box_colors.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "color_schemes/color_scheme_jh.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "accordion.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/chevrons.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/errors.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "notifications.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/about.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/overview.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/contact.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/Andrew_additions.css"), ## added for trying CSS grid
-                  # Shared layout styles
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/layout/three-panel.css"),
-                  # Page-specific styles
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/pages/prerun.css"),
-                  tags$link(rel = "stylesheet", type = "text/css", href = "css/pages/custom.css"),
-                  
-                  # tags$script(src = 'window_sizes.js'),
-                  # tags$script(src = 'window_sizes2.js'),
-                  tags$script(src = 'accordion.js'),
-                  tags$script(src = 'setup_tooltips.js'),
-                  tags$script(src = 'box_expansion.js'),
-                  tags$script(src = 'copy_to_clipboard.js'),
-                  tags$script(src = 'concertina.js'),
-                  tags$script(src = 'js/layout/panel-controls.js')
-                  # tags$script(src = 'do_the_thing.js')
-              ),
-              
-              
-              tags$body(style='height:100%;',
-                        navbarPage(
-                            id = 'main_nav',
-                            title = app.title,
-                            collapsible = F,
-                            selected = selected.tab,
-                            
-                            
-                            tabPanel(
-                                id = 'overview',
-                                value = 'overview',
-                                title = 'Overview',
-                                make.tab.popover("overview", title=OVERVIEW.POPOVER.TITLE, content=OVERVIEW.POPOVER),
-                                includeHTML('html_pages/overview.html')
-                            ),
-                            tabPanel(
-                                title = 'Pre-Run',
-                                value = 'prerun_interventions',
-                                create_prerun_layout()  # This calls our new layout function
-                            ),
-                            tabPanel(
-                                title = 'Custom',
-                                value = 'custom_interventions',
-                                create_custom_layout()
-                            ),
-                            tabPanel(
-                                title = 'FAQ',
-                                value = 'faq',
-                                make.tab.popover("faq", title=FAQ.POPOVER.TITLE, content=FAQ.POPOVER),
-                                includeHTML('html_pages/faq.html')
-                            
-                            ),
-                            tabPanel(
-                                title = 'About the JHEEM',
-                                value = 'about_the_jheem',
-                                make.tab.popover("about_the_jheem", title=ABOUT.POPOVER.TITLE, content=ABOUT.POPOVER),
-                                includeHTML('html_pages/about.html')
-                            ),
-                            tabPanel(
-                                title = 'Our Team',
-                                value = 'our_team',
-                                make.tab.popover("our_team", title=OUR.TEAM.POPOVER.TITLE, content=OUR.TEAM.POPOVER),
-                                TEAM.CONTENT # from ui/team.R
-                                # includeHTML('html_pages/team.html')
-                            ),
-                            tabPanel(
-                                title = 'Contact Us',
-                                value = 'contact_us',
-                                make.tab.popover("contact_us", title=CONTACT.POPOVER.TITLE, content=CONTACT.POPOVER),
-                                CONTACT.CONTENT
-                            )
-                        ) # </navbarPage>
-              ) #</body>
+    tags$html(
+        style = 'height:100%',
+        
+        tags$title(app_title),
+        
+        # Initialize Shiny extensions
+        shinyjs::useShinyjs(),
+        
+        # Load JavaScript extensions
+        extendShinyjs(
+            script = 'js/layout/panel-controls.js',
+            functions = c('ping_display_size', 'ping_display_size_onload', 'set_input_value')
+        ),
+        extendShinyjs(
+            script = 'js/interactions/download_plotly.js',
+            functions = c('download_plotly')
+        ),
+        extendShinyjs(
+            script = 'js/interactions/sounds.js',
+            functions = c('chime', 'chime_if_checked')
+        ),
+        extendShinyjs(
+            script = 'js/interactions/accordion.js',
+            functions = c('trigger_accordion')
+        ),
+        extendShinyjs(
+            script = 'js/interactions/concertina.js',
+            functions = c('trigger_concertina')
+        ),
+        
+        
+        
+        # Load CSS files based on config
+        tags$head(
+
+            # Load base styles
+            tags$link(
+                rel = "stylesheet",
+                type = "text/css",
+                href = config$theme$styles$base
+            ),
+            
+            # Load layout styles
+            lapply(config$theme$styles$layout, function(style) {
+                tags$link(
+                    rel = "stylesheet",
+                    type = "text/css",
+                    href = style
+                )
+            }),
+            
+            # Load component styles
+            lapply(config$theme$styles$components, function(style) {
+                tags$link(
+                    rel = "stylesheet",
+                    type = "text/css",
+                    href = style
+                )
+            }),
+            
+            # Load theme styles
+            lapply(config$theme$styles$themes, function(style) {
+                tags$link(
+                    rel = "stylesheet",
+                    type = "text/css",
+                    href = style
+                )
+            }),
+            
+            # Load page-specific styles
+            lapply(config$theme$styles$pages, function(style) {
+                tags$link(
+                    rel = "stylesheet",
+                    type = "text/css",
+                    href = style
+                )
+            }),
+            
+            # Load grid styles
+            lapply(config$theme$styles$grid, function(style) {
+                tags$link(
+                    rel = "stylesheet",
+                    type = "text/css",
+                    href = style
+                )
+            }),
+            
+            # Load JavaScript files
+            lapply(config$theme$scripts, function(script) {
+                tags$script(src = script)
+            })
+        ),
+            
+        
+        tags$body(
+            style = 'height:100%;',
+            navbarPage(
+                id = 'main_nav',
+                title = app_title,
+                collapsible = FALSE,
+                selected = selected_tab,
+                
+                # Overview tab
+                tabPanel(
+                    id = 'overview',
+                    value = 'overview',
+                    title = 'Overview',
+                    make.tab.popover(
+                        "overview",
+                        title = config$pages$overview$popover$title,
+                        content = config$pages$overview$popover$content
+                    ),
+                    includeHTML('html_pages/overview.html')
+                ),
+                
+                # Pre-run tab
+                tabPanel(
+                    title = 'Pre-Run',
+                    value = 'prerun_interventions',
+                    create_prerun_layout()
+                ),
+                
+                # Custom tab
+                tabPanel(
+                    title = 'Custom',
+                    value = 'custom_interventions',
+                    create_custom_layout()
+                ),
+                
+                # FAQ tab
+                tabPanel(
+                    title = 'FAQ',
+                    value = 'faq',
+                    make.tab.popover(
+                        "faq",
+                        title = config$pages$faq$popover$title,
+                        content = config$pages$faq$popover$content
+                    ),
+                    includeHTML('html_pages/faq.html')
+                ),
+                
+                # About tab
+                tabPanel(
+                    title = 'About the JHEEM',
+                    value = 'about_the_jheem',
+                    make.tab.popover(
+                        "about_the_jheem",
+                        title = config$pages$about$popover$title,
+                        content = config$pages$about$popover$content
+                    ),
+                    includeHTML('html_pages/about.html')
+                ),
+                
+                # Team tab
+                tabPanel(
+                    title = 'Our Team',
+                    value = 'our_team',
+                    make.tab.popover(
+                        "our_team",
+                        title = config$pages$team$popover$title,
+                        content = config$pages$team$popover$content
+                    ),
+                    TEAM.CONTENT
+                ),
+                
+                # Contact tab
+                tabPanel(
+                    title = 'Contact Us',
+                    value = 'contact_us',
+                    make.tab.popover(
+                        "contact_us",
+                        title = config$pages$contact$popover$title,
+                        content = config$pages$contact$popover$content
+                    ),
+                    CONTACT.CONTENT
+                )
+            )
+        )
     )
 }
 
-
-##----------------------##
-##-- SET UP THE CACHE --##
-##----------------------##
-#shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
-DISK.CACHE.1 = cachem::cache_disk(max_size = 1e9, evict='lru')
-DISK.CACHE.2 = cachem::cache_disk(max_size = 1e9, evict='lru')
-
+# Server function
+# Server function
 server <- function(input, output, session) {
-    ##--------------------##    
-    ##-- INITIAL SET-UP --##
-    ##--------------------##
+    # Initialize caches from config
+    cache_config <- get_component_config("caching")
+    DISK.CACHE.1 <- cachem::cache_disk(
+        max_size = cache_config$cache1$max_size,
+        evict = cache_config$cache1$evict_strategy
+    )
+    DISK.CACHE.2 <- cachem::cache_disk(
+        max_size = cache_config$cache2$max_size,
+        evict = cache_config$cache2$evict_strategy
+    )
     
-    # Initial setup
-    print(paste0("Launching server() function - ", Sys.time()))
+    # Load initial data
+    simset <- NULL
+    tryCatch({
+        load('simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata')
+    }, error = function(e) {
+        showNotification(
+            "Error loading initial simulation data",
+            type = "error"
+        )
+    })
     
-    # Hide visualizations and right panels initially
+    # Initialize UI state
     shinyjs::hide("visualization-area-prerun")
     shinyjs::hide("visualization-area-custom")
     shinyjs::hide("settings-settings-panel")
     shinyjs::hide("settings-custom-settings-panel")
     
-    # Load test simset once
-    load('simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata')
-    
-    # Initialize plot panels for both pages
-    plot_panel_server("prerun", 
-                      data = reactive({ simset }),
-                      settings = reactive({
-                          settings <- get.control.settings(input, "prerun")
-                          if (!is.null(settings$outcomes)) {
-                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-                          }
-                          settings
-                      })
-    )
-    
-    plot_panel_server("custom", 
-                      data = reactive({ simset }),
-                      settings = reactive({
-                          settings <- get.control.settings(input, "custom")
-                          if (!is.null(settings$outcomes)) {
-                              settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-                          }
-                          settings
-                      })
-    )
-    
-    ##-----------------------##
-    ##-- HELPER FUNCTIONS --##
-    ##-----------------------##
-    
-    validate_prerun_inputs <- function() {
-        location <- isolate(input$int_location_prerun)
-        aspect <- isolate(input$int_aspect_prerun)
-        
-        if (is.null(location) || is.null(aspect) || 
-            location == 'none' || aspect == 'none') {
-            showNotification(
-                "Please select a location and intervention settings first",
-                type = "warning"
-            )
-            return(FALSE)
-        }
-        return(TRUE)
-    }
-    
-    validate_custom_inputs <- function() {
-        location <- isolate(input$int_location_custom)
-        
-        if (is.null(location) || location == 'none') {
-            showNotification(
-                "Please select a location first",
-                type = "warning"
-            )
-            return(FALSE)
-        }
-        return(TRUE)
-    }
-    
-    collect_prerun_settings <- function() {
-        list(
-            location = isolate(input$int_location_prerun),
-            aspect = isolate(input$int_aspect_prerun),
-            population = isolate(input$int_tpop_prerun),
-            timeframe = isolate(input$int_timeframe_prerun),
-            intensity = isolate(input$int_intensity_prerun)
-        )
-    }
-    
-    collect_custom_subgroup_settings <- function(group_num) {
-        list(
-            demographics = list(
-                age_groups = isolate(input[[paste0("int_age_groups_", group_num, "_custom")]]),
-                race_ethnicity = isolate(input[[paste0("int_race_ethnicity_", group_num, "_custom")]]),
-                biological_sex = isolate(input[[paste0("int_biological_sex_", group_num, "_custom")]]),
-                risk_factor = isolate(input[[paste0("int_risk_factor_", group_num, "_custom")]])
-            ),
-            interventions = list(
-                dates = list(
-                    start = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_start")]]),
-                    end = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_end")]])
-                ),
-                testing = if (isolate(input[[paste0("int_testing_", group_num, "_custom_enabled")]])) {
-                    list(frequency = isolate(input[[paste0("int_testing_", group_num, "_custom_frequency")]]))
-                },
-                prep = if (isolate(input[[paste0("int_prep_", group_num, "_custom_enabled")]])) {
-                    list(coverage = isolate(input[[paste0("int_prep_", group_num, "_custom_coverage")]]))
-                },
-                suppression = if (isolate(input[[paste0("int_suppression_", group_num, "_custom_enabled")]])) {
-                    list(proportion = isolate(input[[paste0("int_suppression_", group_num, "_custom_proportion")]]))
-                },
-                needle_exchange = if (isolate(input[[paste0("int_needle_exchange_", group_num, "_custom_enabled")]])) {
-                    list(proportion = isolate(input[[paste0("int_needle_exchange_", group_num, "_custom_proportion")]]))
-                },
-                moud = if (isolate(input[[paste0("int_moud_", group_num, "_custom_enabled")]])) {
-                    list(proportion = isolate(input[[paste0("int_moud_", group_num, "_custom_proportion")]]))
+    # Initialize plot panels
+    plot_panel_server(
+        "prerun",
+        data = reactive({ 
+            # Only return data when button is clicked
+            if (input$generate_projections_prerun) {
+                simset
+            } else {
+                NULL
+            }
+        }),
+        settings = reactive({
+            # Only process settings when button is clicked
+            if (input$generate_projections_prerun) {
+                settings <- get.control.settings(input, "prerun")
+                if (!is.null(settings$outcomes)) {
+                    settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
                 }
-            )
-        )
-    }
-    
-    ##------------------------##
-    ##-- PRERUN PAGE HANDLERS --##
-    ##------------------------##
-    
-    # Reset downstream selections when location changes
-    observeEvent(input$int_location_prerun, {
-        print(paste("Location selected:", input$int_location_prerun))
-        
-        if (input$int_location_prerun == 'none') {
-            updateRadioButtons(session, "int_aspect_prerun", selected = "none")
-        }
-    })
-    
-    # Log selection changes for debugging
-    observeEvent(input$int_aspect_prerun, {
-        print(paste("Intervention aspect selected:", input$int_aspect_prerun))
-    })
-    
-    observeEvent(input$int_tpop_prerun, {
-        print(paste("Target population selected:", input$int_tpop_prerun))
-    })
-    
-    observeEvent(input$int_timeframe_prerun, {
-        print(paste("Time frame selected:", input$int_timeframe_prerun))
-    })
-    
-    observeEvent(input$int_intensity_prerun, {
-        print(paste("Intensity selected:", input$int_intensity_prerun))
-    })
-    
-    # Handle prerun generate button
-    observeEvent(input$generate_projections_prerun, {
-        if (validate_prerun_inputs()) {
-            settings <- collect_prerun_settings()
-            
-            # Log settings
-            print("Generating projections with settings:")
-            print(settings)
-            
-            # Show visualization
-            shinyjs::show(id = "visualization-area-prerun")
-            shinyjs::show(id = "settings-settings-panel")
-            
-            showNotification(
-                "Starting projection generation...",
-                type = "message"
-            )
-        }
-    })
-    
-    ##------------------------##
-    ##-- CUSTOM PAGE HANDLERS --##
-    ##------------------------##
-    
-    # Handle subgroup count changes
-    observeEvent(input$subgroups_count_custom, {
-        print(paste("Subgroups count changed:", input$subgroups_count_custom))
-    })
-    
-    # Render dynamic subgroup panels
-    output$subgroup_panels_custom <- renderUI({
-        req(input$subgroups_count_custom)
-        
-        panels <- lapply(1:input$subgroups_count_custom, function(i) {
-            create_subgroup_panel(i, "custom")
+                settings
+            } else {
+                NULL
+            }
         })
-        
-        do.call(tagList, panels)
-    })
+    )
     
-    # Handle custom generate button
-    observeEvent(input$generate_custom, {
-        if (validate_custom_inputs()) {
-            # Get subgroup count and settings
-            subgroup_count <- isolate(input$subgroups_count_custom)
-            settings <- lapply(1:subgroup_count, collect_custom_subgroup_settings)
-            
-            # Show visualization
-            shinyjs::show(id = "visualization-area-custom")
-            shinyjs::show(id = "settings-custom-settings-panel")
-            
-            showNotification(
-                "Custom projections starting...",
-                type = "message"
-            )
-        }
-    })
+    # Similar for custom panel
+    plot_panel_server(
+        "custom",
+        data = reactive({ 
+            if (input$generate_custom) {
+                simset
+            } else {
+                NULL
+            }
+        }),
+        settings = reactive({
+            if (input$generate_custom) {
+                settings <- get.control.settings(input, "custom")
+                if (!is.null(settings$outcomes)) {
+                    settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
+                }
+                settings
+            } else {
+                NULL
+            }
+        })
+    )
     
-    ##---------------------------##
-    ##-- SHARED EVENT HANDLERS --##
-    ##---------------------------##
+    # Initialize page handlers
+    initialize_prerun_handlers(input, output, session)
+    initialize_custom_handlers(input, output, session)
     
-    # Add display event handlers
+    # Add general event handlers
     add.display.event.handlers(session, input, output)
-    
-    # Add contact form handlers
     add.contact.handlers(session, input, output)
 }
 

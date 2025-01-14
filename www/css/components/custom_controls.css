@@ -66,3 +66,53 @@
     font-style: italic;
     font-size: 125%;
 }
+
+/* In www/css/components/custom_controls.css */
+
+.intervention-components {
+    margin-top: 20px;
+}
+
+.compound-input {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.compound-input-controls {
+    margin-left: 20px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid #eee;
+}
+
+.input-group {
+    margin: 5px 0;
+}
+
+.date-range {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.date-input {
+    margin: 5px 0;
+}
+
+/* Characteristics section */
+.subgroup-characteristics {
+    margin-bottom: 20px;
+}
+
+.characteristic-age_groups,
+.characteristic-race_ethnicity,
+.characteristic-biological_sex,
+.characteristic-risk_factor {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}

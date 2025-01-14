@@ -1,0 +1,409 @@
+# config/defaults.yaml
+# Default configurations used across the application
+
+defaults:
+  panel:
+    width: 300
+    collapsible: true
+    defaultVisible: true
+  display:
+    plot:
+      height: "600px"
+      defaultType: "static"
+  buttons:
+    generate:
+      label: "Generate Projections"
+      primary_class: "btn-primary"
+  feedback:
+    generate:
+      message: "This will take 10-30 seconds"
+      show_chime: true
+      chime_label: "Play a chime when done"
+
+display:
+  plot:
+    height: "600px"
+    defaultType: "static"
+    container_class: "plot-container"
+  loading:
+    message: "Generating plot..."
+    class: "loading-indicator"
+
+panels:
+  left:
+    id: "intervention-panel"
+    header: "Specify Intervention"
+    width: 300
+    collapsible: true
+    defaultVisible: true
+  right:
+    id: "settings-panel"
+    header: "Figure Settings"
+    width: 300
+    collapsible: true
+    defaultVisible: true
+
+plot_controls:
+  outcomes:
+    type: "checkbox"
+    label: "Outcomes"
+    options:
+      incidence:
+        id: "incidence"
+        label: "Incidence"
+      diagnoses:
+        id: "diagnoses"
+        label: "Reported Diagnoses"
+      prevalence:
+        id: "prevalence"
+        label: "Prevalence (Diagnosed)"
+      mortality:
+        id: "mortality"
+        label: "HIV Mortality"
+      testing:
+        id: "testing"
+        label: "HIV Testing Rates"
+      prep:
+        id: "prep"
+        label: "PrEP Coverage"
+      suppression:
+        id: "suppression"
+        label: "Viral Suppression"
+      knowledge:
+        id: "knowledge"
+        label: "Knowledge of Status"
+
+  stratification:
+    type: "checkbox"
+    label: "Separate Projections By:"
+    options:
+      age:
+        id: "age"
+        label: "Age Group"
+      race:
+        id: "race"
+        label: "Race/Ethnicity"
+      sex:
+        id: "sex"
+        label: "Biological Sex"
+      risk:
+        id: "risk"
+        label: "Risk Factor"
+
+  display:
+    type: "radio"
+    label: "What to Show for Projections:"
+    options:
+      mean:
+        id: "mean"
+        label: "The Mean Estimate and 95% Credible Interval"
+      individual:
+        id: "individual"
+        label: "Each Individual Simulation"
+
+selectors:
+  # Location selector
+  location:
+    type: "select"
+    ui:
+      label: "Select Location:"
+      defaultClass: "location-selector"
+      popover:
+        title: "Which Location to Analyze?"
+        content: "Select the metropolitan area for analysis."
+    options:
+      none:
+        id: "none"
+        label: "None"
+      atlanta:
+        id: "C.12580"
+        label: "Atlanta-Sandy Springs-Roswell, GA"
+      miami:
+        id: "C.33100"
+        label: "Miami-Fort Lauderdale-Pompano Beach, FL"
+      chicago:
+        id: "C.16980"
+        label: "Chicago-Naperville-Elgin, IL-IN-WI"
+
+  # Intervention aspects selector
+  intervention_aspects:
+    type: "radio"
+    ui:
+      label: "Which Aspects to Intervene On:"
+      defaultClass: "intervention-selector"
+      popover:
+        title: "What Should the Intervention Affect?"
+        content: "You can choose interventions that affect HIV testing, PrEP among those at risk for HIV acquisition, viral suppression among PWH, participation in needle-exchange programs, MOUDs, or combinations of these"
+    options:
+      none:
+        id: "none"
+        label: "None"
+      testing:
+        id: "hivtesting"
+        label: "HIV Testing"
+      prep:
+        id: "prep"
+        label: "PrEP Coverage"
+      viral:
+        id: "viralsuppression"
+        label: "Viral Suppression"
+      exchange:
+        id: "needleexchange"
+        label: "Needle Exchange"
+      moud:
+        id: "moud"
+        label: "MOUDs"
+
+  # Population groups selector
+  population_groups:
+    type: "radio"
+    ui:
+      label: "Target Population:"
+      defaultClass: "population-selector"
+      popover:
+        title: "Which Groups to Target?"
+        content: "Select whether to apply interventions across all populations or target specific demographic or risk groups."
+    options:
+      all:
+        id: "all"
+        label: "All populations"
+      age:
+        id: "age_groups"
+        label: "By age groups:<br/>13-24, 25-34, 35-44, 45-54, 55+"
+      risk:
+        id: "risk_groups"
+        label: "By risk groups:<br/>MSM, IDU, heterosexual contact"
+
+  # Timeframes selector
+  timeframes:
+    type: "radio"
+    ui:
+      label: "Intervention Roll-Out Period:"
+      defaultClass: "timeframe-selector"
+      popover:
+        title: "When to Roll Out the Intervention?"
+        content: "Select the time period over which the intervention will be implemented. Longer periods allow for more gradual implementation."
+    options:
+      immediate:
+        id: "2024_2025"
+        label: "2024-2025 (Immediate)"
+      short:
+        id: "2024_2026"
+        label: "2024-2026 (Short-term)"
+      medium:
+        id: "2024_2028"
+        label: "2024-2028 (Medium-term)"
+      long:
+        id: "2024_2030"
+        label: "2024-2030 (Long-term)"
+
+  # Intensities selector
+  intensities:
+    type: "radio"
+    ui:
+      label: "Intervention Intensity:"
+      defaultClass: "intensity-selector"
+      popover:
+        title: "How Intensive Should the Intervention Be?"
+        content: "Select the level of coverage increase to model. More aggressive increases require more resources but may have larger impacts."
+    options:
+      moderate:
+        id: "moderate"
+        label: "Moderate increase in coverage"
+      substantial:
+        id: "substantial"
+        label: "Substantial increase in coverage"
+      aggressive:
+        id: "aggressive"
+        label: "Aggressive increase in coverage"
+      maximum:
+        id: "maximum"
+        label: "Maximum feasible coverage"
+        
+# Custom page specific settings
+custom:
+  subgroups:
+    label: "How Many Distinct Subgroups to Target Interventions To:"
+    min: 1
+    max: 5
+    value: 1
+    panel_title_template: "Subgroup %d Characteristics:"
+
+  demographics:
+    age_groups:
+      type: "checkbox"
+      label: "Age Group"
+      options:
+        all:
+          id: "all"
+          label: "Include All Age Groups"
+        13-24:
+          id: "13-24"
+          label: "13-24 years"
+        25-34:
+          id: "25-34"
+          label: "25-34 years"
+        35-44:
+          id: "35-44"
+          label: "35-44 years"
+        45-54:
+          id: "45-54"
+          label: "45-54 years"
+        55plus:
+          id: "55plus"
+          label: "55+ years"
+
+    race_ethnicity:
+      type: "checkbox"
+      label: "Race/Ethnicity"
+      options:
+        all:
+          id: "all"
+          label: "Include All Races"
+        black:
+          id: "black"
+          label: "Black"
+        hispanic:
+          id: "hispanic"
+          label: "Hispanic"
+        other:
+          id: "other"
+          label: "Other"
+
+    biological_sex:
+      type: "checkbox"
+      label: "Biological Sex"
+      options:
+        all:
+          id: "all"
+          label: "Include All Sexes"
+        male:
+          id: "male"
+          label: "Male"
+        female:
+          id: "female"
+          label: "Female"
+
+    risk_factor:
+      type: "checkbox"
+      label: "Risk Factor"
+      options:
+        all:
+          id: "all"
+          label: "Include All Risk Factors"
+        msm:
+          id: "msm"
+          label: "MSM"
+        active_idu:
+          id: "active_idu"
+          label: "Active IDU"
+        prior_idu:
+          id: "prior_idu"
+          label: "Prior IDU"
+        msm_active_idu:
+          id: "msm_active_idu"
+          label: "MSM + Active IDU"
+        msm_prior_idu:
+          id: "msm_prior_idu"
+          label: "MSM + Prior IDU"
+        heterosexual:
+          id: "heterosexual"
+          label: "Heterosexual"
+
+  interventions:
+    section_title: "Intervention Components:"
+    dates:
+      type: "date_range"
+      label: "Intervention Roll-Out:"
+      start:
+        label: "Begins in:"
+        min: 2023
+        max: 2030
+        value: 2023
+        format: "%Y (%b 1)"
+      end:
+        label: "Fully Implemented by:"
+        min: 2023
+        max: 2030
+        value: 2024
+        format: "%Y (%b 31)"
+
+    types:
+      testing:
+        type: "compound"
+        label: "Intervene on Testing"
+        inputs:
+          enabled:
+            type: "checkbox"
+            label: "Intervene on Testing"
+          frequency:
+            type: "select"
+            label: "Average number of tests per person:"
+            options:
+              once: "Once per year"
+              twice: "Twice per year"
+              four: "Four times per year"
+
+      prep:
+        type: "compound"
+        label: "Intervene on PrEP"
+        inputs:
+          enabled:
+            type: "checkbox"
+            label: "Intervene on PrEP"
+          coverage:
+            type: "numeric"
+            label: "PrEP Coverage:"
+            min: 0
+            max: 100
+            step: 5
+            value: 10
+            format: "percentage"
+
+      suppression:
+        type: "compound"
+        label: "Intervene on Suppression"
+        inputs:
+          enabled:
+            type: "checkbox"
+            label: "Intervene on Suppression"
+          proportion:
+            type: "numeric"
+            label: "Proportion of diagnosed PWH who are Suppressed:"
+            min: 0
+            max: 100
+            step: 5
+            value: 70
+            format: "percentage"
+
+      needle_exchange:
+        type: "compound"
+        label: "Intervene on Needle Exchange"
+        inputs:
+          enabled:
+            type: "checkbox"
+            label: "Intervene on Needle Exchange"
+          proportion:
+            type: "numeric"
+            label: "Proportion of PWID in Needle Exchange Programs:"
+            min: 0
+            max: 100
+            step: 5
+            value: 10
+            format: "percentage"
+
+      moud:
+        type: "compound"
+        label: "Intervene on MOUDs"
+        inputs:
+          enabled:
+            type: "checkbox"
+            label: "Intervene on MOUDs"
+          proportion:
+            type: "numeric"
+            label: "Proportion of PWID on MOUDs:"
+            min: 0
+            max: 100
+            step: 5
+            value: 10
+            format: "percentage"

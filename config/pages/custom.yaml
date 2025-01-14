@@ -1,0 +1,153 @@
+# config/pages/custom.yaml - Custom page specific settings
+subgroups:
+  type: "numeric"
+  label: "How Many Distinct Subgroups to Target Interventions To:"
+  min: 1
+  max: 5
+  value: 1
+
+demographics:
+  age_groups:
+    type: "checkbox"
+    label: "Age Group"
+    options:
+      all:
+        id: "all"
+        label: "Include All Age Groups"
+      13-24:
+        id: "13-24"
+        label: "13-24 years"
+      25-34:
+        id: "25-34"
+        label: "25-34 years"
+      35-44:
+        id: "35-44"
+        label: "35-44 years"
+      45-54:
+        id: "45-54"
+        label: "45-54 years"
+      55plus:
+        id: "55plus"
+        label: "55+ years"
+
+  race_ethnicity:
+    type: "checkbox"
+    label: "Race/Ethnicity"
+    options:
+      all:
+        id: "all"
+        label: "Include All Races"
+      black:
+        id: "black"
+        label: "Black"
+      hispanic:
+        id: "hispanic"
+        label: "Hispanic"
+      other:
+        id: "other"
+        label: "Other"
+
+  biological_sex:
+    type: "checkbox"
+    label: "Biological Sex"
+    options:
+      all:
+        id: "all"
+        label: "Include All Sexes"
+      male:
+        id: "male"
+        label: "Male"
+      female:
+        id: "female"
+        label: "Female"
+
+  risk_factor:
+    type: "checkbox"
+    label: "Risk Factor"
+    options:
+      all:
+        id: "all"
+        label: "Include All Risk Factors"
+      msm:
+        id: "msm"
+        label: "MSM"
+      active_idu:
+        id: "active_idu"
+        label: "Active IDU"
+      prior_idu:
+        id: "prior_idu"
+        label: "Prior IDU"
+      msm_active_idu:
+        id: "msm_active_idu"
+        label: "MSM + Active IDU"
+      msm_prior_idu:
+        id: "msm_prior_idu"
+        label: "MSM + Prior IDU"
+      heterosexual:
+        id: "heterosexual"
+        label: "Heterosexual"
+
+interventions:
+  dates:
+    type: "date_range"
+    label: "Intervention Roll-Out:"
+    start:
+      label: "Begins in:"
+      options:
+        from: 2023
+        to: 2030
+        format: "%Y (%b 1)"
+    end:
+      label: "Fully Implemented by:"
+      options:
+        from: 2023
+        to: 2030
+        format: "%Y (%b 31)"
+
+  components:
+    testing:
+      type: "compound"
+      label: "Intervene on Testing"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on Testing"
+        frequency:
+          type: "select"
+          label: "Average number of tests per person:"
+          options:
+            once: "Once per year"
+            twice: "Twice per year"
+            four: "Four times per year"
+
+    prep:
+      type: "compound"
+      label: "Intervene on PrEP"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on PrEP"
+        coverage:
+          type: "numeric"
+          label: "PrEP Coverage:"
+          min: 0
+          max: 100
+          step: 5
+          value: 10
+          format: "percentage"
+
+    suppression:
+      type: "compound"
+      label: "Intervene on Suppression"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on Suppression"
+        proportion:
+          type: "numeric"
+          label: "Proportion of diagnosed PWH who are Suppressed:"
+          min: 0
+          max: 100
+          step: 5
+          value: 70
+          format: "percentage"

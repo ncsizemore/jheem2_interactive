@@ -14,19 +14,25 @@ create_plot_panel <- function(id, type = "static") {
     ns <- NS(id)
     
     tags$div(
-        class = "plot-panel",
-        # Plot container
+        class = "main-panel main-panel-plot",
         tags$div(
-            class = "plot-container",
-            plotOutput(ns("mainPlot"), height = "600px")
-        ),
-        
-        # Loading indicator
-        tags$div(
-            class = "loading-indicator",
-            id = ns("plotLoading"),
-            style = "display: none;",
-            "Generating plot..."
+            class = "plot-panel-container",
+            tags$div(
+                class = "plot_holder",
+                tags$div(
+                    class = "plot-container",
+                    style = "max-width: 100%; overflow-x: hidden;",
+                    plotOutput(ns("mainPlot"), 
+                               height = "600px",
+                               width = "100%")
+                ),
+                tags$div(
+                    class = "loading-indicator",
+                    id = ns("plotLoading"),
+                    style = "display: none;",
+                    "Generating plot..."
+                )
+            )
         )
     )
 }
@@ -38,8 +44,18 @@ create_plot_panel <- function(id, type = "static") {
 #' @return None
 plot_panel_server <- function(id, data, settings) {
     moduleServer(id, function(input, output, session) {
+        
+        
+        # Get reactive dimensions from session
+        dims <- reactive({
+            session$clientData[[paste0('output_', session$ns('mainPlot'), '_width')]]
+        })
+        
         # Render plot using simplot
         output$mainPlot <- renderPlot({
+            # Force redraw when dimensions change
+            dims()
+            
             # Get current settings
             current_settings <- settings()
             
@@ -70,6 +86,9 @@ plot_panel_server <- function(id, data, settings) {
             shinyjs::hide(id = "plotLoading")
             
             plot
+        }, height = function() {
+            # Dynamic height based on panel height
+            600 # You could make this reactive to panel height if needed
         })
     })
 }

@@ -69,41 +69,12 @@
   transition: all 0.3s ease;
 }
 
-/* Toggle buttons */
-.toggle-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  transition: all 0.3s ease;
-}
 
-.toggle-button:hover {
-  background-color: #f0f0f0;
-}
-
-/* Left toggle button */
-.toggle-left {
-  left: 290px;
-}
 
 .intervention-panel.collapsed .toggle-left {
   left: 0;
 }
 
-/* Right toggle button */
-.toggle-right {
-  right: 290px;
-}
 
 .settings-panel.collapsed .toggle-right {
   right: 0;

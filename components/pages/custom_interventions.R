@@ -1,0 +1,181 @@
+# components/pages/custom_interventions.R
+
+library(shiny)
+
+#' Validate custom configuration
+#' @param config Configuration to validate
+#' @return TRUE if valid, throws error if invalid
+validate_custom_config <- function(config) {
+    required_sections <- c(
+        "subgroups",
+        "demographics",
+        "interventions"
+    )
+    
+    missing <- setdiff(required_sections, names(config))
+    if (length(missing) > 0) {
+        stop(sprintf(
+            "Missing required custom configuration sections: %s",
+            paste(missing, collapse = ", ")
+        ))
+    }
+    TRUE
+}
+
+#' Creates the main layout for custom interventions page
+#' @param config Complete page configuration from get_page_complete_config("custom")
+create_custom_layout <- function(config = get_page_complete_config("custom")) {
+    # Validate required config sections
+    validate_custom_config(config)
+    
+    tags$div(
+        class = paste(
+            "custom-container",
+            "three-panel-container",
+            config$theme$layout$container_class
+        ),
+        
+        # Left panel with intervention designer
+        create_panel(
+            id = "intervention-custom",
+            type = "left",
+            config = config,
+            content = create_custom_intervention_content(config)
+        ),
+        
+        # Main visualization panel
+        create_plot_panel(
+            id = "custom",
+            type = config$display$plot$defaultType %||% "static"
+        ),
+        
+        # Right panel with plot controls
+        create_panel(
+            id = "settings-custom",
+            type = "right",
+            config = config,
+            content = create_custom_plot_controls(config)
+        )
+    )
+}
+
+#' Creates the custom intervention content
+#' @param config Page configuration
+create_custom_intervention_content <- function(config) {
+    tagList(
+        # Location selector
+        create_location_selector("custom"),
+        
+        # Subgroups configuration section
+        tags$div(
+            class = "subgroups-config",
+            
+            # Number of subgroups selector
+            tags$div(
+                class = "form-group subgroups-count",
+                tags$label(
+                    config$subgroups$label,
+                    class = "control-label"
+                ),
+                numericInput(
+                    "subgroups_count_custom",
+                    label = NULL,
+                    value = config$subgroups$value,
+                    min = config$subgroups$min,
+                    max = config$subgroups$max
+                )
+            ),
+            
+            # Dynamic subgroup panels
+            uiOutput("subgroup_panels_custom")
+        ),
+        
+        # Generate button using config settings
+        tags$div(
+            class = "generate-controls",
+            actionButton(
+                inputId = "generate_custom",
+                label = config$defaults$buttons$generate$label,
+                class = paste(
+                    "btn",
+                    config$theme$buttons$primary_class
+                )
+            ),
+            
+            # Feedback area using config
+            tags$div(
+                class = "generate-feedback",
+                tags$small(config$defaults$feedback$generate$message),
+                if (config$defaults$feedback$generate$show_chime) {
+                    tags$div(
+                        class = "chime-option",
+                        checkboxInput(
+                            "chime_custom",
+                            config$defaults$feedback$generate$chime_label,
+                            value = FALSE
+                        )
+                    )
+                }
+            )
+        )
+    )
+}
+
+#' Creates the plot controls for the right panel
+#' @param config Page configuration
+create_custom_plot_controls <- function(config) {
+    plot_config <- config$plot_controls
+    
+    tagList(
+        # Outcomes section
+        create_control_section(
+            type = "outcomes",
+            config = plot_config$outcomes
+        ),
+        
+        # Stratification section
+        create_control_section(
+            type = "stratification",
+            config = plot_config$stratification
+        ),
+        
+        # Display options section
+        create_control_section(
+            type = "display",
+            config = plot_config$display
+        )
+    )
+}
+
+#' Helper to create a control section
+#' @param type Type of control section
+#' @param config Section configuration
+create_control_section <- function(type, config) {
+    tags$div(
+        class = paste("plot-control-section", type),
+        
+        # Section label
+        tags$label(config$label),
+        
+        # Create appropriate input based on type
+        switch(config$type,
+               "checkbox" = checkboxGroupInput(
+                   inputId = paste0(type, "_custom"),
+                   label = NULL,
+                   choices = setNames(
+                       sapply(config$options, `[[`, "id"),
+                       sapply(config$options, `[[`, "label")
+                   )
+               ),
+               "radio" = radioButtons(
+                   inputId = paste0(type, "_custom"),
+                   label = NULL,
+                   choices = setNames(
+                       sapply(config$options, `[[`, "id"),
+                       sapply(config$options, `[[`, "label")
+                   )
+               ),
+               stop(sprintf("Unknown control type: %s", config$type))
+        )
+    )
+}
