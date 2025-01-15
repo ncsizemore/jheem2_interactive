@@ -1,133 +1,109 @@
+# server/display_event_handlers.R
+source('components/common/button_control.R')
 
-##-----------------------------------------##
-##-- EVENT HANDLERS FOR UPDATING DISPLAY --##
-##-----------------------------------------##
-add.display.event.handlers <- function(session, input, output, suffixes=c('prerun', 'custom'))
-{
-    #--Variables for storing plot/table --#
-    plot.and.table.list = lapply(suffixes, function(x){NULL})
-    names(plot.and.table.list) = suffixes
-    is.first.plot = T
-    
+#' Add display event handlers to the application
+#' @param session Shiny session object
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param plot_state Reactive value for storing plot state
+#' @param suffixes Page suffixes to handle (default: c('prerun', 'custom'))
+add.display.event.handlers <- function(session, input, output, plot_state, suffixes=c('prerun', 'custom')) {
     #-- General Handler for Running/Redrawing --#
-    do.run = function(suffix,
-                      intervention.settings)
-    {
+    do.run <- function(suffix, intervention.settings) {
         get.display.size(input, 'prerun')
         
-        # #-- Lock the appropriate buttons --#
-        # lock.cta.buttons(input, called.from.suffix = suffix,
-        #                  plot.and.table.list=plot.and.table.list)
+        # Generate new plot and table
+        new.plot.and.table <- do.prepare.plot.and.table(
+            session = session,
+            input = input,
+            type = suffix,
+            intervention.settings = intervention.settings
+        )
         
-        # in plotting/generate_plot.R
-        new.plot.and.table = do.prepare.plot.and.table(session=session,
-                                                       input=input,
-                                                       type=suffix,
-                                                       intervention.settings=intervention.settings)
-        if (!is.null(new.plot.and.table))
-        {
-            plot.and.table.list[[suffix]] <<- new.plot.and.table
+        if (!is.null(new.plot.and.table)) {
+            # Update the state
+            current_state <- plot_state()
+            current_state[[suffix]] <- new.plot.and.table
+            plot_state(current_state)
             
-            #-- Update the UI --#
-            set.display(input, output, suffix, plot.and.table.list[[suffix]])
-            sync.buttons.to.plot(input, plot.and.table.list)
+            # Update the UI
+            set.display(input, output, suffix, new.plot.and.table)
+            sync_buttons_to_plot(input, plot_state())
         }
-        
-        # unlock.cta.buttons(input, called.from.suffix = suffix,
-        #                    plot.and.table.list=plot.and.table.list)
     }
     
-    #-- The Handlers for Generating/Redrawing Pre-Run --#
+    # Event handlers for prerun
     observeEvent(input$run_prerun, {
-        int.settings = NULL
-        do.run(suffix='prerun',
-               int.settings)
-        # browser()
-        simset = get(load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
-        # library(aws.iam)
-        # library(aws.s3)
-        # simset = s3load("1.0/12060/1.0_12060_baseline.Rdata", bucket='endinghiv.sims')
+        int.settings <- NULL
+        do.run(suffix = 'prerun', int.settings)
+        simset <- get(load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
     })
     
     observeEvent(input$redraw_prerun, {
-        do.run(suffix='prerun',
-               intervention.settings = plot.and.table.list$custom$int.settings)
+        current_state <- plot_state()
+        do.run(
+            suffix = 'prerun',
+            intervention.settings = current_state$custom$int.settings
+        )
     })
     
+    # Event handlers for custom
     observeEvent(input$run_custom, {
-        int.settings = NULL
-        do.run(suffix='custom',
-               int.settings)
+        int.settings <- NULL
+        do.run(suffix = 'custom', int.settings)
     })
     
     observeEvent(input$redraw_custom, {
-        do.run(suffix='custom',
-               intervention.settings = plot.and.table.list$custom$int.settings)
+        current_state <- plot_state()
+        do.run(
+            suffix = 'custom',
+            intervention.settings = current_state$custom$int.settings
+        )
     })
     
-    #-- Some Initial Set-Up Once Loaded --#
-    
-    session$onFlushed(function(){
-        # This is where the "display_size_" inputs are created (in window.js)
+    # Initial setup
+    session$onFlushed(function() {
+        # Initialize display sizes
         js$ping_display_size_onload()
         print("flushed")
-        # browser()
-        js$set_input_value(name='left_width_prerun', value=as.numeric(LEFT.PANEL.SIZE['prerun']))
-        js$set_input_value(name='right_width_prerun', value=0)
-        js$set_input_value(name='left_width_custom', value=as.numeric(LEFT.PANEL.SIZE['custom']))
-        js$set_input_value(name='right_width_custom', value=0)
         
-        # lapply(names(plot.and.table.list), 
-        #        clear.display,
-        #        input=input,
-        #        output=output)
-        # 
-        # Sync up
-        sync.buttons.to.plot(input, plot.and.table.list)
+        js$set_input_value(name = 'left_width_prerun', 
+                           value = as.numeric(LEFT.PANEL.SIZE['prerun']))
+        js$set_input_value(name = 'right_width_prerun', 
+                           value = 0)
+        js$set_input_value(name = 'left_width_custom', 
+                           value = as.numeric(LEFT.PANEL.SIZE['custom']))
+        js$set_input_value(name = 'right_width_custom', 
+                           value = 0)
         
-    }, once=T)
+        # Sync button states - wrap in observe
+        observe({
+            sync_buttons_to_plot(input, plot_state())
+        })
+    }, once = TRUE)
     
-    #-- Resize Listener --#
-    
-    handle.resize <- function(suffixes)
-    {
+    # Resize handler
+    handle.resize <- function(suffixes) {
         print("called handle resize")
-        lapply(suffixes, function(suffix){
-            display.size = get.display.size(input, suffix)
-            if (!is.null(plot.and.table.list[[suffix]]))
-            {
-                set.display(input=input,
-                            output=output,
-                            suffix=suffix,
-                            plot.and.table=plot.and.table.list[[suffix]])
+        current_state <- plot_state()
+        lapply(suffixes, function(suffix) {
+            display.size <- get.display.size(input, suffix)
+            if (!is.null(current_state[[suffix]])) {
+                set.display(
+                    input = input,
+                    output = output,
+                    suffix = suffix,
+                    plot.and.table = current_state[[suffix]]
+                )
             }
         })
     }
     
-    # These are all made in www/window.sizes.js, I believe
+    # Resize event observers
     observeEvent(input$display_size_prerun, handle.resize('prerun'))
     observeEvent(input$display_size_custom, handle.resize('custom'))
     observeEvent(input$left_width_prerun, handle.resize('prerun'))
     observeEvent(input$right_width_prerun, handle.resize('prerun'))
     observeEvent(input$left_width_custom, handle.resize('custom'))
     observeEvent(input$right_width_custom, handle.resize('custom'))
-    
-    # observeEvent(input$main_nav, {
-    #     js$ping_display_size() 
-    # })
-    
-}
-
-##-- ENABLING AND DISABLING --##
-
-sync.buttons.to.plot <- function(input, plot.and.table.list)
-{
-    for (suffix in names(plot.and.table.list))
-    {
-        enable = !is.null(plot.and.table.list[[suffix]])
-        
-        set.redraw.button.enabled(input, suffix, enable)
-        
-        # set.share.enabled(input, suffix, enable)
-    }
 }

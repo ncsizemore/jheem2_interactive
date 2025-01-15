@@ -22,22 +22,10 @@ load_yaml_file <- function(path) {
     })
 }
 
-#' Get configuration for a specific page
-#' @param page Name of the page
-#' @return List containing page configuration
-get_page_config <- function(page) {
-    # Debug print
-    print(paste("Loading config for page:", page))
-    print(paste("Page type:", typeof(page)))
-    print(paste("Page class:", class(page)))
-    
-    # Ensure page is a simple string
-    if (!is.character(page) || length(page) != 1) {
-        stop(sprintf("Invalid page parameter: %s", toString(page)))
-    }
-    
-    path <- file.path("config", "pages", paste0(page, ".yaml"))
-    load_yaml_file(path)
+#' Get base configuration
+#' @return List containing base configuration
+get_base_config <- function() {
+    load_yaml_file("config/base.yaml")
 }
 
 #' Get default configuration
@@ -58,7 +46,17 @@ get_component_config <- function(component) {
 #' @param page Name of the page
 #' @return List containing page configuration
 get_page_config <- function(page) {
-    path <- sprintf("config/pages/%s.yaml", page)
+    # Debug print
+    print(paste("Loading config for page:", page))
+    print(paste("Page type:", typeof(page)))
+    print(paste("Page class:", class(page)))
+    
+    # Ensure page is a simple string
+    if (!is.character(page) || length(page) != 1) {
+        stop(sprintf("Invalid page parameter: %s", toString(page)))
+    }
+    
+    path <- file.path("config", "pages", paste0(page, ".yaml"))
     load_yaml_file(path)
 }
 

@@ -1,4 +1,39 @@
+/* www/css/pages/contact.css */
+.contact-container {
+    text-align: center;
+}
 
-.content_page {
-    
+.contact {
+    display: inline-block;
+    text-align: left;
+}
+
+.contact_header {
+    padding: 20px;
+}
+
+.contact table {
+    margin: 0 auto;
+}
+
+.contact td {
+    padding: 10px;
+}
+
+/* Form styling */
+.contact .form-group {
+    margin-bottom: 15px;
+}
+
+.contact textarea {
+    resize: vertical;
+}
+
+.cta {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }

@@ -1,0 +1,28 @@
+/* www/css/pages/team.css */
+.team_table {
+    width: 100%;
+    height: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.team_td {
+    vertical-align: top;
+    padding: 0;
+}
+
+.team_sidebar {
+    width: 200px;
+    padding: 15px;
+    height: 100%;
+}
+
+.team_image_table {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.team_image_table img {
+    margin-right: 15px;
+    max-width: 200px;
+}

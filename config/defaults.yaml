@@ -95,10 +95,13 @@ plot_controls:
     label: "What to Show for Projections:"
     options:
       mean:
-        id: "mean"
+        id: "mean.and.interval"      # Change from "mean"
         label: "The Mean Estimate and 95% Credible Interval"
+      median:
+        id: "median.and.interval"    # Add this option
+        label: "The Median Estimate and 95% Credible Interval"
       individual:
-        id: "individual"
+        id: "individual.simulation"  # Change from "individual"
         label: "Each Individual Simulation"
 
 selectors:

@@ -44,7 +44,16 @@ create_plot_panel <- function(id, type = "static") {
 #' @return None
 plot_panel_server <- function(id, data, settings) {
     moduleServer(id, function(input, output, session) {
-        
+        # Create reactive to handle settings
+        current_settings <- reactive({
+            s <- settings()
+            # Debug prints
+            print("Plot settings:")
+            print("Summary type value:")
+            print(s$summary.type)
+            print("Valid values are: individual.simulation, mean.and.interval, median.and.interval")
+            s
+        })
         
         # Get reactive dimensions from session
         dims <- reactive({
@@ -56,12 +65,12 @@ plot_panel_server <- function(id, data, settings) {
             # Force redraw when dimensions change
             dims()
             
-            # Get current settings
-            current_settings <- settings()
+            # Get settings from reactive
+            s <- current_settings()
             
             # Validate settings
-            if (is.null(current_settings$outcomes) || 
-                length(current_settings$outcomes) == 0) {
+            if (is.null(s$outcomes) || 
+                length(s$outcomes) == 0) {
                 return(NULL)
             }
             
@@ -72,9 +81,9 @@ plot_panel_server <- function(id, data, settings) {
             plot <- tryCatch({
                 simplot(
                     data(),  # simset
-                    outcomes = current_settings$outcomes,
-                    facet.by = current_settings$facet.by,
-                    summary.type = current_settings$summary.type
+                    outcomes = s$outcomes,
+                    facet.by = s$facet.by,
+                    summary.type = s$summary.type
                 )
             }, error = function(e) {
                 print("Error in simplot:")
@@ -99,6 +108,6 @@ initialize_plot_settings <- function() {
     list(
         outcomes = NULL,
         facet.by = NULL,
-        summary.type = "mean.and.interval"
+        summary.type = "mean.and.interval"  # Make sure this matches simplot's requirements
     )
 }

@@ -3,31 +3,29 @@ library(shinyBS)
 library(shinyjs)
 library(shinycssloaders)
 library(cachem)
+library(magrittr)
 
 # Source configuration system
 source('config/load_config.R')
 
 # Source components and helpers
+source('components/common/popover.R')  # Updated path
 source('components/display/plot_panel.R')
+source('components/display/plot_controls.R')
 source('components/layout/panel.R')
 source('components/selectors/base.R')
 source('components/selectors/custom_components.R')
 source('components/pages/prerun_interventions.R')
 source('components/pages/custom_interventions.R')
-# Add to your app.R source list
-source('ui/popovers.R')
-make_popover <- function(id,
-                         title,
-                         content,
-                         placement)
-{
-    shinyBS::bsPopover(id, 
-                       title=paste0("<b>", title, "</b>"),
-                       content=content,
-                       trigger = "hover",
-                       placement=placement,
-                       options=list(container="body", html=T))
-}
+source('components/pages/team.R')
+source('components/pages/contact.R')
+
+# Source plotting system
+source('plotting/generate_plot.R')
+#source('plotting/simplot/prepare_plot.R')
+#source('plotting/simplot/execute_plot.R')
+#source('components/display/plot.R')
+
 
 # Source server handlers
 source('server/handlers/prerun_handlers.R')
@@ -40,6 +38,9 @@ source('helpers/display_size.R')
 source('plotting/generate_plot.R')
 source('server/display_event_handlers.R')
 source('server/contact_handlers.R')
+
+library(jheem2)
+source('../jheem_analyses/applications/EHE/ehe_specification.R')
 
 # UI Creation
 ui <- function() {
@@ -158,7 +159,7 @@ ui <- function() {
                     id = 'overview',
                     value = 'overview',
                     title = 'Overview',
-                    make.tab.popover(
+                    make_tab_popover(
                         "overview",
                         title = config$pages$overview$popover$title,
                         content = config$pages$overview$popover$content
@@ -184,7 +185,7 @@ ui <- function() {
                 tabPanel(
                     title = 'FAQ',
                     value = 'faq',
-                    make.tab.popover(
+                    make_tab_popover(
                         "faq",
                         title = config$pages$faq$popover$title,
                         content = config$pages$faq$popover$content
@@ -196,7 +197,7 @@ ui <- function() {
                 tabPanel(
                     title = 'About the JHEEM',
                     value = 'about_the_jheem',
-                    make.tab.popover(
+                    make_tab_popover(
                         "about_the_jheem",
                         title = config$pages$about$popover$title,
                         content = config$pages$about$popover$content
@@ -208,24 +209,24 @@ ui <- function() {
                 tabPanel(
                     title = 'Our Team',
                     value = 'our_team',
-                    make.tab.popover(
+                    make_tab_popover(
                         "our_team",
                         title = config$pages$team$popover$title,
                         content = config$pages$team$popover$content
                     ),
-                    TEAM.CONTENT
+                    create_team_content(config)
                 ),
                 
                 # Contact tab
                 tabPanel(
                     title = 'Contact Us',
                     value = 'contact_us',
-                    make.tab.popover(
+                    make_tab_popover(
                         "contact_us",
                         title = config$pages$contact$popover$title,
                         content = config$pages$contact$popover$content
                     ),
-                    CONTACT.CONTENT
+                    create_contact_content(config)
                 )
             )
         )
@@ -233,8 +234,14 @@ ui <- function() {
 }
 
 # Server function
-# Server function
+# In app.R, modify the server function
 server <- function(input, output, session) {
+    # Create reactive value at server level
+    plot_state <- reactiveVal(
+        lapply(c('prerun', 'custom'), function(x) NULL) %>% 
+            setNames(c('prerun', 'custom'))
+    )
+    
     # Initialize caches from config
     cache_config <- get_component_config("caching")
     DISK.CACHE.1 <- cachem::cache_disk(
@@ -266,57 +273,36 @@ server <- function(input, output, session) {
     # Initialize plot panels
     plot_panel_server(
         "prerun",
-        data = reactive({ 
-            # Only return data when button is clicked
-            if (input$generate_projections_prerun) {
-                simset
-            } else {
-                NULL
-            }
-        }),
+        data = reactive({ simset }),
         settings = reactive({
-            # Only process settings when button is clicked
-            if (input$generate_projections_prerun) {
-                settings <- get.control.settings(input, "prerun")
-                if (!is.null(settings$outcomes)) {
-                    settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-                }
-                settings
-            } else {
-                NULL
+            settings <- get_control_settings(input, "prerun")
+            if (!is.null(settings$outcomes)) {
+                settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
             }
+            settings
         })
     )
     
-    # Similar for custom panel
     plot_panel_server(
         "custom",
-        data = reactive({ 
-            if (input$generate_custom) {
-                simset
-            } else {
-                NULL
-            }
-        }),
+        data = reactive({ simset }),
         settings = reactive({
-            if (input$generate_custom) {
-                settings <- get.control.settings(input, "custom")
-                if (!is.null(settings$outcomes)) {
-                    settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-                }
-                settings
-            } else {
-                NULL
+            settings <- get_control_settings(input, "custom")
+            if (!is.null(settings$outcomes)) {
+                settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
             }
+            settings
         })
     )
+    
+    # Add display event handlers with plot_state
+    add.display.event.handlers(session, input, output, plot_state)
     
     # Initialize page handlers
     initialize_prerun_handlers(input, output, session)
     initialize_custom_handlers(input, output, session)
     
-    # Add general event handlers
-    add.display.event.handlers(session, input, output)
+    # Add contact handlers
     add.contact.handlers(session, input, output)
 }
 

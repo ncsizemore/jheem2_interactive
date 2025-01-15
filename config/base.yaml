@@ -68,10 +68,34 @@ pages:
     popover:
       title: "Our Team"
       content: "Meet the team behind JHEEM's development"
+    styles:
+      sidebar:
+        class: "team_sidebar controls_color"
+      main:
+        class: "team_main content_color"
+      header:
+        class: "about_header_padding header_color"
+      content:
+        class: "about_padding"
+  # In base.yaml under pages section
   contact:
-    popover:
-      title: "Contact Us"
-      content: "Get in touch with questions or feedback"
+    title: "Contact Us"
+    description: "We welcome any feedback, comments, questions, or requests"
+    form:
+      name:
+        label: "Your name"
+        type: "text"
+      email:
+        label: "Your email"
+        type: "text"
+      message:
+        label: "Your message"
+        placeholder: "Your feedback, comments, questions, or requests"
+        height: "250px"
+        width: "375px"
+    submit:
+      label: "Submit"
+      class: "cta cta_color"
 
 # Cache configuration
 caching:
