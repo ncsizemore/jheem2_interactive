@@ -4,7 +4,8 @@
 #' @param input Shiny input object
 #' @param output Shiny output object
 #' @param session Shiny session object
-initialize_prerun_handlers <- function(input, output, session) {
+#' @param plot_state Reactive value for plot state
+initialize_prerun_handlers <- function(input, output, session, plot_state) {
     # Reset downstream selections when location changes
     observeEvent(input$int_location_prerun, {
         print(paste("Location selected:", input$int_location_prerun))
@@ -33,21 +34,17 @@ initialize_prerun_handlers <- function(input, output, session) {
     
     # Handle generate button
     observeEvent(input$generate_projections_prerun, {
+        print("Generate button pressed (prerun)")
         if (validate_prerun_inputs(input)) {
             settings <- collect_prerun_settings(input)
-            
-            # Log settings
-            print("Generating projections with settings:")
+            print("Settings collected:")
             print(settings)
             
-            # Show visualization
-            shinyjs::show(id = "visualization-area-prerun")
-            shinyjs::show(id = "settings-settings-panel")
+            # Use proper namespacing
+            updateTextInput(session, session$ns("prerun-visualization_state"), value = "visible")
+            print("Updated visualization state")
             
-            showNotification(
-                "Starting projection generation...",
-                type = "message"
-            )
+            update_display(session, input, output, 'prerun', settings, plot_state)
         }
     })
 }
@@ -57,7 +54,11 @@ initialize_prerun_handlers <- function(input, output, session) {
 #' @return Boolean indicating if inputs are valid
 validate_prerun_inputs <- function(input) {
     location <- isolate(input$int_location_prerun)
-    aspect <- isolate(input$int_aspect_prerun)
+    aspect <- isolate(input$int_intervention_aspects_prerun)  # Changed from int_aspect_prerun
+    
+    print("Validating prerun inputs:")
+    print(paste("Location:", location))
+    print(paste("Aspect:", aspect))
     
     if (is.null(location) || is.null(aspect) || 
         location == 'none' || aspect == 'none') {
@@ -76,9 +77,9 @@ validate_prerun_inputs <- function(input) {
 collect_prerun_settings <- function(input) {
     list(
         location = isolate(input$int_location_prerun),
-        aspect = isolate(input$int_aspect_prerun),
-        population = isolate(input$int_tpop_prerun),
-        timeframe = isolate(input$int_timeframe_prerun),
-        intensity = isolate(input$int_intensity_prerun)
+        aspect = isolate(input$int_intervention_aspects_prerun),  # Changed
+        population = isolate(input$int_population_groups_prerun),
+        timeframe = isolate(input$int_timeframes_prerun),
+        intensity = isolate(input$int_intensities_prerun)
     )
 }

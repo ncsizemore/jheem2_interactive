@@ -19,6 +19,10 @@ source('components/pages/prerun_interventions.R')
 source('components/pages/custom_interventions.R')
 source('components/pages/team.R')
 source('components/pages/contact.R')
+# Source control panel functions
+source('ui/control_panel.R')
+
+source('master_settings/options.R')
 
 # Source plotting system
 source('plotting/generate_plot.R')
@@ -30,6 +34,7 @@ source('plotting/generate_plot.R')
 # Source server handlers
 source('server/handlers/prerun_handlers.R')
 source('server/handlers/custom_handlers.R')
+source('server/display_utils.R')
 
 # Source other required files
 source('helpers/accordion.R')
@@ -265,20 +270,17 @@ server <- function(input, output, session) {
     })
     
     # Initialize UI state
-    shinyjs::hide("visualization-area-prerun")
-    shinyjs::hide("visualization-area-custom")
-    shinyjs::hide("settings-settings-panel")
-    shinyjs::hide("settings-custom-settings-panel")
+    #shinyjs::hide("visualization-area-prerun")
+    #shinyjs::hide("visualization-area-custom")
+    #shinyjs::hide("settings-settings-panel")
+    #shinyjs::hide("settings-custom-settings-panel")
     
     # Initialize plot panels
     plot_panel_server(
         "prerun",
         data = reactive({ simset }),
         settings = reactive({
-            settings <- get_control_settings(input, "prerun")
-            if (!is.null(settings$outcomes)) {
-                settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
-            }
+            settings <- get.control.settings(input, "prerun")
             settings
         })
     )
@@ -287,7 +289,7 @@ server <- function(input, output, session) {
         "custom",
         data = reactive({ simset }),
         settings = reactive({
-            settings <- get_control_settings(input, "custom")
+            settings <- get.control.settings(input, "custom")  # Change to dot version
             if (!is.null(settings$outcomes)) {
                 settings$outcomes <- intersect(settings$outcomes, simset$outcomes)
             }
@@ -299,8 +301,8 @@ server <- function(input, output, session) {
     add.display.event.handlers(session, input, output, plot_state)
     
     # Initialize page handlers
-    initialize_prerun_handlers(input, output, session)
-    initialize_custom_handlers(input, output, session)
+    initialize_prerun_handlers(input, output, session, plot_state)
+    initialize_custom_handlers(input, output, session, plot_state)
     
     # Add contact handlers
     add.contact.handlers(session, input, output)

@@ -4,7 +4,8 @@
 #' @param input Shiny input object
 #' @param output Shiny output object
 #' @param session Shiny session object
-initialize_custom_handlers <- function(input, output, session) {
+#' @param plot_state Reactive value for plot state
+initialize_custom_handlers <- function(input, output, session, plot_state) {
     # Handle subgroup count changes
     observeEvent(input$subgroups_count_custom, {
         print(paste("Subgroups count changed:", input$subgroups_count_custom))
@@ -32,9 +33,12 @@ initialize_custom_handlers <- function(input, output, session) {
             subgroup_count <- isolate(input$subgroups_count_custom)
             settings <- collect_custom_settings(input, subgroup_count)
             
-            # Show visualization
-            shinyjs::show(id = "visualization-area-custom")
-            shinyjs::show(id = "settings-custom-settings-panel")
+            # Fix the namespacing to match prerun pattern
+            updateTextInput(session, session$ns("custom-visualization_state"), value = "visible")
+            print("Updated visualization state")
+            
+            # Call update_display with settings
+            update_display(session, input, output, 'custom', settings, plot_state)
             
             showNotification(
                 "Custom projections starting...",
@@ -90,15 +94,29 @@ collect_subgroup_settings <- function(input, group_num) {
     )
 }
 
+
 #' Collect all custom page settings
 #' @param input Shiny input object
 #' @param subgroup_count Number of subgroups
 #' @return List of all settings
 collect_custom_settings <- function(input, subgroup_count) {
-    list(
+    print("Collecting custom settings")
+    
+    # Get plot control settings
+    plot_settings <- get.control.settings(input, "custom")
+    print("Plot settings:")
+    str(plot_settings)
+    
+    # Get intervention settings
+    intervention_settings <- list(
         location = isolate(input$int_location_custom),
         subgroups = lapply(1:subgroup_count, function(i) {
             collect_subgroup_settings(input, i)
         })
     )
+    print("Intervention settings:")
+    str(intervention_settings)
+    
+    # Combine both types of settings
+    c(plot_settings, intervention_settings)
 }

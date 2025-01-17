@@ -26,6 +26,13 @@ create.plot.control.panel <- function(suffix)
 }
 
 get.control.settings <- function(input, suffix) {
+    print("Getting control settings:")
+    print(paste("Suffix:", suffix))
+    print("Input values:")
+    print(paste("Outcomes:", paste(input[[paste0('outcomes_', suffix)]], collapse=", ")))
+    print(paste("Facet by:", input[[paste0('facet_by_', suffix)]]))
+    print(paste("Summary type:", input[[paste0('summary_type_', suffix)]]))
+    
     # Default settings if input is not yet initialized
     if (is.null(input[[paste0('outcomes_', suffix)]]) ||
         is.null(input[[paste0('facet_by_', suffix)]]) ||

@@ -1,5 +1,6 @@
 # server/display_event_handlers.R
 source('components/common/button_control.R')
+source('server/display_utils.R')
 
 #' Add display event handlers to the application
 #' @param session Shiny session object
@@ -8,64 +9,47 @@ source('components/common/button_control.R')
 #' @param plot_state Reactive value for storing plot state
 #' @param suffixes Page suffixes to handle (default: c('prerun', 'custom'))
 add.display.event.handlers <- function(session, input, output, plot_state, suffixes=c('prerun', 'custom')) {
-    #-- General Handler for Running/Redrawing --#
-    do.run <- function(suffix, intervention.settings) {
-        get.display.size(input, 'prerun')
-        
-        # Generate new plot and table
-        new.plot.and.table <- do.prepare.plot.and.table(
-            session = session,
-            input = input,
-            type = suffix,
-            intervention.settings = intervention.settings
-        )
-        
-        if (!is.null(new.plot.and.table)) {
-            # Update the state
-            current_state <- plot_state()
-            current_state[[suffix]] <- new.plot.and.table
-            plot_state(current_state)
-            
-            # Update the UI
-            set.display(input, output, suffix, new.plot.and.table)
-            sync_buttons_to_plot(input, plot_state())
-        }
-    }
     
     # Event handlers for prerun
     observeEvent(input$run_prerun, {
+        print("Run prerun triggered")
         int.settings <- NULL
-        do.run(suffix = 'prerun', int.settings)
-        simset <- get(load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
+        update_display(session, input, output, 'prerun', int.settings, plot_state)
     })
     
     observeEvent(input$redraw_prerun, {
+        print("Redraw prerun triggered")
         current_state <- plot_state()
-        do.run(
-            suffix = 'prerun',
-            intervention.settings = current_state$custom$int.settings
+        update_display(
+            session, input, output,
+            'prerun',
+            intervention.settings = current_state$custom$int.settings,
+            plot_state
         )
     })
     
     # Event handlers for custom
     observeEvent(input$run_custom, {
+        print("Run custom triggered")
         int.settings <- NULL
-        do.run(suffix = 'custom', int.settings)
+        update_display(session, input, output, 'custom', int.settings, plot_state)
     })
     
     observeEvent(input$redraw_custom, {
+        print("Redraw custom triggered")
         current_state <- plot_state()
-        do.run(
-            suffix = 'custom',
-            intervention.settings = current_state$custom$int.settings
+        update_display(
+            session, input, output,
+            'custom',
+            intervention.settings = current_state$custom$int.settings,
+            plot_state
         )
     })
     
     # Initial setup
     session$onFlushed(function() {
-        # Initialize display sizes
         js$ping_display_size_onload()
-        print("flushed")
+        print("Session flushed - initializing display sizes")
         
         js$set_input_value(name = 'left_width_prerun', 
                            value = as.numeric(LEFT.PANEL.SIZE['prerun']))
@@ -76,34 +60,29 @@ add.display.event.handlers <- function(session, input, output, plot_state, suffi
         js$set_input_value(name = 'right_width_custom', 
                            value = 0)
         
-        # Sync button states - wrap in observe
+        # Sync button states
         observe({
             sync_buttons_to_plot(input, plot_state())
         })
     }, once = TRUE)
     
-    # Resize handler
-    handle.resize <- function(suffixes) {
-        print("called handle resize")
-        current_state <- plot_state()
-        lapply(suffixes, function(suffix) {
-            display.size <- get.display.size(input, suffix)
-            if (!is.null(current_state[[suffix]])) {
-                set.display(
-                    input = input,
-                    output = output,
-                    suffix = suffix,
-                    plot.and.table = current_state[[suffix]]
-                )
-            }
-        })
-    }
-    
-    # Resize event observers
-    observeEvent(input$display_size_prerun, handle.resize('prerun'))
-    observeEvent(input$display_size_custom, handle.resize('custom'))
-    observeEvent(input$left_width_prerun, handle.resize('prerun'))
-    observeEvent(input$right_width_prerun, handle.resize('prerun'))
-    observeEvent(input$left_width_custom, handle.resize('custom'))
-    observeEvent(input$right_width_custom, handle.resize('custom'))
+    # Resize handlers
+    observeEvent(input$display_size_prerun, {
+        update_display(session, input, output, 'prerun', NULL, plot_state)
+    })
+    observeEvent(input$display_size_custom, {
+        update_display(session, input, output, 'custom', NULL, plot_state)
+    })
+    observeEvent(input$left_width_prerun, {
+        update_display(session, input, output, 'prerun', NULL, plot_state)
+    })
+    observeEvent(input$right_width_prerun, {
+        update_display(session, input, output, 'prerun', NULL, plot_state)
+    })
+    observeEvent(input$left_width_custom, {
+        update_display(session, input, output, 'custom', NULL, plot_state)
+    })
+    observeEvent(input$right_width_custom, {
+        update_display(session, input, output, 'custom', NULL, plot_state)
+    })
 }

@@ -6,6 +6,12 @@
 #' @param config Configuration from get_page_complete_config()
 #' @param content Panel content
 create_panel <- function(id, type, config, content) {
+    if(id == "settings") {
+        print("=== Creating Right Panel ===")
+        print(paste("Panel ID:", id))
+        print(paste("Panel Type:", type))
+    }
+    
     # Validate inputs
     validate_panel_inputs(id, type, config)
     

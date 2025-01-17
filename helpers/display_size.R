@@ -1,16 +1,34 @@
-# Code to (roughly) track the size of the display panel using javascript
+# helpers/display_size.R
 
-LEFT.PANEL.SIZE = c(prerun=250,
-                    custom=500)
-RIGHT.PANEL.SIZE = c(prerun=250,
-                     custom=250)
+# Source display helpers for defaults
+source('ui/display_helpers.R')
+
+# Panel size constants
+LEFT.PANEL.SIZE = c(
+    prerun = 250,
+    custom = 500
+)
+
+RIGHT.PANEL.SIZE = c(
+    prerun = 250,
+    custom = 250
+)
 
 FIGURE.PADDING = 5
-DISPLAY_PADDING = 0#10
+DISPLAY_PADDING = 0  #10
 DISPLAY_Y_CUSHION = 2*DISPLAY_PADDING + 10
 DISPLAY_X_CUSHION = 2*DISPLAY_PADDING + 25
 
+#' Get display size based on input and suffix
+#' @param input Shiny input object
+#' @param suffix Page suffix ('prerun' or 'custom')
+#' @return List containing display dimensions
 get.display.size <- function(input, suffix) {
+    print(paste("get.display.size called with suffix:", suffix))
+    print("Current defaults:")
+    print(paste("DEFAULT.DISPLAY.WIDTH:", DEFAULT.DISPLAY.WIDTH))
+    print(paste("DEFAULT.DISPLAY.HEIGHT:", DEFAULT.DISPLAY.HEIGHT))
+    
     size <- input[[paste0('display_size_', suffix)]]
     if (is.null(size)) {
         print("Using default display size")
