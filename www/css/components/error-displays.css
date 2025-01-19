@@ -1,0 +1,67 @@
+/* www/css/components/error-displays.css */
+
+/* Common error styles */
+.error-boundary {
+    margin: 10px 0;
+}
+
+/* Validation errors */
+.validation-error {
+    background-color: #fff3f3;
+    border-left: 4px solid #dc3545;
+    color: #dc3545;
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+}
+
+.validation-error .error-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+/* Plot errors */
+.plot-error {
+    background-color: #fff8f3;
+    border-left: 4px solid #fd7e14;
+    color: #fd7e14;
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+}
+
+.plot-error .error-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.plot-error .error-details {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: rgba(253, 126, 20, 0.1);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    color: #666;
+}
+
+/* Error animations */
+.error-boundary > div {
+    animation: errorFadeIn 0.3s ease-in-out;
+}
+
+@keyframes errorFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

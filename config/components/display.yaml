@@ -14,3 +14,17 @@ display:
   controls:
     defaultCollapsed: true
     width: 300
+    
+  errors:
+    styles:
+      - css/components/error-displays.css
+    classes:
+      validation: "validation-error"
+      plot: "plot-error"
+      boundary: "error-boundary"
+    icons:
+      validation: "⚠"
+      plot: "⚠"
+    animation:
+      enabled: true
+      duration: "0.3s"

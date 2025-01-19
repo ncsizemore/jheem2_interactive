@@ -15,8 +15,11 @@ source('components/common/state/types.R')
 source('components/common/state/store.R')
 source('components/common/state/visualization.R')
 source('components/common/state/controls.R')
+
 source('components/display/plot_panel.R')
 source('components/display/plot_controls.R')
+# Source error handling
+source('components/common/errors/boundaries.R')
 source('components/layout/panel.R')
 source('components/selectors/base.R')
 source('components/selectors/custom_components.R')

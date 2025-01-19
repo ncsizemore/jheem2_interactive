@@ -10,7 +10,7 @@ create_plot_panel <- function(id, type = "static") {
     tags$div(
         class = "main-panel main-panel-plot",
         
-        # Hidden input for visibility state - wrap in div with hidden class
+        # Hidden input for visibility state
         tags$div(
             class = "hidden",
             textInput(
@@ -25,6 +25,10 @@ create_plot_panel <- function(id, type = "static") {
             condition = sprintf("input['%s'] === 'visible'", ns("visualization_state")),
             tags$div(
                 class = "plot-panel-container",
+                
+                # Error displays at the top
+                uiOutput(ns("error_display")),
+                
                 tags$div(
                     class = "plot_holder",
                     
@@ -51,15 +55,6 @@ create_plot_panel <- function(id, type = "static") {
                                 tags$span(class = "loading-spinner"),
                                 tags$span("Generating plot...")
                             )
-                        )
-                    ),
-                    
-                    # Error display
-                    conditionalPanel(
-                        condition = sprintf("input['%s'] !== ''", ns("error_message")),
-                        tags$div(
-                            class = "error-container",
-                            textOutput(ns("errorText"))
                         )
                     ),
                     
@@ -96,6 +91,33 @@ plot_panel_server <- function(id, data, settings) {
         vis_manager <- create_visualization_manager(session, id, ns("visualization"))
         control_manager <- create_control_manager(session, id, ns("controls"), settings)
         
+        # Create error boundaries
+        validation_boundary <- create_validation_boundary(session, output, id, ns("validation"))
+        plot_boundary <- create_plot_boundary(session, output, id, ns("plot"))
+        
+        # Create plot generation function that includes error handling
+        generate_plot <- function(settings_to_use) {
+            # Clear any previous errors first
+            plot_boundary$clear()  # Changed from clear_error to clear
+            
+            # Generate plot with error handling
+            result <- tryCatch({
+                plot <- simplot(
+                    data(),
+                    outcomes = settings_to_use$outcomes,
+                    facet.by = settings_to_use$facet.by,
+                    summary.type = settings_to_use$summary.type
+                )
+                list(success = TRUE, plot = plot)
+            }, error = function(e) {
+                plot_boundary$set_error(conditionMessage(e), "plot")
+                list(success = FALSE, error = conditionMessage(e))
+            })
+            
+            # Return the plot if successful, otherwise NULL
+            if (result$success) result$plot else NULL
+        }
+        
         # Combined observer for all control changes
         observe({
             print("=== Plot Panel Control Update ===")
@@ -125,7 +147,7 @@ plot_panel_server <- function(id, data, settings) {
                     summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
                 )
                 
-                print("Updating to settings:")
+                print("Settings for plot:")
                 str(new_settings)
                 
                 # Update state and plot within isolate
@@ -133,17 +155,9 @@ plot_panel_server <- function(id, data, settings) {
                     # Update control state
                     control_manager$update_settings(new_settings)
                     
-                    # Directly update plot
+                    # Update plot output
                     output$mainPlot <- renderPlot({
-                        print("Rendering plot with settings:")
-                        str(new_settings)
-                        
-                        simplot(
-                            data(),
-                            outcomes = new_settings$outcomes,
-                            facet.by = new_settings$facet.by,
-                            summary.type = new_settings$summary.type
-                        )
+                        generate_plot(new_settings)
                     })
                 })
             }
@@ -170,28 +184,14 @@ plot_panel_server <- function(id, data, settings) {
                 "No simulation data available"
             ))
             
-            # Clear any previous error
-            vis_manager$clear_error()
-            
             # Generate plot
-            tryCatch({
-                plot <- simplot(
-                    data(),
-                    outcomes = current_settings$outcomes,
-                    facet.by = current_settings$facet.by,
-                    summary.type = current_settings$summary.type
-                )
-                
-                print("Plot generated successfully")
+            plot <- generate_plot(current_settings)
+            
+            if (!is.null(plot)) {
                 vis_manager$set_plot_status("ready")
-                
-                plot
-            }, error = function(e) {
-                print("Error in plot generation:")
-                print(conditionMessage(e))
-                vis_manager$set_error(conditionMessage(e))
-                NULL
-            })
+            }
+            
+            plot
         })
         
         # Reset states when visibility changes
@@ -199,7 +199,18 @@ plot_panel_server <- function(id, data, settings) {
             if (input$visualization_state == "hidden") {
                 vis_manager$reset()
                 control_manager$reset()
+                validation_boundary$clear()  # Changed from clear_error to clear
+                plot_boundary$clear()  # Changed from clear_error to clear
             }
+        })
+        
+        # Add error boundary UI
+        output[[ns("error_display")]] <- renderUI({
+            tags$div(
+                class = "error-displays",
+                validation_boundary$ui(),
+                plot_boundary$ui()
+            )
         })
     })
 }
