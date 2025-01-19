@@ -10,6 +10,11 @@ source('config/load_config.R')
 
 # Source components and helpers
 source('components/common/popover.R')  # Updated path
+# Source state management system
+source('components/common/state/types.R')
+source('components/common/state/store.R')
+source('components/common/state/visualization.R')
+source('components/common/state/controls.R')
 source('components/display/plot_panel.R')
 source('components/display/plot_controls.R')
 source('components/layout/panel.R')

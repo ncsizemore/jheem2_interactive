@@ -92,6 +92,10 @@ plot_panel_server <- function(id, data, settings) {
     moduleServer(id, function(input, output, session) {
         ns <- session$ns
         
+        # Create state managers
+        vis_manager <- create_visualization_manager(session, id, ns("visualization"))
+        control_manager <- create_control_manager(session, id, ns("controls"), settings)
+        
         # Combined observer for all control changes
         observe({
             print("=== Plot Panel Control Update ===")
@@ -111,41 +115,39 @@ plot_panel_server <- function(id, data, settings) {
                 input$visualization_state == "visible" &&
                 (!is.null(outcomes) || !is.null(facet_by) || !is.null(summary_type))) {
                 
-                # Get base settings and update with all current control values
-                settings_copy <- isolate(settings())
+                # Get current settings with isolate
+                current_settings <- isolate(control_manager$get_settings())
                 
-                if (!is.null(outcomes)) {
-                    settings_copy$outcomes <- as.character(outcomes)
-                }
+                # Create settings update
+                new_settings <- list(
+                    outcomes = if (!is.null(outcomes)) as.character(outcomes) else current_settings$outcomes,
+                    facet.by = if (!is.null(facet_by)) as.character(facet_by) else current_settings$facet.by,
+                    summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
+                )
                 
-                if (!is.null(facet_by)) {
-                    settings_copy$facet.by <- if(length(facet_by) > 0) as.character(facet_by) else NULL
-                }
+                print("Updating to settings:")
+                str(new_settings)
                 
-                if (!is.null(summary_type)) {
-                    settings_copy$summary.type <- summary_type
-                }
-                
-                print("Final settings for plot:")
-                str(settings_copy)
-                
-                # Update the plot
-                output$mainPlot <- renderPlot({
-                    print("Rendering plot with settings:")
-                    str(settings_copy)
+                # Update state and plot within isolate
+                isolate({
+                    # Update control state
+                    control_manager$update_settings(new_settings)
                     
-                    simplot(
-                        data(),
-                        outcomes = settings_copy$outcomes,
-                        facet.by = settings_copy$facet.by,
-                        summary.type = settings_copy$summary.type
-                    )
+                    # Directly update plot
+                    output$mainPlot <- renderPlot({
+                        print("Rendering plot with settings:")
+                        str(new_settings)
+                        
+                        simplot(
+                            data(),
+                            outcomes = new_settings$outcomes,
+                            facet.by = new_settings$facet.by,
+                            summary.type = new_settings$summary.type
+                        )
+                    })
                 })
             }
         })
-        
-        # Create a reactive value to track plot completion
-        plot_rendered <- reactiveVal(FALSE)
         
         # Initial plot rendering
         output$mainPlot <- renderPlot({
@@ -154,71 +156,49 @@ plot_panel_server <- function(id, data, settings) {
             
             req(input$visualization_state == "visible")
             
-            # Reset plot completion flag
-            plot_rendered(FALSE)
-            
             # Set loading state
-            updateTextInput(session, "plot_status", value = "loading")
+            vis_manager$set_plot_status("loading")
             
             # Get current settings
-            settings_to_use <- settings()
+            current_settings <- control_manager$get_settings()
             print("Initial settings:")
-            str(settings_to_use)
+            str(current_settings)
             
-            # Validate requirements
-            validate(need(
-                !is.null(settings_to_use$outcomes) && length(settings_to_use$outcomes) > 0,
-                "Please select at least one outcome to display"
-            ))
-            
+            # Validate data
             validate(need(
                 !is.null(data()),
                 "No simulation data available"
             ))
             
             # Clear any previous error
-            updateTextInput(session, "error_message", value = "")
+            vis_manager$clear_error()
             
             # Generate plot
             tryCatch({
                 plot <- simplot(
                     data(),
-                    outcomes = settings_to_use$outcomes,
-                    facet.by = settings_to_use$facet.by,
-                    summary.type = settings_to_use$summary.type
+                    outcomes = current_settings$outcomes,
+                    facet.by = current_settings$facet.by,
+                    summary.type = current_settings$summary.type
                 )
                 
-                print("Initial plot generated successfully")
-                plot_rendered(TRUE)
+                print("Plot generated successfully")
+                vis_manager$set_plot_status("ready")
                 
                 plot
             }, error = function(e) {
                 print("Error in plot generation:")
                 print(conditionMessage(e))
-                updateTextInput(session, "plot_status", value = "error")
-                updateTextInput(session, "error_message", value = conditionMessage(e))
+                vis_manager$set_error(conditionMessage(e))
                 NULL
             })
-        })
-        
-        # Watch for plot completion
-        observe({
-            if (plot_rendered()) {
-                updateTextInput(session, "plot_status", value = "ready")
-            }
-        })
-        
-        # Error message output
-        output$errorText <- renderText({
-            input$error_message
         })
         
         # Reset states when visibility changes
         observeEvent(input$visualization_state, {
             if (input$visualization_state == "hidden") {
-                updateTextInput(session, "plot_status", value = "ready")
-                updateTextInput(session, "error_message", value = "")
-                plot_rendered(FALSE)
+                vis_manager$reset()
+                control_manager$reset()
             }
         })
     })
