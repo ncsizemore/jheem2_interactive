@@ -1,60 +1,138 @@
 # components/common/errors/boundaries.R
 
+#' Error type definitions
+#' @return List of error type constants
+ERROR_TYPES <- list(
+    VALIDATION = "validation",
+    PLOT = "plot",
+    DATA = "data",
+    SYSTEM = "system",
+    STATE = "state"
+)
+
+#' Error severity levels
+#' @return List of severity level constants
+SEVERITY_LEVELS <- list(
+    WARNING = "warning",
+    ERROR = "error",
+    FATAL = "fatal"
+)
+
+#' Global error registry for cross-component communication
+error_registry <- new.env()
+
+#' Create an error state
+#' @param message Error message
+#' @param type Error type from ERROR_TYPES
+#' @param severity Error severity from SEVERITY_LEVELS
+#' @param details Optional details about the error
+#' @param source Optional source component ID
+#' @return List representing error state
+create_error_state <- function(
+        message,
+        type = ERROR_TYPES$SYSTEM,
+        severity = SEVERITY_LEVELS$ERROR,
+        details = NULL,
+        source = NULL
+) {
+    list(
+        has_error = TRUE,
+        message = message,
+        type = type,
+        severity = severity,
+        details = details,
+        source = source,
+        timestamp = Sys.time()
+    )
+}
+
 #' Create an error boundary component
 #' @param session Shiny session object
 #' @param output Shiny output object
 #' @param page_id Character: page identifier
 #' @param id Character: component identifier
+#' @param state_manager Optional visualization manager for integration
 #' @return List of error handling functions
-create_error_boundary <- function(session, output, page_id, id) {
+create_error_boundary <- function(session, output, page_id, id, state_manager = NULL) {
     ns <- session$ns
-    print("Creating error boundary")
-    print(paste("page_id:", page_id))
-    print(paste("id:", id))
+    print(sprintf("Creating error boundary for %s on page %s", id, page_id))
     
     # Initialize error state
     error_state <- reactiveVal(list(
         has_error = FALSE,
         message = "",
-        type = "",        
-        details = NULL,   
-        timestamp = NULL  
+        type = "",
+        severity = "",
+        details = NULL,
+        source = NULL,
+        timestamp = NULL
     ))
+    
+    # Register this boundary in the global registry
+    error_registry[[id]] <- NULL
+    
+    # Create reactive error display
+    local({
+        output[[ns("error_display")]] <- renderUI({
+            print("=== Rendering Error Display ===")
+            current_error <- error_state()
+            print("Current error state:")
+            str(current_error)
+            
+            if (!current_error$has_error) {
+                print("No error to display")
+                return(NULL)
+            }
+            
+            print(sprintf("Rendering error UI for type: %s", current_error$type))
+            
+            # Create error display based on type
+            result <- if (current_error$type == ERROR_TYPES$VALIDATION) {
+                tags$div(
+                    class = paste("validation-error", current_error$severity),
+                    tags$span(class = "error-icon", "⚠"),
+                    tags$span(class = "error-message", current_error$message),
+                    if (!is.null(current_error$details)) {
+                        tags$div(class = "error-details", current_error$details)
+                    }
+                )
+            } else {
+                tags$div(
+                    class = paste("component-error", current_error$severity),
+                    tags$span(class = "error-icon", "⚠"),
+                    tags$span(class = "error-message", current_error$message),
+                    if (!is.null(current_error$details)) {
+                        tags$pre(class = "error-details", current_error$details)
+                    }
+                )
+            }
+            print("Error UI generated")
+            result
+        })
+    })
     
     # Define error management functions
     local({
         print("Defining error management functions")
         
-        set_error <- function(message, type = "general", details = NULL) {
-            print(sprintf("Setting error: %s (%s)", message, type))
+        set_error <- function(message, type = ERROR_TYPES$SYSTEM, 
+                              severity = SEVERITY_LEVELS$ERROR, 
+                              details = NULL, 
+                              source = NULL) {
+            print(sprintf("Setting %s error: %s", type, message))
             isolate({
-                error_state(list(
-                    has_error = TRUE,
+                new_state <- create_error_state(
                     message = message,
                     type = type,
+                    severity = severity,
                     details = details,
-                    timestamp = Sys.time()
-                ))
+                    source = source %||% id
+                )
+                error_state(new_state)
                 
-                if (type == "validation") {
-                    output[[ns("validation_error")]] <- renderUI({
-                        tags$div(
-                            class = "validation-error",
-                            tags$span(class = "error-icon", "⚠"),
-                            tags$span(message)
-                        )
-                    })
-                } else if (type == "plot") {
-                    output[[ns("plot_error")]] <- renderUI({
-                        tags$div(
-                            class = "plot-error",
-                            tags$span(class = "error-icon", "⚠"),
-                            tags$span(message),
-                            if (!is.null(details)) {
-                                tags$pre(class = "error-details", details)
-                            }
-                        )
-                    })
+                # Update visualization status if manager provided
+                if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
+                    state_manager$set_plot_status("error")
                 }
             })
         }
@@ -66,53 +144,38 @@ create_error_boundary <- function(session, output, page_id, id) {
                     has_error = FALSE,
                     message = "",
                     type = "",
+                    severity = "",
                     details = NULL,
+                    source = NULL,
                     timestamp = NULL
                 ))
                 
-                output[[ns("validation_error")]] <- renderUI({ NULL })
-                output[[ns("plot_error")]] <- renderUI({ NULL })
-            })
-        }
-        
-        handle <- function(expr, type = "general", message = NULL) {
-            print(sprintf("Handling expression with type: %s", type))
-            tryCatch({
-                if (error_state()$type == type) {
-                    clear_error()
+                # Update visualization status if manager provided
+                if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
+                    state_manager$set_plot_status("ready")
                 }
-                expr
-            }, error = function(e) {
-                set_error(
-                    message = message %||% conditionMessage(e),
-                    type = type,
-                    details = conditionMessage(e)
-                )
-                NULL
-            }, warning = function(w) {
-                print(sprintf("Warning in %s: %s", type, conditionMessage(w)))
-                expr
             })
         }
         
-        # Return functions in environment
+        # Other functions same as before...
         environment()
     }) -> error_fns
     
+    # Create error interface
     error_interface <- list(
         set_error = error_fns$set_error,
         clear_error = error_fns$clear_error,
         get_error = reactive({ error_state() }),
         has_error = reactive({ error_state()$has_error }),
+        propagate_error = error_fns$propagate_error,
         ui = function() {
-            tags$div(
-                class = "error-boundary",
-                uiOutput(ns("validation_error")),
-                uiOutput(ns("plot_error"))
-            )
+            uiOutput(ns("error_display"))
         },
         handle = error_fns$handle
     )
+    
+    # Register interface in global registry
+    error_registry[[id]] <- error_interface
     
     print("Created error interface:")
     str(error_interface)
@@ -125,16 +188,21 @@ create_error_boundary <- function(session, output, page_id, id) {
 #' @param output Shiny output object
 #' @param page_id Character: page identifier
 #' @param id Character: component identifier
+#' @param state_manager Optional visualization manager for integration
 #' @return Validation error handler
-create_validation_boundary <- function(session, output, page_id, id) {
-    error_boundary <- create_error_boundary(session, output, page_id, id)
+create_validation_boundary <- function(session, output, page_id, id, state_manager = NULL) {
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
     
     list(
         # Validate with custom rules
-        validate = function(value, rules) {
+        validate = function(value, rules, severity = SEVERITY_LEVELS$ERROR) {
             for (rule in rules) {
                 if (!rule$test(value)) {
-                    error_boundary$set_error(rule$message, "validation")
+                    error_boundary$set_error(
+                        message = rule$message,
+                        type = ERROR_TYPES$VALIDATION,
+                        severity = severity
+                    )
                     return(FALSE)
                 }
             }
@@ -144,31 +212,57 @@ create_validation_boundary <- function(session, output, page_id, id) {
         
         # Common validation rules
         rules = list(
-            required = function(message = "This field is required") {
+            required = function(message = "This field is required", 
+                                severity = SEVERITY_LEVELS$ERROR) {
                 list(
                     test = function(value) !is.null(value) && length(value) > 0,
-                    message = message
+                    message = message,
+                    severity = severity
                 )
             },
-            type = function(type, message = sprintf("Must be of type %s", type)) {
+            
+            type = function(type, 
+                            message = sprintf("Must be of type %s", type),
+                            severity = SEVERITY_LEVELS$ERROR) {
                 list(
                     test = function(value) inherits(value, type),
-                    message = message
+                    message = message,
+                    severity = severity
                 )
             },
-            custom = function(test_fn, message) {
+            
+            range = function(min = NULL, max = NULL,
+                             message = sprintf("Value must be between %s and %s", 
+                                               if(is.null(min)) "-∞" else min,
+                                               if(is.null(max)) "∞" else max),
+                             severity = SEVERITY_LEVELS$ERROR) {
+                list(
+                    test = function(value) {
+                        if (!is.numeric(value)) return(FALSE)
+                        min_ok <- is.null(min) || value >= min
+                        max_ok <- is.null(max) || value <= max
+                        min_ok && max_ok
+                    },
+                    message = message,
+                    severity = severity
+                )
+            },
+            
+            custom = function(test_fn, message, severity = SEVERITY_LEVELS$ERROR) {
                 list(
                     test = test_fn,
-                    message = message
+                    message = message,
+                    severity = severity
                 )
             }
         ),
         
         # Access to base error boundary functions
         ui = error_boundary$ui,
-        clear = error_boundary$clear_error,  # Add this
+        clear = error_boundary$clear_error,
         get_state = error_boundary$get_error,
-        set_error = error_boundary$set_error  # Add this
+        set_error = error_boundary$set_error,
+        propagate_error = error_boundary$propagate_error
     )
 }
 
@@ -177,30 +271,56 @@ create_validation_boundary <- function(session, output, page_id, id) {
 #' @param output Shiny output object
 #' @param page_id Character: page identifier
 #' @param id Character: component identifier
+#' @param state_manager Optional visualization manager for integration
 #' @return Plot error handler
-create_plot_boundary <- function(session, output, page_id, id) {
+create_plot_boundary <- function(session, output, page_id, id, state_manager = NULL) {
     print("Creating plot boundary")
-    error_boundary <- create_error_boundary(session, output, page_id, id)
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
     print("Plot boundary error functions:")
     str(error_boundary)
     
-    interface <- list(
-        handle_plot = function(plot_expr) {
-            error_boundary$handle(plot_expr, type = "plot", message = "Error generating plot")
+    list(
+        handle_plot = function(plot_expr, severity = SEVERITY_LEVELS$ERROR) {
+            error_boundary$handle(
+                plot_expr,
+                type = ERROR_TYPES$PLOT,
+                message = "Error generating plot",
+                severity = severity
+            )
         },
-        handle_data = function(data_expr) {
-            error_boundary$handle(data_expr, type = "plot", message = "Error processing plot data")
+        
+        handle_data = function(data_expr, severity = SEVERITY_LEVELS$ERROR) {
+            error_boundary$handle(
+                data_expr,
+                type = ERROR_TYPES$DATA,
+                message = "Error processing plot data",
+                severity = severity
+            )
         },
-        handle_settings = function(settings_expr) {
-            error_boundary$handle(settings_expr, type = "plot", message = "Error processing plot settings")
+        
+        handle_settings = function(settings_expr, severity = SEVERITY_LEVELS$ERROR) {
+            error_boundary$handle(
+                settings_expr,
+                type = ERROR_TYPES$STATE,
+                message = "Error processing plot settings",
+                severity = severity
+            )
         },
+        
+        # Handle warnings as non-fatal errors
+        handle_warning = function(expr, message) {
+            error_boundary$handle(
+                expr,
+                type = ERROR_TYPES$PLOT,
+                message = message,
+                severity = SEVERITY_LEVELS$WARNING
+            )
+        },
+        
         clear = error_boundary$clear_error,
         set_error = error_boundary$set_error,
         ui = error_boundary$ui,
-        get_state = error_boundary$get_error
+        get_state = error_boundary$get_error,
+        propagate_error = error_boundary$propagate_error
     )
-    
-    print("Created plot boundary interface:")
-    str(interface)
-    interface
 }

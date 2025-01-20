@@ -26,17 +26,20 @@ create_plot_panel <- function(id, type = "static") {
             tags$div(
                 class = "plot-panel-container",
                 
-                # Error displays at the top
-                uiOutput(ns("error_display")),
+                # Error displays at the top - modified this part
+                tags$div(
+                    class = "error-display-debug",  # Added debug class
+                    uiOutput(ns("error_display"))
+                ),
                 
                 tags$div(
                     class = "plot_holder",
-                    
+
                     # Plot container
                     tags$div(
                         class = "plot-container",
                         style = "max-width: 100%; overflow-x: hidden;",
-                        
+
                         # Plot output
                         plotOutput(
                             ns("mainPlot"),
@@ -44,7 +47,7 @@ create_plot_panel <- function(id, type = "static") {
                             width = "100%"
                         )
                     ),
-                    
+
                     # Loading indicator
                     conditionalPanel(
                         condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
@@ -57,7 +60,7 @@ create_plot_panel <- function(id, type = "static") {
                             )
                         )
                     ),
-                    
+
                     # Hidden inputs for state management
                     tags$div(
                         class = "hidden",
@@ -92,31 +95,61 @@ plot_panel_server <- function(id, data, settings) {
         control_manager <- create_control_manager(session, id, ns("controls"), settings)
         
         # Create error boundaries
-        validation_boundary <- create_validation_boundary(session, output, id, ns("validation"))
-        plot_boundary <- create_plot_boundary(session, output, id, ns("plot"))
+        validation_boundary <- create_validation_boundary(
+            session, output, id, ns("validation"),
+            state_manager = vis_manager
+        )
         
-        # Create plot generation function that includes error handling
-        generate_plot <- function(settings_to_use) {
-            # Clear any previous errors first
-            plot_boundary$clear()  # Changed from clear_error to clear
+        plot_boundary <- create_plot_boundary(
+            session, output, id, ns("plot"),
+            state_manager = vis_manager
+        )
+        
+        # Add debug observer here
+        observe({
+            print("=== Error State Debug ===")
+            print("Plot boundary structure:")
+            str(plot_boundary)
+        })
+        
+        # Plot generation with error handling
+        generate_plot_safely <- function(settings_to_use) {
+            plot_boundary$clear()
             
-            # Generate plot with error handling
-            result <- tryCatch({
-                plot <- simplot(
+            tryCatch({
+                print("Attempting simplot...")
+                simplot(
                     data(),
                     outcomes = settings_to_use$outcomes,
                     facet.by = settings_to_use$facet.by,
                     summary.type = settings_to_use$summary.type
                 )
-                list(success = TRUE, plot = plot)
             }, error = function(e) {
-                plot_boundary$set_error(conditionMessage(e), "plot")
-                list(success = FALSE, error = conditionMessage(e))
+                print(paste("Error in plot generation:", conditionMessage(e)))
+                plot_boundary$set_error(
+                    "Error generating plot",
+                    type = ERROR_TYPES$PLOT,
+                    details = conditionMessage(e)
+                )
+                NULL
             })
-            
-            # Return the plot if successful, otherwise NULL
-            if (result$success) result$plot else NULL
         }
+        
+        # Initial plot output definition - will be updated by observers
+        output$mainPlot <- renderPlot({
+            print("=== Initial Plot Render ===")
+            req(input$visualization_state == "visible")
+            
+            vis_manager$set_plot_status("loading")
+            current_settings <- control_manager$get_settings()
+            
+            plot <- generate_plot_safely(current_settings)
+            if (!is.null(plot)) {
+                vis_manager$set_plot_status("ready")
+            }
+            
+            plot
+        })
         
         # Combined observer for all control changes
         observe({
@@ -150,48 +183,20 @@ plot_panel_server <- function(id, data, settings) {
                 print("Settings for plot:")
                 str(new_settings)
                 
-                # Update state and plot within isolate
+                # Update state and plot together
                 isolate({
                     # Update control state
                     control_manager$update_settings(new_settings)
                     
-                    # Update plot output
-                    output$mainPlot <- renderPlot({
-                        generate_plot(new_settings)
-                    })
+                    # Direct plot update
+                    vis_manager$set_plot_status("loading")
+                    plot <- generate_plot_safely(new_settings)
+                    if (!is.null(plot)) {
+                        vis_manager$set_plot_status("ready")
+                    }
+                    output$mainPlot <- renderPlot({ plot })
                 })
             }
-        })
-        
-        # Initial plot rendering
-        output$mainPlot <- renderPlot({
-            print("=== Initial Plot Render ===")
-            print(paste("Visualization state:", input$visualization_state))
-            
-            req(input$visualization_state == "visible")
-            
-            # Set loading state
-            vis_manager$set_plot_status("loading")
-            
-            # Get current settings
-            current_settings <- control_manager$get_settings()
-            print("Initial settings:")
-            str(current_settings)
-            
-            # Validate data
-            validate(need(
-                !is.null(data()),
-                "No simulation data available"
-            ))
-            
-            # Generate plot
-            plot <- generate_plot(current_settings)
-            
-            if (!is.null(plot)) {
-                vis_manager$set_plot_status("ready")
-            }
-            
-            plot
         })
         
         # Reset states when visibility changes
@@ -199,8 +204,8 @@ plot_panel_server <- function(id, data, settings) {
             if (input$visualization_state == "hidden") {
                 vis_manager$reset()
                 control_manager$reset()
-                validation_boundary$clear()  # Changed from clear_error to clear
-                plot_boundary$clear()  # Changed from clear_error to clear
+                validation_boundary$clear()
+                plot_boundary$clear()
             }
         })
         
