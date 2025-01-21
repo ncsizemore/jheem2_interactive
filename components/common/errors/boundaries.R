@@ -163,15 +163,37 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
     
     # Create error interface
     error_interface <- list(
-        set_error = error_fns$set_error,
-        clear_error = error_fns$clear_error,
-        get_error = reactive({ error_state() }),
-        has_error = reactive({ error_state()$has_error }),
-        propagate_error = error_fns$propagate_error,
-        ui = function() {
-            uiOutput(ns("error_display"))
-        },
-        handle = error_fns$handle
+      set_error = error_fns$set_error,
+      clear_error = error_fns$clear_error,
+      get_error = reactive({ error_state() }),
+      has_error = reactive({ error_state()$has_error }),
+      propagate_error = error_fns$propagate_error,
+      ui = function() {
+        current_error <- error_state()
+        
+        if (!current_error$has_error) return(NULL)
+        
+        if (current_error$type == ERROR_TYPES$VALIDATION) {
+          tags$div(
+            class = paste("validation-error", current_error$severity),
+            tags$span(class = "error-icon", "⚠"),
+            tags$span(class = "error-message", current_error$message),
+            if (!is.null(current_error$details)) {
+              tags$div(class = "error-details", current_error$details)
+            }
+          )
+        } else {
+          tags$div(
+            class = paste("plot-error", current_error$severity),
+            tags$span(class = "error-icon", "⚠"),
+            tags$span(class = "error-message", current_error$message),
+            if (!is.null(current_error$details)) {
+              tags$pre(class = "error-details", current_error$details)
+            }
+          )
+        }
+      },
+      handle = error_fns$handle
     )
     
     # Register interface in global registry
