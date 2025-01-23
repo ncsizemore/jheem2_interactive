@@ -3,18 +3,21 @@
 #' Create a visualization state object
 #' @param visibility Character: "visible", "hidden", or "loading"
 #' @param plot_status Character: "ready", "loading", or "error"
+#' @param display_type Character: "plot" or "table"
 #' @param error_message Character: Error message if any
 #' @return List with visualization state properties
 create_visualization_state <- function(
-        visibility = "hidden",
-        plot_status = "ready",
-        error_message = ""
+    visibility = "hidden",
+    plot_status = "ready",
+    display_type = "plot",  # Default to plot view
+    error_message = ""
 ) {
-    validate_visualization_state(list(
-        visibility = visibility,
-        plot_status = plot_status,
-        error_message = error_message
-    ))
+  validate_visualization_state(list(
+    visibility = visibility,
+    plot_status = plot_status,
+    display_type = display_type,
+    error_message = error_message
+  ))
 }
 
 #' Create a new control state object
@@ -57,32 +60,37 @@ create_panel_state <- function(
 #' @param state List containing visualization state properties
 #' @return The state object if valid, otherwise throws error
 validate_visualization_state <- function(state) {
-    if (!is.list(state)) stop("Visualization state must be a list")
-    
-    # Required fields
-    required <- c("visibility", "plot_status", "error_message")
-    missing <- setdiff(required, names(state))
-    if (length(missing) > 0) {
-        stop(sprintf("Missing required visualization state fields: %s",
-                     paste(missing, collapse = ", ")))
-    }
-    
-    # Validate visibility
-    if (!state$visibility %in% c("visible", "hidden", "loading")) {
-        stop("Invalid visibility value. Must be 'visible', 'hidden', or 'loading'")
-    }
-    
-    # Validate plot_status
-    if (!state$plot_status %in% c("ready", "loading", "error")) {
-        stop("Invalid plot_status value. Must be 'ready', 'loading', or 'error'")
-    }
-    
-    # Validate error_message
-    if (!is.character(state$error_message)) {
-        stop("error_message must be a character string")
-    }
-    
-    state
+  if (!is.list(state)) stop("Visualization state must be a list")
+  
+  # Required fields
+  required <- c("visibility", "plot_status", "display_type", "error_message")
+  missing <- setdiff(required, names(state))
+  if (length(missing) > 0) {
+    stop(sprintf("Missing required visualization state fields: %s",
+                 paste(missing, collapse = ", ")))
+  }
+  
+  # Validate visibility
+  if (!state$visibility %in% c("visible", "hidden", "loading")) {
+    stop("Invalid visibility value. Must be 'visible', 'hidden', or 'loading'")
+  }
+  
+  # Validate plot_status
+  if (!state$plot_status %in% c("ready", "loading", "error")) {
+    stop("Invalid plot_status value. Must be 'ready', 'loading', or 'error'")
+  }
+  
+  # Validate display_type
+  if (!state$display_type %in% c("plot", "table")) {
+    stop("Invalid display_type value. Must be 'plot' or 'table'")
+  }
+  
+  # Validate error_message
+  if (!is.character(state$error_message)) {
+    stop("error_message must be a character string")
+  }
+  
+  state
 }
 
 #' Validate control state object

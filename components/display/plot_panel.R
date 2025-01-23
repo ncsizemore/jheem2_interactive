@@ -9,41 +9,28 @@ create_plot_panel <- function(id, type = "static") {
   
   tags$div(
     class = "main-panel main-panel-plot",
-    
-    # Hidden input for visibility state
-    tags$div(
-      class = "hidden",
-      textInput(
-        ns("visualization_state"),
-        label = NULL,
-        value = "hidden"
-      )
-    ),
-    
-    # Main panel content
     conditionalPanel(
-      condition = sprintf("input['%s'] === 'visible'", ns("visualization_state")),
+      condition = sprintf(
+        "input['%s'] === 'visible' && input['%s'] === 'plot'", 
+        ns("visualization_state"),
+        ns("display_type")
+      ),
       tags$div(
         class = "plot-panel-container",
-        
         # Plot container
         tags$div(
           class = "plot_holder",
-          
-          # Plot output
-          tags$div(
-            class = "plot-container",
-            style = "max-width: 100%; overflow-x: hidden;",
-            plotOutput(
-              ns("mainPlot"),
-              height = "600px",
-              width = "100%"
-            )
+          plotOutput(
+            ns("mainPlot"),
+            height = "600px",
+            width = "100%"
           ),
-          
           # Loading indicator
           conditionalPanel(
-            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
+            condition = sprintf(
+              "input['%s'] === 'loading'",
+              ns("plot_status")
+            ),
             tags$div(
               class = "loading-indicator",
               tags$div(
@@ -53,8 +40,7 @@ create_plot_panel <- function(id, type = "static") {
               )
             )
           ),
-          
-          # Hidden inputs for state management
+          # Hidden status input
           tags$div(
             class = "hidden",
             textInput(
@@ -66,8 +52,7 @@ create_plot_panel <- function(id, type = "static") {
         )
       )
     ),
-    
-    # Error display - outside conditional panel
+    # Error display outside conditional panel
     tags$div(
       class = "plot-error error",
       textOutput(ns("error_message"))

@@ -31,31 +31,35 @@ StateStore <- R6Class("StateStore",
                           #' @param plot_status Character: new plot status
                           #' @param error_message Character: new error message
                           update_visualization_state = function(
-        page_id,
-        visibility = NULL,
-        plot_status = NULL,
-        error_message = NULL
+    page_id,
+    visibility = NULL,
+    plot_status = NULL,
+    display_type = NULL,  # Add display_type parameter
+    error_message = NULL
                           ) {
-                              current_state <- self$get_panel_state(page_id)
-                              
-                              # Only update provided fields
-                              if (!is.null(visibility)) {
-                                  current_state$visualization$visibility <- visibility
-                              }
-                              if (!is.null(plot_status)) {
-                                  current_state$visualization$plot_status <- plot_status
-                              }
-                              if (!is.null(error_message)) {
-                                  current_state$visualization$error_message <- error_message
-                              }
-                              
-                              # Validate and update
-                              current_state$visualization <- validate_visualization_state(
-                                  current_state$visualization
-                              )
-                              self$panel_states[[page_id]](current_state)
-                              
-                              invisible(self)
+                            current_state <- self$get_panel_state(page_id)
+                            
+                            # Only update provided fields
+                            if (!is.null(visibility)) {
+                              current_state$visualization$visibility <- visibility
+                            }
+                            if (!is.null(plot_status)) {
+                              current_state$visualization$plot_status <- plot_status
+                            }
+                            if (!is.null(display_type)) {
+                              current_state$visualization$display_type <- display_type
+                            }
+                            if (!is.null(error_message)) {
+                              current_state$visualization$error_message <- error_message
+                            }
+                            
+                            # Validate and update
+                            current_state$visualization <- validate_visualization_state(
+                              current_state$visualization
+                            )
+                            self$panel_states[[page_id]](current_state)
+                            
+                            invisible(self)
                           },
         
         #' @description Update control state for a panel
