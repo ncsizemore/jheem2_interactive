@@ -17,6 +17,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
   vis_manager <- create_visualization_manager(session, "custom", ns("visualization"))
   
   # Handle toggle buttons
+  # Handle toggle buttons
   observeEvent(input[["custom-toggle_plot"]], {
     print("\n=== Plot Toggle Event ===")
     print(paste("1. Event triggered at:", Sys.time()))
@@ -35,6 +36,10 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     vis_manager$set_visibility("visible")
     updateTextInput(session, "custom-display_type", value = "plot")
     updateTextInput(session, "custom-visualization_state", value = "visible")
+    
+    # Update button states
+    removeClass(id = "custom-toggle_table", class = "active")
+    addClass(id = "custom-toggle_plot", class = "active")
     
     tryCatch({
       state <- store$get_panel_state("custom")
@@ -63,6 +68,10 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     vis_manager$set_visibility("visible")
     updateTextInput(session, "custom-display_type", value = "table")
     updateTextInput(session, "custom-visualization_state", value = "visible")
+    
+    # Update button states
+    removeClass(id = "custom-toggle_plot", class = "active")
+    addClass(id = "custom-toggle_table", class = "active")
     
     tryCatch({
       state <- store$get_panel_state("custom")

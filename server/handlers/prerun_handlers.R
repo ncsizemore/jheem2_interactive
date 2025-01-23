@@ -29,6 +29,7 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
   })
   
   print("\n3. Setting up toggle observers...")
+  # Handle toggle buttons
   observeEvent(input[["prerun-toggle_plot"]], {
     print("\n=== Plot Toggle Event ===")
     print(paste("1. Event triggered at:", Sys.time()))
@@ -44,9 +45,13 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
     
     # Update both store and UI state
     vis_manager$set_display_type("plot")
-    vis_manager$set_visibility("visible")  # Add this
+    vis_manager$set_visibility("visible")
     updateTextInput(session, "prerun-display_type", value = "plot")
-    updateTextInput(session, "prerun-visualization_state", value = "visible")  # Add this
+    updateTextInput(session, "prerun-visualization_state", value = "visible")
+    
+    # Update button states
+    removeClass(id = "prerun-toggle_table", class = "active")
+    addClass(id = "prerun-toggle_plot", class = "active")
     
     tryCatch({
       state <- store$get_panel_state("prerun")
@@ -61,12 +66,6 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
     print("\n=== Table Toggle Event ===")
     print(paste("1. Event triggered at:", Sys.time()))
     
-    # Add input state debugging
-    print("Current input states:")
-    print(paste("visualization_state:", input[["prerun-visualization_state"]]))
-    print(paste("display_type:", input[["prerun-display_type"]]))
-    print(paste("plot_status:", input[["prerun-plot_status"]]))
-    
     store <- get_store()
     tryCatch({
       state <- store$get_panel_state("prerun")
@@ -78,9 +77,13 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
     
     # Update both store and UI state
     vis_manager$set_display_type("table")
-    vis_manager$set_visibility("visible")  # Add this
+    vis_manager$set_visibility("visible")
     updateTextInput(session, "prerun-display_type", value = "table")
-    updateTextInput(session, "prerun-visualization_state", value = "visible")  # Add this
+    updateTextInput(session, "prerun-visualization_state", value = "visible")
+    
+    # Update button states
+    removeClass(id = "prerun-toggle_plot", class = "active")
+    addClass(id = "prerun-toggle_table", class = "active")
     
     tryCatch({
       state <- store$get_panel_state("prerun")
