@@ -28,6 +28,7 @@ theme:
       - "css/components/custom_controls.css"
       - "css/components/plot_controls.css"
       - "css/components/plot_panel.css"
+      - "css/components/toggle.css"
       - "css/components/accordion.css"
       - "css/components/chevrons.css"
       - "css/components/notifications.css"

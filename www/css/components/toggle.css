@@ -1,19 +1,39 @@
 /* www/css/components/toggle.css */
 
-.toggle-button {
+.display-toggle .btn {
     background-color: white;
-    transition: all 0.2s ease-in-out;
+    border: 1px solid #dee2e6;  /* Lighter border by default */
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.toggle-button:hover {
-    background-color: #f3f4f6;
+.display-toggle .btn:hover {
+    background-color: #f8f9fa;
+    border-color: #cbd3da;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-button-active {
-    background-color: #e5e7eb;
-    color: #1f2937;
+.display-toggle .btn.active {
+    background-color: #3b82f6;  /* Nice bright blue */
+    border-color: #3b82f6;
+    color: white;
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 }
 
-.toggle-button-active:hover {
-    background-color: #d1d5db;
+.display-toggle .btn.active:hover {
+    background-color: #2563eb;  /* Slightly darker on hover */
+    border-color: #2563eb;
+}
+
+/* Add spacing between buttons and make them stick together visually */
+.display-toggle {
+    display: inline-flex;
+    gap: 4px;
+    padding: 2px;
+    background: #f8f9fa;
+    border-radius: 6px;
 }

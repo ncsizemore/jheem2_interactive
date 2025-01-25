@@ -33,6 +33,7 @@ create_prerun_layout <- function(config = get_page_complete_config("prerun")) {
   # Create namespace for this module
   ns <- NS("prerun")
   
+  
   tags$div(
     class = paste(
       "prerun-container",
@@ -56,32 +57,32 @@ create_prerun_layout <- function(config = get_page_complete_config("prerun")) {
       tags$div(
         class = "hidden",
         textInput(
-          ns("visualization_state"),
+          inputId = ns("visualization_state"),  # Keep ns()
           label = NULL,
           value = "hidden"
         ),
         textInput(
-          ns("display_type"),
+          inputId = ns("display_type"),  # Keep ns()
           label = NULL,
           value = "plot"
         )
       ),
       
-      # Display toggle
+      # Visualization container
       tags$div(
         class = "visualization-container",
-        style = "position: relative;",  # Make this a positioning context
+        style = "position: relative;",
         
         # Display toggle
         tags$div(
           class = "display-toggle mb-4 inline-flex gap-2",
           actionButton(
-            ns("toggle_plot"),
+            inputId = ns("toggle_plot"),  # Add ns() back
             "Plot",
             class = "btn btn-default active"
           ),
           actionButton(
-            ns("toggle_table"),
+            inputId = ns("toggle_table"),  # Add ns() back
             "Table",
             class = "btn btn-default"
           )

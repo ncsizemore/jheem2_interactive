@@ -83,19 +83,48 @@ prepare.simulations.plot.and.table <- function(simset,
                                                facet.by,
                                                summary.type)
 {
-    print("In prepare.simulations.plot.and.table")
-    print("Inputs:")
-    print(paste("- outcomes:", paste(outcomes, collapse=", ")))
-    print(paste("- facet.by:", paste(facet.by, collapse=", ")))
-    print(paste("- summary.type:", summary.type))
-    
-    # Right now, the simset doesn't have a name
-    plot.data = prepare.plot(
-        list(simset=simset), 
-        outcomes=outcomes, 
-        facet.by=facet.by, 
-        summary.type=summary.type
-    )
-    print("Plot data prepared successfully")
-    return(list(plot=plot.data))
+  print("In prepare.simulations.plot.and.table")
+  print("Inputs:")
+  print(paste("- outcomes:", paste(outcomes, collapse=", ")))
+  print(paste("- facet.by:", paste(facet.by, collapse=", ")))
+  print(paste("- summary.type:", summary.type))
+  
+  # Right now, the simset doesn't have a name
+  plot.data = prepare.plot(
+    list(simset=simset), 
+    outcomes=outcomes, 
+    facet.by=facet.by, 
+    summary.type=summary.type
+  )
+  
+  print("\nExamining plot.data structure:")
+  print("Class of plot.data:")
+  print(class(plot.data))
+  print("\nNames/components of plot.data:")
+  print(names(plot.data))
+  
+  # Look at first few rows if it's a data frame
+  if(is.data.frame(plot.data)) {
+    print("\nFirst few rows of plot.data:")
+    print(head(plot.data))
+    print("\nColumn classes:")
+    print(sapply(plot.data, class))
+  }
+  
+  # If it's a list, examine top-level components
+  if(is.list(plot.data) && !is.data.frame(plot.data)) {
+    print("\nExamining each top-level component:")
+    for(name in names(plot.data)) {
+      print(paste("\nComponent:", name))
+      print(paste("Class:", class(plot.data[[name]])))
+      print(paste("Length/Dim:", 
+                  if(is.null(dim(plot.data[[name]]))) 
+                    length(plot.data[[name]]) 
+                  else 
+                    paste(dim(plot.data[[name]]), collapse="x")))
+    }
+  }
+  
+  print("Plot data prepared successfully")
+  return(list(plot=plot.data))
 }
