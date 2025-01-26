@@ -19,6 +19,9 @@ source("components/common/state/store.R")
 source("components/common/state/visualization.R")
 source("components/common/state/controls.R")
 
+# Source data layer components
+source("components/common/data/simulation.R")
+
 # Source display components
 source("components/display/plot_panel.R")
 source("components/display/table_panel.R")
@@ -41,7 +44,7 @@ source("ui/control_panel.R")
 source("master_settings/options.R")
 
 # Source plotting system
-source("plotting/generate_plot.R")
+#source("plotting/generate_plot.R")
 
 # Source server handlers
 source("server/handlers/prerun_handlers.R")

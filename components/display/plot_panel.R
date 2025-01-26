@@ -92,8 +92,12 @@ plot_panel_server <- function(id, data, settings) {
       current_settings <- control_manager$get_settings()
       
       tryCatch({
+        # Use data layer to get plot data
+        plot_data <- get_plot_data(data(), current_settings)
+        
+        # Create plot using prepared data
         plot <- simplot(
-          data(),
+          plot_data,
           outcomes = current_settings$outcomes,
           facet.by = current_settings$facet.by,
           summary.type = current_settings$summary.type
@@ -102,6 +106,7 @@ plot_panel_server <- function(id, data, settings) {
         vis_manager$set_plot_status("ready")
         plot
       }, error = function(e) {
+        print(paste("Error in plot creation:", conditionMessage(e)))
         output$error_message <- renderText({
           sprintf("Error: %s", conditionMessage(e))
         })
@@ -111,12 +116,12 @@ plot_panel_server <- function(id, data, settings) {
     
     # Combined observer for all control changes
     observe({
-      print("=== Plot Panel Control Update ===")
+      print("\n=== Plot Panel Control Update ===")
       
       # Get all current control values
-      outcomes <- input[[paste0("outcomes_", id)]]
-      facet_by <- input[[paste0("facet_by_", id)]]
-      summary_type <- input[[paste0("summary_type_", id)]]
+      outcomes <- input[[paste0('outcomes_', id)]]
+      facet_by <- input[[paste0('facet_by_', id)]]
+      summary_type <- input[[paste0('summary_type_', id)]]
       
       print("Current control values:")
       print(paste("- outcomes:", paste(outcomes, collapse=", ")))
@@ -138,7 +143,7 @@ plot_panel_server <- function(id, data, settings) {
           summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
         )
         
-        print("Settings for plot:")
+        print("\nSettings for plot:")
         str(new_settings)
         
         # Update state and plot together
@@ -146,12 +151,16 @@ plot_panel_server <- function(id, data, settings) {
           # Update control state
           control_manager$update_settings(new_settings)
           
-          # Direct plot update
+          # Direct plot update using data layer
           vis_manager$set_plot_status("loading")
           output$mainPlot <- renderPlot({
             tryCatch({
+              # Use data layer to get plot data
+              plot_data <- get_plot_data(data(), new_settings)
+              
+              # Create plot using prepared data
               plot <- simplot(
-                data(),
+                plot_data,
                 outcomes = new_settings$outcomes,
                 facet.by = new_settings$facet.by,
                 summary.type = new_settings$summary.type
@@ -160,6 +169,7 @@ plot_panel_server <- function(id, data, settings) {
               vis_manager$set_plot_status("ready")
               plot
             }, error = function(e) {
+              print(paste("Error in plot update:", conditionMessage(e)))
               output$error_message <- renderText({
                 sprintf("Error: %s", conditionMessage(e))
               })
