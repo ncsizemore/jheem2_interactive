@@ -40,11 +40,7 @@ source("components/pages/contact.R")
 
 # Source control panel functions
 source("ui/control_panel.R")
-
 source("master_settings/options.R")
-
-# Source plotting system
-#source("plotting/generate_plot.R")
 
 # Source server handlers
 source("server/handlers/prerun_handlers.R")
@@ -55,7 +51,6 @@ source("server/display_utils.R")
 source("helpers/accordion.R")
 source("helpers/concertina.R")
 source("helpers/display_size.R")
-source("plotting/generate_plot.R")
 source("server/display_event_handlers.R")
 source("server/contact_handlers.R")
 
@@ -265,53 +260,47 @@ server <- function(input, output, session) {
     evict = cache_config$cache2$evict_strategy
   )
   
-  # Load initial data
-  simset <- NULL
-  tryCatch(
-    {
-      load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata")
-    },
-    error = function(e) {
-      showNotification(
-        "Error loading initial simulation data",
-        type = "error"
-      )
-    }
-  )
+  # Create reactive data sources for each panel
+  prerun_data <- reactive({
+    settings <- get.control.settings(input, "prerun")
+    get_simulation_data(settings, mode = "prerun")
+  })
   
+  custom_data <- reactive({
+    settings <- get.control.settings(input, "custom")
+    get_simulation_data(settings, mode = "custom")
+  })
+  
+  # Initialize panel servers with reactive data sources
   plot_panel_server(
     "prerun",
-    data = reactive({ simset }),
+    data = prerun_data,
     settings = reactive({
-      settings <- get.control.settings(input, "prerun")
-      settings
+      get.control.settings(input, "prerun")
     })
   )
   
   table_panel_server(
     "prerun",
-    data = reactive({ simset }),
+    data = prerun_data,
     settings = reactive({
-      settings <- get.control.settings(input, "prerun")
-      settings
+      get.control.settings(input, "prerun")
     })
   )
   
   plot_panel_server(
     "custom",
-    data = reactive({ simset }),
+    data = custom_data,
     settings = reactive({
-      settings <- get.control.settings(input, "custom")
-      settings
+      get.control.settings(input, "custom")
     })
   )
   
   table_panel_server(
     "custom",
-    data = reactive({ simset }),
+    data = custom_data,
     settings = reactive({
-      settings <- get.control.settings(input, "custom")
-      settings
+      get.control.settings(input, "custom")
     })
   )
   

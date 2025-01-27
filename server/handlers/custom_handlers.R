@@ -106,7 +106,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
       # Update visualization state
       updateTextInput(session, session$ns("custom-visualization_state"), value = "visible")
       
-      # Call update_display with settings
+      # Call update_display with settings and simset
       update_display(session, input, output, 'custom', settings, plot_state)
       
       showNotification(

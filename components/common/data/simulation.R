@@ -1,8 +1,31 @@
 # components/common/data/simulation.R
 
+#' Get simulation data based on settings and mode
+#' @param settings List of settings that determine the simulation
+#' @param mode Either "prerun" or "custom"
+#' @return jheem simulation set
+get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
+  mode <- match.arg(mode)
+  print(paste("Getting simulation data for mode:", mode))
+  print("Settings:")
+  str(settings)
+  
+  # For now, load test data for both modes
+  # Later this will:
+  # - Load appropriate pre-run data for prerun mode
+  # - Run model for custom mode
+  simset <- get(load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
+  
+  print(paste("Loaded simulation data of class:", class(simset)[1]))
+  return(simset)
+}
+
 #' Transform simulation data for visualization
 #' @param simset jheem simulation set object
-#' @param settings list with outcomes, facet.by, and summary.type
+#' @param settings list with:
+#'   outcomes - character vector of outcomes to include
+#'   facet.by - character vector of dimensions to facet by (or NULL)
+#'   summary.type - type of summary to calculate
 #' @return Transformed data structure
 transform_simulation_data <- function(simset, settings) {
   print("Starting data transformation")
@@ -13,11 +36,17 @@ transform_simulation_data <- function(simset, settings) {
     stop("outcomes must be specified in settings")
   }
   
-  result <- prepare.simulations.plot.and.table(
-    simset = simset,
+  # Get raw plot data using prepare.plot
+  plot_data <- prepare.plot(
+    simset.list = list(simset=simset),
     outcomes = settings$outcomes,
     facet.by = settings$facet.by,
     summary.type = settings$summary.type
+  )
+  
+  # Structure the result to match expected format
+  result <- list(
+    plot = plot_data
   )
   
   print("Transformed data structure:")
