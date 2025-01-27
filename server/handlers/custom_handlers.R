@@ -135,7 +135,7 @@ collect_custom_settings <- function(input, subgroup_count) {
   print("Collecting custom settings")
   
   # Get plot control settings
-  plot_settings <- get.control.settings(input, "custom")
+  plot_settings <- get_control_settings(input, "custom")
   print("Plot settings:")
   str(plot_settings)
   

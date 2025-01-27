@@ -9,13 +9,13 @@ get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
   print(paste("Getting simulation data for mode:", mode))
   print("Settings:")
   str(settings)
-  
+
   # For now, load test data for both modes
   # Later this will:
   # - Load appropriate pre-run data for prerun mode
   # - Run model for custom mode
   simset <- get(load("simulations/init.pop.ehe_simset_2024-12-16_C.12580.Rdata"))
-  
+
   print(paste("Loaded simulation data of class:", class(simset)[1]))
   return(simset)
 }
@@ -31,27 +31,27 @@ transform_simulation_data <- function(simset, settings) {
   print("Starting data transformation")
   print("Settings:")
   str(settings)
-  
+
   if (is.null(settings$outcomes)) {
     stop("outcomes must be specified in settings")
   }
-  
+
   # Get raw plot data using prepare.plot
   plot_data <- prepare.plot(
-    simset.list = list(simset=simset),
+    simset.list = list(simset = simset),
     outcomes = settings$outcomes,
     facet.by = settings$facet.by,
     summary.type = settings$summary.type
   )
-  
+
   # Structure the result to match expected format
   result <- list(
     plot = plot_data
   )
-  
+
   print("Transformed data structure:")
   str(result)
-  
+
   return(result)
 }
 
@@ -63,7 +63,8 @@ get_plot_data <- function(simset, settings) {
   simset
 }
 
-#' Format simulation data for table display
+
+#' Format table data for display
 #' @param transformed_data Output from transform_simulation_data
 #' @param config Configuration list from get_defaults_config
 #' @return Formatted data frame for table display
@@ -71,27 +72,34 @@ format_table_data <- function(transformed_data, config) {
   if (is.null(transformed_data) || is.null(transformed_data$plot)) {
     return(data.frame())
   }
-  
+
   # Extract components
   df.sim <- transformed_data$plot$df.sim
   df.truth <- transformed_data$plot$df.truth
   is_summary <- "value.mean" %in% names(df.sim)
-  
-  # Format numbers
+
+  # Helper for number formatting
   format_number <- function(x) {
     ifelse(is.na(x), "NA",
-           ifelse(x >= 100, as.character(round(x)), 
-                  as.character(round(x, 1))))
+      ifelse(x >= 100, as.character(round(x)),
+        as.character(round(x, 1))
+      )
+    )
   }
-  
+
+  # Save current options and ensure they're restored
+  old_digits <- getOption("digits")
+  on.exit(options(digits = old_digits))
+  options(digits = 7)
+
   # Create base data frame
   sim_data <- data.frame(
     Year = df.sim$year,
     Outcome = df.sim$outcome.display.name,
-    Source = "Projected",
+    Source = rep("Projected", nrow(df.sim)),
     stringsAsFactors = FALSE
   )
-  
+
   # Add values based on mode
   if (is_summary) {
     sim_data$Value <- paste0(
@@ -105,15 +113,12 @@ format_table_data <- function(transformed_data, config) {
       sim_data$Simulation <- as.numeric(as.character(df.sim$sim))
     }
   }
-  
-  # Get dimension columns from config
+
+  # Add dimension columns
   dimension_ids <- sapply(config$plot_controls$stratification$options, function(x) x$id)
-  
-  # Find which dimensions are in the data
   direct_dims <- intersect(names(df.sim), dimension_ids)
   facet_cols <- grep("^facet\\.by\\d+$", names(df.sim), value = TRUE)
-  
-  # Add dimensions
+
   if (length(direct_dims) > 0) {
     for (col in direct_dims) {
       sim_data[[col]] <- df.sim[[col]]
@@ -124,76 +129,23 @@ format_table_data <- function(transformed_data, config) {
       sim_data[[col_name]] <- df.sim[[facet_cols[i]]]
     }
   }
-  
-  # Add truth data if available
-  if (!is.null(df.truth) && nrow(df.truth) > 0) {
-    truth_data <- data.frame(
-      Year = df.truth$year,
-      Outcome = df.truth$outcome.display.name,
-      Value = format_number(df.truth$value),
-      Source = "Historical",
-      stringsAsFactors = FALSE
-    )
-    
-    # Add Simulation column if needed
-    if ("Simulation" %in% names(sim_data)) {
-      truth_data$Simulation <- NA_real_
-    }
-    
-    # Add dimension columns
-    extra_cols <- setdiff(names(sim_data), 
-                          c("Year", "Outcome", "Value", "Source", "Simulation"))
-    
-    for (col in extra_cols) {
-      if (grepl("^Category", col)) {
-        facet_num <- as.numeric(gsub("Category", "", col))
-        truth_col <- paste0("facet.by", facet_num)
-        truth_data[[col]] <- if(truth_col %in% names(df.truth)) {
-          df.truth[[truth_col]]
-        } else {
-          NA
-        }
-      } else {
-        truth_data[[col]] <- if(col %in% names(df.truth)) {
-          df.truth[[col]]
-        } else {
-          NA
-        }
-      }
-    }
-    
-    sim_data <- rbind(sim_data, truth_data)
-  }
-  
-  # Sort rows
-  sort_cols <- list(sim_data$Year)
-  if ("Simulation" %in% names(sim_data)) {
-    sort_cols <- c(sort_cols, list(sim_data$Simulation))
-  }
-  
-  dimension_cols <- setdiff(names(sim_data), 
-                            c("Year", "Simulation", "Outcome", "Value", "Source"))
-  for (col in dimension_cols) {
-    sort_cols <- c(sort_cols, list(sim_data[[col]]))
-  }
-  sort_cols <- c(sort_cols, list(sim_data$Source, sim_data$Outcome))
-  
-  sim_data <- sim_data[do.call(order, sort_cols), ]
-  
-  # Rename dimension columns
-  if (!is.null(transformed_data$plot$details$facet.dims)) {
-    old_names <- grep("^Category\\d+$", names(sim_data), value = TRUE)
-    if (length(old_names) > 0) {
-      new_names <- sapply(transformed_data$plot$details$facet.dims, function(dim_id) {
-        config$plot_controls$stratification$options[[dim_id]]$label
-      })
-      if (length(old_names) == length(new_names)) {
-        names(sim_data)[match(old_names, names(sim_data))] <- new_names
-      }
+
+  # Get column order from config
+  ordered_cols <- character(0)
+  for (col in config$table_structure$display_order) {
+    if (col == "dimensions") {
+      dim_cols <- setdiff(
+        names(sim_data),
+        sapply(config$table_structure$base_columns, function(x) x$id)
+      )
+      ordered_cols <- c(ordered_cols, dim_cols)
+    } else if (col %in% names(sim_data)) {
+      ordered_cols <- c(ordered_cols, col)
     }
   }
-  
-  sim_data
+
+  # Return data frame with columns in configured order
+  sim_data[, ordered_cols]
 }
 
 #' Get data prepared for table display

@@ -39,8 +39,8 @@ source("components/pages/team.R")
 source("components/pages/contact.R")
 
 # Source control panel functions
-source("ui/control_panel.R")
-source("master_settings/options.R")
+#source("ui/control_panel.R")
+#source("master_settings/options.R")
 
 # Source server handlers
 source("server/handlers/prerun_handlers.R")
@@ -48,8 +48,8 @@ source("server/handlers/custom_handlers.R")
 source("server/display_utils.R")
 
 # Source other required files
-source("helpers/accordion.R")
-source("helpers/concertina.R")
+#source("helpers/accordion.R")
+#source("helpers/concertina.R")
 source("helpers/display_size.R")
 source("server/display_event_handlers.R")
 source("server/contact_handlers.R")
@@ -262,12 +262,12 @@ server <- function(input, output, session) {
   
   # Create reactive data sources for each panel
   prerun_data <- reactive({
-    settings <- get.control.settings(input, "prerun")
+    settings <- get_control_settings(input, "prerun")
     get_simulation_data(settings, mode = "prerun")
   })
   
   custom_data <- reactive({
-    settings <- get.control.settings(input, "custom")
+    settings <- get_control_settings(input, "custom")
     get_simulation_data(settings, mode = "custom")
   })
   
@@ -276,7 +276,7 @@ server <- function(input, output, session) {
     "prerun",
     data = prerun_data,
     settings = reactive({
-      get.control.settings(input, "prerun")
+      get_control_settings(input, "prerun")
     })
   )
   
@@ -284,7 +284,7 @@ server <- function(input, output, session) {
     "prerun",
     data = prerun_data,
     settings = reactive({
-      get.control.settings(input, "prerun")
+      get_control_settings(input, "prerun")
     })
   )
   
@@ -292,7 +292,7 @@ server <- function(input, output, session) {
     "custom",
     data = custom_data,
     settings = reactive({
-      get.control.settings(input, "custom")
+      get_control_settings(input, "custom")
     })
   )
   
@@ -300,7 +300,7 @@ server <- function(input, output, session) {
     "custom",
     data = custom_data,
     settings = reactive({
-      get.control.settings(input, "custom")
+      get_control_settings(input, "custom")
     })
   )
   

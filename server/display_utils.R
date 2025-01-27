@@ -14,7 +14,7 @@ update_display <- function(session, input, output, suffix, intervention.settings
   print("Generating new plot and table")
   
   # Get display settings from control panel
-  display_settings <- get.control.settings(input, suffix)
+  display_settings <- get_control_settings(input, suffix)
   print("Display settings:")
   str(display_settings)
   

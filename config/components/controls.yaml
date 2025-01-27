@@ -1,0 +1,85 @@
+# Plot Control Settings
+plot_controls:
+  outcomes:
+    values: ['incidence', 'new', 'diagnosed.prevalence', 'hiv.mortality', 'testing', 'prep.uptake', 'suppression', 'awareness']
+    names: ['Incidence', 'Reported Diagnoses', 'Prevalence (Diagnosed)', 'HIV Mortality', 'HIV Testing Rates', 'PrEP Coverage', 'Viral Suppression', 'Knowledge of Status']
+    defaults: ['incidence', 'new']  # First two values used for default selection
+  
+  facet_by:
+    values: ['none', 'age', 'race', 'sex', 'risk']
+    names: ['None', 'Age', 'Race/Ethnicity', 'Sex', 'Risk']
+    default: 'none'
+  
+  summary_type:
+    values: ['mean.and.interval', 'median.and.interval', 'individual.simulation']
+    names: ['Mean and Interval', 'Median and Interval', 'Individual Simulations']
+    default: 'mean.and.interval'
+
+# Dimension Settings (for faceting/stratification)
+dimensions:
+  age:
+    values: ['13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years']
+    names: ['13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years']
+    label: 'Age Group'
+    label_plural: 'Age Groups'
+  
+  race:
+    values: ['black', 'hispanic', 'other']
+    names: ['Black', 'Hispanic', 'Other']
+    label: 'Race/Ethnicity'
+    label_plural: 'Races'
+  
+  sex:
+    values: ['male', 'female']
+    names: ['Male', 'Female']
+    label: 'Biological Sex'
+    label_plural: 'Sexes'
+  
+  risk:
+    values: ['msm', 'active_idu', 'prior_idu', 'msm_active_idu', 'msm_prior_idu', 'heterosexual']
+    names: ['MSM', 'Active IDU', 'Prior IDU', 'MSM + Active IDU', 'MSM + Prior IDU', 'Heterosexual']
+    label: 'Risk Factor'
+    label_plural: 'Risk Factors'
+    
+# Table Display Settings    
+table_structure:
+  base_columns:
+    - id: "Year"
+      source: "year"
+      type: "numeric"
+    - id: "Outcome"
+      source: "outcome.display.name"
+      type: "character"
+    - id: "Source"
+      type: "character"
+      values: ["Projected", "Historical"]
+    - id: "Value"
+      type: "character"  # Formatted string for both summary and individual
+    - id: "Simulation"
+      source: "sim"
+      type: "numeric"
+      optional: true  # Only present for individual simulations
+
+  display_order:
+    - "Year"
+    - "Simulation"  # If present
+    - dimensions    # Dynamic from faceting
+    - "Source" 
+    - "Outcome"
+    - "Value"
+  
+  defaults:
+    sort_by: ["Year", "Simulation"]  # Default sort order
+    direction: "ascending"
+
+# Control Labels and Display Settings
+labels:
+  outcomes: "Outcomes"
+  facet_by: "What to Facet By"
+  summary_type: "Summary Type"
+
+# Control Types (for UI generation)
+types:
+  outcomes: "checkbox"
+  facet_by: "radio"
+  summary_type: "radio"
