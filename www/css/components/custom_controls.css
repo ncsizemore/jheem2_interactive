@@ -1,7 +1,4 @@
-
-
-.specify_custom table {
-}
+.specify_custom table {}
 
 .specify_custom th {
     width: 50%;
@@ -12,6 +9,7 @@
     font-weight: normal;
     font-style: italic;
 }
+
 .specify_custom td {
     width: 50%;
     vertical-align: top;
@@ -23,18 +21,19 @@
     border-left: none;
     border-right: 1px solid #E0E0E0;
 }
+
 .specify_custom th:first-child {
     border-left: none;
     border-right: 1px solid #E0E0E0;
 }
 
-.specify_custom tr:first-child{
+.specify_custom tr:first-child {
     border-bottom: 1px solid #E0E0E0;
 }
 
 
 .tmp {
-    
+
     box-shadow: inset 2px 2px 2px #E0E0E0;
     border-style: solid;
     border-color: #E0E0E0;
@@ -49,7 +48,7 @@
 .inline_select td {
     vertical-align: middle;
     text-align: left;
-    padding-right:10px;
+    padding-right: 10px;
 }
 
 .inline_select div {
@@ -88,7 +87,7 @@
 }
 
 .input-group {
-    margin: 5px 0;
+    margin: 4px 0;
 }
 
 .date-range {
@@ -104,15 +103,30 @@
 
 /* Characteristics section */
 .subgroup-characteristics {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .characteristic-age_groups,
 .characteristic-race_ethnicity,
 .characteristic-biological_sex,
 .characteristic-risk_factor {
-    margin: 10px 0;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 4px;
+    margin: 6px 0;
+    padding: 8px;
+    background: var(--color-secondary);
+    border-radius: var(--radius-sm);
+}
+
+/* Checkbox groups */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--color-gray-700);
 }

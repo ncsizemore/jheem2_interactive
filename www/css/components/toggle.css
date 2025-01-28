@@ -1,39 +1,31 @@
 /* www/css/components/toggle.css */
 
-.display-toggle .btn {
-    background-color: white;
-    border: 1px solid #dee2e6;  /* Lighter border by default */
-    border-radius: 4px;
-    padding: 6px 14px;
-    font-weight: 500;
-    font-size: 14px;
-    transition: all 0.15s ease-in-out;
+.display-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    background: #f1f5f9;
+    border-radius: 6px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.display-toggle .btn {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    color: #64748b;
+}
+
 .display-toggle .btn:hover {
-    background-color: #f8f9fa;
-    border-color: #cbd3da;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #e2e8f0;
 }
 
 .display-toggle .btn.active {
-    background-color: #3b82f6;  /* Nice bright blue */
-    border-color: #3b82f6;
+    background-color: #2563eb;
     color: white;
-    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
-}
-
-.display-toggle .btn.active:hover {
-    background-color: #2563eb;  /* Slightly darker on hover */
-    border-color: #2563eb;
-}
-
-/* Add spacing between buttons and make them stick together visually */
-.display-toggle {
-    display: inline-flex;
-    gap: 4px;
-    padding: 2px;
-    background: #f8f9fa;
-    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

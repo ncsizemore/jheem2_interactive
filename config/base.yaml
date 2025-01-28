@@ -7,11 +7,6 @@ application:
     selected_tab: 'custom_interventions'
 
 theme:
-  colors:
-    primary: "#f8f9fa"
-    border: "#ddd"
-    background: "#fff"
-    accent: "#4e73df"
   spacing:
     padding: 15
     headerPadding: "12px 15px"
@@ -20,7 +15,9 @@ theme:
   
   # Style and script paths
   styles:
-    base: "css/main_layout.css"
+    base: 
+      - "css/base/variables.css"
+      - "css/main_layout.css"
     layout:
       - "css/layout/three-panel.css"
     components:
@@ -28,6 +25,7 @@ theme:
       - "css/components/custom_controls.css"
       - "css/components/plot_controls.css"
       - "css/components/plot_panel.css"
+      - "css/components/table_panel.css"
       - "css/components/toggle.css"
       - "css/components/accordion.css"
       - "css/components/chevrons.css"
@@ -40,17 +38,11 @@ theme:
       - "css/pages/custom.css"
       - "css/pages/about.css"
       - "css/pages/overview.css"
-      - "css/pages/contact.css"
-    grid:
-      - "css/Andrew_additions.css"  # Grid system CSS
+      - "css/pages/contact.css" # Grid system CSS
   
   scripts:
     - "js/layout/panel-controls.js"
-    - "js/interactions/accordion.js"
     - "js/interactions/setup_tooltips.js"
-    - "js/interactions/box_expansion.js"
-    - "js/interactions/copy_to_clipboard.js"
-    - "js/interactions/concertina.js"
 
 # Page-specific content
 pages:

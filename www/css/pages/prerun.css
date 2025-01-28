@@ -24,25 +24,6 @@
   transition: all 0.3s ease;
 }
 
-.intervention-panel.collapsed {
-  width: 0;
-  padding: 0;
-  border: none;
-}
-
-/* Right panel */
-.settings-panel {
-  width: 300px;
-  border-left: 1px solid #ddd;
-  transition: all 0.3s ease;
-}
-
-.settings-panel.collapsed {
-  width: 0;
-  padding: 0;
-  border: none;
-}
-
 /* Panel headers */
 .panel-header {
   padding: 12px 15px;
@@ -69,16 +50,6 @@
   transition: all 0.3s ease;
 }
 
-
-
-.intervention-panel.collapsed .toggle-left {
-  left: 0;
-}
-
-
-.settings-panel.collapsed .toggle-right {
-  right: 0;
-}
 
 /* Plot container */
 .plot-container {
