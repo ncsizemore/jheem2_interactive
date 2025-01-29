@@ -33,8 +33,10 @@ source("components/common/errors/boundaries.R")
 source("components/layout/panel.R")
 source("components/selectors/base.R")
 source("components/selectors/custom_components.R")
-source("components/pages/prerun_interventions.R")
-source("components/pages/custom_interventions.R")
+
+
+source("src/ui/components/pages/prerun/layout.R")
+source("src/ui/components/pages/custom/layout.R")
 source("components/pages/team.R")
 source("components/pages/contact.R")
 
@@ -56,18 +58,18 @@ source("../jheem_analyses/applications/EHE/ehe_specification.R")
 ui <- function() {
   # Load base configuration
   config <- get_base_config()
-  
+
   # Default selections from config
   selected_tab <- config$application$defaults$selected_tab %||% "custom_interventions"
   app_title <- config$application$name
-  
+
   tags$html(
     style = "height:100%",
     tags$title(app_title),
-    
+
     # Initialize Shiny extensions
     shinyjs::useShinyjs(),
-    
+
     # Load JavaScript extensions
     extendShinyjs(
       script = "js/layout/panel-controls.js",
@@ -81,7 +83,7 @@ ui <- function() {
       script = "js/interactions/sounds.js",
       functions = c("chime", "chime_if_checked")
     ),
-    
+
     # Load CSS files based on config
     tags$head(
       tags$link(
@@ -89,7 +91,7 @@ ui <- function() {
         type = "text/css",
         href = "css/main.css"
       ),
-      
+
       # Load JavaScript files
       lapply(config$theme$scripts, function(script) {
         tags$script(src = script)
@@ -102,7 +104,7 @@ ui <- function() {
         title = app_title,
         collapsible = FALSE,
         selected = selected_tab,
-        
+
         # Overview tab
         tabPanel(
           id = "overview",
@@ -115,21 +117,21 @@ ui <- function() {
           ),
           includeHTML("html_pages/overview.html")
         ),
-        
+
         # Pre-run tab
         tabPanel(
           title = "Pre-Run",
           value = "prerun_interventions",
           create_prerun_layout()
         ),
-        
+
         # Custom tab
         tabPanel(
           title = "Custom",
           value = "custom_interventions",
           create_custom_layout()
         ),
-        
+
         # FAQ tab
         tabPanel(
           title = "FAQ",
@@ -141,7 +143,7 @@ ui <- function() {
           ),
           includeHTML("html_pages/faq.html")
         ),
-        
+
         # About tab
         tabPanel(
           title = "About the JHEEM",
@@ -153,7 +155,7 @@ ui <- function() {
           ),
           includeHTML("html_pages/about.html")
         ),
-        
+
         # Team tab
         tabPanel(
           title = "Our Team",
@@ -165,7 +167,7 @@ ui <- function() {
           ),
           create_team_content(config)
         ),
-        
+
         # Contact tab
         tabPanel(
           title = "Contact Us",
@@ -189,7 +191,7 @@ server <- function(input, output, session) {
     lapply(c("prerun", "custom"), function(x) NULL) %>%
       setNames(c("prerun", "custom"))
   )
-  
+
   # Initialize caches from config
   cache_config <- get_component_config("caching")
   DISK.CACHE.1 <- cachem::cache_disk(
@@ -200,18 +202,18 @@ server <- function(input, output, session) {
     max_size = cache_config$cache2$max_size,
     evict = cache_config$cache2$evict_strategy
   )
-  
+
   # Create reactive data sources for each panel
   prerun_data <- reactive({
     settings <- get_control_settings(input, "prerun")
     get_simulation_data(settings, mode = "prerun")
   })
-  
+
   custom_data <- reactive({
     settings <- get_control_settings(input, "custom")
     get_simulation_data(settings, mode = "custom")
   })
-  
+
   # Initialize panel servers with reactive data sources
   plot_panel_server(
     "prerun",
@@ -220,7 +222,7 @@ server <- function(input, output, session) {
       get_control_settings(input, "prerun")
     })
   )
-  
+
   table_panel_server(
     "prerun",
     data = prerun_data,
@@ -228,7 +230,7 @@ server <- function(input, output, session) {
       get_control_settings(input, "prerun")
     })
   )
-  
+
   plot_panel_server(
     "custom",
     data = custom_data,
@@ -236,7 +238,7 @@ server <- function(input, output, session) {
       get_control_settings(input, "custom")
     })
   )
-  
+
   table_panel_server(
     "custom",
     data = custom_data,
@@ -244,14 +246,14 @@ server <- function(input, output, session) {
       get_control_settings(input, "custom")
     })
   )
-  
+
   # Add display event handlers with plot_state
   add.display.event.handlers(session, input, output, plot_state)
-  
+
   # Initialize page handlers
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
-  
+
   # Add contact handlers
   add.contact.handlers(session, input, output)
 }
