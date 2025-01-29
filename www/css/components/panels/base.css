@@ -1,0 +1,44 @@
+/* components/panels/base.css */
+/* Base styles shared by all panels */
+.main-panel {
+    display: none;  /* Hidden by default */
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin: var(--spacing-sm);
+}
+
+.panel-container {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    position: relative;
+}
+
+.panel-content {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+}
+
+/* Loading states */
+.loading-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Error states */
+.plot-error.error {
+    padding: var(--spacing-sm);
+    color: var(--color-error, #dc2626);
+}

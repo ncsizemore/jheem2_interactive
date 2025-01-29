@@ -27,8 +27,6 @@ theme:
       - "css/components/plot_panel.css"
       - "css/components/table_panel.css"
       - "css/components/toggle.css"
-      - "css/components/accordion.css"
-      - "css/components/chevrons.css"
       - "css/components/notifications.css"
       - "css/components/errors.css"
     themes:
@@ -38,7 +36,7 @@ theme:
       - "css/pages/custom.css"
       - "css/pages/about.css"
       - "css/pages/overview.css"
-      - "css/pages/contact.css" # Grid system CSS
+      - "css/pages/contact.css" 
   
   scripts:
     - "js/layout/panel-controls.js"

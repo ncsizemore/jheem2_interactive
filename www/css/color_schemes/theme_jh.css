@@ -1,0 +1,59 @@
+/* color_schemes/theme_jh.css */
+
+/* Navbar */
+.nav.navbar-nav.shiny-tab-input a {
+  background-color: var(--theme-navbar-bg);
+  color: var(--theme-navbar-text);
+  font-size: 110%;
+}
+
+.nav.navbar-nav.shiny-tab-input a:hover {
+  background-color: var(--theme-navbar-hover-bg);
+  color: var(--theme-navbar-hover-text);
+}
+
+.nav.navbar-nav.shiny-tab-input > .active a {
+  background-color: var(--theme-navbar-active-bg);
+  color: var(--theme-navbar-text);
+}
+
+/* Layout */
+body {
+  background-color: var(--theme-body-bg);
+}
+
+.header_color {
+  background-color: var(--theme-header-bg);
+  color: var(--theme-navbar-hover-text);
+}
+
+.controls_color {
+  background-color: var(--theme-controls-bg);
+}
+
+.content_color {
+  background-color: var(--theme-content-bg);
+}
+
+/* CTAs */
+.cta_color {
+  background: var(--theme-cta-bg);
+  color: var(--theme-cta-text);
+  box-shadow: var(--theme-cta-shadow);
+  border: none;
+  transition: all var(--transition-speed);
+}
+
+.cta_color:hover {
+  filter: brightness(110%);
+}
+
+.cta_color:active {
+  box-shadow: inset var(--theme-cta-shadow);
+}
+
+.cta_color:disabled {
+  background: var(--theme-cta-disabled-bg);
+  color: var(--theme-cta-disabled-text);
+  box-shadow: none;
+}

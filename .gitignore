@@ -19,6 +19,9 @@ R_scripts/run_scripts
 _dev
 _archive
 
+dev_notes/
+.cursorrules
+
 # Project-specific
 /temp/
 *git-ignored/

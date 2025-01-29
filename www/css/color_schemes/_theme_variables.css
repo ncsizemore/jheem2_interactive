@@ -1,0 +1,28 @@
+/* color_schemes/_theme_variables.css */
+
+:root {
+  /* Brand Colors */
+  --brand-primary: #1c4882;    /* JH Blue */
+  --brand-secondary: #4F7BB5;  /* Lighter Blue */
+  --brand-accent: #dce8f8;     /* Very Light Blue */
+  
+  /* Application Theme */
+  --theme-navbar-bg: var(--brand-primary);
+  --theme-navbar-text: var(--color-white);
+  --theme-navbar-hover-bg: var(--brand-accent);
+  --theme-navbar-hover-text: var(--color-gray-900);
+  --theme-navbar-active-bg: var(--brand-secondary);
+  
+  /* Layout Colors */
+  --theme-body-bg: #f8f8f8;
+  --theme-header-bg: var(--brand-accent);
+  --theme-content-bg: var(--color-white);
+  --theme-controls-bg: var(--theme-body-bg);
+  
+  /* CTAs */
+  --theme-cta-bg: var(--brand-primary);
+  --theme-cta-text: var(--color-white);
+  --theme-cta-shadow: 2px 1px 2px 0px var(--color-gray-600);
+  --theme-cta-disabled-bg: var(--color-gray-400);
+  --theme-cta-disabled-text: var(--color-gray-600);
+}

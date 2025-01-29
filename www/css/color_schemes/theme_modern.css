@@ -1,0 +1,127 @@
+/* color_schemes/theme_modern.css */
+:root {
+  /* Core Theme Colors - Using base variables */
+  --theme-bg-primary: var(--color-gray-50);
+  --theme-bg-surface: var(--color-white);
+  --theme-bg-elevated: var(--color-white);
+  
+  /* Navigation */
+  --theme-nav-bg: var(--color-gray-800);
+  --theme-nav-text: var(--color-white);
+  --theme-nav-hover-bg: var(--color-gray-700);
+  --theme-nav-active-bg: var(--color-primary);
+  --theme-nav-active-text: var(--color-white);
+  --theme-nav-border: var(--color-gray-700);
+
+  /* Panels */
+  --theme-panel-bg: var(--color-white);
+  --theme-panel-border: var(--color-gray-200);
+  --theme-panel-shadow: var(--shadow-sm);
+  --theme-panel-header-bg: var(--color-gray-50);
+  --theme-panel-header-text: var(--color-gray-800);
+
+  /* Controls */
+  --theme-control-bg: var(--color-white);
+  --theme-control-border: var(--color-gray-200);
+  --theme-control-text: var(--color-gray-800);
+  --theme-control-hover: var(--color-gray-100);
+  --theme-control-focus-ring: var(--color-primary-light);
+  
+  /* Buttons */
+  --theme-button-primary-bg: var(--color-primary);
+  --theme-button-primary-text: var(--color-white);
+  --theme-button-primary-hover: var(--color-primary-dark);
+  --theme-button-secondary-bg: var(--color-gray-100);
+  --theme-button-secondary-text: var(--color-gray-800);
+  
+  /* Toggle Controls */
+  --theme-toggle-bg: var(--color-primary);
+  --theme-toggle-hover: var(--color-primary-dark);
+  --theme-toggle-text: var(--color-white);
+}
+
+/* Navigation */
+.navbar-static-top {
+  background-color: var(--theme-nav-bg);
+  border-bottom: 1px solid var(--theme-nav-border);
+}
+
+.nav.navbar-nav.shiny-tab-input a {
+  background-color: transparent;
+  color: var(--theme-nav-text);
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  transition: all var(--transition-speed);
+}
+
+.nav.navbar-nav.shiny-tab-input a:hover {
+  background-color: var(--theme-nav-hover-bg);
+  color: var(--theme-nav-text);
+}
+
+.nav.navbar-nav.shiny-tab-input > .active a {
+  background-color: var(--theme-nav-active-bg);
+  color: var(--theme-nav-active-text);
+}
+
+/* Panels */
+.panel-section {
+  background: var(--theme-panel-bg);
+  border: 1px solid var(--theme-panel-border);
+  box-shadow: var(--theme-panel-shadow);
+}
+
+.panel-header {
+  background: var(--theme-panel-header-bg);
+  color: var(--theme-panel-header-text);
+  border-bottom: 1px solid var(--theme-panel-border);
+}
+
+/* Controls */
+.form-control {
+  border-color: var(--theme-control-border);
+  background: var(--theme-control-bg);
+  color: var(--theme-control-text);
+}
+
+.form-control:focus {
+  border-color: var(--theme-control-focus-ring);
+  box-shadow: 0 0 0 2px var(--theme-control-focus-ring);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--theme-button-primary-bg);
+  color: var(--theme-button-primary-text);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-speed);
+}
+
+.btn-primary:hover {
+  background: var(--theme-button-primary-hover);
+}
+
+.toggle-button {
+  background: var(--theme-toggle-bg);
+  color: var(--theme-toggle-text);
+}
+
+.toggle-button:hover {
+  background: var(--theme-toggle-hover);
+}
+
+/* Layout */
+.header_color {
+  background: var(--theme-panel-header-bg);
+  border-bottom: 1px solid var(--theme-panel-border);
+}
+
+.controls_color {
+  background: var(--theme-bg-primary);
+}
+
+.content_color {
+  background: var(--theme-bg-surface);
+}

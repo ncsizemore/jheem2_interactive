@@ -16,10 +16,9 @@ create_plot_panel <- function(id, type = "static") {
         ns("display_type")
       ),
       tags$div(
-        class = "plot-panel-container",
-        # Plot container
+        class = "panel-container",
         tags$div(
-          class = "plot_holder",
+          class = "panel-content",
           plotOutput(
             ns("mainPlot"),
             height = "600px",
@@ -27,10 +26,7 @@ create_plot_panel <- function(id, type = "static") {
           ),
           # Loading indicator
           conditionalPanel(
-            condition = sprintf(
-              "input['%s'] === 'loading'",
-              ns("plot_status")
-            ),
+            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
             tags$div(
               class = "loading-indicator",
               tags$div(
@@ -40,19 +36,13 @@ create_plot_panel <- function(id, type = "static") {
               )
             )
           ),
-          # Hidden status input
           tags$div(
             class = "hidden",
-            textInput(
-              ns("plot_status"),
-              label = NULL,
-              value = "ready"
-            )
+            textInput(ns("plot_status"), label = NULL, value = "ready")
           )
         )
       )
     ),
-    # Error display outside conditional panel
     tags$div(
       class = "plot-error error",
       textOutput(ns("error_message"))

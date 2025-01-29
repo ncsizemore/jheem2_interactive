@@ -1,0 +1,16 @@
+/* components/panels/plot.css */
+
+/* Plot panel specific styles */
+.main-panel-plot:has(.shiny-panel-conditional:not([style*="display: none"])) {
+    display: flex !important;
+}
+
+.main-panel-plot .panel-content {
+    padding: var(--spacing-md);
+}
+
+.plot_holder {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}

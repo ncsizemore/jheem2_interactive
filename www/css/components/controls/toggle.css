@@ -1,0 +1,59 @@
+/* components/toggle.css */
+.display-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.display-toggle .btn {
+    background-color: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all var(--transition-speed) ease;
+    color: var(--color-gray-500);
+}
+
+.display-toggle .btn:hover {
+    background-color: var(--color-gray-200);
+}
+
+.display-toggle .btn.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.toggle-button {
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-elevate);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-speed) ease;
+}
+
+.toggle-button:hover {
+  background: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.toggle-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.toggle-button i {
+  color: var(--color-white);
+  font-size: 14px;
+}

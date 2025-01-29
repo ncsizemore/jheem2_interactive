@@ -1,140 +1,75 @@
-/* Base layout */
+/* three-panel.css - Layout-specific styles */
+
 .three-panel-container {
   display: grid;
   grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   min-height: calc(100vh - 50px);
-  background: white;
+  background: var(--color-white);
 }
 
-/* Panel sections */
-.panel-section {
-  background: white;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+/* Panel Structure */
+.side-panel {
+  width: 300px;
+  position: relative;
+  margin: var(--spacing-sm);
   transition: all var(--transition-speed) ease;
 }
 
-/* Side panels */
-.side-panel {
-  width: 300px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition: all 0.3s ease;
-  margin: 8px;
-  border: 1px solid #e5e7eb;
-}
-
 .left-panel {
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--color-gray-200);
 }
 
 .right-panel {
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--color-gray-200);
 }
 
-/* Panel collapsed states */
+/* Panel States */
 .side-panel.collapsed {
-  width: 0;
-  padding: 0;
-  margin: 0;
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none;
+  overflow: hidden;
 }
 
-/* Ensure toggle buttons stay visible */
-.side-panel.collapsed .toggle-button {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
+.side-panel.collapsed > *:not(.toggle-button) {
+  display: none;
 }
 
-/* Toggle button positions */
-.left-panel .toggle-button {
-  left: 300px;
-}
-
-.right-panel .toggle-button {
-  right: 300px;
-}
-
-/* Collapsed state positions */
-.left-panel.collapsed .toggle-button {
-  left: 0;
-}
-
-.right-panel.collapsed .toggle-button {
-  right: 0;
-}
-
-/* Headers */
-.panel-header {
-  padding: 16px 20px;
-  background: #f8fafc;
-  border-radius: 8px 8px 0 0;
-  font-weight: 600;
-  color: #1e293b;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Content areas */
-.panel-content {
-  padding: var(--spacing-md);
-  background: white;
-}
-
-.main-panel {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  margin: 8px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-}
-
-/* Toggle buttons */
-.toggle-button {
+/* Toggle Button Positioning */
+.side-panel.right-panel .toggle-button {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  background: #2563eb;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  right: 300px;
 }
 
-.toggle-button:hover {
-  background: #1e40af;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.side-panel.left-panel .toggle-button {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 300px;
 }
 
-.toggle-button i {
-  color: white;
-  font-size: 14px;
+.side-panel.collapsed.right-panel .toggle-button {
+  right: 0;
 }
 
-/* Override any panel collapse effects for buttons */
-.side-panel.collapsed * {
-  opacity: 0;
-  pointer-events: none;
+.side-panel.collapsed.left-panel .toggle-button {
+  left: 0;
 }
 
-.side-panel.collapsed .toggle-button,
-.side-panel.collapsed .toggle-button * {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  visibility: visible !important;
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .three-panel-container {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    width: 100%;
+    margin: var(--spacing-sm) 0;
+  }
 }

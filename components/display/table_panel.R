@@ -6,7 +6,6 @@ create_table_panel <- function(id) {
   
   tags$div(
     class = "main-panel main-panel-table",
-    style = "display: flex; flex-direction: column;",
     conditionalPanel(
       condition = sprintf(
         "input['%s'] === 'visible' && input['%s'] === 'table'",
@@ -14,23 +13,19 @@ create_table_panel <- function(id) {
         ns("display_type")
       ),
       tags$div(
-        class = "plot-panel-container",
-        style = "flex: 1;",
+        class = "panel-container",
         tags$div(
-          class = "plot_holder",
-          style = "height: 550px; overflow-y: auto;",
+          class = "panel-content",
+          # Table content
           tableOutput(ns("mainTable")),
-          # Add pagination controls
+          # Pagination controls
           tags$div(
             class = "pagination-controls",
             tags$div(
               class = "pagination-container",
               tags$div(
                 class = "rows-per-page",
-                tags$label(
-                  `for` = ns("page_size"),
-                  "Rows per page:"
-                ),
+                tags$label(`for` = ns("page_size"), "Rows per page:"),
                 tags$select(
                   id = ns("page_size"),
                   class = "page-size-select",
@@ -41,20 +36,12 @@ create_table_panel <- function(id) {
               ),
               tags$div(
                 class = "pagination-navigation",
-                actionButton(
-                  ns("prev_page"), 
-                  "Previous",
-                  class = "btn-pagination"
-                ),
+                actionButton(ns("prev_page"), "Previous", class = "btn-pagination"),
                 tags$span(
                   class = "page-info",
                   textOutput(ns("page_info"), inline = TRUE)
                 ),
-                actionButton(
-                  ns("next_page"), 
-                  "Next",
-                  class = "btn-pagination"
-                )
+                actionButton(ns("next_page"), "Next", class = "btn-pagination")
               )
             )
           ),

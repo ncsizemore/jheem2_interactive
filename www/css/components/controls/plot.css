@@ -1,0 +1,85 @@
+/* components/controls/plot.css */
+
+/* Plot Control Layout */
+.plot-control-section {
+    border-bottom: 1px solid var(--color-gray-200);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+}
+
+.plot-control-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Section Headers */
+.plot-control-section > label {
+    color: var(--color-gray-700);
+    display: block;
+    font-weight: 500;
+    margin-bottom: var(--spacing-md);
+}
+
+/* Control Groups */
+.checkbox-group,
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* Time Range Controls */
+.time-range {
+    display: flex;
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+.range-input {
+    flex: 1;
+}
+
+.range-input label {
+    color: var(--color-gray-500);
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Table Selects (from original plot_controls.css) */
+.table_select td {
+    vertical-align: middle;
+    text-align: left;
+    padding-right: var(--spacing-sm);
+}
+
+.table_select td:first-child {
+    text-align: right;
+}
+
+/* Buttons */
+.btn-secondary {
+    background-color: var(--color-gray-600);
+    border-color: var(--color-gray-600);
+    color: var(--color-white);
+    transition: all var(--transition-speed);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-gray-700);
+    border-color: var(--color-gray-700);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .time-range {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .plot-control-section {
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-md);
+    }
+}

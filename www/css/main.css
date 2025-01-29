@@ -1,0 +1,33 @@
+/* main.css */
+/* Base */
+@import 'base/variables.css';
+
+/* Layout */
+@import 'layout/three-panel.css';
+
+/* Components */
+@import 'components/common/panels.css';
+@import 'components/common/scrollbars.css';
+@import 'components/common/loading.css';
+
+@import 'components/panels/base.css';
+@import 'components/panels/plot.css';
+@import 'components/panels/table.css';
+
+@import 'components/controls/base.css';
+@import 'components/controls/plot.css';
+@import 'components/controls/toggle.css';
+
+@import 'components/feedback/errors.css';
+@import 'components/feedback/notifications.css';
+
+/* Color Schemes */
+@import 'color_schemes/theme_modern.css';
+
+/* Pages */
+@import 'pages/about.css';
+@import 'pages/contact.css';
+@import 'pages/custom.css';
+@import 'pages/overview.css';
+@import 'pages/prerun.css';
+@import 'pages/team.css';

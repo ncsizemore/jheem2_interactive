@@ -81,68 +81,14 @@ ui <- function() {
       script = "js/interactions/sounds.js",
       functions = c("chime", "chime_if_checked")
     ),
-    extendShinyjs(
-      script = "js/interactions/accordion.js",
-      functions = c("trigger_accordion")
-    ),
-    extendShinyjs(
-      script = "js/interactions/concertina.js",
-      functions = c("trigger_concertina")
-    ),
     
     # Load CSS files based on config
     tags$head(
-      # Load base styles
       tags$link(
         rel = "stylesheet",
         type = "text/css",
-        href = config$theme$styles$base
+        href = "css/main.css"
       ),
-      
-      # Load layout styles
-      lapply(config$theme$styles$layout, function(style) {
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = style
-        )
-      }),
-      
-      # Load component styles
-      lapply(config$theme$styles$components, function(style) {
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = style
-        )
-      }),
-      
-      # Load theme styles
-      lapply(config$theme$styles$themes, function(style) {
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = style
-        )
-      }),
-      
-      # Load page-specific styles
-      lapply(config$theme$styles$pages, function(style) {
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = style
-        )
-      }),
-      
-      # Load grid styles
-      lapply(config$theme$styles$grid, function(style) {
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = style
-        )
-      }),
       
       # Load JavaScript files
       lapply(config$theme$scripts, function(script) {
