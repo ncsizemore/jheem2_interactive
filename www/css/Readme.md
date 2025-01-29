@@ -3,6 +3,7 @@
 ## Organization
 The CSS is organized into the following structure:
 
+```
 css/
 ├── base/                 # Foundation styles
 │   └── variables.css     # CSS custom properties/design tokens
@@ -32,6 +33,7 @@ css/
 │   └── prerun.css
 │
 └── main.css          # Main CSS file that imports all others
+```
 
 ## Usage
 - `base/`: Contains foundational styles and variables that are used throughout the application
