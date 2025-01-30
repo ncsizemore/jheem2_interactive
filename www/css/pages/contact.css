@@ -1,39 +1,79 @@
 /* www/css/pages/contact.css */
 .contact-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
     text-align: center;
 }
 
-.contact {
+.contact-form {
     display: inline-block;
     text-align: left;
+    background: var(--panel-bg);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 500px;
 }
 
-.contact_header {
-    padding: 20px;
+/* Form groups */
+.form-group {
+    margin-bottom: var(--spacing-lg);
 }
 
-.contact table {
-    margin: 0 auto;
+/* Labels */
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+    color: var(--color-gray-700);
 }
 
-.contact td {
-    padding: 10px;
+/* Required field indicator */
+.required {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
 }
 
-/* Form styling */
-.contact .form-group {
-    margin-bottom: 15px;
+/* Form controls */
+.form-control {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-speed) var(--transition-timing);
+    background: var(--control-bg);
 }
 
-.contact textarea {
+.form-control:focus {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Textarea specific */
+textarea.form-control {
     resize: vertical;
+    min-height: 120px;
 }
 
-.cta {
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 4px;
+/* Submit button */
+.btn-primary {
+    color: var(--color-white);
+    background-color: var(--color-primary);
     border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-speed) var(--transition-timing);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-light);
+}
+
+.btn-primary:active {
+    background-color: var(--color-primary-dark);
 }

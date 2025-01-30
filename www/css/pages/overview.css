@@ -1,37 +1,107 @@
+/* Overview page styles */
+.overview-container {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    text-align: left;
+    font-size: var(--font-size-lg);
+}
 
-.overview, .contact {
+.overview-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.overview-header h1 {
+    font-size: 150%;
+    font-weight: 800;
+    text-align: center;
+    margin: 0;
+}
+
+.overview-header h2 {
+    font-size: 110%;
+    font-style: italic;
+    text-align: center;
+    margin: var(--spacing-xs) 0 0 0;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+.overview-demo h3,
+.overview-links h3 {
+    font-size: 125%;
+    font-weight: bold;
+    margin-top: 0;
+}
+
+.overview-demo img {
+    border: 1px solid var(--panel-border);
+    margin: 0;
+}
+
+.overview-link {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.overview-link:hover {
+    text-decoration: underline;
+    color: var(--color-primary-light);
+}
+
+.caption {
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-xs) 0 0 0;
+    color: var(--color-gray-600);
+}
+
+.overview,
+.contact {
     border: 1px solid black;
     border-radius: 10px;
     background-color: white;
     box-shadow: 5px 5px 5px 1px #696969;
-    
+
     vertical-align: middle;
     min-width: 750px;
     max-width: 850px;
-    
+
     font-size: 140%;
     text-align: left;
 }
 
-.overview table, .contact table {
+.overview table,
+.contact table {
     width: 100%;
 }
 
-.overview tbody, .contact tbody {
+.overview tbody,
+.contact tbody {
     width: 100%;
 }
 
-.overview .overview_header, .contact .contact_header {
+.overview .overview_header,
+.contact .contact_header {
     padding: 10px 20px 10px 20px;
 }
 
-.overview td, .contact td {
+.overview td,
+.contact td {
     padding: 20px 20px 5px 0px;
     vertical-align: top;
     border-radius: 10px 10px 0px 0px;
 }
 
-.overview td:first-child, .contact td:first-child {
+.overview td:first-child,
+.contact td:first-child {
     padding-left: 20px;
 }
 
@@ -43,47 +113,50 @@
 .overview a {
     cursor: pointer;
     font-weight: bold;
-    
+
     color: #002d72;
-/*    text-shadow: 0.5px 0.5px #696969; */
+    /*    text-shadow: 0.5px 0.5px #696969; */
 }
 
 .overview a:hover {
     text-decoration: underline;
 }
 
-.overview h1, .contact h1 {
+.overview h1,
+.contact h1 {
     font-size: 150%;
     font-weight: 800;
-    
+
     text-align: center;
     margin: 0px;
 }
 
-.overview h2, .contact h2 {
+.overview h2,
+.contact h2 {
     font-size: 110%;
     font-style: italic;
-    
+
     text-align: center;
     margin: 5px 0px 0px 0px;
 }
 
-.overview h3, .contact h3 {
+.overview h3,
+.contact h3 {
     font-size: 125%;
     font-weight: bold;
-    
+
     margin-top: 0;
 }
 
 
-.overview p, .contact p {
-}
+.overview p,
+.contact p {}
 
 .overview .figure_title {
     font-weight: bold;
     font-size: 100%;
     margin: 0;
-    
+
 }
 
 .overview .caption {

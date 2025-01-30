@@ -1,7 +1,6 @@
 # app.R
 
 library(shiny)
-library(shinyBS)
 library(shinyjs)
 library(shinycssloaders)
 library(cachem)
@@ -11,35 +10,33 @@ library(magrittr)
 source("config/load_config.R")
 
 # Source components and helpers
-source("components/common/popover.R")
+source("src/ui/components/common/popover/popover.R")
 
 # Source state management system
-source("components/common/state/types.R")
-source("components/common/state/store.R")
-source("components/common/state/visualization.R")
-source("components/common/state/controls.R")
+source("src/ui/state/types.R")
+source("src/ui/state/store.R")
+source("src/ui/state/visualization.R")
+source("src/ui/state/controls.R")
 
 # Source data layer components
-source("components/common/data/simulation.R")
+source("src/adapters/simulation_adapter.R")
 
 # Source display components
-source("components/display/plot_panel.R")
-source("components/display/table_panel.R")
-source("components/display/toggle.R")
-source("components/display/plot_controls.R")
+source("src/ui/components/common/display/plot_panel.R")
+source("src/ui/components/common/display/table_panel.R")
+source("src/ui/components/common/display/toggle.R")
+source("src/ui/components/common/display/plot_controls.R")
 
 # Source error handling
-source("components/common/errors/boundaries.R")
+source("src/ui/components/common/errors/boundaries.R")
 source("components/layout/panel.R")
-source("components/selectors/base.R")
-source("components/selectors/custom_components.R")
-
+source("src/ui/components/selectors/base.R")
+source("src/ui/components/selectors/custom_components.R")
 
 source("src/ui/components/pages/prerun/layout.R")
 source("src/ui/components/pages/custom/layout.R")
 source("components/pages/team.R")
 source("components/pages/contact.R")
-
 
 # Source server handlers
 source("server/handlers/prerun_handlers.R")
@@ -53,6 +50,22 @@ source("server/contact_handlers.R")
 
 library(jheem2)
 source("../jheem_analyses/applications/EHE/ehe_specification.R")
+
+# Source page components
+source("src/ui/components/pages/about/about.R")
+source("src/ui/components/pages/about/content.R")
+source("src/ui/components/pages/faq/faq.R")
+source("src/ui/components/pages/faq/content.R")
+source("src/ui/components/pages/team/team.R")
+source("src/ui/components/pages/team/content.R")
+source("src/ui/components/pages/team/member_card.R")
+source("src/ui/components/pages/contact/contact.R")
+source("src/ui/components/pages/contact/content.R")
+source("src/ui/components/pages/contact/form.R")
+
+# Source overview components
+source("src/ui/components/pages/overview/overview.R")
+source("src/ui/components/pages/overview/content.R")
 
 # UI Creation
 ui <- function() {
@@ -115,7 +128,7 @@ ui <- function() {
             title = config$pages$overview$popover$title,
             content = config$pages$overview$popover$content
           ),
-          includeHTML("html_pages/overview.html")
+          create_overview_page(config)
         ),
 
         # Pre-run tab
@@ -141,7 +154,7 @@ ui <- function() {
             title = config$pages$faq$popover$title,
             content = config$pages$faq$popover$content
           ),
-          includeHTML("html_pages/faq.html")
+          create_faq_page(config)
         ),
 
         # About tab
@@ -153,7 +166,7 @@ ui <- function() {
             title = config$pages$about$popover$title,
             content = config$pages$about$popover$content
           ),
-          includeHTML("html_pages/about.html")
+          create_about_page(config)
         ),
 
         # Team tab
@@ -165,7 +178,7 @@ ui <- function() {
             title = config$pages$team$popover$title,
             content = config$pages$team$popover$content
           ),
-          create_team_content(config)
+          create_team_page(config)
         ),
 
         # Contact tab
@@ -177,7 +190,7 @@ ui <- function() {
             title = config$pages$contact$popover$title,
             content = config$pages$contact$popover$content
           ),
-          create_contact_content(config)
+          create_contact_page(config)
         )
       )
     )

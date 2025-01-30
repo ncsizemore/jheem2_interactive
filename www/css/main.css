@@ -6,6 +6,7 @@
 @import 'layout/three-panel.css';
 
 /* Components */
+@import 'components/common/page.css';
 @import 'components/common/panels.css';
 @import 'components/common/scrollbars.css';
 @import 'components/common/loading.css';

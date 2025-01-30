@@ -8,18 +8,21 @@ library(yaml)
 load_yaml_file <- function(path) {
     # Debug print
     print(paste("Attempting to load:", path))
-    
+
     # Check if file exists
     if (!isTRUE(file.exists(path))) {
         stop(sprintf("Configuration file not found: %s", path))
     }
-    
+
     # Load and parse YAML
-    tryCatch({
-        yaml::read_yaml(path)
-    }, error = function(e) {
-        stop(sprintf("Error reading YAML file %s: %s", path, e$message))
-    })
+    tryCatch(
+        {
+            yaml::read_yaml(path)
+        },
+        error = function(e) {
+            stop(sprintf("Error reading YAML file %s: %s", path, e$message))
+        }
+    )
 }
 
 #' Get base configuration
@@ -48,16 +51,20 @@ get_component_config <- function(component) {
 get_page_config <- function(page) {
     # Debug print
     print(paste("Loading config for page:", page))
-    print(paste("Page type:", typeof(page)))
-    print(paste("Page class:", class(page)))
-    
-    # Ensure page is a simple string
-    if (!is.character(page) || length(page) != 1) {
-        stop(sprintf("Invalid page parameter: %s", toString(page)))
+
+    # Try new location first
+    new_path <- file.path("src", "ui", "config", "pages", paste0(page, ".yaml"))
+    if (file.exists(new_path)) {
+        return(load_yaml_file(new_path))
     }
-    
-    path <- file.path("config", "pages", paste0(page, ".yaml"))
-    load_yaml_file(path)
+
+    # Fall back to old location
+    old_path <- file.path("config", "pages", paste0(page, ".yaml"))
+    if (file.exists(old_path)) {
+        return(load_yaml_file(old_path))
+    }
+
+    stop(sprintf("Configuration file not found in either location for page: %s", page))
 }
 
 #' Merge configurations recursively
@@ -65,11 +72,17 @@ get_page_config <- function(page) {
 #' @param override Configuration to merge on top
 #' @return Merged configuration
 merge_configs <- function(base, override) {
-    if (is.null(override)) return(base)
-    if (is.null(base)) return(override)
-    
-    if (!is.list(base) || !is.list(override)) return(override)
-    
+    if (is.null(override)) {
+        return(base)
+    }
+    if (is.null(base)) {
+        return(override)
+    }
+
+    if (!is.list(base) || !is.list(override)) {
+        return(override)
+    }
+
     merged <- base
     for (name in names(override)) {
         if (name %in% names(base) && is.list(base[[name]]) && is.list(override[[name]])) {
@@ -88,17 +101,17 @@ get_page_complete_config <- function(page) {
     # Debug print
     print(paste("Getting complete config for page:", page))
     print(paste("Page type:", typeof(page)))
-    
+
     # Validate page parameter
     if (!is.character(page) || length(page) != 1) {
         stop(sprintf("Invalid page parameter: %s", toString(page)))
     }
-    
+
     # Load all configurations
     base <- get_base_config()
     defaults <- get_defaults_config()
     page_specific <- get_page_config(page)
-    
+
     # Create initial merged config
     config <- list(
         application = base$application,
@@ -109,15 +122,15 @@ get_page_complete_config <- function(page) {
         plot_controls = defaults$plot_controls,
         display = defaults$display
     )
-    
+
     # Merge page-specific configuration
     if (length(page_specific) > 0) {
         config <- merge_configs(config, page_specific)
     }
-    
+
     # Add page type
     config$page_type <- page
-    
+
     config
 }
 
@@ -133,7 +146,7 @@ validate_config <- function(config) {
         "panels",
         "selectors"
     )
-    
+
     # Check required sections
     missing <- setdiff(required, names(config))
     if (length(missing) > 0) {
@@ -142,12 +155,12 @@ validate_config <- function(config) {
             paste(missing, collapse = ", ")
         ))
     }
-    
+
     # Page-specific validation based on page type
     if (!is.null(config$page_type)) {
         validate_page_config(config, config$page_type)
     }
-    
+
     TRUE
 }
 
@@ -157,20 +170,20 @@ validate_config <- function(config) {
 #' @return TRUE if valid, throws error if invalid
 validate_page_config <- function(config, page) {
     required <- switch(page,
-                       "prerun" = c(
-                           "intervention_aspects",
-                           "population_groups",
-                           "timeframes",
-                           "intensities"
-                       ),
-                       "custom" = c(
-                           "subgroups",
-                           "demographics",
-                           "interventions"
-                       ),
-                       stop(sprintf("Unknown page type: %s", page))
+        "prerun" = c(
+            "intervention_aspects",
+            "population_groups",
+            "timeframes",
+            "intensities"
+        ),
+        "custom" = c(
+            "subgroups",
+            "demographics",
+            "interventions"
+        ),
+        stop(sprintf("Unknown page type: %s", page))
     )
-    
+
     # Check required sections
     missing <- setdiff(required, names(config))
     if (length(missing) > 0) {
@@ -180,7 +193,7 @@ validate_page_config <- function(config, page) {
             paste(missing, collapse = ", ")
         ))
     }
-    
+
     TRUE
 }
 
@@ -206,10 +219,10 @@ get_config_value <- function(config, path, default = NULL) {
 #' @return Formatted value
 format_config_value <- function(value, type) {
     switch(type,
-           "numeric" = as.numeric(value),
-           "logical" = as.logical(value),
-           "character" = as.character(value),
-           value
+        "numeric" = as.numeric(value),
+        "logical" = as.logical(value),
+        "character" = as.character(value),
+        value
     )
 }
 
@@ -223,7 +236,7 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
     print(paste("Getting config for selector:", selector_id))
     print(paste("Page type:", page_type))
     print(paste("Group num:", group_num))
-    
+
     # Validate inputs
     if (!is.character(page_type) || length(page_type) != 1) {
         stop("page_type must be a single character string")
@@ -234,10 +247,10 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
     if (!is.null(group_num) && (!is.numeric(group_num) || length(group_num) != 1)) {
         stop("group_num must be NULL or a single number")
     }
-    
+
     # Load complete configuration for the page
     config <- get_page_complete_config(page_type)
-    
+
     # Get base selector configuration based on context
     selector_config <- if (page_type == "custom" && !is.null(group_num)) {
         if (selector_id %in% c("age_groups", "race_ethnicity", "biological_sex", "risk_factor")) {
@@ -256,7 +269,7 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
     } else {
         config$selectors[[selector_id]]
     }
-    
+
     if (is.null(selector_config)) {
         # Debug print of available configurations
         print("Available configurations:")
@@ -268,16 +281,16 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
         print(names(config$selectors))
         stop(sprintf("No configuration found for selector: %s", selector_id))
     }
-    
+
     # Generate ID with group number if provided
     id <- if (!is.null(group_num)) {
         paste("int", selector_id, group_num, page_type, sep = "_")
     } else {
         paste("int", selector_id, page_type, sep = "_")
     }
-    
+
     # Add generated ID to config
     selector_config$id <- id
-    
+
     selector_config
 }

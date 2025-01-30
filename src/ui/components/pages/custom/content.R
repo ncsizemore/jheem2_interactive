@@ -63,8 +63,8 @@ create_custom_intervention_content <- function(config) {
 #' Creates the plot controls for the right panel
 #' @param config Page configuration
 create_custom_plot_controls <- function(config) {
-    # Source shared control section implementation
-    source("components/common/plot_controls/control_section.R")
+    # Update source path
+    source("src/ui/components/common/plot_controls/control_section.R")
     print("Creating custom plot controls")
     # Create namespace for controls
     ns <- NS("custom")
