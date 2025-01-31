@@ -1,63 +1,72 @@
-$(document).ready(function() {
-  // Initialize panel states
-  let leftPanelVisible = true;
-  let rightPanelVisible = true;
+// Panel state management
+const PreRunPanelManager = {
+  state: {
+    leftPanelVisible: true,
+    rightPanelVisible: true
+  },
 
-  function updateContainerClass() {
+  updateContainerClass() {
     const container = $('.prerun-container');
     container.removeClass('left-collapsed right-collapsed both-collapsed');
-    
-    if (!leftPanelVisible && !rightPanelVisible) {
+
+    if (!this.state.leftPanelVisible && !this.state.rightPanelVisible) {
       container.addClass('both-collapsed');
-    } else if (!leftPanelVisible) {
+    } else if (!this.state.leftPanelVisible) {
       container.addClass('left-collapsed');
-    } else if (!rightPanelVisible) {
+    } else if (!this.state.rightPanelVisible) {
       container.addClass('right-collapsed');
     }
-  }
+  },
 
-  function updateToggles() {
-    // Update left toggle
-    const leftToggle = $('#toggle-interventions');
-    leftToggle.find('i')
-      .removeClass('fa-chevron-left fa-chevron-right')
-      .addClass(leftPanelVisible ? 'fa-chevron-left' : 'fa-chevron-right');
+  updatePanels() {
+    // Update panel states
+    $('.intervention-panel').toggleClass('collapsed', !this.state.leftPanelVisible);
+    $('.settings-panel').toggleClass('collapsed', !this.state.rightPanelVisible);
 
-    // Update right toggle
-    const rightToggle = $('#toggle-settings');
-    rightToggle.find('i')
+    // Update toggle button icons
+    $('#toggle-interventions i')
       .removeClass('fa-chevron-left fa-chevron-right')
-      .addClass(rightPanelVisible ? 'fa-chevron-right' : 'fa-chevron-left');
+      .addClass(this.state.leftPanelVisible ? 'fa-chevron-left' : 'fa-chevron-right');
+
+    $('#toggle-settings i')
+      .removeClass('fa-chevron-left fa-chevron-right')
+      .addClass(this.state.rightPanelVisible ? 'fa-chevron-right' : 'fa-chevron-left');
+
+    // Update container classes
+    this.updateContainerClass();
 
     // Trigger resize after transition
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 300);
-  }
+  },
 
+  togglePanel(side) {
+    if (side === 'left') {
+      this.state.leftPanelVisible = !this.state.leftPanelVisible;
+    } else {
+      this.state.rightPanelVisible = !this.state.rightPanelVisible;
+    }
+    this.updatePanels();
+  }
+};
+
+// Initialize on document ready
+$(document).ready(function () {
   // Toggle intervention panel
-  $('#toggle-interventions').on('click', function(e) {
+  $('#toggle-interventions').on('click', function (e) {
     e.preventDefault();
     e.stopPropagation();
-    leftPanelVisible = !leftPanelVisible;
-    
-    $('.intervention-panel').toggleClass('collapsed', !leftPanelVisible);
-    updateContainerClass();
-    updateToggles();
+    PreRunPanelManager.togglePanel('left');
   });
 
   // Toggle settings panel
-  $('#toggle-settings').on('click', function(e) {
+  $('#toggle-settings').on('click', function (e) {
     e.preventDefault();
     e.stopPropagation();
-    rightPanelVisible = !rightPanelVisible;
-    
-    $('.settings-panel').toggleClass('collapsed', !rightPanelVisible);
-    updateContainerClass();
-    updateToggles();
+    PreRunPanelManager.togglePanel('right');
   });
 
   // Initial setup
-  updateContainerClass();
-  updateToggles();
+  PreRunPanelManager.updatePanels();
 });

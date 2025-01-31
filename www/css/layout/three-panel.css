@@ -35,31 +35,34 @@
   overflow: hidden;
 }
 
-.side-panel.collapsed > *:not(.toggle-button) {
+.side-panel.collapsed>*:not(.toggle-button) {
   display: none;
 }
 
-/* Toggle Button Positioning */
-.side-panel.right-panel .toggle-button {
+/* Toggle Button Base Styles */
+.toggle-button {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  right: 300px;
+  transition: all var(--transition-speed) ease;
 }
 
-.side-panel.left-panel .toggle-button {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  left: 300px;
+/* Left Panel Toggle Button */
+.left-panel .toggle-button {
+  left: 320px;
 }
 
-.side-panel.collapsed.right-panel .toggle-button {
-  right: 0;
+.left-panel .toggle-button.collapsed {
+  left: 20px;
 }
 
-.side-panel.collapsed.left-panel .toggle-button {
-  left: 0;
+/* Right Panel Toggle Button */
+.right-panel .toggle-button {
+  right: 320px;
+}
+
+.right-panel .toggle-button.collapsed {
+  right: 20px;
 }
 
 /* Responsive Layout */
