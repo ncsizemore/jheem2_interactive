@@ -1,8 +1,8 @@
 # test/state_store_test.R
 
 library(shiny)
-source("components/common/state/types.R")
-source("components/common/state/store.R")
+source("src/ui/state/types.R")
+source("src/ui/state/store.R")
 
 # Test UI
 ui <- fluidPage(
