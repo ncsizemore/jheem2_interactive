@@ -1,0 +1,112 @@
+/* Navigation bar styles */
+.navbar {
+    background-color: var(--color-gray-900);
+    box-shadow: var(--shadow-md);
+    padding: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+}
+
+/* Brand/logo styling */
+.navbar-brand {
+    color: var(--color-white) !important;
+    font-size: 1.75rem;
+    /* Increased size */
+    font-weight: 600;
+    /* Semi-bold */
+    letter-spacing: 0.5px;
+    /* Subtle letter spacing */
+    padding: var(--spacing-sm) var(--spacing-lg);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-decoration: none !important;
+}
+
+/* Navigation items container */
+.navbar-nav {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    /* Add spacing between nav items */
+}
+
+/* Individual nav items */
+.nav-item {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0 3px;
+    /* Slightly increased margin for more separation */
+}
+
+/* Nav links */
+.nav-link,
+.navbar .nav>li>a,
+/* Additional selector */
+a[data-value] {
+    /* Additional selector for Shiny tabs */
+    color: var(--color-gray-300) !important;
+    padding: 0 var(--spacing-lg) !important;
+    height: calc(100% - 16px) !important;
+    /* Even shorter for more pronounced rounding */
+    margin: 8px 0;
+    display: flex !important;
+    align-items: center;
+    position: relative;
+    transition: all var(--transition-speed) ease;
+    border-radius: 25px !important;
+    /* Even more rounded corners */
+    font-weight: 500;
+    text-decoration: none;
+}
+
+/* Hover states */
+.nav-link:hover,
+.navbar .nav>li>a:hover,
+a[data-value]:hover {
+    color: var(--color-white) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+/* Active tab styling */
+.nav-item.active .nav-link,
+.navbar .nav>li.active>a,
+a[data-value].active {
+    color: var(--color-white) !important;
+    background-color: var(--color-primary) !important;
+    font-weight: 600;
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+/* Force rounded corners with multiple declarations */
+.navbar a[data-value],
+.navbar .nav-link,
+.navbar .nav>li>a {
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    border-radius: 25px !important;
+}
+
+/* Tab content area */
+.tab-content {
+    padding-top: var(--spacing-md);
+}
+
+/* Optional: Add a subtle glow effect to the active tab */
+.nav-item.active .nav-link {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+/* Optional: Add a slight scale effect on hover */
+.nav-link {
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+.nav-link:hover {
+    transform: scale(1.05);
+}
