@@ -215,13 +215,16 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
 #' @param page_id Character: page identifier
 #' @param id Character: component identifier
 #' @param state_manager Optional visualization manager for integration
+#' @param validation_manager Optional validation manager for state tracking
 #' @return Validation error handler
-create_validation_boundary <- function(session, output, page_id, id, state_manager = NULL) {
+create_validation_boundary <- function(session, output, page_id, id,
+                                       state_manager = NULL,
+                                       validation_manager = NULL) {
     error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
 
     list(
         # Validate with custom rules
-        validate = function(value, rules, severity = SEVERITY_LEVELS$ERROR) {
+        validate = function(value, rules, field_id = id, severity = SEVERITY_LEVELS$ERROR) {
             for (rule in rules) {
                 if (!rule$test(value)) {
                     error_boundary$set_error(
@@ -229,10 +232,18 @@ create_validation_boundary <- function(session, output, page_id, id, state_manag
                         type = ERROR_TYPES$VALIDATION,
                         severity = severity
                     )
+                    # Update validation state if manager provided
+                    if (!is.null(validation_manager)) {
+                        validation_manager$update_field(field_id, FALSE, rule$message)
+                    }
                     return(FALSE)
                 }
             }
             error_boundary$clear_error()
+            # Update validation state if manager provided
+            if (!is.null(validation_manager)) {
+                validation_manager$update_field(field_id, TRUE)
+            }
             TRUE
         },
 
@@ -241,7 +252,12 @@ create_validation_boundary <- function(session, output, page_id, id, state_manag
             required = function(message = "This field is required",
                                 severity = SEVERITY_LEVELS$ERROR) {
                 list(
-                    test = function(value) !is.null(value) && length(value) > 0,
+                    test = function(value) {
+                        !is.null(value) &&
+                            length(value) > 0 &&
+                            !is.na(value) &&
+                            (!is.character(value) || nchar(trimws(value)) > 0)
+                    },
                     message = message,
                     severity = severity
                 )
@@ -264,7 +280,7 @@ create_validation_boundary <- function(session, output, page_id, id, state_manag
                              severity = SEVERITY_LEVELS$ERROR) {
                 list(
                     test = function(value) {
-                        if (!is.numeric(value)) {
+                        if (is.null(value) || is.na(value) || !is.numeric(value)) {
                             return(FALSE)
                         }
                         min_ok <- is.null(min) || value >= min

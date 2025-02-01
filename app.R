@@ -17,6 +17,7 @@ source("src/ui/state/types.R")
 source("src/ui/state/store.R")
 source("src/ui/state/visualization.R")
 source("src/ui/state/controls.R")
+source("src/ui/state/validation.R")
 
 # Source data layer components
 source("src/adapters/simulation_adapter.R")
@@ -39,7 +40,7 @@ source("src/ui/components/pages/custom/layout.R")
 
 # Source server handlers
 source("server/handlers/prerun_handlers.R")
-source("server/handlers/custom_handlers.R")
+source("src/ui/components/pages/custom/index.R")
 source("server/display_utils.R")
 
 # Source other required files

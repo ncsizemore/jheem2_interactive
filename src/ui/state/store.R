@@ -82,6 +82,19 @@ StateStore <- R6Class("StateStore",
         reset_panel_state = function(page_id) {
             self$panel_states[[page_id]](create_panel_state(page_id))
             invisible(self)
+        },
+
+        #' @description Update validation state for a panel
+        #' @param page_id Character: panel identifier
+        #' @param validation_state List: new validation state
+        update_validation_state = function(page_id, validation_state) {
+            current_state <- self$get_panel_state(page_id)
+
+            # Update validation state
+            current_state$validation <- validate_validation_state(validation_state)
+            self$panel_states[[page_id]](current_state)
+
+            invisible(self)
         }
     ),
     private = list(

@@ -39,14 +39,30 @@ create_control_state <- function(outcomes = NULL,
 #' @param page_id Character: page identifier
 #' @param visualization Visualization state object
 #' @param controls Control state object
+#' @param validation Validation state object
 #' @return List with panel state properties
 create_panel_state <- function(page_id,
                                visualization = create_visualization_state(),
-                               controls = create_control_state()) {
+                               controls = create_control_state(),
+                               validation = create_validation_state()) {
     validate_panel_state(list(
         page_id = page_id,
         visualization = visualization,
-        controls = controls
+        controls = controls,
+        validation = validation
+    ))
+}
+
+#' Create a validation state object
+#' @param is_valid Logical: overall validation state
+#' @param field_states Named list of field validation states
+#' @return List with validation state properties
+create_validation_state <- function(
+    is_valid = TRUE,
+    field_states = list()) {
+    validate_validation_state(list(
+        is_valid = is_valid,
+        field_states = field_states
     ))
 }
 
@@ -153,7 +169,7 @@ validate_panel_state <- function(state) {
     if (!is.list(state)) stop("Panel state must be a list")
 
     # Required fields
-    required <- c("page_id", "visualization", "controls")
+    required <- c("page_id", "visualization", "controls", "validation")
     missing <- setdiff(required, names(state))
     if (length(missing) > 0) {
         stop(sprintf(
@@ -170,6 +186,34 @@ validate_panel_state <- function(state) {
     # Validate nested states
     state$visualization <- validate_visualization_state(state$visualization)
     state$controls <- validate_control_state(state$controls)
+    state$validation <- validate_validation_state(state$validation)
+
+    state
+}
+
+#' Validate validation state object
+#' @param state List containing validation state properties
+#' @return The state object if valid, otherwise throws error
+validate_validation_state <- function(state) {
+    if (!is.list(state)) stop("Validation state must be a list")
+
+    # Required fields
+    required <- c("is_valid", "field_states")
+    missing <- setdiff(required, names(state))
+    if (length(missing) > 0) {
+        stop(sprintf(
+            "Missing required validation state fields: %s",
+            paste(missing, collapse = ", ")
+        ))
+    }
+
+    # Type checking
+    if (!is.logical(state$is_valid)) {
+        stop("is_valid must be logical")
+    }
+    if (!is.list(state$field_states)) {
+        stop("field_states must be a list")
+    }
 
     state
 }
