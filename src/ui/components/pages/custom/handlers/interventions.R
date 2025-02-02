@@ -9,6 +9,9 @@
 initialize_intervention_handlers <- function(input, output, session, validation_manager, config) {
     # Create observers for intervention inputs
     observe({
+        req(input$subgroups_count_custom)
+        req(config$subgroups$min)
+
         # Get current subgroup count, handle NA/invalid values
         subgroup_count <- tryCatch(
             {
@@ -24,54 +27,37 @@ initialize_intervention_handlers <- function(input, output, session, validation_
             }
         )
 
-        # For each subgroup
-        for (i in 1:subgroup_count) {
-            local({
-                group_num <- i # Need local binding
+        # Only proceed if we have a valid subgroup count
+        if (!is.null(subgroup_count) && subgroup_count > 0) {
+            # For each subgroup
+            for (i in 1:subgroup_count) {
+                local({
+                    group_num <- i
 
-                # For each intervention component in config
-                for (component_name in names(config$interventions$components)) {
-                    local({
-                        component <- config$interventions$components[[component_name]]
+                    # Get intervention components from config
+                    for (component_name in names(config$interventions$components)) {
+                        local({
+                            # Get component config using config system
+                            component <- config$interventions$components[[component_name]]
 
-                        # Skip if not a compound type with numeric/select inputs
-                        if (component$type != "compound") {
-                            return()
-                        }
+                            # Skip if not a compound type
+                            if (component$type != "compound") {
+                                return()
+                            }
 
-                        enabled_id <- paste0("int_", component_name, "_", group_num, "_custom_enabled")
+                            # Get selector config for this component and group
+                            selector_config <- get_selector_config(component_name, "custom", group_num)
+                            enabled_id <- paste0(selector_config$id, "_enabled")
 
-                        # For each input in the compound component
-                        for (input_name in names(component$inputs)) {
-                            input_config <- component$inputs[[input_name]]
-                            if (input_name == "enabled") next # Skip enabled checkbox
+                            # For each input in the compound component
+                            for (input_name in names(component$inputs)) {
+                                if (input_name == "enabled") next # Skip enabled checkbox
 
-                            value_id <- paste0("int_", component_name, "_", group_num, "_custom_", input_name)
+                                input_config <- component$inputs[[input_name]]
+                                value_id <- paste0(selector_config$id, "_", input_name)
 
-                            # Add input change observer
-                            observeEvent(input[[enabled_id]], {
-                                if (!input[[enabled_id]]) {
-                                    # Clear validation state for this field
-                                    validation_manager$update_field(value_id, TRUE)
-                                    # Clear UI validation state
-                                    runjs(sprintf("
-                                        $('#%s').removeClass('is-invalid');
-                                        $('#%s_error').hide();
-                                    ", value_id, value_id))
-                                }
-                            })
-
-                            observeEvent(input[[value_id]], {
-                                if (input[[enabled_id]]) {
-                                    validation_boundary <- create_validation_boundary(
-                                        session,
-                                        output,
-                                        "custom",
-                                        paste0(component_name, "_validation_", group_num),
-                                        validation_manager = validation_manager
-                                    )
-
-                                    # Create validation rules based on input type
+                                # Create validation rules based on input type
+                                create_validation_rules <- function() {
                                     rules <- list(
                                         validation_boundary$rules$required(
                                             sprintf("%s is required", input_config$label)
@@ -91,26 +77,61 @@ initialize_intervention_handlers <- function(input, output, session, validation_
                                         )
                                     }
 
-                                    # Validate and update UI
-                                    valid <- validation_boundary$validate(input[[value_id]], rules, field_id = value_id)
-                                    if (!valid) {
-                                        error_state <- validation_manager$get_field_state(value_id)
-                                        runjs(sprintf("
-                                            $('#%s').addClass('is-invalid');
-                                            $('#%s_error').text('%s').show();
-                                        ", value_id, value_id, error_state$message))
-                                    } else {
+                                    rules
+                                }
+
+                                # Create validation boundary for this component
+                                validation_boundary <- create_validation_boundary(
+                                    session,
+                                    output,
+                                    "custom",
+                                    paste0(component_name, "_validation_", group_num),
+                                    validation_manager = validation_manager
+                                )
+
+                                # Add enabled state observer
+                                observeEvent(input[[enabled_id]], {
+                                    if (!input[[enabled_id]]) {
+                                        # Clear validation state
+                                        validation_manager$update_field(value_id, TRUE)
+                                        # Clear UI validation state
                                         runjs(sprintf("
                                             $('#%s').removeClass('is-invalid');
                                             $('#%s_error').hide();
                                         ", value_id, value_id))
                                     }
-                                }
-                            })
-                        }
-                    })
-                }
-            })
+                                })
+
+                                # Add value change observer
+                                observeEvent(input[[value_id]], {
+                                    if (input[[enabled_id]]) {
+                                        # Validate using config-based rules
+                                        valid <- validation_boundary$validate(
+                                            input[[value_id]],
+                                            create_validation_rules(),
+                                            field_id = value_id
+                                        )
+
+                                        # Update UI error state
+                                        if (!valid) {
+                                            error_state <- validation_manager$get_field_state(value_id)
+                                            runjs(sprintf("
+                                                $('#%s').addClass('is-invalid');
+                                                $('#%s_error').text('%s').show();
+                                            ", value_id, value_id, error_state$message))
+                                        } else {
+                                            runjs(sprintf("
+                                                $('#%s').removeClass('is-invalid');
+                                                $('#%s_error').hide();
+                                            ", value_id, value_id))
+                                        }
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+            }
         }
     })
 }
@@ -127,7 +148,7 @@ collect_custom_settings <- function(input, subgroup_count) {
     print("Plot settings:")
     str(plot_settings)
 
-    # Get intervention settings
+    # Get intervention settings using config-based IDs
     intervention_settings <- list(
         location = isolate(input$int_location_custom),
         subgroups = lapply(1:subgroup_count, function(i) {
@@ -146,26 +167,40 @@ collect_custom_settings <- function(input, subgroup_count) {
 #' @param group_num Subgroup number
 #' @return List of subgroup settings
 collect_subgroup_settings <- function(input, group_num) {
+    # Use get_selector_config to get proper IDs
+    demographics_config <- list(
+        age_groups = get_selector_config("age_groups", "custom", group_num),
+        race_ethnicity = get_selector_config("race_ethnicity", "custom", group_num),
+        biological_sex = get_selector_config("biological_sex", "custom", group_num),
+        risk_factor = get_selector_config("risk_factor", "custom", group_num)
+    )
+
+    intervention_config <- list(
+        testing = get_selector_config("testing", "custom", group_num),
+        prep = get_selector_config("prep", "custom", group_num),
+        suppression = get_selector_config("suppression", "custom", group_num)
+    )
+
     list(
         demographics = list(
-            age_groups = isolate(input[[paste0("int_age_groups_", group_num, "_custom")]]),
-            race_ethnicity = isolate(input[[paste0("int_race_ethnicity_", group_num, "_custom")]]),
-            biological_sex = isolate(input[[paste0("int_biological_sex_", group_num, "_custom")]]),
-            risk_factor = isolate(input[[paste0("int_risk_factor_", group_num, "_custom")]])
+            age_groups = isolate(input[[demographics_config$age_groups$id]]),
+            race_ethnicity = isolate(input[[demographics_config$race_ethnicity$id]]),
+            biological_sex = isolate(input[[demographics_config$biological_sex$id]]),
+            risk_factor = isolate(input[[demographics_config$risk_factor$id]])
         ),
         interventions = list(
             dates = list(
                 start = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_start")]]),
                 end = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_end")]])
             ),
-            testing = if (isolate(input[[paste0("int_testing_", group_num, "_custom_enabled")]])) {
-                list(frequency = isolate(input[[paste0("int_testing_", group_num, "_custom_frequency")]]))
+            testing = if (isolate(input[[paste0(intervention_config$testing$id, "_enabled")]])) {
+                list(frequency = isolate(input[[paste0(intervention_config$testing$id, "_frequency")]]))
             },
-            prep = if (isolate(input[[paste0("int_prep_", group_num, "_custom_enabled")]])) {
-                list(coverage = isolate(input[[paste0("int_prep_", group_num, "_custom_coverage")]]))
+            prep = if (isolate(input[[paste0(intervention_config$prep$id, "_enabled")]])) {
+                list(coverage = isolate(input[[paste0(intervention_config$prep$id, "_coverage")]]))
             },
-            suppression = if (isolate(input[[paste0("int_suppression_", group_num, "_custom_enabled")]])) {
-                list(proportion = isolate(input[[paste0("int_suppression_", group_num, "_custom_proportion")]]))
+            suppression = if (isolate(input[[paste0(intervention_config$suppression$id, "_enabled")]])) {
+                list(proportion = isolate(input[[paste0(intervention_config$suppression$id, "_proportion")]]))
             }
         )
     )

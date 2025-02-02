@@ -39,7 +39,7 @@ source("src/ui/components/pages/custom/layout.R")
 
 
 # Source server handlers
-source("server/handlers/prerun_handlers.R")
+source("src/ui/components/pages/prerun/index.R")
 source("src/ui/components/pages/custom/index.R")
 source("server/display_utils.R")
 
