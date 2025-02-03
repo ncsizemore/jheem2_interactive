@@ -1,4 +1,6 @@
 # config/pages/prerun.yaml - Pre-run page specific settings
+
+# Intervention aspect selection
 intervention_aspects:
   type: "radio"
   label: "Which Aspects to Intervene On:"
@@ -25,6 +27,7 @@ intervention_aspects:
       id: "moud"
       label: "MOUDs"
 
+# Target population selection
 population_groups:
   type: "radio"
   label: "Target Population:"
@@ -42,6 +45,7 @@ population_groups:
       id: "risk_groups"
       label: "By risk groups:<br/>MSM, IDU, heterosexual contact"
 
+# Intervention timeframe selection
 timeframes:
   type: "radio"
   label: "Intervention Roll-Out Period:"
@@ -62,6 +66,7 @@ timeframes:
       id: "2024_2030"
       label: "2024-2030 (Long-term)"
 
+# Intervention intensity selection
 intensities:
   type: "radio"
   label: "Intervention Intensity:"

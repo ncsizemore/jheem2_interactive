@@ -1,6 +1,7 @@
-# config/defaults.yaml
+# src/ui/config/defaults.yaml
 # Default configurations used across the application
 
+# Panel and display defaults
 defaults:
   panel:
     width: 300
@@ -20,6 +21,7 @@ defaults:
       show_chime: true
       chime_label: "Play a chime when done"
 
+# Display settings
 display:
   plot:
     height: "600px"
@@ -29,6 +31,7 @@ display:
     message: "Generating plot..."
     class: "loading-indicator"
 
+# Panel configurations
 panels:
   left:
     id: "intervention-panel"
@@ -43,6 +46,7 @@ panels:
     collapsible: true
     defaultVisible: true
 
+# Plot control configurations
 plot_controls:
   outcomes:
     type: "checkbox"
@@ -95,15 +99,16 @@ plot_controls:
     label: "What to Show for Projections:"
     options:
       mean:
-        id: "mean.and.interval"      # Change from "mean"
+        id: "mean.and.interval"
         label: "The Mean Estimate and 95% Credible Interval"
       median:
-        id: "median.and.interval"    # Add this option
+        id: "median.and.interval"
         label: "The Median Estimate and 95% Credible Interval"
       individual:
-        id: "individual.simulation"  # Change from "individual"
+        id: "individual.simulation"
         label: "Each Individual Simulation"
 
+# Input type defaults
 input_types:
   select:
     default_style: "choices"
@@ -118,6 +123,7 @@ input_types:
     default_style: "native"
     multiple: false
 
+# Common selectors
 selectors:
   location:
     type: "select"
@@ -137,7 +143,6 @@ selectors:
         id: "C.16980"
         label: "Chicago-Naperville-Elgin, IL-IN-WI"
 
-  # Intervention aspects selector
   intervention_aspects:
     type: "select"
     label: "Which Aspects to Intervene On:"
@@ -162,7 +167,6 @@ selectors:
         id: "moud"
         label: "MOUDs"
 
-  # Population groups selector
   population_groups:
     type: "radio"
     ui:
@@ -182,7 +186,6 @@ selectors:
         id: "risk_groups"
         label: "By risk groups:<br/>MSM, IDU, heterosexual contact"
 
-  # Timeframes selector
   timeframes:
     type: "radio"
     ui:
@@ -205,7 +208,6 @@ selectors:
         id: "2024_2030"
         label: "2024-2030 (Long-term)"
 
-  # Intensities selector
   intensities:
     type: "radio"
     ui:
@@ -227,7 +229,89 @@ selectors:
       maximum:
         id: "maximum"
         label: "Maximum feasible coverage"
-        
+
+# Intervention configurations
+interventions:
+  types:
+    testing:
+      type: "compound"
+      label: "Intervene on Testing"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on Testing"
+        frequency:
+          type: "select"
+          label: "Average number of tests per person:"
+          options:
+            once: "Once per year"
+            twice: "Twice per year"
+            four: "Four times per year"
+
+    prep:
+      type: "compound"
+      label: "Intervene on PrEP"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on PrEP"
+        coverage:
+          type: "numeric"
+          label: "PrEP Coverage:"
+          min: 0
+          max: 100
+          step: 5
+          value: 10
+          format: "percentage"
+
+    suppression:
+      type: "compound"
+      label: "Intervene on Suppression"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on Suppression"
+        proportion:
+          type: "numeric"
+          label: "Proportion of diagnosed PWH who are Suppressed:"
+          min: 0
+          max: 100
+          step: 5
+          value: 70
+          format: "percentage"
+
+    needle_exchange:
+      type: "compound"
+      label: "Intervene on Needle Exchange"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on Needle Exchange"
+        proportion:
+          type: "numeric"
+          label: "Proportion of PWID in Needle Exchange Programs:"
+          min: 0
+          max: 100
+          step: 5
+          value: 10
+          format: "percentage"
+
+    moud:
+      type: "compound"
+      label: "Intervene on MOUDs"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Intervene on MOUDs"
+        proportion:
+          type: "numeric"
+          label: "Proportion of PWID on MOUDs:"
+          min: 0
+          max: 100
+          step: 5
+          value: 10
+          format: "percentage"
+
 # Custom page specific settings
 custom:
   subgroups:

@@ -1,0 +1,30 @@
+# config/components/display.yaml - Display/visualization settings
+display:
+  plot:
+    height: "600px"
+    defaultType: "static"
+    loading:
+      message: "Generating plot..."
+      class: "loading-indicator"
+  
+  visualization:
+    container:
+      class: "visualization-panel panel-section"
+      
+  controls:
+    defaultCollapsed: true
+    width: 300
+    
+  errors:
+    styles:
+      - css/components/error-displays.css
+    classes:
+      validation: "validation-error"
+      plot: "plot-error"
+      boundary: "error-boundary"
+    icons:
+      validation: "⚠"
+      plot: "⚠"
+    animation:
+      enabled: true
+      duration: "0.3s"

@@ -1,4 +1,6 @@
 # config/pages/custom.yaml - Custom page specific settings
+
+# Subgroup configuration
 subgroups:
   type: "numeric"
   label: "How Many Distinct Subgroups to Target Interventions To:"
@@ -6,6 +8,7 @@ subgroups:
   max: 5
   value: 1
 
+# Demographic selectors
 demographics:
   age_groups:
     type: "select"
@@ -99,18 +102,21 @@ demographics:
         id: "heterosexual"
         label: "Heterosexual"
 
+# Intervention dates
 interventions:
   dates:
     type: "date_range"
-    label: "Intervention Roll-Out:"
     start:
       type: "select"
       input_style: "choices"
       multiple: false
       label: "Begins in:"
       placeholder: "Select start year..."
+      min: 2023
+      max: 2030
+      value: 2023
       options:
-        all:
+        2023:
           id: "2023"
           label: "2023"
         2024:
@@ -140,8 +146,11 @@ interventions:
       multiple: false
       label: "Fully Implemented by:"
       placeholder: "Select end year..."
+      min: 2023
+      max: 2030
+      value: 2024
       options:
-        all:
+        2023:
           id: "2023"
           label: "2023"
         2024:

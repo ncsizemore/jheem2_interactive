@@ -7,7 +7,7 @@ library(cachem)
 library(magrittr)
 
 # Source configuration system
-source("config/load_config.R")
+source("src/ui/config/load_config.R")
 
 # Source components and helpers
 source("src/ui/components/common/popover/popover.R")
