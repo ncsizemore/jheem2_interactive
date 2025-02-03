@@ -8,19 +8,18 @@ subgroups:
 
 demographics:
   age_groups:
-    type: "choices_select"
+    type: "select"
+    input_style: "choices"
+    multiple: true
     label: "Age Groups"
     placeholder: "Select age groups..."
-    multiple: true
     options:
       all:
         id: "all"
         label: "All Ages"
-        value: "all"
       "13-24":
         id: "13-24"
         label: "13-24 years"
-        value: "13-24"
       25-34:
         id: "25-34"
         label: "25-34 years"
@@ -35,8 +34,11 @@ demographics:
         label: "55+ years"
 
   race_ethnicity:
-    type: "checkbox"
+    type: "select"
+    input_style: "choices"
+    multiple: true
     label: "Race/Ethnicity"
+    placeholder: "Select race/ethnicity..."
     options:
       all:
         id: "all"
@@ -52,8 +54,11 @@ demographics:
         label: "Other"
 
   biological_sex:
-    type: "checkbox"
+    type: "select"
+    input_style: "choices"
+    multiple: true
     label: "Biological Sex"
+    placeholder: "Select biological sex..."
     options:
       all:
         id: "all"
@@ -66,8 +71,11 @@ demographics:
         label: "Female"
 
   risk_factor:
-    type: "checkbox"
+    type: "select"
+    input_style: "choices"
+    multiple: true
     label: "Risk Factor"
+    placeholder: "Select risk factors..."
     options:
       all:
         id: "all"
@@ -96,17 +104,67 @@ interventions:
     type: "date_range"
     label: "Intervention Roll-Out:"
     start:
+      type: "select"
+      input_style: "choices"
+      multiple: false
       label: "Begins in:"
+      placeholder: "Select start year..."
       options:
-        from: 2023
-        to: 2030
-        format: "%Y (%b 1)"
+        all:
+          id: "2023"
+          label: "2023"
+        2024:
+          id: "2024"
+          label: "2024"
+        2025:
+          id: "2025"
+          label: "2025"
+        2026:
+          id: "2026"
+          label: "2026"
+        2027:
+          id: "2027"
+          label: "2027"
+        2028:
+          id: "2028"
+          label: "2028"
+        2029:
+          id: "2029"
+          label: "2029"
+        2030:
+          id: "2030"
+          label: "2030"
     end:
+      type: "select"
+      input_style: "choices"
+      multiple: false
       label: "Fully Implemented by:"
+      placeholder: "Select end year..."
       options:
-        from: 2023
-        to: 2030
-        format: "%Y (%b 31)"
+        all:
+          id: "2023"
+          label: "2023"
+        2024:
+          id: "2024"
+          label: "2024"
+        2025:
+          id: "2025"
+          label: "2025"
+        2026:
+          id: "2026"
+          label: "2026"
+        2027:
+          id: "2027"
+          label: "2027"
+        2028:
+          id: "2028"
+          label: "2028"
+        2029:
+          id: "2029"
+          label: "2029"
+        2030:
+          id: "2030"
+          label: "2030"
 
   components:
     testing:
@@ -115,14 +173,25 @@ interventions:
       inputs:
         enabled:
           type: "checkbox"
+          input_style: "native"
           label: "Intervene on Testing"
+          value: false
         frequency:
           type: "select"
-          label: "Average number of tests per person:"
+          input_style: "choices"
+          multiple: false
+          placeholder: "Average number of tests per person..."
+          value: "once"
           options:
-            once: "Once per year"
-            twice: "Twice per year"
-            four: "Four times per year"
+            once:
+              id: "once"
+              label: "Once per year"
+            twice:
+              id: "twice"
+              label: "Twice per year"
+            four:
+              id: "four"
+              label: "Four times per year"
 
     prep:
       type: "compound"
@@ -130,10 +199,12 @@ interventions:
       inputs:
         enabled:
           type: "checkbox"
+          input_style: "native"
           label: "Intervene on PrEP"
+          value: false
         coverage:
           type: "numeric"
-          label: "PrEP Coverage:"
+          placeholder: "PrEP Coverage"
           min: 0
           max: 100
           step: 5
@@ -146,10 +217,12 @@ interventions:
       inputs:
         enabled:
           type: "checkbox"
+          input_style: "native"
           label: "Intervene on Suppression"
+          value: false
         proportion:
           type: "numeric"
-          label: "Proportion of diagnosed PWH who are Suppressed:"
+          placeholder: "Proportion Suppressed"
           min: 0
           max: 100
           step: 5

@@ -104,16 +104,25 @@ plot_controls:
         id: "individual.simulation"  # Change from "individual"
         label: "Each Individual Simulation"
 
+input_types:
+  select:
+    default_style: "choices"
+    multiple: false
+  radio:
+    default_style: "native"
+    multiple: false
+  checkbox:
+    default_style: "native"
+    multiple: true
+  numeric:
+    default_style: "native"
+    multiple: false
+
 selectors:
-  # Location selector
   location:
     type: "select"
-    ui:
-      label: "Select Location:"
-      defaultClass: "location-selector"
-      popover:
-        title: "Which Location to Analyze?"
-        content: "Select the metropolitan area for analysis."
+    label: "Location"
+    placeholder: "Select a location..."
     options:
       none:
         id: "none"
@@ -130,13 +139,9 @@ selectors:
 
   # Intervention aspects selector
   intervention_aspects:
-    type: "radio"
-    ui:
-      label: "Which Aspects to Intervene On:"
-      defaultClass: "intervention-selector"
-      popover:
-        title: "What Should the Intervention Affect?"
-        content: "You can choose interventions that affect HIV testing, PrEP among those at risk for HIV acquisition, viral suppression among PWH, participation in needle-exchange programs, MOUDs, or combinations of these"
+    type: "select"
+    label: "Which Aspects to Intervene On:"
+    placeholder: "Select intervention aspects..."
     options:
       none:
         id: "none"

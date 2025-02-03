@@ -104,7 +104,11 @@ initialize_intervention_handlers <- function(input, output, session, validation_
 
                                 # Add value change observer
                                 observeEvent(input[[value_id]], {
-                                    if (input[[enabled_id]]) {
+                                    req(input[[enabled_id]]) # Explicit dependency
+
+                                    if (isTRUE(input[[enabled_id]])) { # Safe boolean check
+                                        req(input[[value_id]]) # Ensure value exists
+
                                         # Validate using config-based rules
                                         valid <- validation_boundary$validate(
                                             input[[value_id]],

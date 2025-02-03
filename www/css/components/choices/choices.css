@@ -1,28 +1,127 @@
-/* Base styles for the Choices container */
+/* Base container */
 .choices {
     position: relative;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
     width: 100%;
 }
 
-/* The main input/select element */
+/* Location selector specific styling */
+.location-selector {
+    position: relative;
+    isolation: isolate;
+    /* Create new stacking context */
+    z-index: 9999;
+    /* Much higher z-index */
+    margin-bottom: var(--spacing-md);
+}
+
+.location-selector .choices__list--dropdown {
+    position: absolute;
+    z-index: 10000;
+    /* Higher than parent */
+}
+
+/* Subgroup characteristics section */
+.subgroup-characteristics {
+    position: relative;
+    z-index: 1;
+    /* Much lower than location */
+}
+
+/* Individual demographic fields */
+.demographic-field {
+    position: relative;
+}
+
+.demographic-field:nth-child(1) {
+    z-index: 4;
+}
+
+.demographic-field:nth-child(2) {
+    z-index: 3;
+}
+
+.demographic-field:nth-child(3) {
+    z-index: 2;
+}
+
+.demographic-field:nth-child(4) {
+    z-index: 1;
+}
+
+.demographic-field .choices__list--dropdown {
+    z-index: 701;
+    /* Keep dropdown above its container but below location */
+}
+
+/* Intervention section */
+.intervention-components {
+    position: relative;
+    z-index: 1;
+    /* Much lower than location */
+}
+
+/* Input field */
 .choices__inner {
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
     min-height: 38px;
     padding: 0.375rem 0.75rem;
     cursor: pointer;
 }
 
+/* Placeholder text */
+.choices__placeholder {
+    opacity: 0.6;
+    display: block;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown positioning */
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+    position: absolute;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    margin-top: 2px;
+    width: 100%;
+    top: 100%;
+    bottom: auto !important;
+}
+
+/* Container and field spacing */
+.choices-container,
+.demographic-field {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+}
+
 /* Selected items */
 .choices__list--multiple .choices__item {
-    background-color: #007bff;
-    border: 1px solid #006fe6;
-    border-radius: 0.25rem;
-    color: #fff;
+    background-color: var(--color-primary);
+    border: 1px solid var(--color-primary-dark);
+    border-radius: var(--radius-sm);
+    color: var(--color-white);
     margin: 3px;
     padding: 2px 20px 2px 8px;
+    max-width: calc(100% - 10px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown items */
+.choices__list--dropdown .choices__item {
+    padding: 6px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Remove button on selected items */
@@ -30,25 +129,6 @@
     border-left: 1px solid #0062cc;
     margin-left: 5px;
     padding-left: 5px;
-}
-
-/* Dropdown menu */
-.choices__list--dropdown,
-.choices__list[aria-expanded] {
-    position: absolute;
-    z-index: var(--z-dropdown);
-    background: var(--color-white);
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md);
-    margin-top: 2px;
-    width: 100%;
-}
-
-/* Dropdown items */
-.choices__list--dropdown .choices__item {
-    padding: 6px 12px;
-    cursor: pointer;
 }
 
 .choices__list--dropdown .choices__item:hover {
@@ -83,17 +163,63 @@
     font-weight: 500;
 }
 
-/* Container spacing */
-.choices-container {
+/* Create a proper stacking context hierarchy */
+.custom-container {
     position: relative;
-    margin-bottom: var(--spacing-md);
+    z-index: 0;
+    /* Base stacking context */
 }
 
-/* Add spacing between characteristic groups */
-.characteristic-age_groups,
-.characteristic-race_ethnicity,
-.characteristic-biological_sex,
-.characteristic-risk_factor {
-    margin-bottom: var(--spacing-lg);
+/* Primary selectors (like location) */
+.panel-left>.location-selector {
     position: relative;
+    z-index: 3;
+    /* Highest level */
+}
+
+/* Secondary level (subgroup characteristics) */
+.subgroup-characteristics {
+    position: relative;
+    z-index: 2;
+    /* Higher than intervention section */
+}
+
+/* Individual demographic fields - stack from top to bottom */
+.demographic-field {
+    position: relative;
+}
+
+.demographic-field:nth-child(1) {
+    z-index: 4;
+}
+
+.demographic-field:nth-child(2) {
+    z-index: 3;
+}
+
+.demographic-field:nth-child(3) {
+    z-index: 2;
+}
+
+.demographic-field:nth-child(4) {
+    z-index: 1;
+}
+
+/* Intervention section */
+.intervention-components {
+    position: relative;
+    z-index: 1;
+    /* Lower than subgroup characteristics */
+}
+
+/* Ensure dropdowns appear above their parents but maintain hierarchy */
+.choices__list--dropdown {
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    margin-top: 2px;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
 }

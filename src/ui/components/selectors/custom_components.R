@@ -3,17 +3,14 @@
 #' @param config UI configuration from YAML
 #' @param container_class Additional CSS class for container
 create_compound_input <- function(id, config, container_class = NULL) {
-    # Debug print
-    print("Creating compound input with config:")
-    print(str(config))
-
-    # Extract configuration - handle both direct and nested label cases
-    label <- if (!is.null(config$label)) {
-        config$label
-    } else if (!is.null(config$ui$label)) {
-        config$ui$label
+    # Validate inputs
+    if (is.null(config) || is.null(config$inputs)) {
+        warning(sprintf("Invalid config for compound input %s", id))
+        return(NULL)
     }
 
+    # Extract configuration
+    label <- config$label
     inputs <- config$inputs
 
     # Create container classes
@@ -22,59 +19,61 @@ create_compound_input <- function(id, config, container_class = NULL) {
         classes <- c(classes, container_class)
     }
 
-    # Create the component with conditional display
+    # Ensure enabled config has default value
+    enabled_config <- list(
+        type = "checkbox",
+        label = label,
+        value = FALSE,
+        input_style = "native"
+    )
+
+    # Get input names safely
+    input_names <- names(inputs)
+    if (is.null(input_names)) {
+        warning(sprintf("No input names found for compound input %s", id))
+        input_names <- character(0)
+    }
+
     tags$div(
         class = paste(classes, collapse = " "),
-
         # Main checkbox
-        checkboxInput(
-            inputId = paste0(id, "_enabled"),
-            label = label, # This should now have the correct label
-            value = FALSE
+        create_input_by_type(
+            type = "checkbox",
+            id = paste0(id, "_enabled"),
+            config = enabled_config
         ),
-
-        # Additional inputs in a container that shows only when enabled
+        # Additional inputs
         conditionalPanel(
             condition = sprintf("input['%s_enabled'] == true", id),
             class = "compound-input-controls",
-
-            # Create each additional input based on type
-            lapply(names(inputs), function(input_name) {
-                if (input_name != "enabled") {
-                    input_config <- inputs[[input_name]]
-                    input_id <- paste0(id, "_", input_name)
-
-                    tags$div(
-                        class = "input-group",
-                        if (!is.null(input_config$label)) {
-                            tags$label(input_config$label, `for` = input_id)
-                        },
-                        switch(input_config$type,
-                            "numeric" = tags$div(
-                                numericInput(
-                                    inputId = input_id,
-                                    label = NULL,
-                                    value = input_config$value %||% 0,
-                                    min = input_config$min %||% 0,
-                                    max = input_config$max %||% 100,
-                                    step = input_config$step %||% 1
-                                ),
-                                # Add error message container
-                                tags$div(
-                                    id = paste0(input_id, "_error"),
-                                    class = "input-error-message",
-                                    style = "display: none;"
-                                )
-                            ),
-                            "select" = selectInput(
-                                inputId = input_id,
-                                label = NULL,
-                                choices = input_config$options,
-                                selected = input_config$options[1]
-                            )
-                        )
-                    )
+            lapply(input_names, function(input_name) {
+                # Skip if input_name is NULL or empty
+                if (is.null(input_name) || nchar(input_name) == 0) {
+                    return(NULL)
                 }
+
+                # Skip the enabled input
+                if (input_name == "enabled") {
+                    return(NULL)
+                }
+
+                input_config <- inputs[[input_name]]
+                if (is.null(input_config)) {
+                    warning(sprintf("Missing config for input %s in compound input %s", input_name, id))
+                    return(NULL)
+                }
+
+                input_id <- paste0(id, "_", input_name)
+
+                # Create the input group
+                tags$div(
+                    class = "input-group",
+                    create_input_by_type(
+                        type = input_config$type,
+                        id = input_id,
+                        config = input_config
+                    )
+                )
             })
         )
     )
@@ -85,29 +84,13 @@ create_compound_input <- function(id, config, container_class = NULL) {
 #' @param config Date range configuration from YAML
 #' @param container_class Additional CSS class for container
 create_date_range <- function(id, config, container_class = NULL) {
-    # Debug print
-    print("Creating date range with config:")
-    print(str(config))
-
     # Extract configuration
     start_config <- config$start
     end_config <- config$end
 
     # Validate configuration
     if (is.null(start_config) || is.null(end_config)) {
-        print("Missing start or end configuration")
-        return(NULL)
-    }
-
-    # Ensure we have numeric values for the sequence
-    from_year <- as.numeric(start_config$options$from)
-    to_year <- as.numeric(end_config$options$to)
-
-    if (is.na(from_year) || is.na(to_year)) {
-        print("Invalid year values:")
-        print(paste("from:", from_year))
-        print(paste("to:", to_year))
-        return(NULL)
+        stop("Missing start or end configuration")
     }
 
     # Create container classes
@@ -125,11 +108,10 @@ create_date_range <- function(id, config, container_class = NULL) {
         tags$div(
             class = "date-input",
             tags$label(start_config$label),
-            selectInput(
-                inputId = paste0(id, "_start"),
-                label = NULL,
-                choices = seq(from_year, to_year),
-                selected = from_year
+            create_input_by_type(
+                type = start_config$type,
+                id = paste0(id, "_start"),
+                config = start_config
             )
         ),
 
@@ -137,11 +119,10 @@ create_date_range <- function(id, config, container_class = NULL) {
         tags$div(
             class = "date-input",
             tags$label(end_config$label),
-            selectInput(
-                inputId = paste0(id, "_end"),
-                label = NULL,
-                choices = seq(from_year, to_year),
-                selected = to_year
+            create_input_by_type(
+                type = end_config$type,
+                id = paste0(id, "_end"),
+                config = end_config
             )
         )
     )
@@ -230,32 +211,27 @@ create_subgroup_panel <- function(group_num, config_or_suffix) {
 create_subgroup_characteristics <- function(group_num, suffix) {
     print(paste("Creating characteristics for group:", group_num, "suffix:", suffix))
 
-    characteristics <- c("age_groups", "race_ethnicity", "biological_sex", "risk_factor")
+    # Get config to determine available characteristics
+    config <- get_page_complete_config(suffix)
+    demographic_fields <- names(config$demographics)
 
     # Create container for all characteristics
     tags$div(
         class = "subgroup-characteristics",
-        lapply(characteristics, function(char_type) {
-            config <- get_selector_config(char_type, suffix, group_num)
+        lapply(demographic_fields, function(field_name) {
+            # Get field config using existing config system
+            field_config <- get_selector_config(field_name, suffix, group_num)
 
-            # Debug what labels we're getting
-            print("Label debug:")
-            print(str(config))
-            print(paste("Label:", config$label))
+            # Debug what we're getting
+            print(paste("Creating field:", field_name))
+            print(str(field_config))
 
             tags$div(
-                class = paste0("characteristic-", char_type),
-                choicesSelectInput(
-                    inputId = config$id,
-                    label = config$label,
-                    choices = lapply(config$options, function(opt) {
-                        list(
-                            value = opt$id %||% opt$value %||% opt$label,
-                            label = opt$label
-                        )
-                    }),
-                    multiple = TRUE,
-                    placeholder = sprintf("Select %s", config$label)
+                class = "demographic-field",
+                create_input_by_type(
+                    type = field_config$type,
+                    id = field_config$id,
+                    config = field_config
                 )
             )
         })

@@ -225,8 +225,17 @@ create_validation_boundary <- function(session, output, page_id, id,
     list(
         # Validate with custom rules
         validate = function(value, rules, field_id = id, severity = SEVERITY_LEVELS$ERROR) {
+            print("Validating value:") # Debug
+            print(value)
+            print("With rules:")
+            str(rules)
+
             for (rule in rules) {
+                print("Testing rule:") # Debug
+                str(rule)
+
                 if (!rule$test(value)) {
+                    print(sprintf("Validation failed with message: %s", rule$message)) # Debug
                     error_boundary$set_error(
                         message = rule$message,
                         type = ERROR_TYPES$VALIDATION,
@@ -239,6 +248,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                     return(FALSE)
                 }
             }
+            print("All validations passed") # Debug
             error_boundary$clear_error()
             # Update validation state if manager provided
             if (!is.null(validation_manager)) {
@@ -249,14 +259,21 @@ create_validation_boundary <- function(session, output, page_id, id,
 
         # Common validation rules
         rules = list(
-            required = function(message = "This field is required",
+            required = function(message,
                                 severity = SEVERITY_LEVELS$ERROR) {
+                if (is.null(message) || length(message) == 0) {
+                    message <- "This field is required"
+                }
+                print(sprintf("Creating required rule with message: %s", message))
+
                 list(
                     test = function(value) {
-                        !is.null(value) &&
+                        result <- !is.null(value) &&
                             length(value) > 0 &&
                             !is.na(value) &&
                             (!is.character(value) || nchar(trimws(value)) > 0)
+                        print(sprintf("Required test result: %s", result))
+                        result
                     },
                     message = message,
                     severity = severity
@@ -271,27 +288,40 @@ create_validation_boundary <- function(session, output, page_id, id,
                     severity = severity
                 )
             },
-            range = function(min = NULL, max = NULL,
-                             message = sprintf(
-                                 "Value must be between %s and %s",
-                                 if (is.null(min)) "-∞" else min,
-                                 if (is.null(max)) "∞" else max
-                             ),
+            range = function(min = NULL,
+                             max = NULL,
+                             message = NULL,
                              severity = SEVERITY_LEVELS$ERROR) {
+                if (is.null(message) || length(message) == 0) {
+                    message <- sprintf(
+                        "Value must be between %s and %s",
+                        if (is.null(min)) "-∞" else min,
+                        if (is.null(max)) "∞" else max
+                    )
+                }
+                print(sprintf("Creating range rule with message: %s", message))
+
                 list(
                     test = function(value) {
                         if (is.null(value) || is.na(value) || !is.numeric(value)) {
+                            print("Range test failed: invalid value type")
                             return(FALSE)
                         }
                         min_ok <- is.null(min) || value >= min
                         max_ok <- is.null(max) || value <= max
-                        min_ok && max_ok
+                        result <- min_ok && max_ok
+                        print(sprintf("Range test result: %s", result))
+                        result
                     },
                     message = message,
                     severity = severity
                 )
             },
-            custom = function(test_fn, message, severity = SEVERITY_LEVELS$ERROR) {
+            custom = function(test_fn,
+                              message,
+                              severity = SEVERITY_LEVELS$ERROR) {
+                print("Creating custom rule with message:") # Debug
+                print(message)
                 list(
                     test = test_fn,
                     message = message,

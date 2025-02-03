@@ -161,6 +161,22 @@ validate_config <- function(config) {
         validate_page_config(config, config$page_type)
     }
 
+    # Validate input types if present
+    if (!is.null(config$input_types)) {
+        for (type_name in names(config$input_types)) {
+            type_config <- config$input_types[[type_name]]
+            required_type_fields <- c("default_style", "multiple")
+            missing <- setdiff(required_type_fields, names(type_config))
+            if (length(missing) > 0) {
+                stop(sprintf(
+                    "Missing required fields for input type %s: %s",
+                    type_name,
+                    paste(missing, collapse = ", ")
+                ))
+            }
+        }
+    }
+
     TRUE
 }
 
@@ -251,6 +267,9 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
     # Load complete configuration for the page
     config <- get_page_complete_config(page_type)
 
+    # Get input type defaults
+    input_types <- config$input_types %||% list()
+
     # Get base selector configuration based on context
     selector_config <- if (page_type == "custom" && !is.null(group_num)) {
         if (selector_id %in% c("age_groups", "race_ethnicity", "biological_sex", "risk_factor")) {
@@ -280,6 +299,13 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
         print("Selectors:")
         print(names(config$selectors))
         stop(sprintf("No configuration found for selector: %s", selector_id))
+    }
+
+    # Merge with input type defaults if applicable
+    if (!is.null(selector_config$type) && !is.null(input_types[[selector_config$type]])) {
+        type_defaults <- input_types[[selector_config$type]]
+        selector_config$input_style <- selector_config$input_style %||% type_defaults$default_style
+        selector_config$multiple <- selector_config$multiple %||% type_defaults$multiple
     }
 
     # Generate ID with group number if provided
