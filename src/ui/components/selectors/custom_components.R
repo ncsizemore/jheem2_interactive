@@ -228,7 +228,6 @@ create_subgroup_panel <- function(group_num, config_or_suffix) {
 #' @param group_num Subgroup number
 #' @param suffix Page suffix (usually "custom")
 create_subgroup_characteristics <- function(group_num, suffix) {
-    # Debug print
     print(paste("Creating characteristics for group:", group_num, "suffix:", suffix))
 
     characteristics <- c("age_groups", "race_ethnicity", "biological_sex", "risk_factor")
@@ -239,16 +238,24 @@ create_subgroup_characteristics <- function(group_num, suffix) {
         lapply(characteristics, function(char_type) {
             config <- get_selector_config(char_type, suffix, group_num)
 
+            # Debug what labels we're getting
+            print("Label debug:")
+            print(str(config))
+            print(paste("Label:", config$label))
+
             tags$div(
                 class = paste0("characteristic-", char_type),
-                tags$label(config$ui$label),
-                checkboxGroupInput(
+                choicesSelectInput(
                     inputId = config$id,
-                    label = NULL,
-                    choices = setNames(
-                        sapply(config$options, `[[`, "id"),
-                        sapply(config$options, `[[`, "label")
-                    )
+                    label = config$label,
+                    choices = lapply(config$options, function(opt) {
+                        list(
+                            value = opt$id %||% opt$value %||% opt$label,
+                            label = opt$label
+                        )
+                    }),
+                    multiple = TRUE,
+                    placeholder = sprintf("Select %s", config$label)
                 )
             )
         })

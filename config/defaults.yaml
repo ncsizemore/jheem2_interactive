@@ -233,28 +233,32 @@ custom:
     panel_title_template: "Subgroup %d Characteristics:"
 
   demographics:
-    age_groups:
-      type: "checkbox"
-      label: "Age Group"
-      options:
-        all:
-          id: "all"
-          label: "Include All Age Groups"
-        13-24:
-          id: "13-24"
-          label: "13-24 years"
-        25-34:
-          id: "25-34"
-          label: "25-34 years"
-        35-44:
-          id: "35-44"
-          label: "35-44 years"
-        45-54:
-          id: "45-54"
-          label: "45-54 years"
-        55plus:
-          id: "55plus"
-          label: "55+ years"
+  age_groups:
+    type: "choices_select"
+    label: "Age Groups"
+    placeholder: "Select age groups..."
+    multiple: true
+    options:
+      all:
+        id: "all"
+        label: "All Ages"
+        value: "all"
+      "13-24":
+        id: "13-24"
+        label: "13-24 years"
+        value: "13-24"
+      25-34:
+        id: "25-34"
+        label: "25-34 years"
+      35-44:
+        id: "35-44"
+        label: "35-44 years"
+      45-54:
+        id: "45-54"
+        label: "45-54 years"
+      55plus:
+        id: "55plus"
+        label: "55+ years"
 
     race_ethnicity:
       type: "checkbox"

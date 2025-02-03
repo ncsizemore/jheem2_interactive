@@ -8,15 +8,19 @@ subgroups:
 
 demographics:
   age_groups:
-    type: "checkbox"
-    label: "Age Group"
+    type: "choices_select"
+    label: "Age Groups"
+    placeholder: "Select age groups..."
+    multiple: true
     options:
       all:
         id: "all"
-        label: "Include All Age Groups"
-      13-24:
+        label: "All Ages"
+        value: "all"
+      "13-24":
         id: "13-24"
         label: "13-24 years"
+        value: "13-24"
       25-34:
         id: "25-34"
         label: "25-34 years"

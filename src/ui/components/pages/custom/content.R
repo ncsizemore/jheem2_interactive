@@ -1,6 +1,10 @@
 #' Creates the custom intervention content
 #' @param config Page configuration
 create_custom_intervention_content <- function(config) {
+    print("Creating custom intervention content")
+    print("Config structure:")
+    str(config) # This will show us the full config structure
+
     tagList(
         # Location selector
         create_location_selector("custom"),

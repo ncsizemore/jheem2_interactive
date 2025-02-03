@@ -24,6 +24,8 @@
 @import 'components/feedback/errors.css';
 @import 'components/feedback/notifications.css';
 
+@import 'components/choices/choices.css';
+
 /* Color Schemes */
 @import 'color_schemes/theme_modern.css';
 

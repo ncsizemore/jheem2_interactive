@@ -104,33 +104,33 @@ validate_custom_inputs <- function(session, output, inputs, config) {
 #' @return TRUE if valid, FALSE if invalid
 validate_subgroup_demographics <- function(validation_boundary, inputs, group_num, config) {
     get_input_id <- function(field) {
-        paste0("int_", field, "_", group_num, "_custom")
+        paste0("demographic_", field, "_", group_num)
     }
 
     # Validate each demographic field
     for (field in names(config)) {
         field_config <- config[[field]]
         field_id <- get_input_id(field)
+        field_value <- inputs[[field_id]]
 
-        # Skip if not a checkbox type (handles potential future demographic types)
-        if (field_config$type != "checkbox") next
+        # If "all" is selected, skip other validations for this field
+        if ("all" %in% field_value) {
+            next
+        }
 
         valid <- validation_boundary$validate(
-            inputs[[field_id]],
+            field_value,
             list(
                 validation_boundary$rules$required(
                     sprintf(
-                        "Please select %s for subgroup %d",
+                        "Please select at least one %s for subgroup %d",
                         field_config$label,
                         group_num
                     )
                 ),
-                validation_boundary$rules$custom(
-                    test_fn = function(value) {
-                        all(value %in% names(field_config$options))
-                    },
-                    message = sprintf(
-                        "Invalid %s selection for subgroup %d",
+                validation_boundary$rules$not_empty(
+                    sprintf(
+                        "Please select at least one %s for subgroup %d",
                         field_config$label,
                         group_num
                     )
