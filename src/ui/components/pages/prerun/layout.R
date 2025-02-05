@@ -52,7 +52,6 @@ create_prerun_layout <- function(config = get_page_complete_config("prerun")) {
             tags$div(
                 class = "visualization-container",
                 style = "position: relative;",
-
                 # Display toggle
                 tags$div(
                     class = "display-toggle mb-4 inline-flex gap-2",

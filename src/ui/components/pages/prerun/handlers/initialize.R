@@ -13,14 +13,18 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
 
     # Create managers
     vis_manager <- create_visualization_manager(session, "prerun", ns("visualization"))
+
+    # Initialize handlers
+    initialize_prerun_visualization_handlers(input, output, session, vis_manager)
+
+    # Create managers
     validation_manager <- create_validation_manager(session, "prerun", ns("validation"))
 
     # Store validation manager in session for access by other functions
     session$userData$validation_manager <- validation_manager
 
-    # Initialize handlers
-    initialize_visualization_handlers(input, output, session, vis_manager)
-    initialize_intervention_handlers(input, output, session, validation_manager, config)
+
+    # initialize_intervention_handlers(input, output, session, validation_manager, config)
 
     # Validate location selection
     validation_boundary <- create_validation_boundary(

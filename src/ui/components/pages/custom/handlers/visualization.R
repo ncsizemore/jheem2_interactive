@@ -1,11 +1,11 @@
+# src/ui/components/pages/custom/handlers/visualization.R
+
 #' Initialize visualization toggle handlers for custom page
 #' @param input Shiny session object
 #' @param output Shiny output object
 #' @param session Shiny session object
 #' @param vis_manager Visualization manager instance
-initialize_visualization_handlers <- function(input, output, session, vis_manager) {
-    ns <- session$ns
-
+initialize_custom_visualization_handlers <- function(input, output, session, vis_manager) {
     # Handle plot toggle
     observeEvent(input[["custom-toggle_plot"]],
         {

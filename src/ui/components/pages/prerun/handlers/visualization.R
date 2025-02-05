@@ -5,7 +5,7 @@
 #' @param output Shiny output object
 #' @param session Shiny session object
 #' @param vis_manager Visualization manager instance
-initialize_visualization_handlers <- function(input, output, session, vis_manager) {
+initialize_prerun_visualization_handlers <- function(input, output, session, vis_manager) {
     # Handle plot toggle
     observeEvent(input[["prerun-toggle_plot"]],
         {

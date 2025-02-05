@@ -144,3 +144,100 @@ test_that("create_intervention handles settings from UI collector", {
     # - Values should be correctly transformed
     # - Dates should be numeric
 })
+
+test_that("create_custom_intervention handles multiple subgroups", {
+    # Mock settings with two subgroups
+    settings <- list(
+        location = "C.12580",
+        subgroups = list(
+            # First subgroup: Young MSM with PrEP
+            list(
+                demographics = list(
+                    age_groups = c("13-24", "25-34"),
+                    race_ethnicity = NULL,
+                    biological_sex = "male",
+                    risk_factor = "msm"
+                ),
+                interventions = list(
+                    dates = list(
+                        start = "2023",
+                        end = "2025"
+                    ),
+                    prep = list(
+                        enabled = TRUE,
+                        coverage = 25
+                    ),
+                    testing = list(
+                        enabled = FALSE
+                    ),
+                    suppression = list(
+                        enabled = FALSE
+                    )
+                )
+            ),
+            # Second subgroup: All races with testing
+            list(
+                demographics = list(
+                    age_groups = NULL,
+                    race_ethnicity = c("black", "hispanic", "other"),
+                    biological_sex = NULL,
+                    risk_factor = NULL
+                ),
+                interventions = list(
+                    dates = list(
+                        start = "2023",
+                        end = "2025"
+                    ),
+                    prep = list(
+                        enabled = FALSE
+                    ),
+                    testing = list(
+                        enabled = TRUE,
+                        frequency = 2
+                    ),
+                    suppression = list(
+                        enabled = FALSE
+                    )
+                )
+            )
+        )
+    )
+
+    # Create intervention
+    intervention <- create_custom_intervention(settings)
+
+    # Verify intervention was created
+    expect_false(is.null(intervention))
+
+    # Verify it's not a null intervention
+    expect_false(identical(intervention, jheem2:::get.null.intervention()))
+
+    # TODO: Add more specific checks about the combined intervention
+    # These would depend on the exact behavior of union.interventions
+})
+
+test_that("create_intervention handles session IDs", {
+    settings <- list(
+        location = "baltimore",
+        subgroups = list(
+            list(
+                demographics = list(
+                    age_groups = c("13-24"),
+                    race_ethnicity = c("black")
+                ),
+                interventions = list(
+                    dates = list(start = "2025", end = "2030"),
+                    testing = list(enabled = TRUE, frequency = 2)
+                )
+            )
+        )
+    )
+
+    # Test with session ID
+    intervention <- create_intervention(settings, mode = "custom", session_id = "test123")
+    expect_match(intervention$code, "^c\\.test123\\.")
+
+    # Test without session ID
+    intervention <- create_intervention(settings, mode = "custom")
+    expect_match(intervention$code, "^c\\.[0-9]")
+})

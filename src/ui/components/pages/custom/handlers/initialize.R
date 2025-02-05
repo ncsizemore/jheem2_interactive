@@ -15,7 +15,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     vis_manager <- create_visualization_manager(session, "custom", ns("visualization"))
 
     # Initialize visualization handlers
-    initialize_visualization_handlers(input, output, session, vis_manager)
+    initialize_custom_visualization_handlers(input, output, session, vis_manager)
 
     # Create managers
     validation_manager <- create_validation_manager(session, "custom", ns("validation"))

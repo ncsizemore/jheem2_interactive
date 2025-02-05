@@ -12,10 +12,25 @@ get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
     print("Settings:")
     str(settings)
 
-    # For now, use a fixed simset key for testing
-    simset_key <- "init.pop.ehe_simset_2024-12-16_C.12580"
-    simset <- load_simset(simset_key)
+    # Initialize provider
+    provider <- LocalProvider$new("simulations")
 
-    print(paste("Loaded simulation data of class:", class(simset)[1]))
-    return(simset)
+    # For development/testing, use test simset
+    if (is.null(settings) || is.null(settings$location)) {
+        return(provider$load_test_simset())
+    }
+
+    # TODO: Get these from config when implemented
+    version <- "v1"
+    calibration <- "baseline"
+
+    simset_key <- paste(
+        settings$location,
+        version,
+        calibration,
+        sep = "_"
+    )
+
+    # Load through provider
+    provider$load_simset(simset_key)
 }
