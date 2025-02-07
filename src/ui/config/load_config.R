@@ -294,3 +294,18 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
 
     selector_config
 }
+
+#' Get model dimension mapping
+#' @param dimension Dimension name (age, sex, risk, race)
+#' @param ui_value UI value to map
+#' @return Model value
+get_model_dimension_value <- function(dimension, ui_value) {
+    config <- get_defaults_config()
+    mappings <- config$model_dimensions[[dimension]]$mappings
+
+    if (is.null(mappings[[ui_value]])) {
+        stop(sprintf("No mapping found for %s value: %s", dimension, ui_value))
+    }
+
+    mappings[[ui_value]]
+}

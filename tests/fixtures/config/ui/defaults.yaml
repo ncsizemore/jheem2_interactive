@@ -531,6 +531,7 @@ model_dimensions:
       "msm": "msm"
       "msm_active_idu": "msm_active_IDU"
       "msm_prior_idu": "msm_prior_IDU"
+      "never_idu": "never_IDU"
   
   race:
     ui_field: "race_ethnicity"
@@ -538,3 +539,4 @@ model_dimensions:
       "black": "black"
       "hispanic": "hispanic"
       "other": "other"
+

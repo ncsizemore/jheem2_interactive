@@ -5,6 +5,10 @@
 #' @return jheem intervention object
 create_intervention <- function(settings, mode = c("prerun", "custom"), session_id = NULL) {
     mode <- match.arg(mode)
+    print("=== create_intervention ===")
+    print(paste("Mode:", mode))
+    print("Settings:")
+    str(settings)
 
     if (mode == "custom") {
         create_custom_intervention(settings, session_id)
@@ -18,6 +22,9 @@ create_intervention <- function(settings, mode = c("prerun", "custom"), session_
 #' @param session_id Optional session identifier
 #' @return jheem intervention object
 create_custom_intervention <- function(settings, session_id = NULL) {
+    print("Creating custom intervention with settings:")
+    str(settings)
+
     # Extract location and subgroups
     location <- settings$location
     subgroups <- settings$subgroups
@@ -39,6 +46,10 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         return(jheem2:::get.null.intervention())
     }
 
+    # Get dimension configurations
+    config <- get_defaults_config()
+    dimensions <- names(config$model_dimensions)
+
     # Create an intervention for each subgroup
     subgroup_interventions <- list()
 
@@ -48,20 +59,30 @@ create_custom_intervention <- function(settings, session_id = NULL) {
             next
         }
 
-        # Filter out NULL demographics and create name components
+        # Map UI demographic values to model values for each dimension
         demographics <- list()
         name_parts <- c()
 
-        for (dim in names(subgroup$demographics)) {
-            vals <- subgroup$demographics[[dim]]
-            if (!is.null(vals) && length(vals) > 0) {
-                demographics[[dim]] <- vals
+        for (dim in dimensions) {
+            # Get UI field name from config
+            ui_field <- config$model_dimensions[[dim]]$ui_field
+
+            # Get values if they exist
+            ui_values <- subgroup$demographics[[ui_field]]
+            if (!is.null(ui_values) && length(ui_values) > 0) {
+                # Map each UI value to model value
+                model_values <- sapply(ui_values, function(val) {
+                    get_model_dimension_value(dim, val)
+                })
+                demographics[[dim]] <- model_values
+
+                # Add to name parts
                 name_parts <- c(
                     name_parts,
-                    if (length(vals) > 1) {
-                        paste0(vals[1], ".", length(vals))
+                    if (length(model_values) > 1) {
+                        paste0(model_values[1], ".", length(model_values))
                     } else {
-                        vals[1]
+                        model_values[1]
                     }
                 )
             }
@@ -72,14 +93,14 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         if (nchar(target_name) > 25) {
             target_name <- paste0(substr(target_name, 1, 22), "...")
         }
+        # Replace underscores with dashes in the name only
+        target_name <- gsub("_", "-", target_name)
 
-        # Create target population with non-NULL demographics
+        # Create target population with mapped demographics
         target_args <- list(name = target_name)
-        if (length(demographics$age_groups) > 0) target_args$age <- demographics$age_groups
-        if (length(demographics$race_ethnicity) > 0) target_args$race <- demographics$race_ethnicity
-        if (length(demographics$biological_sex) > 0) target_args$sex <- demographics$biological_sex
-        if (length(demographics$risk_factor) > 0) target_args$risk <- demographics$risk_factor
-
+        for (dim in names(demographics)) {
+            target_args[[dim]] <- demographics[[dim]]
+        }
         target_pop <- do.call(create.target.population, target_args)
 
         # Create effects for this subgroup
@@ -100,7 +121,7 @@ create_custom_intervention <- function(settings, session_id = NULL) {
 
         # Create intervention for this subgroup with unique code
         if (length(subgroup_effects) > 0) {
-            subgroup_code <- paste0(intervention_code_base, ".", length(subgroup_interventions)) # Just use number
+            subgroup_code <- paste0(intervention_code_base, ".", length(subgroup_interventions))
             subgroup_interventions[[length(subgroup_interventions) + 1]] <-
                 create.intervention(target_pop, subgroup_effects,
                     code = subgroup_code,

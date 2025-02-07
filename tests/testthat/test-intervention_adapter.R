@@ -6,16 +6,29 @@ source("../../src/adapters/interventions/model_effects.R")
 source("../../src/adapters/intervention_adapter.R")
 
 test_that("create_custom_intervention handles valid settings", {
+    # Override just get_model_dimension_value
+    assign("get_model_dimension_value", function(dimension, ui_value) {
+        print(paste("TEST version of get_model_dimension_value called with:", dimension, ui_value))
+        config <- get_defaults_config()
+        mappings <- config$model_dimensions[[dimension]]$mappings
+
+        if (is.null(mappings[[ui_value]])) {
+            stop(sprintf("No mapping found for %s value: %s", dimension, ui_value))
+        }
+
+        mappings[[ui_value]]
+    }, envir = .GlobalEnv)
+
     # Mock settings as they would come from collect_custom_settings
     settings <- list(
-        location = "baltimore",
+        location = "C.12580",
         subgroups = list(
             list(
                 demographics = list(
                     age_groups = c("13-24", "25-34"),
                     race_ethnicity = c("black", "hispanic"),
                     biological_sex = c("male"),
-                    risk_factor = c("msm", "pwid")
+                    risk_factor = c("msm", "active_idu")
                 ),
                 interventions = list(
                     dates = list(
@@ -86,7 +99,7 @@ test_that("create_intervention handles settings from UI collector", {
                     age_groups = c("13-24", "25-34"),
                     race_ethnicity = c("black", "hispanic"),
                     biological_sex = c("male"),
-                    risk_factor = c("msm", "pwid")
+                    risk_factor = c("msm", "active_idu")
                 ),
                 interventions = list(
                     dates = list(
@@ -111,7 +124,7 @@ test_that("create_intervention handles settings from UI collector", {
             list(
                 demographics = list(
                     age_groups = c("35-44"),
-                    race_ethnicity = c("white"),
+                    race_ethnicity = c("other"),
                     biological_sex = c("female"),
                     risk_factor = c("heterosexual")
                 ),

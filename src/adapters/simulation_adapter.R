@@ -8,7 +8,8 @@ source("src/ui/formatters/table_formatter.R")
 #' @return jheem simulation set
 get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
     mode <- match.arg(mode)
-    print(paste("Getting simulation data for mode:", mode))
+    print("=== get_simulation_data ===")
+    print(paste("Mode:", mode))
     print("Settings:")
     str(settings)
 
@@ -31,6 +32,18 @@ get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
         sep = "_"
     )
 
-    # Load through provider
-    provider$load_simset(simset_key)
+    # Load base simset
+    simset <- provider$load_simset(simset_key)
+
+    # For custom mode, run intervention
+    if (mode == "custom") {
+        print("Creating intervention...")
+        intervention <- create_intervention(settings, mode)
+        print("Created intervention:")
+        str(intervention)
+        runner <- SimulationRunner$new(provider)
+        simset <- runner$run_intervention(intervention, simset)
+    }
+
+    simset
 }

@@ -198,13 +198,22 @@ collect_subgroup_settings <- function(input, group_num) {
                 end = isolate(input[[paste0("int_intervention_dates_", group_num, "_custom_end")]])
             ),
             testing = if (isolate(input[[paste0(intervention_config$testing$id, "_enabled")]])) {
-                list(frequency = isolate(input[[paste0(intervention_config$testing$id, "_frequency")]]))
+                list(
+                    enabled = TRUE,
+                    frequency = isolate(input[[paste0(intervention_config$testing$id, "_frequency")]])
+                )
             },
             prep = if (isolate(input[[paste0(intervention_config$prep$id, "_enabled")]])) {
-                list(coverage = isolate(input[[paste0(intervention_config$prep$id, "_coverage")]]))
+                list(
+                    enabled = TRUE,
+                    coverage = isolate(input[[paste0(intervention_config$prep$id, "_coverage")]])
+                )
             },
             suppression = if (isolate(input[[paste0(intervention_config$suppression$id, "_enabled")]])) {
-                list(proportion = isolate(input[[paste0(intervention_config$suppression$id, "_proportion")]]))
+                list(
+                    enabled = TRUE,
+                    proportion = isolate(input[[paste0(intervention_config$suppression$id, "_proportion")]])
+                )
             }
         )
     )
