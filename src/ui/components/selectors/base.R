@@ -22,7 +22,9 @@ wrap_in_conditional <- function(element, condition) {
 create_selector <- function(selector_id, page_type, condition = NULL) {
     # Load configuration
     config <- get_page_complete_config(page_type)
-    selector_config <- config$selectors[[selector_id]]
+
+    # Try to find selector config in either selectors or directly in config
+    selector_config <- config$selectors[[selector_id]] %||% config[[selector_id]]
 
     if (is.null(selector_config)) {
         stop(sprintf("No configuration found for selector: %s", selector_id))

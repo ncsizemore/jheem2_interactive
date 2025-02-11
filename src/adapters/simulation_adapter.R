@@ -1,4 +1,5 @@
 source("src/data/loader.R")
+source("src/core/simulation/runner.R")
 source("src/core/simulation/results.R")
 source("src/ui/formatters/table_formatter.R")
 

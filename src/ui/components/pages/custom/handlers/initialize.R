@@ -280,19 +280,14 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     observeEvent(input$generate_custom, {
         print("Generate button pressed (custom)")
 
-        # Check all validations
-        validation_results <- validation_manager$is_valid()
-
-        if (validation_results) {
+        if (validation_manager$is_valid()) {
             # Get subgroup count and settings
             subgroup_count <- isolate(input$subgroups_count_custom)
             settings <- collect_custom_settings(input, subgroup_count)
 
-            # Update visualization state
-            updateTextInput(session, ns("custom-visualization_state"), value = "visible")
-
-            # Call update_display with settings and simset
-            update_display(session, input, output, "custom", settings, plot_state)
+            # Update visualization state and display
+            vis_manager$set_visibility("visible")
+            vis_manager$update_display(input, output, settings)
 
             showNotification(
                 "Custom projections starting...",
@@ -305,4 +300,8 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             )
         }
     })
+
+    # Initialize display handlers
+    initialize_display_handlers(session, input, output, vis_manager, "custom")
+    initialize_display_setup(session, input)
 }

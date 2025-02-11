@@ -18,6 +18,14 @@ test_that("create_custom_intervention handles valid settings", {
 
         mappings[[ui_value]]
     }, envir = .GlobalEnv)
+  
+    assign("get_defaults_config", function() {
+      print("TEST version of get_defaults_config called!")
+      root <- get_project_root()
+      config_path <- file.path(root, "tests", "fixtures", "config", "ui", "defaults.yaml")
+      print(paste("Loading config from:", config_path))
+      yaml::read_yaml(config_path)
+    }, envir = .GlobalEnv)
 
     # Mock settings as they would come from collect_custom_settings
     settings <- list(

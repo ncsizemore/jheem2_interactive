@@ -26,6 +26,16 @@ create_control_section <- function(type, config, suffix, ns = NULL) {
     input_id <- if (!is.null(ns)) ns(base_id) else base_id
     print(paste("Generated input ID:", input_id))
 
+    # Transform options for choices-select
+    transform_options <- function(options) {
+        lapply(options, function(opt) {
+            list(
+                value = opt$id,
+                label = opt$label
+            )
+        })
+    }
+
     tags$div(
         class = paste("plot-control-section", type),
 
@@ -40,7 +50,8 @@ create_control_section <- function(type, config, suffix, ns = NULL) {
                 choices = setNames(
                     sapply(config$options, `[[`, "id"),
                     sapply(config$options, `[[`, "label")
-                )
+                ),
+                selected = config$defaults
             ),
             "radio" = radioButtons(
                 inputId = input_id,
@@ -48,7 +59,16 @@ create_control_section <- function(type, config, suffix, ns = NULL) {
                 choices = setNames(
                     sapply(config$options, `[[`, "id"),
                     sapply(config$options, `[[`, "label")
-                )
+                ),
+                selected = config$defaults
+            ),
+            "choices-select" = choicesSelectInput(
+                inputId = input_id,
+                label = NULL,
+                choices = transform_options(config$options),
+                selected = config$defaults,
+                multiple = type %in% c("outcomes", "stratification"), # Allow multiple for both
+                placeholder = paste("Select", tolower(config$label))
             ),
             stop(sprintf("Unknown control type: %s", config$type))
         )

@@ -68,8 +68,12 @@ get_page_complete_config <- function(page) {
     defaults_config <- get_defaults_config()
     page_config <- get_page_config(page)
 
+    # Load component configs
+    controls_config <- get_component_config("controls")
+
     # Merge configurations
     config <- merge_configs(base_config, defaults_config)
+    config <- merge_configs(config, controls_config)
     config <- merge_configs(config, page_config)
 
     # Add page type

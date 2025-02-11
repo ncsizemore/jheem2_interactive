@@ -21,6 +21,7 @@ source("src/ui/state/validation.R")
 
 # Source data layer components
 source("src/adapters/simulation_adapter.R")
+source("src/adapters/intervention_adapter.R")
 
 # Source display components
 source("src/ui/components/common/display/plot_panel.R")
@@ -42,11 +43,10 @@ source("src/ui/components/pages/custom/layout.R")
 # Source server handlers
 source("src/ui/components/pages/prerun/index.R")
 source("src/ui/components/pages/custom/index.R")
-source("server/display_utils.R")
 
 # Source other required files
 source("helpers/display_size.R")
-source("server/display_event_handlers.R")
+source("src/ui/components/common/display/handlers.R")
 source("server/contact_handlers.R")
 
 # Source page components
@@ -264,10 +264,10 @@ server <- function(input, output, session) {
     })
   )
 
-  # Add display event handlers with plot_state
-  add.display.event.handlers(session, input, output, plot_state)
+  # Initialize display setup (replaces add.display.event.handlers)
+  initialize_display_setup(session, input)
 
-  # Initialize page handlers
+  # Initialize page handlers (these now handle their own display events)
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
 

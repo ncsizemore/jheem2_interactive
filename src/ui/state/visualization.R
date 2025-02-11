@@ -1,5 +1,7 @@
 # src/ui/state/visualization.R
 
+source("src/ui/components/common/display/button_control.R")
+
 #' Create a visualization state manager
 #' @param session Shiny session object
 #' @param page_id Character: page identifier
@@ -9,138 +11,134 @@ create_visualization_manager <- function(session, page_id, id) {
     ns <- session$ns
     store <- get_store()
 
+    # Define set_display first so it can be used by other functions
+    set_display <- function(input, output, transformed_data) {
+        # Use the full page_id prefix for input IDs
+        vis_state_id <- paste0(page_id, "-visualization_state")
+        display_type_id <- paste0(page_id, "-display_type")
+        plot_status_id <- paste0(page_id, "-plot_status")
+
+        # 1. Update store state
+        store$update_visualization_state(
+            page_id,
+            visibility = "visible",
+            display_type = "plot",
+            plot_status = "ready"
+        )
+
+        # 2. Update UI inputs with full prefixed IDs
+        updateTextInput(session, vis_state_id, value = "visible")
+        updateTextInput(session, display_type_id, value = "plot")
+        updateTextInput(session, plot_status_id, value = "ready")
+
+        # 3. Get display size
+        display_size <- get.display.size(input, page_id)
+
+        # 4. Update plot output
+        output[[ns("mainPlot")]] <- renderPlot({
+            # Validate outcomes before plotting
+            if (is.null(transformed_data$plot$control.settings$outcomes) ||
+                any(is.na(transformed_data$plot$control.settings$outcomes)) ||
+                anyDuplicated(transformed_data$plot$control.settings$outcomes)) {
+                stop("Invalid outcomes configuration. Please select valid outcomes without duplicates.")
+            }
+
+            transformed_data$plot
+        })
+
+        # 5. Update buttons state
+        sync_buttons_to_plot(input, list(
+            custom = if (page_id == "custom") transformed_data else NULL,
+            prerun = if (page_id == "prerun") transformed_data else NULL
+        ))
+    }
+
     list(
-        # Update visualization state
         set_visibility = function(visibility) {
             store$update_visualization_state(
                 page_id,
                 visibility = visibility
             )
-
-            # Maintain compatibility with current implementation
             updateTextInput(
                 session,
-                ns("visualization_state"),
+                paste0(page_id, "-visualization_state"),
                 value = visibility
             )
         },
-
-        # Update plot status
         set_plot_status = function(status) {
             store$update_visualization_state(
                 page_id,
                 plot_status = status
             )
-
-            # Maintain compatibility with current implementation
             updateTextInput(
                 session,
-                ns("plot_status"),
+                paste0(page_id, "-plot_status"),
                 value = status
             )
         },
-
-        # Set display type (new function)
         set_display_type = function(type) {
             store$update_visualization_state(
                 page_id,
                 display_type = type
             )
-
-            # Update hidden input for display type
             updateTextInput(
                 session,
-                ns("display_type"),
+                paste0(page_id, "-display_type"),
                 value = type
             )
         },
+        # Add back the update_display function that handles simulation
+        update_display = function(input, output, intervention_settings) {
+            print("=== update_display called ===")
 
-        # Get current display type (new function)
-        get_display_type = function() {
-            state <- store$get_panel_state(page_id)
-            state$visualization$display_type
-        },
+            # Get current control state from store
+            control_state <- store$get_panel_state(page_id)$controls
+            print("Control state:")
+            str(control_state)
 
-        # Set error state
-        set_error = function(message) {
+            # Create settings structure to match existing format
+            settings <- list(
+                outcomes = control_state$outcomes,
+                facet.by = control_state$facet_by,
+                summary.type = control_state$summary_type
+            )
+
+            # Transform data using control state
+            print("Getting simulation data...")
+            simset <- get_simulation_data(intervention_settings, mode = page_id)
+            print("Transforming simulation data...")
+            transformed <- transform_simulation_data(simset, settings)
+            print("Transformed data:")
+            str(transformed)
+
+            # Create plot-and-table structure to match existing expectations
+            new_plot_and_table <- list(
+                plot = transformed$plot,
+                main.settings = list(),
+                control.settings = settings,
+                int.settings = intervention_settings
+            )
+
+            # Update visualization state
             store$update_visualization_state(
                 page_id,
-                plot_status = "error",
-                error_message = message
+                visibility = "visible",
+                plot_status = "ready"
             )
 
-            # Maintain compatibility with current implementation
-            updateTextInput(
-                session,
-                ns("plot_status"),
-                value = "error"
-            )
-            updateTextInput(
-                session,
-                ns("error_message"),
-                value = message
-            )
+            # Update display using the set_display function defined above
+            print("Calling set_display...")
+            set_display(input, output, new_plot_and_table)
         },
-
-        # Clear error state
-        clear_error = function() {
-            store$update_visualization_state(
-                page_id,
-                plot_status = "ready",
-                error_message = ""
-            )
-
-            # Maintain compatibility with current implementation
-            updateTextInput(
-                session,
-                ns("plot_status"),
-                value = "ready"
-            )
-            updateTextInput(
-                session,
-                ns("error_message"),
-                value = ""
-            )
-        },
-
-        # Reset all states
         reset = function() {
             store$update_visualization_state(
                 page_id,
                 visibility = "hidden",
                 plot_status = "ready",
-                display_type = "plot", # Reset to default plot view
-                error_message = ""
-            )
-
-            # Maintain compatibility with current implementation
-            updateTextInput(
-                session,
-                ns("visualization_state"),
-                value = "hidden"
-            )
-            updateTextInput(
-                session,
-                ns("plot_status"),
-                value = "ready"
-            )
-            updateTextInput(
-                session,
-                ns("display_type"),
-                value = "plot"
-            )
-            updateTextInput(
-                session,
-                ns("error_message"),
-                value = ""
+                display_type = "plot"
             )
         },
-
-        # Get current visualization state
-        get_state = function() {
-            panel_state <- store$get_panel_state(page_id)
-            panel_state$visualization
-        }
+        set_display = set_display
     )
 }
 

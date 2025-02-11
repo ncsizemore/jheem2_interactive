@@ -26,8 +26,16 @@ create_visualization_state <- function(
 #' @return List with control state properties
 create_control_state <- function(outcomes = NULL,
                                  facet_by = NULL,
-                                 summary_type = "mean.and.interval" # Default value
-) {
+                                 summary_type = "mean.and.interval") {
+    # Get defaults from config if not provided
+    config <- get_component_config("controls")
+    if (is.null(outcomes)) {
+        outcomes <- config$plot_controls$outcomes$defaults
+    }
+    if (is.null(facet_by)) {
+        facet_by <- config$plot_controls$stratification$defaults
+    }
+
     validate_control_state(list(
         outcomes = outcomes,
         facet.by = facet_by,

@@ -8,6 +8,7 @@
 #' @return List of handler functions and reactive sources
 create_control_manager <- function(session, page_id, id, initial_settings = NULL) {
     store <- get_store()
+    ns <- session$ns
 
     # Initialize with strict structure defaults
     default_settings <- list(
@@ -31,6 +32,20 @@ create_control_manager <- function(session, page_id, id, initial_settings = NULL
                 )
                 settings_state(processed_settings)
                 store$update_control_state(page_id, processed_settings)
+
+                # Update UI to reflect initial settings
+                if (!is.null(processed_settings$outcomes)) {
+                    updateSelectInput(session,
+                        ns("outcomes"),
+                        selected = processed_settings$outcomes
+                    )
+                }
+                if (!is.null(processed_settings$facet.by)) {
+                    updateSelectInput(session,
+                        ns("stratification"),
+                        selected = processed_settings$facet.by
+                    )
+                }
             }
         }
     })

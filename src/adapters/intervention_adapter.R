@@ -1,3 +1,5 @@
+source("src/adapters/interventions/model_effects.R")
+
 #' Create an intervention from UI settings
 #' @param settings List of settings from UI
 #' @param mode Either "prerun" or "custom"

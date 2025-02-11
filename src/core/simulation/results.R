@@ -23,6 +23,11 @@ transform_simulation_data <- function(simset, settings) {
         stop("outcomes must be specified in settings")
     }
 
+    # Add default summary type if not specified
+    if (is.null(settings$summary.type)) {
+        settings$summary.type <- "mean.and.interval"
+    }
+
     # Get raw plot data using prepare.plot
     plot_data <- prepare.plot(
         simset.list = list(simset = simset),

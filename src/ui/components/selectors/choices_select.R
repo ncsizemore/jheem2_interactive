@@ -12,11 +12,12 @@ choicesSelectInput <- function(inputId,
                                multiple = FALSE,
                                placeholder = NULL) {
     # Print debug info
-    print(sprintf("Creating choices select: %s", inputId))
-    print("Inputs:")
-    print(paste("inputId:", inputId))
-    print(paste("multiple:", multiple))
-    print(paste("placeholder:", placeholder))
+    print("\n=== Creating Choices Select ===")
+    print(paste("Input ID:", inputId))
+    print("Selected values:")
+    str(selected)
+    print("Choices:")
+    str(choices)
 
     # Create select element
     select_tag <- tags$select(
@@ -25,12 +26,16 @@ choicesSelectInput <- function(inputId,
         multiple = if (multiple) "multiple" else NULL
     )
 
-    # Add options
+    # Add options with selected state
     for (choice in choices) {
+        is_selected <- !is.null(selected) && choice$value %in% selected
+        print(sprintf("Option: %s, Selected: %s", choice$value, is_selected))
+
         select_tag <- tagAppendChild(
             select_tag,
             tags$option(
                 value = choice$value,
+                selected = if (is_selected) "selected" else NULL,
                 choice$label
             )
         )
@@ -48,9 +53,6 @@ choicesSelectInput <- function(inputId,
         ),
         closing = "});"
     )
-
-    print("Script parts:")
-    str(script_parts)
 
     # Combine script parts
     init_script <- paste(
@@ -71,9 +73,6 @@ choicesSelectInput <- function(inputId,
         select_tag,
         tags$script(HTML(init_script))
     )
-
-    print("Container created:")
-    print(container)
 
     container
 }

@@ -24,7 +24,7 @@ test_that("full simulation flow works with test data", {
     initialize_provider("local", root_dir = test_dir)
 
     # Load simset and inspect specification
-    simset <- load_simset("C.12580_v1_baseline")
+    simset <- load_simset("C.33100_v1_baseline")
     spec_metadata <- simset$jheem.kernel$specification.metadata
 
     # Debug: Print available dimension values
@@ -69,14 +69,14 @@ test_that("full simulation flow works with test data", {
     }, envir = .GlobalEnv)
 
     # Debug: Check file existence
-    test_file <- file.path(test_dir, "C.12580_v1_baseline.Rdata")
+    test_file <- file.path(test_dir, "C.33100_v1_baseline.Rdata")
 
     print(paste("Test directory:", test_dir))
     print(paste("Test file exists:", file.exists(test_file)))
 
     # Create test settings with correct model values
     settings <- list(
-        location = "C.12580",
+        location = "C.33100",
         subgroups = list(
             list(
                 demographics = list(
@@ -113,7 +113,7 @@ test_that("full simulation flow works with test data", {
 test_that("custom intervention UI flow produces modified results", {
     # 1. Mock UI settings (using our working test settings)
     settings <- list(
-        location = "C.12580",
+        location = "C.33100",
         subgroups = list(
             list(
                 demographics = list(
@@ -141,7 +141,7 @@ test_that("custom intervention UI flow produces modified results", {
     intervention <- create_intervention(settings, "custom")
 
     # Load and run simulation
-    simset <- load_simset("C.12580_v1_baseline")
+    simset <- load_simset("C.33100_v1_baseline")
     runner <- SimulationRunner$new(.provider)
     results <- runner$run_intervention(intervention, simset)
 

@@ -42,11 +42,3 @@ theme:
     - "js/layout/panel-controls.js"
     - "js/interactions/setup_tooltips.js"
 
-# Cache configuration
-caching:
-  cache1:
-    max_size: 1000000000  # 1GB
-    evict_strategy: "lru"
-  cache2:
-    max_size: 1000000000  # 1GB
-    evict_strategy: "lru"

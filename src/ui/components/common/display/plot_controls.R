@@ -1,51 +1,10 @@
 # src/ui/components/common/display/plot_controls.R
 
-#' Create a plot control panel
-#' @param suffix Page suffix (prerun or custom)
-#' @return Shiny UI element containing plot controls
-create_plot_control_panel <- function(suffix) {
-  # Get control settings from config
-  config <- get_component_config("controls")
-  controls <- config$plot_controls
-
-  tags$div(
-    class = "controls controls_narrow",
-
-    # Outcomes selection
-    checkboxGroupInput(
-      inputId = paste0("outcomes_", suffix),
-      label = "Outcomes",
-      choiceValues = controls$outcomes$values,
-      choiceNames = controls$outcomes$names,
-      selected = controls$outcomes$defaults
-    ),
-
-    # Faceting selection
-    radioButtons(
-      inputId = paste0("facet_by_", suffix),
-      label = "What to Facet By",
-      choiceValues = controls$facet_by$values,
-      choiceNames = controls$facet_by$names,
-      selected = controls$facet_by$default
-    ),
-
-    # Summary type selection
-    radioButtons(
-      inputId = paste0("summary_type_", suffix),
-      label = "Summary Type",
-      choiceValues = controls$summary_type$values,
-      choiceNames = controls$summary_type$names,
-      selected = controls$summary_type$default
-    )
-  )
-}
-
 #' Get current plot control settings
 #' @param input Shiny input object
 #' @param suffix Page suffix (prerun or custom)
 #' @return List of plot control settings
 get_control_settings <- function(input, suffix) {
-  # Get control settings from config
   config <- get_component_config("controls")
   controls <- config$plot_controls
 
@@ -61,13 +20,12 @@ get_control_settings <- function(input, suffix) {
     is.null(input[[paste0("facet_by_", suffix)]]) ||
     is.null(input[[paste0("summary_type_", suffix)]])) {
     return(list(
-      outcomes = controls$outcomes$defaults,
-      facet.by = NULL, # Default to no faceting
-      summary.type = controls$summary_type$default
+      outcomes = sapply(head(controls$outcomes$options, 2), `[[`, "id"),
+      facet.by = NULL,
+      summary.type = controls$display$options$mean$id
     ))
   }
 
-  # Regular settings collection if inputs exist
   list(
     outcomes = get_selected_outcomes(input, suffix),
     facet.by = get_selected_facet_by(input, suffix),
@@ -80,10 +38,10 @@ get_control_settings <- function(input, suffix) {
 #' @param suffix Page suffix
 #' @return Vector of selected outcomes
 get_selected_outcomes <- function(input, suffix) {
-  config <- get_component_config("controls")
   selected <- input[[paste0("outcomes_", suffix)]]
   if (is.null(selected)) {
-    return(config$plot_controls$outcomes$defaults)
+    config <- get_component_config("controls")
+    return(sapply(head(config$plot_controls$outcomes$options, 2), `[[`, "id"))
   }
   selected
 }
@@ -94,7 +52,7 @@ get_selected_outcomes <- function(input, suffix) {
 #' @return Selected faceting option or NULL
 get_selected_facet_by <- function(input, suffix) {
   selected <- input[[paste0("facet_by_", suffix)]]
-  if (is.null(selected) || selected == "none") {
+  if (is.null(selected) || selected == "") {
     return(NULL)
   }
   selected
@@ -108,7 +66,7 @@ get_selected_summary_type <- function(input, suffix) {
   config <- get_component_config("controls")
   selected <- input[[paste0("summary_type_", suffix)]]
   if (is.null(selected)) {
-    return(config$plot_controls$summary_type$default)
+    return(config$plot_controls$display$options$mean$id)
   }
   selected
 }

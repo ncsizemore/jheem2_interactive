@@ -23,6 +23,9 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
     # Store validation manager in session for access by other functions
     session$userData$validation_manager <- validation_manager
 
+    # Initialize display handlers
+    initialize_display_handlers(session, input, output, vis_manager, "prerun")
+    initialize_display_setup(session, input)
 
     # initialize_intervention_handlers(input, output, session, validation_manager, config)
 
@@ -70,10 +73,10 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
             print(settings)
 
             print("3. Updating visualization state...")
-            updateTextInput(session, session$ns("prerun-visualization_state"), value = "visible")
+            vis_manager$set_visibility("visible")
 
             print("4. Calling update_display...")
-            update_display(session, input, output, "prerun", settings, plot_state)
+            vis_manager$update_display(input, output, settings)
         } else {
             showNotification(
                 "Please select a location and intervention settings first",

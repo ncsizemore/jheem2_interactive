@@ -7,31 +7,36 @@ This directory contains YAML configuration files that define the behavior and st
 ### base.yaml
 - Application-wide settings including name, version, theme configuration
 - CSS and JavaScript file references
-- **Note**: Contains duplicate caching config that should be consolidated with `caching.yaml`
+- Global application settings
 
 ### defaults.yaml
 - Default configurations used across the application
-- Panel and display defaults
-- Plot control configurations
+- Model dimension mappings
 - Input type defaults
 - Selector configurations
-- **Improvement**: Could be split into smaller, more focused files
 
-### caching.yaml
-- Cache size and eviction strategy settings
-- Used by the application's caching system
-- **Note**: Should be consolidated with caching config in `base.yaml`
+## Component Configurations
+
+Located in `components/`:
 
 ### controls.yaml
-- Plot control settings
-- Dimension settings for faceting/stratification
-- Table display settings
-- **Improvement**: Some settings overlap with `defaults.yaml` and should be consolidated
+- Plot and table control settings
+- Outcome selection options
+- Stratification settings
+- Display type configurations
+- Table structure and formatting
+
+### selectors.yaml (if applicable)
+- Common selector configurations
+- Reusable input settings
+- Shared validation rules
 
 ## Page-Specific Configurations
 
+Located in `pages/`:
+
 ### prerun.yaml
-- Settings for pre-run interventions page
+- Pre-run interventions page settings
 - Intervention aspect selection
 - Population group selection
 - Timeframe and intensity settings
@@ -42,43 +47,35 @@ This directory contains YAML configuration files that define the behavior and st
 - Demographic selectors
 - Intervention dates and components
 
-### Static Page Configurations
-- `about.yaml`: About page content and structure
-- `contact.yaml`: Contact form configuration
-- `overview.yaml`: Overview page layout and content
-- `team.yaml`: Team member information and layout
+## Configuration Loading
 
-## Opportunities for Improvement
+Configurations are loaded and merged in this order:
+1. Base configuration (`base.yaml`)
+2. Default settings (`defaults.yaml`)
+3. Component configurations (`components/*.yaml`)
+4. Page-specific configurations (`pages/*.yaml`)
 
-1. **Configuration Consolidation**
-   - Merge duplicate caching settings
-   - Consolidate overlapping control settings
-   - Consider merging static page configs into a single file
+See `src/ui/config/load_config.R` for implementation details.
 
-2. **Structure Optimization**
-   - Split `defaults.yaml` into more focused files
-   - Create a clear hierarchy for configuration inheritance
-   - Consider using JSON Schema for validation
+## Best Practices
 
-3. **Documentation**
-   - Add detailed comments for each configuration section
-   - Document relationships between configuration files
-   - Create examples for common configuration patterns
+1. **Configuration Structure**
+   - Keep related settings grouped together
+   - Use consistent naming conventions
+   - Document any non-obvious settings
 
-4. **Validation**
-   - Implement schema validation for each config file
-   - Add type checking for critical values
-   - Create tests for configuration loading
+2. **Validation**
+   - All configurations are validated on load
+   - Required fields are checked
+   - Type checking is performed where necessary
 
-## Usage
-
-These configuration files are loaded by `src/ui/config/load_config.R`, which provides functions to:
-- Load individual config files
-- Merge configurations
-- Validate configuration structure
-- Access specific configuration values
+3. **Maintenance**
+   - Keep configurations DRY (Don't Repeat Yourself)
+   - Document changes in git commits
+   - Update this README when adding new configuration types
 
 ## Related Files
 
 - `src/ui/config/load_config.R`: Configuration loading and validation
+- `src/ui/components/common/display/plot_controls.R`: Plot control implementation
 - `app.R`: Main application file that uses these configurations 
