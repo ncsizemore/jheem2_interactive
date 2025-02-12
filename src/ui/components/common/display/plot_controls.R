@@ -20,7 +20,7 @@ get_control_settings <- function(input, suffix) {
     is.null(input[[paste0("facet_by_", suffix)]]) ||
     is.null(input[[paste0("summary_type_", suffix)]])) {
     return(list(
-      outcomes = sapply(head(controls$outcomes$options, 2), `[[`, "id"),
+      outcomes = controls$outcomes$defaults, # Use defaults directly
       facet.by = NULL,
       summary.type = controls$display$options$mean$id
     ))
@@ -38,10 +38,10 @@ get_control_settings <- function(input, suffix) {
 #' @param suffix Page suffix
 #' @return Vector of selected outcomes
 get_selected_outcomes <- function(input, suffix) {
+  config <- get_component_config("controls")
   selected <- input[[paste0("outcomes_", suffix)]]
   if (is.null(selected)) {
-    config <- get_component_config("controls")
-    return(sapply(head(config$plot_controls$outcomes$options, 2), `[[`, "id"))
+    return(config$plot_controls$outcomes$defaults) # Use defaults directly
   }
   selected
 }

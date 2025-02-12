@@ -90,7 +90,7 @@ create_visualization_manager <- function(session, page_id, id) {
         # Add back the update_display function that handles simulation
         update_display = function(input, output, intervention_settings) {
             print("=== update_display called ===")
-
+            browser()
             # Get current control state from store
             control_state <- store$get_panel_state(page_id)$controls
             print("Control state:")
@@ -99,8 +99,8 @@ create_visualization_manager <- function(session, page_id, id) {
             # Create settings structure to match existing format
             settings <- list(
                 outcomes = control_state$outcomes,
-                facet.by = control_state$facet_by,
-                summary.type = control_state$summary_type
+                facet.by = control_state$facet.by,
+                summary.type = control_state$summary.type
             )
 
             # Transform data using control state

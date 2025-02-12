@@ -10,14 +10,32 @@ create_control_manager <- function(session, page_id, id, initial_settings = NULL
     store <- get_store()
     ns <- session$ns
 
-    # Initialize with strict structure defaults
-    default_settings <- list(
-        outcomes = NULL,
-        facet.by = NULL, # Using dot notation consistently
-        summary.type = "mean.and.interval" # Using dot notation consistently
-    )
+    # Get defaults from config
+    config <- get_component_config("controls")
+    print("=== Control Manager Creation ===")
+    print("1. Raw config defaults:")
+    str(config$plot_controls$outcomes$defaults)
 
-    settings_state <- reactiveVal(default_settings)
+    # Get the outcome IDs from the options
+    outcome_ids <- sapply(config$plot_controls$outcomes$options, function(x) x$id)
+    print("2. Available outcome IDs:")
+    str(outcome_ids)
+
+    # Map default IDs to their option keys
+    default_outcomes <- config$plot_controls$outcomes$defaults
+    print("3. Default outcomes:")
+    str(default_outcomes)
+
+    config_defaults <- list(
+        outcomes = default_outcomes, # Use direct IDs instead of mapping
+        facet.by = NULL,
+        summary.type = "mean.and.interval"
+    )
+    print("4. Final config defaults:")
+    str(config_defaults)
+
+    # Initialize with config defaults
+    settings_state <- reactiveVal(config_defaults)
 
     # Initialize settings if provided
     observe({
@@ -51,50 +69,37 @@ create_control_manager <- function(session, page_id, id, initial_settings = NULL
     })
 
     list(
-        # Update all settings at once
+        get_settings = function() {
+            current <- settings_state()
+            print("=== Getting Control Settings ===")
+            print("Current settings:")
+            str(current)
+            return(current)
+        },
         update_settings = function(settings) {
             if (is.null(settings)) {
                 return()
             }
-
-            print("Control Manager: Updating settings")
+            print("=== Updating Control Settings ===")
+            print("New settings:")
             str(settings)
 
-            # Process settings maintaining structure
-            processed <- list(
-                outcomes = if (!is.null(settings$outcomes)) as.character(settings$outcomes) else settings_state()$outcomes,
-                facet.by = if (!is.null(settings$facet.by)) {
-                    if (length(settings$facet.by) > 0) as.character(settings$facet.by) else NULL
-                } else {
-                    settings_state()$facet.by
-                },
-                summary.type = if (!is.null(settings$summary.type)) {
-                    settings$summary.type
-                } else {
-                    settings_state()$summary.type
-                }
-            )
+            settings_state(settings)
+            store$update_control_state(page_id, settings)
 
-            print("Control Manager: Processed settings:")
-            str(processed)
-
-            # Update both reactive and store
-            settings_state(processed)
-            store$update_control_state(page_id, processed)
+            print("After update:")
+            str(settings_state())
         },
-
-        # Get current settings (reactive)
-        get_settings = reactive({
-            settings_state()
-        }),
-
-        # Reset settings with guaranteed structure
         reset = function() {
-            print("Control Manager: Resetting to defaults:")
-            str(default_settings)
+            print("=== Resetting Control Settings ===")
+            print("Resetting to defaults:")
+            str(config_defaults)
 
-            settings_state(default_settings)
-            store$update_control_state(page_id, default_settings)
+            settings_state(config_defaults)
+            store$update_control_state(page_id, config_defaults)
+
+            print("After reset:")
+            str(settings_state())
         }
     )
 }

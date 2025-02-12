@@ -6,9 +6,14 @@
 #'   summary.type - type of summary to calculate
 #' @return Transformed data structure
 transform_simulation_data <- function(simset, settings) {
-    print("Starting data transformation")
-    print("Settings:")
-    str(settings)
+    print("\n=== transform_simulation_data ===")
+    print("Input settings received:")
+    print("- outcomes:")
+    str(settings$outcomes)
+    print("- facet.by:")
+    str(settings$facet.by)
+    print("- summary.type:")
+    str(settings$summary.type)
 
     # Add debug logging
     print("Debug information:")
@@ -24,11 +29,15 @@ transform_simulation_data <- function(simset, settings) {
     }
 
     # Add default summary type if not specified
-    if (is.null(settings$summary.type)) {
-        settings$summary.type <- "mean.and.interval"
-    }
+    # if (is.null(settings$summary.type)) {
+    #    print("WARNING: summary.type was NULL, defaulting to 'mean.and.interval'")
+    #    settings$summary.type <- "mean.and.interval"
+    # }
 
     # Get raw plot data using prepare.plot
+    print("\nCalling prepare.plot with settings:")
+    str(settings)
+
     plot_data <- prepare.plot(
         simset.list = list(simset = simset),
         outcomes = settings$outcomes,

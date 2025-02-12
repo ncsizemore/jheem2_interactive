@@ -6,3 +6,4 @@ cache1:
 cache2:
   max_size: 1000000000  # 1GB
   evict_strategy: "lru"
+

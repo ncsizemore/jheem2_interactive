@@ -85,6 +85,22 @@ Components use these state inputs:
 3. State updates trigger conditional panels
 4. Display components update accordingly
 
+### Default Handling
+The control settings system uses a specific hierarchy for defaults:
+1. Direct config defaults (`controls$outcomes$defaults`)
+2. User-selected values from inputs
+3. Fallback to config-specified defaults
+
+Important: Always use explicit defaults from config rather than deriving them from options.
+Example:
+```r
+# Correct:
+controls$outcomes$defaults
+
+# Incorrect - may select wrong options:
+sapply(head(controls$outcomes$options, 2), `[[`, "id")
+```
+
 ## Usage Example
 
 ```r

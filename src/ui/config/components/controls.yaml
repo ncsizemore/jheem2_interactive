@@ -15,7 +15,7 @@ plot_controls:
 
       # HIV diagnoses tracking
       diagnoses:
-        id: "diagnosed.prevalence"
+        id: "hiv.diagnoses"
         label: "Reported Diagnoses"
         description: "Number of people diagnosed with HIV"
 
