@@ -39,6 +39,36 @@ src/ui/components/pages/prerun/
 - Ensures proper loading order of handlers
 - Exports the main initialization function
 
+## Configuration-Based Implementation
+
+The prerun page now uses a flexible, configuration-driven approach:
+
+### Selector Creation
+- Selectors are created based on configuration presence
+- The page supports a variable number of selectors without code changes
+- Core create_intervention_content uses Filter to handle optional selectors
+- Example:
+  ```R
+  selectors <- list(
+    create_location_selector("prerun"),
+    create_intervention_selector("prerun"),
+    # etc.
+  )
+  selectors <- Filter(Negate(is.null), selectors)
+  ```
+
+### Validation
+- Page requirements are pulled from config (`defaults.yaml`)
+- Validation checks configuration-defined requirements
+- No hardcoded validation rules
+- Supports different validation requirements per deployment
+
+### Benefits
+- More maintainable code
+- Flexible UI based on configuration
+- Easy to customize for different deployments
+- Clear separation between code and configuration
+
 ## State Management
 
 The page uses two main types of state:
@@ -53,4 +83,4 @@ The page is initialized through `initialize_prerun_handlers` which sets up all n
 - validation_manager: Manages form validation state
 - vis_manager: Controls visualization display
 - error boundaries: Provides validation and error handling
-- config system: Provides validation rules and UI configuration 
+- config system: Provides validation rules and UI configuration

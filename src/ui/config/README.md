@@ -57,6 +57,36 @@ Configurations are loaded and merged in this order:
 
 See `src/ui/config/load_config.R` for implementation details.
 
+## Configuration-Based Validation & Flexible Selectors
+
+The configuration system supports flexible page requirements and optional selectors through several key features:
+
+### Page Requirements
+- Page-specific requirements are defined in `defaults.yaml` under `page_requirements`
+- Each page type can specify its required configuration sections
+- Requirements are validated during config loading
+- Example:
+  ```yaml
+  page_requirements:
+    prerun:
+      required_sections:
+        - intervention_aspects
+        - population_groups
+        # etc.
+  ```
+
+### Optional Selectors
+- Selectors are created only if configured
+- Base selector implementation (`base.R`) checks for configuration before creating
+- Helper functions (e.g., `create_intervention_selector`) respect config presence
+- Allows different deployments to have different UI elements without code changes
+
+### Benefits
+- Different branches/deployments can specify their own requirements
+- UI elements can be added/removed via configuration
+- Core functionality remains the same across deployments
+- Validation is consistent but flexible
+
 ## Best Practices
 
 1. **Configuration Structure**
