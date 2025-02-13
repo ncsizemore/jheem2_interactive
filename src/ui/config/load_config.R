@@ -192,20 +192,14 @@ validate_config <- function(config) {
 #' @param page Page type
 #' @return TRUE if valid, throws error if invalid
 validate_page_config <- function(config, page) {
-    required <- switch(page,
-        "prerun" = c(
-            "intervention_aspects",
-            "population_groups",
-            "timeframes",
-            "intensities"
-        ),
-        "custom" = c(
-            "subgroups",
-            "demographics",
-            "interventions"
-        ),
-        stop(sprintf("Unknown page type: %s", page))
-    )
+    # Get requirements from config
+    defaults_config <- get_defaults_config()
+    required <- defaults_config$page_requirements[[page]]$required_sections
+    
+    if (is.null(required)) {
+        warning(sprintf("No requirements defined for page: %s", page))
+        return(TRUE)
+    }
 
     # Check required sections
     missing <- setdiff(required, names(config))

@@ -1,88 +1,21 @@
 # config/pages/prerun.yaml - Pre-run page specific settings
+# Simplified version for ryan-white branch
 
-# Intervention aspect selection
-intervention_aspects:
-  type: "radio"
-  label: "Which Aspects to Intervene On:"
-  popover:
-    title: "What Should the Intervention Affect?"
-    content: "You can choose interventions that affect HIV testing, PrEP among those at risk for HIV acquisition, viral suppression among PWH, participation in needle-exchange programs, MOUDs, or combinations of these"
-  options:
-    none:
-      id: "none"
-      label: "None"
-    testing:
-      id: "hivtesting"
-      label: "HIV Testing"
-    prep:
-      id: "prep"
-      label: "PrEP Coverage"
-    viral:
-      id: "viralsuppression"
-      label: "Viral Suppression"
-    exchange:
-      id: "needleexchange"
-      label: "Needle Exchange"
-    moud:
-      id: "moud"
-      label: "MOUDs"
-
-# Target population selection
-population_groups:
-  type: "radio"
-  label: "Target Population:"
-  popover:
-    title: "Which Groups to Target?"
-    content: "Select whether to apply interventions across all populations or target specific demographic or risk groups."
-  options:
-    all:
-      id: "all"
-      label: "All populations"
-    age:
-      id: "age_groups"
-      label: "By age groups:<br/>13-24, 25-34, 35-44, 45-54, 55+"
-    risk:
-      id: "risk_groups"
-      label: "By risk groups:<br/>MSM, IDU, heterosexual contact"
-
-# Intervention timeframe selection
-timeframes:
-  type: "radio"
-  label: "Intervention Roll-Out Period:"
-  popover:
-    title: "When to Roll Out the Intervention?"
-    content: "Select the time period over which the intervention will be implemented. Longer periods allow for more gradual implementation."
-  options:
-    immediate:
-      id: "2024_2025"
-      label: "2024-2025 (Immediate)"
-    short:
-      id: "2024_2026"
-      label: "2024-2026 (Short-term)"
-    medium:
-      id: "2024_2028"
-      label: "2024-2028 (Medium-term)"
-    long:
-      id: "2024_2030"
-      label: "2024-2030 (Long-term)"
-
-# Intervention intensity selection
-intensities:
-  type: "radio"
-  label: "Intervention Intensity:"
-  popover:
-    title: "How Intensive Should the Intervention Be?"
-    content: "Select the level of coverage increase to model. More aggressive increases require more resources but may have larger impacts."
-  options:
-    moderate:
-      id: "moderate"
-      label: "Moderate increase in coverage"
-    substantial:
-      id: "substantial"
-      label: "Substantial increase in coverage"
-    aggressive:
-      id: "aggressive"
-      label: "Aggressive increase in coverage"
-    maximum:
-      id: "maximum"
-      label: "Maximum feasible coverage"
+# Selector configurations
+selectors:
+  scenario:
+    type: "select"
+    input_style: "choices"
+    label: "Scenario"
+    placeholder: "Select a scenario..."
+    value: "neutral"  # Default to neutral scenario
+    options:
+      optimistic:
+        id: "optimistic"
+        label: "Optimistic Scenario"
+      neutral:
+        id: "neutral"
+        label: "Neutral Scenario"
+      pessimistic:
+        id: "pessimistic"
+        label: "Pessimistic Scenario"

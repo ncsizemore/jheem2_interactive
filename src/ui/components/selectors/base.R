@@ -13,12 +13,11 @@ wrap_in_conditional <- function(element, condition) {
     )
 }
 
-
 #' Create a selector component
 #' @param selector_id String identifier matching config (e.g., "location")
 #' @param page_type String identifying the page ("prerun" or "custom")
 #' @param condition Optional condition for when selector should display
-#' @return A Shiny UI element
+#' @return A Shiny UI element or NULL if selector not configured
 create_selector <- function(selector_id, page_type, condition = NULL) {
     # Load configuration
     config <- get_page_complete_config(page_type)
@@ -26,8 +25,9 @@ create_selector <- function(selector_id, page_type, condition = NULL) {
     # Try to find selector config in either selectors or directly in config
     selector_config <- config$selectors[[selector_id]] %||% config[[selector_id]]
 
+    # Return NULL if selector is not configured
     if (is.null(selector_config)) {
-        stop(sprintf("No configuration found for selector: %s", selector_id))
+        return(NULL)
     }
 
     # Generate input ID
@@ -202,46 +202,70 @@ create_location_selector <- function(id, config) {
     )
 }
 
+#' Create intervention selector if configured
+#' @param page_type String identifying the page type
+#' @return Selector UI element or NULL if not configured
 create_intervention_selector <- function(page_type) {
-    create_selector(
-        "intervention_aspects",
-        page_type,
-        condition = sprintf("input.int_location_%s !== 'none'", page_type)
-    )
-}
-
-create_population_selector <- function(page_type) {
-    create_selector(
-        "population_groups",
-        page_type,
-        condition = sprintf("input.int_aspect_%s !== 'none'", page_type)
-    )
-}
-
-create_timeframe_selector <- function(page_type) {
-    create_selector(
-        "timeframes",
-        page_type,
-        condition = sprintf(
-            "input.int_aspect_%s !== 'none' && input.int_tpop_%s !== ''",
+    config <- get_page_complete_config(page_type)
+    if (!is.null(config$intervention_aspects)) {
+        create_selector(
+            "intervention_aspects",
             page_type,
-            page_type
+            condition = sprintf("input.int_location_%s !== 'none'", page_type)
         )
-    )
+    }
 }
 
-create_intensity_selector <- function(page_type) {
-    create_selector(
-        "intensities",
-        page_type,
-        condition = sprintf(
-            paste(
-                "input.int_aspect_%s !== 'none'",
-                "input.int_tpop_%s !== ''",
-                "input.int_timeframe_%s !== ''",
-                sep = " && "
-            ),
-            page_type, page_type, page_type
+#' Create population selector if configured
+#' @param page_type String identifying the page type
+#' @return Selector UI element or NULL if not configured
+create_population_selector <- function(page_type) {
+    config <- get_page_complete_config(page_type)
+    if (!is.null(config$population_groups)) {
+        create_selector(
+            "population_groups",
+            page_type,
+            condition = sprintf("input.int_aspect_%s !== 'none'", page_type)
         )
-    )
+    }
+}
+
+#' Create timeframe selector if configured
+#' @param page_type String identifying the page type
+#' @return Selector UI element or NULL if not configured
+create_timeframe_selector <- function(page_type) {
+    config <- get_page_complete_config(page_type)
+    if (!is.null(config$timeframes)) {
+        create_selector(
+            "timeframes",
+            page_type,
+            condition = sprintf(
+                "input.int_aspect_%s !== 'none' && input.int_tpop_%s !== ''",
+                page_type,
+                page_type
+            )
+        )
+    }
+}
+
+#' Create intensity selector if configured
+#' @param page_type String identifying the page type
+#' @return Selector UI element or NULL if not configured
+create_intensity_selector <- function(page_type) {
+    config <- get_page_complete_config(page_type)
+    if (!is.null(config$intensities)) {
+        create_selector(
+            "intensities",
+            page_type,
+            condition = sprintf(
+                paste(
+                    "input.int_aspect_%s !== 'none'",
+                    "input.int_tpop_%s !== ''",
+                    "input.int_timeframe_%s !== ''",
+                    sep = " && "
+                ),
+                page_type, page_type, page_type
+            )
+        )
+    }
 }

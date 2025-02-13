@@ -1,19 +1,25 @@
 #' Creates the intervention panel content
 #' @param config Page configuration
 create_intervention_content <- function(config) {
-    tagList(
-        # Location selector
+    # Create all possible selectors
+    selectors <- list(
         create_location_selector("prerun"),
-
-        # Intervention options container
+        create_selector("scenario", "prerun"),  # Add scenario selector
+        create_intervention_selector("prerun"),
+        create_population_selector("prerun"),
+        create_timeframe_selector("prerun"),
+        create_intensity_selector("prerun")
+    )
+    
+    # Filter out NULL selectors (those not configured)
+    selectors <- Filter(Negate(is.null), selectors)
+    
+    tagList(
+        # Selectors container
         tags$div(
             class = "intervention-options",
-
-            # Create each selector using helper functions
-            create_intervention_selector("prerun"),
-            create_population_selector("prerun"),
-            create_timeframe_selector("prerun"),
-            create_intensity_selector("prerun"),
+            # Spread the selectors
+            selectors,
 
             # Generate button using config settings
             tags$div(
