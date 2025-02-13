@@ -111,3 +111,17 @@ model_dimensions:
       "hispanic": "hispanic"
       "other": "other"
 
+# Page requirements - defines required sections for each page type
+page_requirements:
+  prerun:
+    required_sections:
+      - intervention_aspects
+      - population_groups
+      - timeframes
+      - intensities
+  custom:
+    required_sections:
+      - subgroups
+      - demographics
+      - interventions
+
