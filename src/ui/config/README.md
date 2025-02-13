@@ -11,7 +11,7 @@ This directory contains YAML configuration files that define the behavior and st
 
 ### defaults.yaml
 - Default configurations used across the application
-- Model dimension mappings
+- Model dimension mappings (must align with model's expected values)
 - Input type defaults
 - Selector configurations
 
@@ -74,8 +74,36 @@ See `src/ui/config/load_config.R` for implementation details.
    - Document changes in git commits
    - Update this README when adding new configuration types
 
+## Known Issues & Future Work
+
+1. **Selector "All" Functionality**
+   - Currently "all" options are removed from selectors
+   - Future work needed to implement proper handling of "all" selections
+   - Implementation considerations:
+     * UI/UX Behavior:
+       - How to handle when user selects "all" + individual options
+       - Consider auto-deselecting individual options when "all" is selected
+       - Consider auto-deselecting "all" when individual options are selected
+       - Potentially make "all" mutually exclusive with other options
+     * Model Translation:
+       - Need mechanism to expand "all" into complete set of valid values
+       - Consider adding expansion mappings in defaults.yaml
+       - Ensure expansion respects any model-specific constraints
+     * Configuration Structure:
+       - May need to add metadata to identify which selectors support "all"
+       - Consider adding validation rules specific to "all" handling
+       - Potential for selector-specific "all" behavior
+     * Performance:
+       - Consider caching expanded "all" values
+       - Evaluate impact on model runs with full selection sets
+
+2. **Model Value Alignment**
+   - Configuration values must align with model expectations
+   - Maintain mappings in `defaults.yaml` when model values change
+   - Consider adding validation to ensure config values match model requirements
+
 ## Related Files
 
 - `src/ui/config/load_config.R`: Configuration loading and validation
 - `src/ui/components/common/display/plot_controls.R`: Plot control implementation
-- `app.R`: Main application file that uses these configurations 
+- `app.R`: Main application file that uses these configurations

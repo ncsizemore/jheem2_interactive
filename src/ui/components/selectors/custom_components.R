@@ -23,7 +23,7 @@ create_compound_input <- function(id, config, container_class = NULL) {
     enabled_config <- list(
         type = "checkbox",
         label = label,
-        value = FALSE,
+        value = inputs$enabled$value %||% FALSE,
         input_style = "native"
     )
 

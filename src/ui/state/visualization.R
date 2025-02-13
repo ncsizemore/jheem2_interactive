@@ -90,7 +90,6 @@ create_visualization_manager <- function(session, page_id, id) {
         # Add back the update_display function that handles simulation
         update_display = function(input, output, intervention_settings) {
             print("=== update_display called ===")
-            browser()
             # Get current control state from store
             control_state <- store$get_panel_state(page_id)$controls
             print("Control state:")

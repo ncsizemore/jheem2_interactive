@@ -63,6 +63,11 @@ create_selector <- function(selector_id, page_type, condition = NULL) {
 #' @param config Configuration for the input
 #' @return Shiny input element
 create_input_by_type <- function(type, id, config) {
+    # Debug print
+    print(paste("Creating input:", id, "of type:", type))
+    print("Config:")
+    str(config)
+    
     # Ensure default values based on type
     config$value <- config$value %||% switch(type,
         "checkbox" = FALSE,
@@ -95,13 +100,20 @@ create_input_by_type <- function(type, id, config) {
         list()
     }
 
+    print("Choices structured as:")
+    str(choices)
+    print(paste("Default value:", config$value))
+
     # Create the base input element
     input_element <- switch(type,
         "select" = if (input_style == "choices") {
+            print("Creating choices select with defaults:")
+            print(paste("Selected:", config$value))
             choicesSelectInput(
                 inputId = id,
                 label = NULL,
                 choices = choices,
+                selected = config$value,  # Pass through the default value
                 multiple = multiple,
                 placeholder = config$placeholder %||% config$label
             )
@@ -113,6 +125,7 @@ create_input_by_type <- function(type, id, config) {
                     sapply(choices, `[[`, "value"),
                     sapply(choices, `[[`, "label")
                 ),
+                selected = config$value,  # Pass through the default value
                 multiple = multiple
             )
         },
@@ -122,19 +135,20 @@ create_input_by_type <- function(type, id, config) {
             choices = setNames(
                 sapply(choices, `[[`, "value"),
                 sapply(choices, `[[`, "label")
-            )
+            ),
+            selected = config$value  # Pass through the default value
         ),
         "checkbox" = checkboxInput(
             inputId = id,
             label = config$label,
-            value = config$value
+            value = config$value  # Already properly passed through
         ),
         "numeric" = tags$div(
             class = "numeric-input-container",
             numericInput(
                 inputId = id,
                 label = config$label,
-                value = config$value,
+                value = config$value,  # Already properly passed through
                 min = config$min %||% NA,
                 max = config$max %||% NA,
                 step = config$step %||% 1

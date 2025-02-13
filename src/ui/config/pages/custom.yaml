@@ -16,10 +16,8 @@ demographics:
     multiple: true
     label: "Age Groups"
     placeholder: "Select age groups..."
+    value: ["13-24", "25-34"]
     options:
-      all:
-        id: "all"
-        label: "All Ages"
       "13-24":
         id: "13-24"
         label: "13-24 years"
@@ -42,10 +40,8 @@ demographics:
     multiple: true
     label: "Race/Ethnicity"
     placeholder: "Select race/ethnicity..."
+    value: ["black", "hispanic"]
     options:
-      all:
-        id: "all"
-        label: "Include All Races"
       black:
         id: "black"
         label: "Black"
@@ -62,13 +58,14 @@ demographics:
     multiple: true
     label: "Biological Sex"
     placeholder: "Select biological sex..."
+    value: ["heterosexual_male"]
     options:
-      all:
-        id: "all"
-        label: "Include All Sexes"
-      male:
-        id: "male"
-        label: "Male"
+      heterosexual_male:
+        id: "heterosexual_male"
+        label: "Heterosexual Male"
+      msm:
+        id: "msm"
+        label: "MSM"
       female:
         id: "female"
         label: "Female"
@@ -79,28 +76,17 @@ demographics:
     multiple: true
     label: "Risk Factor"
     placeholder: "Select risk factors..."
+    value: ["never_IDU"]
     options:
-      all:
-        id: "all"
-        label: "Include All Risk Factors"
-      msm:
-        id: "msm"
-        label: "MSM"
-      active_idu:
-        id: "active_idu"
+      never_IDU:
+        id: "never_IDU"
+        label: "Never IDU"
+      active_IDU:
+        id: "active_IDU"
         label: "Active IDU"
-      prior_idu:
-        id: "prior_idu"
-        label: "Prior IDU"
-      msm_active_idu:
-        id: "msm_active_idu"
-        label: "MSM + Active IDU"
-      msm_prior_idu:
-        id: "msm_prior_idu"
-        label: "MSM + Prior IDU"
-      heterosexual:
-        id: "heterosexual"
-        label: "Heterosexual"
+      IDU_in_remission:
+        id: "IDU_in_remission"
+        label: "IDU in Remission"
 
 # Intervention configuration
 interventions:
@@ -184,22 +170,22 @@ interventions:
           type: "checkbox"
           input_style: "native"
           label: "Intervene on Testing"
-          value: false
+          value: true  # Changed this to true to test
         frequency:
           type: "select"
           input_style: "choices"
           multiple: false
           placeholder: "Average number of tests per person..."
-          value: "once"
+          value: 1
           options:
             once:
-              id: "once"
+              id: 1
               label: "Once per year"
             twice:
-              id: "twice"
+              id: 2
               label: "Twice per year"
             four:
-              id: "four"
+              id: 4
               label: "Four times per year"
 
     prep:

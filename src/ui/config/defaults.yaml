@@ -67,6 +67,7 @@ selectors:
     type: "select"
     label: "Location"
     placeholder: "Select a location..."
+    value: "C.33100"  # Default to Miami
     options:
       atlanta:
         id: "C.12580"
@@ -92,19 +93,16 @@ model_dimensions:
   sex:
     ui_field: "biological_sex"
     mappings:
-      "male": "heterosexual_male"
+      "heterosexual_male": "heterosexual_male"
       "msm": "msm"
       "female": "female"
   
   risk:
     ui_field: "risk_factor"
     mappings:
-      "active_idu": "active_IDU"
-      "prior_idu": "IDU_in_remission"
-      "heterosexual": "heterosexual"
-      "msm": "msm"
-      "msm_active_idu": "msm_active_IDU"
-      "msm_prior_idu": "msm_prior_IDU"
+      "never_IDU": "never_IDU"
+      "active_IDU": "active_IDU"
+      "IDU_in_remission": "IDU_in_remission"
   
   race:
     ui_field: "race_ethnicity"

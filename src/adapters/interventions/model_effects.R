@@ -60,7 +60,7 @@ MODEL_EFFECTS <- list(
     testing = list(
         quantity_name = "general.population.testing",
         scale = "rate",
-        transform = function(value) value,
+        transform = function(value) as.numeric(value), # Ensure numeric conversion
         value_field = "frequency",
         create = function(start_time, end_time, value) {
             create_standard_effect(
