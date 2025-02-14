@@ -2,11 +2,14 @@
 #' @param config Configuration to validate
 #' @return TRUE if valid, throws error if invalid
 validate_custom_config <- function(config) {
-    required_sections <- c(
-        "subgroups",
-        "demographics",
-        "interventions"
-    )
+    # Get requirements from config
+    defaults_config <- get_defaults_config()
+    required_sections <- defaults_config$page_requirements$custom$required_sections
+    
+    if (is.null(required_sections)) {
+        warning("No requirements defined for custom page")
+        return(TRUE)
+    }
 
     missing <- setdiff(required_sections, names(config))
     if (length(missing) > 0) {
@@ -32,28 +35,30 @@ validate_custom_inputs <- function(session, output, inputs, config) {
         "intervention_validation"
     )
 
-    # Validate subgroups count
-    valid_count <- validation_boundary$validate(
-        inputs$subgroups_count_custom,
-        list(
-            validation_boundary$rules$required("Number of subgroups is required"),
-            validation_boundary$rules$range(
-                min = config$subgroups$min,
-                max = config$subgroups$max,
-                message = sprintf(
-                    "Number of subgroups must be between %d and %d",
-                    config$subgroups$min,
-                    config$subgroups$max
+    # Validate subgroups count if configured
+    if (!is.null(config$subgroups)) {
+        valid_count <- validation_boundary$validate(
+            inputs$subgroups_count_custom,
+            list(
+                validation_boundary$rules$required("Number of subgroups is required"),
+                validation_boundary$rules$range(
+                    min = config$subgroups$min,
+                    max = config$subgroups$max,
+                    message = sprintf(
+                        "Number of subgroups must be between %d and %d",
+                        config$subgroups$min,
+                        config$subgroups$max
+                    )
                 )
             )
         )
-    )
 
-    if (!valid_count) {
-        return(FALSE)
+        if (!valid_count) {
+            return(FALSE)
+        }
     }
 
-    # Validate location
+    # Validate location if present
     valid_location <- validation_boundary$validate(
         inputs$int_location_custom,
         list(
@@ -65,31 +70,35 @@ validate_custom_inputs <- function(session, output, inputs, config) {
         return(FALSE)
     }
 
-    # Validate subgroups
-    subgroup_count <- inputs$subgroups_count_custom
-    for (i in 1:subgroup_count) {
-        # Validate demographics for each subgroup
-        valid_demographics <- validate_subgroup_demographics(
-            validation_boundary,
-            inputs,
-            i,
-            config$demographics
-        )
+    # Validate subgroups if configured
+    if (!is.null(config$subgroups)) {
+        subgroup_count <- inputs$subgroups_count_custom
+        for (i in 1:subgroup_count) {
+            # Validate demographics for each subgroup if configured
+            if (!is.null(config$demographics)) {
+                valid_demographics <- validate_subgroup_demographics(
+                    validation_boundary,
+                    inputs,
+                    i,
+                    config$demographics
+                )
 
-        if (!valid_demographics) {
-            return(FALSE)
-        }
+                if (!valid_demographics) {
+                    return(FALSE)
+                }
+            }
 
-        # Validate intervention settings for each subgroup
-        valid_interventions <- validate_subgroup_interventions(
-            validation_boundary,
-            inputs,
-            i,
-            config$interventions
-        )
+            # Validate intervention settings for each subgroup
+            valid_interventions <- validate_subgroup_interventions(
+                validation_boundary,
+                inputs,
+                i,
+                config$interventions
+            )
 
-        if (!valid_interventions) {
-            return(FALSE)
+            if (!valid_interventions) {
+                return(FALSE)
+            }
         }
     }
 
@@ -168,46 +177,71 @@ validate_subgroup_interventions <- function(validation_boundary, inputs, group_n
     # Validate each intervention component
     for (component_name in names(config$components)) {
         component <- config$components[[component_name]]
-        enabled_id <- paste0("int_", component_name, "_", group_num, "_custom_enabled")
+        component_id <- paste0("int_", component_name, "_", group_num, "_custom")
 
-        # If intervention is enabled, validate its inputs
-        if (inputs[[enabled_id]]) {
-            # Validate each input in the compound component
-            for (input_name in names(component$inputs)) {
-                input_config <- component$inputs[[input_name]]
-                if (input_name == "enabled") next # Skip enabled checkbox
+        # Handle different component types
+        if (component$type == "compound") {
+            enabled_id <- paste0(component_id, "_enabled")
 
-                value_id <- paste0("int_", component_name, "_", group_num, "_custom_", input_name)
+            # If intervention is enabled, validate its inputs
+            if (inputs[[enabled_id]]) {
+                # Validate each input in the compound component
+                for (input_name in names(component$inputs)) {
+                    input_config <- component$inputs[[input_name]]
+                    if (input_name == "enabled") next # Skip enabled checkbox
 
-                # Create validation rules based on input type
-                rules <- list(validation_boundary$rules$required(
-                    sprintf("%s is required when enabled", component$label)
-                ))
+                    value_id <- paste0(component_id, "_", input_name)
 
-                # Add type-specific validation
-                if (input_config$type == "numeric") {
-                    rules[[length(rules) + 1]] <- validation_boundary$rules$range(
-                        min = input_config$min,
-                        max = input_config$max,
-                        message = sprintf(
-                            "%s must be between %s and %s for subgroup %d",
-                            input_config$label,
-                            input_config$min,
-                            input_config$max,
-                            group_num
+                    # Create validation rules based on input type
+                    rules <- list(validation_boundary$rules$required(
+                        sprintf("%s is required when enabled", component$label)
+                    ))
+
+                    # Add type-specific validation
+                    if (input_config$type == "numeric") {
+                        rules[[length(rules) + 1]] <- validation_boundary$rules$range(
+                            min = input_config$min,
+                            max = input_config$max,
+                            message = sprintf(
+                                "%s must be between %s and %s for subgroup %d",
+                                input_config$label,
+                                input_config$min,
+                                input_config$max,
+                                group_num
+                            )
                         )
-                    )
-                } else if (input_config$type == "select") {
-                    rules[[length(rules) + 1]] <- validation_boundary$rules$custom(
-                        test_fn = function(value) value %in% names(input_config$options),
-                        message = sprintf("Invalid %s selection", input_config$label)
-                    )
-                }
+                    } else if (input_config$type == "select") {
+                        rules[[length(rules) + 1]] <- validation_boundary$rules$custom(
+                            test_fn = function(value) value %in% names(input_config$options),
+                            message = sprintf("Invalid %s selection", input_config$label)
+                        )
+                    }
 
-                valid <- validation_boundary$validate(inputs[[value_id]], rules)
-                if (!valid) {
-                    return(FALSE)
+                    valid <- validation_boundary$validate(inputs[[value_id]], rules)
+                    if (!valid) {
+                        return(FALSE)
+                    }
                 }
+            }
+        } else if (component$type == "numeric") {
+            # Direct numeric validation
+            rules <- list(
+                validation_boundary$rules$required(sprintf("%s is required", component$label)),
+                validation_boundary$rules$range(
+                    min = component$min,
+                    max = component$max,
+                    message = sprintf(
+                        "%s must be between %d and %d",
+                        component$label,
+                        component$min,
+                        component$max
+                    )
+                )
+            )
+
+            valid <- validation_boundary$validate(inputs[[component_id]], rules)
+            if (!valid) {
+                return(FALSE)
             }
         }
     }
@@ -225,25 +259,11 @@ validate_intervention_dates <- function(validation_boundary, inputs, group_num, 
     start_id <- paste0("int_intervention_dates_", group_num, "_custom_start")
     end_id <- paste0("int_intervention_dates_", group_num, "_custom_end")
 
-    date_config <- config$dates
-
     # Validate start date
     valid_start <- validation_boundary$validate(
         inputs[[start_id]],
         list(
-            validation_boundary$rules$required("Start date is required"),
-            validation_boundary$rules$custom(
-                test_fn = function(value) {
-                    year <- as.numeric(value)
-                    year >= date_config$start$options$from &&
-                        year <= date_config$start$options$to
-                },
-                message = sprintf(
-                    "Start date must be between %d and %d",
-                    date_config$start$options$from,
-                    date_config$start$options$to
-                )
-            )
+            validation_boundary$rules$required("Start date is required")
         )
     )
 
@@ -258,16 +278,9 @@ validate_intervention_dates <- function(validation_boundary, inputs, group_num, 
             validation_boundary$rules$required("End date is required"),
             validation_boundary$rules$custom(
                 test_fn = function(value) {
-                    year <- as.numeric(value)
-                    year >= date_config$end$options$from &&
-                        year <= date_config$end$options$to &&
-                        year > as.numeric(inputs[[start_id]])
+                    as.numeric(value) > as.numeric(inputs[[start_id]])
                 },
-                message = sprintf(
-                    "End date must be between %d and %d and after start date",
-                    date_config$end$options$from,
-                    date_config$end$options$to
-                )
+                message = "End date must be after start date"
             )
         )
     )

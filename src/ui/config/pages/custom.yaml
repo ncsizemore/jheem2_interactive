@@ -1,95 +1,9 @@
 # config/pages/custom.yaml - Custom page specific settings
-
-# Custom interventions page configuration
-subgroups:
-  type: "numeric"
-  label: "How Many Distinct Subgroups to Target Interventions To:"
-  min: 1
-  max: 5
-  value: 1
-
-# Demographic selectors for custom interventions
-demographics:
-  age_groups:
-    type: "select"
-    input_style: "choices"
-    multiple: true
-    label: "Age Groups"
-    placeholder: "Select age groups..."
-    value: ["13-24", "25-34"]
-    options:
-      "13-24":
-        id: "13-24"
-        label: "13-24 years"
-      25-34:
-        id: "25-34"
-        label: "25-34 years"
-      35-44:
-        id: "35-44"
-        label: "35-44 years"
-      45-54:
-        id: "45-54"
-        label: "45-54 years"
-      55plus:
-        id: "55plus"
-        label: "55+ years"
-
-  race_ethnicity:
-    type: "select"
-    input_style: "choices"
-    multiple: true
-    label: "Race/Ethnicity"
-    placeholder: "Select race/ethnicity..."
-    value: ["black", "hispanic"]
-    options:
-      black:
-        id: "black"
-        label: "Black"
-      hispanic:
-        id: "hispanic"
-        label: "Hispanic"
-      other:
-        id: "other"
-        label: "Other"
-
-  biological_sex:
-    type: "select"
-    input_style: "choices"
-    multiple: true
-    label: "Biological Sex"
-    placeholder: "Select biological sex..."
-    value: ["heterosexual_male"]
-    options:
-      heterosexual_male:
-        id: "heterosexual_male"
-        label: "Heterosexual Male"
-      msm:
-        id: "msm"
-        label: "MSM"
-      female:
-        id: "female"
-        label: "Female"
-
-  risk_factor:
-    type: "select"
-    input_style: "choices"
-    multiple: true
-    label: "Risk Factor"
-    placeholder: "Select risk factors..."
-    value: ["never_IDU"]
-    options:
-      never_IDU:
-        id: "never_IDU"
-        label: "Never IDU"
-      active_IDU:
-        id: "active_IDU"
-        label: "Active IDU"
-      IDU_in_remission:
-        id: "IDU_in_remission"
-        label: "IDU in Remission"
+# Simplified version for ryan-white branch
 
 # Intervention configuration
 interventions:
+  # Keep the date range selector
   dates:
     type: "date_range"
     start:
@@ -161,66 +75,24 @@ interventions:
           id: "2030"
           label: "2030"
 
+  # Simple numeric inputs for suppression loss
   components:
-    testing:
-      type: "compound"
-      label: "Intervene on Testing"
-      inputs:
-        enabled:
-          type: "checkbox"
-          input_style: "native"
-          label: "Intervene on Testing"
-          value: true  # Changed this to true to test
-        frequency:
-          type: "select"
-          input_style: "choices"
-          multiple: false
-          placeholder: "Average number of tests per person..."
-          value: 1
-          options:
-            once:
-              id: 1
-              label: "Once per year"
-            twice:
-              id: 2
-              label: "Twice per year"
-            four:
-              id: 4
-              label: "Four times per year"
-
-    prep:
-      type: "compound"
-      label: "Intervene on PrEP"
-      inputs:
-        enabled:
-          type: "checkbox"
-          input_style: "native"
-          label: "Intervene on PrEP"
-          value: false
-        coverage:
-          type: "numeric"
-          placeholder: "PrEP Coverage"
-          min: 0
-          max: 100
-          step: 5
-          value: 10
-          format: "percentage"
-
-    suppression:
-      type: "compound"
-      label: "Intervene on Suppression"
-      inputs:
-        enabled:
-          type: "checkbox"
-          input_style: "native"
-          label: "Intervene on Suppression"
-          value: false
-        proportion:
-          type: "numeric"
-          placeholder: "Proportion Suppressed"
-          min: 0
-          max: 100
-          step: 5
-          value: 70
-          format: "percentage"
-
+    suppression_loss_1:
+      type: "numeric"
+      label: "Category 1 Suppression Loss"
+      placeholder: "Enter percentage..."
+      min: 0
+      max: 100
+      step: 5
+      value: 0
+      format: "percentage"
+    
+    suppression_loss_2:
+      type: "numeric"
+      label: "Category 2 Suppression Loss"
+      placeholder: "Enter percentage..."
+      min: 0
+      max: 100
+      step: 5
+      value: 0
+      format: "percentage"

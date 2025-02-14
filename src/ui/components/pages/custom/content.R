@@ -3,34 +3,84 @@
 create_custom_intervention_content <- function(config) {
     print("Creating custom intervention content")
     print("Config structure:")
-    str(config) # This will show us the full config structure
+    str(config)
 
     tagList(
         # Location selector
         create_location_selector("custom"),
 
-        # Subgroups configuration section
+        # Intervention configuration section
         tags$div(
-            class = "subgroups-config",
-
-            # Number of subgroups selector
-            tags$div(
-                class = "form-group subgroups-count",
-                tags$label(
-                    config$subgroups$label,
-                    class = "control-label"
-                ),
-                numericInput(
-                    "subgroups_count_custom",
-                    label = NULL,
-                    value = config$subgroups$value,
-                    min = config$subgroups$min,
-                    max = config$subgroups$max
+            class = "intervention-config",
+            
+            # Date range selector
+            if (!is.null(config$interventions$dates)) {
+                tags$div(
+                    class = "form-group date-range",
+                    # Start date
+                    tags$div(
+                        class = "date-start",
+                        selectInput(
+                            "int_dates_start_custom",
+                            label = config$interventions$dates$start$label,
+                            choices = setNames(
+                                sapply(config$interventions$dates$start$options, `[[`, "id"),
+                                sapply(config$interventions$dates$start$options, `[[`, "label")
+                            ),
+                            selected = config$interventions$dates$start$value
+                        )
+                    ),
+                    # End date
+                    tags$div(
+                        class = "date-end",
+                        selectInput(
+                            "int_dates_end_custom",
+                            label = config$interventions$dates$end$label,
+                            choices = setNames(
+                                sapply(config$interventions$dates$end$options, `[[`, "id"),
+                                sapply(config$interventions$dates$end$options, `[[`, "label")
+                            ),
+                            selected = config$interventions$dates$end$value
+                        )
+                    )
                 )
-            ),
+            },
 
-            # Dynamic subgroup panels
-            uiOutput("subgroup_panels_custom")
+            # Intervention components
+            if (!is.null(config$interventions$components)) {
+                tags$div(
+                    class = "intervention-components",
+                    lapply(names(config$interventions$components), function(component_name) {
+                        component <- config$interventions$components[[component_name]]
+                        
+                        tags$div(
+                            class = paste("component", component_name),
+                            if (component$type == "compound") {
+                                # Compound component (for full version)
+                                create_compound_component(component_name, component, "custom")
+                            } else if (component$type == "numeric") {
+                                # Simple numeric input (for ryan-white) with validation wrapper
+                                tags$div(
+                                    class = "input-validation-wrapper numeric",
+                                    numericInput(
+                                        paste0("int_", component_name, "_custom"),
+                                        label = component$label,
+                                        value = component$value %||% 0,
+                                        min = component$min %||% 0,
+                                        max = component$max %||% 100,
+                                        step = component$step %||% 1
+                                    ),
+                                    tags$div(
+                                        class = "input-error-message",
+                                        id = paste0("int_", component_name, "_custom_error"),
+                                        style = "display: none;"
+                                    )
+                                )
+                            }
+                        )
+                    })
+                )
+            }
         ),
 
         # Generate button using config settings
@@ -49,7 +99,8 @@ create_custom_intervention_content <- function(config) {
             tags$div(
                 class = "generate-feedback",
                 tags$small(config$defaults$feedback$generate$message),
-                if (config$defaults$feedback$generate$show_chime) {
+                if (!is.null(config$defaults$feedback$generate$show_chime) && 
+                    config$defaults$feedback$generate$show_chime) {
                     tags$div(
                         class = "chime-option",
                         checkboxInput(
