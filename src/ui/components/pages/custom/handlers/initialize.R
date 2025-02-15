@@ -34,9 +34,16 @@ initialize_component <- function(component_name, component, group_num, input, ou
             
             # Create validation rules
             create_validation_rules <- function() {
+                # Construct a clear field label
+                field_label <- if (!is.null(input_config$label)) {
+                    sprintf("%s %s", component$label, tolower(input_config$label))
+                } else {
+                    component$label
+                }
+                
                 rules <- list(
                     validation_boundary$rules$required(
-                        sprintf("%s is required", input_config$label)
+                        sprintf("%s is required", field_label)
                     )
                 )
                 
@@ -45,8 +52,8 @@ initialize_component <- function(component_name, component, group_num, input, ou
                         min = input_config$min,
                         max = input_config$max,
                         message = sprintf(
-                            "%s must be between %s and %s",
-                            input_config$label,
+                            "%s must be between %d and %d",
+                            field_label,
                             input_config$min,
                             input_config$max
                         )
@@ -137,8 +144,6 @@ initialize_subgroup_components <- function(group_num, input, output, session, va
 #' @param validation_manager Validation manager instance
 #' @param config Page configuration
 initialize_section <- function(section, input, output, session, validation_manager, config) {
-    print(sprintf("Initializing section: %s", section))
-    
     # Create validation boundary for this section
     validation_boundary <- create_validation_boundary(
         session, output, "custom", 
@@ -248,9 +253,6 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     config <- get_page_complete_config("custom")
     defaults_config <- get_defaults_config()
     required_sections <- defaults_config$page_requirements$custom$required_sections
-    print("Required sections:")
-    str(required_sections)
-
     # Create visualization manager with explicit page ID
     vis_manager <- create_visualization_manager(session, "custom", ns("visualization"))
 
@@ -270,14 +272,9 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
 
     # Handle generate button
     observeEvent(input$generate_custom, {
-        print("Generate button pressed (custom)")
-
         if (validation_manager$is_valid()) {
             subgroup_count <- isolate(input$subgroups_count_custom)
             settings <- collect_custom_settings(input, subgroup_count)
-
-            print("Collected settings:")
-            str(settings)
 
             # Update visualization state and display
             vis_manager$set_visibility("visible")
