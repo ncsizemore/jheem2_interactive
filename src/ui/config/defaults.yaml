@@ -121,6 +121,7 @@ page_requirements:
       - intensities
   custom:
     required_sections:
+      - location
       - subgroups
       - demographics
       - interventions

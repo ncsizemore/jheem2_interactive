@@ -1,5 +1,241 @@
 # src/ui/components/pages/custom/handlers/initialize.R
 
+#' Initialize a component's validation and observers
+#' @param component_name Name of the component
+#' @param component Component configuration
+#' @param group_num Subgroup number
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#' @param validation_manager Validation manager instance
+#' @param config Page configuration
+initialize_component <- function(component_name, component, group_num, input, output, 
+                               session, validation_manager, config) {
+    # Get selector config for this component and group
+    selector_config <- get_selector_config(component_name, "custom", group_num)
+    enabled_id <- paste0(selector_config$id, "_enabled")
+    
+    # Create validation boundary for this component
+    validation_boundary <- create_validation_boundary(
+        session,
+        output,
+        "custom",
+        paste0(component_name, "_validation_", group_num),
+        validation_manager = validation_manager
+    )
+    
+    # For each input in the compound component
+    for (input_name in names(component$inputs)) {
+        if (input_name == "enabled") next
+        
+        local({
+            input_config <- component$inputs[[input_name]]
+            value_id <- paste0(selector_config$id, "_", input_name)
+            
+            # Create validation rules
+            create_validation_rules <- function() {
+                rules <- list(
+                    validation_boundary$rules$required(
+                        sprintf("%s is required", input_config$label)
+                    )
+                )
+                
+                if (input_config$type == "numeric") {
+                    rules[[length(rules) + 1]] <- validation_boundary$rules$range(
+                        min = input_config$min,
+                        max = input_config$max,
+                        message = sprintf(
+                            "%s must be between %s and %s",
+                            input_config$label,
+                            input_config$min,
+                            input_config$max
+                        )
+                    )
+                }
+                rules
+            }
+            
+            # Add enabled state observer
+            observeEvent(input[[enabled_id]], {
+                if (!input[[enabled_id]]) {
+                    validation_manager$update_field(value_id, TRUE)
+                    runjs(sprintf("
+                        $('#%s').removeClass('is-invalid');
+                        $('#%s_error').hide();
+                    ", value_id, value_id))
+                }
+            })
+            
+            # Add value change observer
+            observeEvent(input[[value_id]], {
+                req(input[[enabled_id]])
+                
+                if (isTRUE(input[[enabled_id]])) {
+                    req(input[[value_id]])
+                    
+                    valid <- validation_boundary$validate(
+                        input[[value_id]],
+                        create_validation_rules(),
+                        field_id = value_id
+                    )
+                    
+                    if (!valid) {
+                        error_state <- validation_manager$get_field_state(value_id)
+                        runjs(sprintf("
+                            $('#%s').addClass('is-invalid');
+                            $('#%s_error').text('%s').show();
+                        ", value_id, value_id, error_state$message))
+                    } else {
+                        runjs(sprintf("
+                            $('#%s').removeClass('is-invalid');
+                            $('#%s_error').hide();
+                        ", value_id, value_id))
+                    }
+                }
+            })
+        })
+    }
+}
+
+#' Initialize components for a subgroup
+#' @param group_num Subgroup number
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#' @param validation_manager Validation manager instance
+#' @param config Page configuration
+initialize_subgroup_components <- function(group_num, input, output, session, validation_manager, config) {
+    # Get intervention components from config
+    for (component_name in names(config$interventions$components)) {
+        local({
+            # Get component config
+            component <- config$interventions$components[[component_name]]
+            
+            # Skip non-compound components
+            if (component$type != "compound") return()
+            
+            # Initialize this component
+            initialize_component(
+                component_name,
+                component,
+                group_num,
+                input,
+                output,
+                session,
+                validation_manager,
+                config
+            )
+        })
+    }
+}
+
+#' Initialize a specific section
+#' @param section Section name
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#' @param validation_manager Validation manager instance
+#' @param config Page configuration
+initialize_section <- function(section, input, output, session, validation_manager, config) {
+    print(sprintf("Initializing section: %s", section))
+    
+    # Create validation boundary for this section
+    validation_boundary <- create_validation_boundary(
+        session, output, "custom", 
+        paste0(section, "_validation"),
+        validation_manager = validation_manager
+    )
+    
+    # Handle each section type
+    switch(section,
+        "location" = {
+            observeEvent(input$int_location_custom, {
+                validation_boundary$validate(
+                    input$int_location_custom,
+                    list(
+                        validation_boundary$rules$required("Please select a location"),
+                        validation_boundary$rules$custom(
+                            test_fn = function(value) !is.null(value) && value != "none",
+                            message = "Please select a location"
+                        )
+                    ),
+                    field_id = "int_location_custom"
+                )
+            })
+        },
+        "subgroups" = {
+            # Validate subgroup count
+            observe({
+                req(input$subgroups_count_custom)
+                req(config$subgroups$min)
+                
+                count <- tryCatch({
+                    val <- as.numeric(input$subgroups_count_custom)
+                    if (is.na(val) || val < config$subgroups$min || val > config$subgroups$max) {
+                        validation_boundary$validate(
+                            input$subgroups_count_custom,
+                            list(
+                                validation_boundary$rules$range(
+                                    min = config$subgroups$min,
+                                    max = config$subgroups$max,
+                                    message = sprintf("Must be between %d and %d", 
+                                                    config$subgroups$min, 
+                                                    config$subgroups$max)
+                                )
+                            ),
+                            field_id = "subgroups_count_custom"
+                        )
+                        config$subgroups$min
+                    } else {
+                        val
+                    }
+                }, error = function(e) {
+                    config$subgroups$min
+                })
+                
+                # Render subgroup panels
+                output$subgroup_panels_custom <- renderUI({
+                    tagList(
+                        lapply(1:count, function(i) {
+                            create_subgroup_panel(i, "custom")
+                        })
+                    )
+                })
+            })
+        },
+        "demographics" = {
+            # Demographics validation is handled per-subgroup in interventions
+            NULL
+        },
+        "interventions" = {
+            # Main intervention observer
+            observe({
+                req(input$subgroups_count_custom)
+                req(config$subgroups$min)
+                
+                count <- as.numeric(input$subgroups_count_custom)
+                
+                # For each subgroup
+                for (i in 1:count) {
+                    local({
+                        group_num <- i
+                        
+                        # Initialize components for this subgroup
+                        initialize_subgroup_components(
+                            group_num,
+                            input,
+                            output,
+                            session,
+                            validation_manager,
+                            config
+                        )
+                    })
+                }
+            })
+        }
+    )
+}
+
 #' Initialize handlers for custom page
 #' @param input Shiny session object
 #' @param output Shiny output object
@@ -8,8 +244,12 @@
 initialize_custom_handlers <- function(input, output, session, plot_state) {
     ns <- session$ns
 
-    # Get configuration
+    # Get configuration and required sections
     config <- get_page_complete_config("custom")
+    defaults_config <- get_defaults_config()
+    required_sections <- defaults_config$page_requirements$custom$required_sections
+    print("Required sections:")
+    str(required_sections)
 
     # Create visualization manager with explicit page ID
     vis_manager <- create_visualization_manager(session, "custom", ns("visualization"))
@@ -23,267 +263,21 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     # Store validation manager in session for access by other functions
     session$userData$validation_manager <- validation_manager
 
-    # Validate location selection
-    validation_boundary <- create_validation_boundary(
-        session,
-        output,
-        "custom",
-        "location_validation",
-        validation_manager = validation_manager
-    )
+    # Initialize each required section
+    for (section in required_sections) {
+        initialize_section(section, input, output, session, validation_manager, config)
+    }
 
-    observeEvent(input$int_location_custom, {
-        validation_boundary$validate(
-            input$int_location_custom,
-            list(
-                validation_boundary$rules$required("Please select a location"),
-                validation_boundary$rules$custom(
-                    test_fn = function(value) !is.null(value) && value != "none",
-                    message = "Please select a location"
-                )
-            ),
-            field_id = "int_location_custom"
-        )
-    })
-
-    # Handle subgroup count changes
-    observeEvent(input$subgroups_count_custom, {
-        print(paste("Subgroups count changed:", input$subgroups_count_custom))
-
-        # Create validation boundary with validation manager
-        validation_boundary <- create_validation_boundary(
-            session,
-            output,
-            "custom",
-            "subgroups_validation",
-            validation_manager = validation_manager
-        )
-
-        # Get the numeric value, handle empty/NULL
-        count <- tryCatch(
-            {
-                as.numeric(input$subgroups_count_custom)
-            },
-            warning = function(w) NULL,
-            error = function(e) NULL
-        )
-
-        # Validate subgroups count
-        valid_count <- validation_boundary$validate(
-            count,
-            list(
-                validation_boundary$rules$required("Number of subgroups is required"),
-                validation_boundary$rules$range(
-                    min = config$subgroups$min,
-                    max = config$subgroups$max,
-                    message = sprintf(
-                        "Number of subgroups must be between %d and %d",
-                        config$subgroups$min,
-                        config$subgroups$max
-                    )
-                )
-            ),
-            field_id = "subgroups_count_custom"
-        )
-
-        # Clear existing panels if invalid
-        if (!valid_count) {
-            output$subgroup_panels_custom <- renderUI({
-                NULL
-            })
-            # Reset the input to last valid value or min
-            updateNumericInput(
-                session,
-                "subgroups_count_custom",
-                value = config$subgroups$min
-            )
-        } else {
-            # Only render subgroup panels if count is valid
-            output$subgroup_panels_custom <- renderUI({
-                panels <- lapply(1:count, function(i) {
-                    create_subgroup_panel(i, config)
-                })
-                do.call(tagList, panels)
-            })
-        }
-    })
-
-    # Create observers for intervention inputs
-    observe({
-        # Get current subgroup count
-        subgroup_count <- tryCatch(
-            {
-                count <- as.numeric(input$subgroups_count_custom)
-                if (is.na(count) || count < config$subgroups$min || count > config$subgroups$max) {
-                    config$subgroups$min
-                } else {
-                    count
-                }
-            },
-            error = function(e) config$subgroups$min
-        )
-
-        # For each subgroup
-        for (i in 1:subgroup_count) {
-            local({
-                group_num <- i
-
-                # For each intervention component in config
-                for (component_name in names(config$interventions$components)) {
-                    local({
-                        component <- config$interventions$components[[component_name]]
-
-                        # Skip if not a compound type with numeric/select inputs
-                        if (component$type != "compound") {
-                            return()
-                        }
-
-                        # Create validation boundary with unique ID for each field
-                        validation_boundary <- create_validation_boundary(
-                            session,
-                            output,
-                            "custom",
-                            sprintf("validation_%s_%d", component_name, group_num),
-                            validation_manager = validation_manager
-                        )
-
-                        enabled_id <- paste0("int_", component_name, "_", group_num, "_custom_enabled")
-
-                        # For each input in the compound component
-                        for (input_name in names(component$inputs)) {
-                            input_config <- component$inputs[[input_name]]
-                            if (input_name == "enabled") next
-
-                            value_id <- paste0("int_", component_name, "_", group_num, "_custom_", input_name)
-
-                            print(sprintf("Setting up validation for %s", value_id))
-
-                            # Add input change observer
-                            observeEvent(input[[enabled_id]], {
-                                print(sprintf("Enabled state changed for %s: %s", value_id, input[[enabled_id]]))
-                                if (!input[[enabled_id]]) {
-                                    validation_manager$update_field(value_id, TRUE)
-                                    runjs(sprintf("
-                                        $('#%s').removeClass('is-invalid');
-                                        $('#%s_error').hide();
-                                    ", value_id, value_id))
-                                }
-                            })
-
-                            observeEvent(input[[value_id]], {
-                                print(sprintf("Value changed for %s: %s", value_id, input[[value_id]]))
-                                if (input[[enabled_id]]) {
-                                    # Debug input configuration
-                                    print("Input config:")
-                                    str(input_config)
-
-                                    # Get the proper label from the component configuration
-                                    field_label <- if (!is.null(component$inputs[[input_name]]$label)) {
-                                        # First try component-specific input label from defaults.yaml
-                                        component$inputs[[input_name]]$label
-                                    } else if (!is.null(input_config$label)) {
-                                        # Then try the direct input label from custom.yaml
-                                        input_config$label
-                                    } else if (!is.null(input_config$placeholder)) {
-                                        # Fall back to placeholder if available
-                                        gsub("\\.\\.\\.$", "", input_config$placeholder) # Remove trailing ellipsis
-                                    } else if (!is.null(component$label)) {
-                                        # Use parent component label as last resort
-                                        sub("Intervene on ", "", component$label)
-                                    } else {
-                                        "Field"
-                                    }
-
-                                    print(sprintf("Using field label: %s", field_label))
-
-                                    # Create validation rules based on input type
-                                    rules <- list(
-                                        validation_boundary$rules$required(
-                                            message = sprintf("%s is required", field_label)
-                                        )
-                                    )
-
-                                    if (input_config$type == "numeric") {
-                                        # Get min/max from config with fallbacks
-                                        min_val <- input_config$min %||% 0
-                                        max_val <- input_config$max %||% 100
-
-                                        message <- sprintf(
-                                            "%s must be between %d and %d",
-                                            field_label,
-                                            min_val,
-                                            max_val
-                                        )
-
-                                        # Add percentage if format is percentage
-                                        if (!is.null(input_config$format) && input_config$format == "percentage") {
-                                            message <- sprintf("%s%%", message)
-                                        }
-
-                                        print(sprintf("Creating range validation message: %s", message))
-
-                                        rules[[length(rules) + 1]] <- validation_boundary$rules$range(
-                                            min = min_val,
-                                            max = max_val,
-                                            message = message
-                                        )
-                                    }
-
-                                    print("Created validation rules:")
-                                    str(rules)
-
-                                    # Convert input value to numeric for numeric fields
-                                    value <- if (input_config$type == "numeric") {
-                                        as.numeric(input[[value_id]])
-                                    } else {
-                                        input[[value_id]]
-                                    }
-
-                                    # Validate and update UI
-                                    valid <- validation_boundary$validate(
-                                        value,
-                                        rules,
-                                        field_id = value_id
-                                    )
-
-                                    print(sprintf("Validation result for %s: %s", value_id, valid))
-
-                                    if (!valid) {
-                                        error_state <- validation_manager$get_field_state(value_id)
-                                        print("Error state:")
-                                        str(error_state)
-
-                                        if (!is.null(error_state) && !is.null(error_state$message)) {
-                                            print(sprintf("Showing error for %s: %s", value_id, error_state$message))
-                                            runjs(sprintf("
-                                                $('#%s').addClass('is-invalid');
-                                                $('#%s_error').text('%s').show();
-                                            ", value_id, value_id, error_state$message))
-                                        }
-                                    } else {
-                                        print(sprintf("Clearing error for %s", value_id))
-                                        runjs(sprintf("
-                                            $('#%s').removeClass('is-invalid');
-                                            $('#%s_error').hide();
-                                        ", value_id, value_id))
-                                    }
-                                }
-                            })
-                        }
-                    })
-                }
-            })
-        }
-    })
-
-    # Modify generate button handler
+    # Handle generate button
     observeEvent(input$generate_custom, {
         print("Generate button pressed (custom)")
 
         if (validation_manager$is_valid()) {
-            # Get subgroup count and settings
             subgroup_count <- isolate(input$subgroups_count_custom)
             settings <- collect_custom_settings(input, subgroup_count)
+
+            print("Collected settings:")
+            str(settings)
 
             # Update visualization state and display
             vis_manager$set_visibility("visible")

@@ -4,15 +4,12 @@ create_custom_intervention_content <- function(config) {
     print("Creating custom intervention content")
     print("Config structure:")
     str(config) # This will show us the full config structure
-
     tagList(
         # Location selector
         create_location_selector("custom"),
-
         # Subgroups configuration section
         tags$div(
             class = "subgroups-config",
-
             # Number of subgroups selector
             tags$div(
                 class = "form-group subgroups-count",
@@ -28,11 +25,9 @@ create_custom_intervention_content <- function(config) {
                     max = config$subgroups$max
                 )
             ),
-
             # Dynamic subgroup panels
             uiOutput("subgroup_panels_custom")
         ),
-
         # Generate button using config settings
         tags$div(
             class = "generate-controls",
@@ -44,7 +39,6 @@ create_custom_intervention_content <- function(config) {
                     config$theme$buttons$primary_class
                 )
             ),
-
             # Feedback area using config
             tags$div(
                 class = "generate-feedback",
@@ -72,11 +66,9 @@ create_custom_plot_controls <- function(config) {
     print("Creating custom plot controls")
     # Create namespace for controls
     ns <- NS("custom")
-
     plot_config <- config$plot_controls
     print("Plot config structure:")
     str(plot_config)
-
     tagList(
         # Outcomes section
         create_control_section(
@@ -85,7 +77,6 @@ create_custom_plot_controls <- function(config) {
             suffix = "custom",
             ns = ns # Add namespace
         ),
-
         # Stratification section
         create_control_section(
             type = "stratification",
@@ -93,7 +84,6 @@ create_custom_plot_controls <- function(config) {
             suffix = "custom",
             ns = ns # Add namespace
         ),
-
         # Display options section
         create_control_section(
             type = "display",

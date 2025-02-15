@@ -192,22 +192,41 @@ validate_config <- function(config) {
 #' @param page Page type
 #' @return TRUE if valid, throws error if invalid
 validate_page_config <- function(config, page) {
-    # Get requirements from config
+    # Get defaults configuration
     defaults_config <- get_defaults_config()
-    required <- defaults_config$page_requirements[[page]]$required_sections
+    # Get required sections from page requirements
+    required_sections <- defaults_config$page_requirements[[page]]$required_sections
 
-    if (is.null(required)) {
+
+    if (is.null(required_sections)) {
         warning(sprintf("No requirements defined for page: %s", page))
         return(TRUE)
     }
 
-    # Check required sections
-    missing <- setdiff(required, names(config))
-    if (length(missing) > 0) {
+    # For each required section
+    for (section in required_sections) {
+        print(paste("Checking section:", section))
+        # First check if section exists in page-specific config
+        if (section %in% names(config)) {
+            print(paste("Found", section, "in page config"))
+            next
+        }
+
+        # If not in page config, check if it's in selectors
+        print(paste("Looking for", section, "in selectors"))
+        print("Available selectors:")
+        str(config$selectors)
+
+        if (section %in% names(config$selectors)) {
+            print(paste("Found", section, "in selectors"))
+            next
+        }
+
+        # If not found in either place, it's missing
         stop(sprintf(
-            "Missing required configuration sections for %s: %s",
-            page,
-            paste(missing, collapse = ", ")
+            "Missing required configuration section '%s' for %s. Section must be defined either in page config or in common selectors.",
+            section,
+            page
         ))
     }
 
