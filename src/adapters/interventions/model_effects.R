@@ -16,11 +16,11 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
         quantity.name = quantity_name,
         start.time = start_time,
         effect.values = effect_value,
-        apply.effects.as = "value",
+        apply.effects.as = "multiplier",
         scale = scale,
         times = end_time,
-        allow.values.less.than.otherwise = FALSE,
-        allow.values.greater.than.otherwise = TRUE
+        allow.values.less.than.otherwise = TRUE,
+        allow.values.greater.than.otherwise = FALSE
     )
 }
 
@@ -34,58 +34,44 @@ get_effect_config <- function(intervention_type) {
     MODEL_EFFECTS[[intervention_type]]
 }
 
-#' Convert percentage to proportion
-#' @param value Percentage value
-#' @return Proportion value
-percentage_to_proportion <- function(value) value / 100
-
 #' Model effect configurations
 MODEL_EFFECTS <- list(
-    prep = list(
-        quantity_name = "oral.prep.uptake",
+    adap_suppression_loss = list(
+        quantity_name = "adap.suppression.effect",
         scale = "proportion",
-        transform = percentage_to_proportion,
-        value_field = "coverage",
+        transform = function(value) {
+            # Convert percentage loss to multiplier
+            # e.g., 25% loss becomes 0.75 multiplier
+            1 - (value / 100)
+        },
+        value_field = "adap_suppression_loss",
         create = function(start_time, end_time, value) {
             create_standard_effect(
-                quantity_name = MODEL_EFFECTS$prep$quantity_name,
-                scale = MODEL_EFFECTS$prep$scale,
+                quantity_name = MODEL_EFFECTS$adap_suppression_loss$quantity_name,
+                scale = MODEL_EFFECTS$adap_suppression_loss$scale,
                 start_time = start_time,
                 end_time = end_time,
                 value = value,
-                transform = MODEL_EFFECTS$prep$transform
+                transform = MODEL_EFFECTS$adap_suppression_loss$transform
             )
         }
     ),
-    testing = list(
-        quantity_name = "general.population.testing",
-        scale = "rate",
-        transform = function(value) as.numeric(value), # Ensure numeric conversion
-        value_field = "frequency",
-        create = function(start_time, end_time, value) {
-            create_standard_effect(
-                quantity_name = MODEL_EFFECTS$testing$quantity_name,
-                scale = MODEL_EFFECTS$testing$scale,
-                start_time = start_time,
-                end_time = end_time,
-                value = value,
-                transform = MODEL_EFFECTS$testing$transform
-            )
-        }
-    ),
-    suppression = list(
-        quantity_name = "suppression.of.diagnosed",
+    non_adap_suppression_loss = list(
+        quantity_name = "rw.without.adap.suppression.effect",
         scale = "proportion",
-        transform = percentage_to_proportion,
-        value_field = "proportion",
+        transform = function(value) {
+            # Convert percentage loss to multiplier
+            1 - (value / 100)
+        },
+        value_field = "non_adap_suppression_loss",
         create = function(start_time, end_time, value) {
             create_standard_effect(
-                quantity_name = MODEL_EFFECTS$suppression$quantity_name,
-                scale = MODEL_EFFECTS$suppression$scale,
+                quantity_name = MODEL_EFFECTS$non_adap_suppression_loss$quantity_name,
+                scale = MODEL_EFFECTS$non_adap_suppression_loss$scale,
                 start_time = start_time,
                 end_time = end_time,
                 value = value,
-                transform = MODEL_EFFECTS$suppression$transform
+                transform = MODEL_EFFECTS$non_adap_suppression_loss$transform
             )
         }
     )

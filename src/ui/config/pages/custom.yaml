@@ -1,98 +1,89 @@
-# config/pages/custom.yaml - Custom page specific settings
-# Simplified version for ryan-white branch
+# src/ui/config/pages/custom.yaml - Ryan White funding impact settings
 
 # Intervention configuration
 interventions:
-  # Keep the date range selector
+  # Implementation timing - July 1st to October 1st of selected years
   dates:
     type: "date_range"
     start:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Begins in:"
+      label: "Program Changes Begin (July 1st):"
       placeholder: "Select start year..."
-      min: 2023
+      min: 2025
       max: 2030
-      value: 2023
+      value: 2025
       options:
-        2023:
-          id: "2023"
-          label: "2023"
-        2024:
-          id: "2024"
-          label: "2024"
         2025:
-          id: "2025"
+          id: "2025.5"
           label: "2025"
         2026:
-          id: "2026"
+          id: "2026.5"
           label: "2026"
         2027:
-          id: "2027"
+          id: "2027.5"
           label: "2027"
         2028:
-          id: "2028"
+          id: "2028.5"
           label: "2028"
         2029:
-          id: "2029"
+          id: "2029.5"
           label: "2029"
         2030:
-          id: "2030"
+          id: "2030.5"
           label: "2030"
     end:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Fully Implemented by:"
+      label: "Fully Implemented by (October 1st):"
       placeholder: "Select end year..."
-      min: 2023
+      min: 2025
       max: 2030
-      value: 2024
+      value: 2025
       options:
-        2023:
-          id: "2023"
-          label: "2023"
-        2024:
-          id: "2024"
-          label: "2024"
         2025:
-          id: "2025"
+          id: "2025.8"
           label: "2025"
         2026:
-          id: "2026"
+          id: "2026.8"
           label: "2026"
         2027:
-          id: "2027"
+          id: "2027.8"
           label: "2027"
         2028:
-          id: "2028"
+          id: "2028.8"
           label: "2028"
         2029:
-          id: "2029"
+          id: "2029.8"
           label: "2029"
         2030:
-          id: "2030"
+          id: "2030.8"
           label: "2030"
 
-  # Simple numeric inputs for suppression loss
+  # Suppression loss components
   components:
-    suppression_loss_1:
+    adap_suppression_loss:
       type: "numeric"
-      label: "Category 1 Suppression Loss"
+      label: "ADAP Recipients Suppression Loss"
+      description: "What percentage of currently suppressed ADAP recipients would lose suppression if all Ryan White services stopped?"
+      help_text: "Consider patients receiving any ADAP benefits (full-pay medications, premium assistance, and/or copay support)"
       placeholder: "Enter percentage..."
       min: 0
       max: 100
-      step: 5
+      step: 1
       value: 0
       format: "percentage"
     
-    suppression_loss_2:
+    non_adap_suppression_loss:
       type: "numeric"
-      label: "Category 2 Suppression Loss"
+      label: "Non-ADAP Recipients Suppression Loss"
+      description: "What percentage of currently suppressed non-ADAP Ryan White clients would lose suppression if all Ryan White services stopped?"
+      help_text: "Consider patients receiving Ryan White services but NO ADAP benefits"
       placeholder: "Enter percentage..."
       min: 0
       max: 100
-      step: 5
+      step: 1
       value: 0
       format: "percentage"
