@@ -46,40 +46,9 @@ create_custom_intervention_content <- function(config) {
                 )
             },
 
-            # Intervention components
-            if (!is.null(config$interventions$components)) {
-                tags$div(
-                    class = "intervention-components",
-                    lapply(names(config$interventions$components), function(component_name) {
-                        component <- config$interventions$components[[component_name]]
-                        
-                        tags$div(
-                            class = paste("component", component_name),
-                            if (component$type == "compound") {
-                                # Compound component (for full version)
-                                create_compound_component(component_name, component, "custom")
-                            } else if (component$type == "numeric") {
-                                # Simple numeric input (for ryan-white) with validation wrapper
-                                tags$div(
-                                    class = "input-validation-wrapper numeric",
-                                    numericInput(
-                                        paste0("int_", component_name, "_custom"),
-                                        label = component$label,
-                                        value = component$value %||% 0,
-                                        min = component$min %||% 0,
-                                        max = component$max %||% 100,
-                                        step = component$step %||% 1
-                                    ),
-                                    tags$div(
-                                        class = "input-error-message",
-                                        id = paste0("int_", component_name, "_custom_error"),
-                                        style = "display: none;"
-                                    )
-                                )
-                            }
-                        )
-                    })
-                )
+            # Subgroup panels placeholder
+            if (!is.null(config$subgroups)) {
+                uiOutput("subgroup_panels_custom")
             }
         ),
 

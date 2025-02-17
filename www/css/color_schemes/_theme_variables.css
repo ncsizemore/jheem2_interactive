@@ -1,28 +1,49 @@
 /* color_schemes/_theme_variables.css */
 
+/* Ryan White Theme Variables */
 :root {
-  /* Brand Colors */
-  --brand-primary: #1c4882;    /* JH Blue */
-  --brand-secondary: #4F7BB5;  /* Lighter Blue */
-  --brand-accent: #dce8f8;     /* Very Light Blue */
-  
+  /* Brand Colors - Warm, healthcare-focused palette */
+  --brand-primary: #E63946;
+  /* Warm Red - represents healthcare/urgency */
+  --brand-secondary: #457B9D;
+  /* Muted Blue - professionalism */
+  --brand-accent: #F1FAEE;
+  /* Soft Mint - freshness/health */
+
+  /* Extended Palette */
+  --color-success: #2A9D8F;
+  /* Teal */
+  --color-warning: #E9C46A;
+  /* Gold */
+  --color-error: #D62828;
+  /* Dark Red */
+
   /* Application Theme */
   --theme-navbar-bg: var(--brand-primary);
   --theme-navbar-text: var(--color-white);
-  --theme-navbar-hover-bg: var(--brand-accent);
-  --theme-navbar-hover-text: var(--color-gray-900);
-  --theme-navbar-active-bg: var(--brand-secondary);
-  
+  --theme-navbar-hover-bg: #f8d7da;
+  /* Light red */
+  --theme-navbar-hover-text: var(--brand-primary);
+  --theme-navbar-active-bg: #dc3545;
+
   /* Layout Colors */
-  --theme-body-bg: #f8f8f8;
+  --theme-body-bg: #F8F9FA;
   --theme-header-bg: var(--brand-accent);
   --theme-content-bg: var(--color-white);
   --theme-controls-bg: var(--theme-body-bg);
-  
-  /* CTAs */
-  --theme-cta-bg: var(--brand-primary);
-  --theme-cta-text: var(--color-white);
-  --theme-cta-shadow: 2px 1px 2px 0px var(--color-gray-600);
-  --theme-cta-disabled-bg: var(--color-gray-400);
-  --theme-cta-disabled-text: var(--color-gray-600);
+  --theme-panel-border: #E9ECEF;
+
+  /* Typography */
+  --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size-base: 0.95rem;
+
+  /* Component Specific */
+  --input-border-radius: 8px;
+  --button-border-radius: 8px;
+  --panel-border-radius: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }

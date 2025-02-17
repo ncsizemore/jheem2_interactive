@@ -1,5 +1,17 @@
 # src/ui/config/pages/custom.yaml - Ryan White funding impact settings
 
+# Subgroups configuration - fixed for Ryan White
+subgroups:
+  fixed: true
+  count: 2
+  groups:
+    - id: "adap"
+      label: "ADAP Recipients"
+      description: "Patients receiving any ADAP benefits (full-pay medications, premium assistance, and/or copay support)"
+    - id: "non_adap"
+      label: "Non-ADAP Recipients"
+      description: "Patients receiving Ryan White services but NO ADAP benefits"
+
 # Intervention configuration
 interventions:
   # Implementation timing - July 1st to October 1st of selected years
@@ -64,23 +76,10 @@ interventions:
 
   # Suppression loss components
   components:
-    adap_suppression_loss:
+    suppression_loss:
       type: "numeric"
-      label: "ADAP Recipients Suppression Loss"
-      description: "What percentage of currently suppressed ADAP recipients would lose suppression if all Ryan White services stopped?"
-      help_text: "Consider patients receiving any ADAP benefits (full-pay medications, premium assistance, and/or copay support)"
-      placeholder: "Enter percentage..."
-      min: 0
-      max: 100
-      step: 1
-      value: 0
-      format: "percentage"
-    
-    non_adap_suppression_loss:
-      type: "numeric"
-      label: "Non-ADAP Recipients Suppression Loss"
-      description: "What percentage of currently suppressed non-ADAP Ryan White clients would lose suppression if all Ryan White services stopped?"
-      help_text: "Consider patients receiving Ryan White services but NO ADAP benefits"
+      label: "Suppression Loss"
+      description: "What percentage would lose suppression if all Ryan White services stopped?"
       placeholder: "Enter percentage..."
       min: 0
       max: 100

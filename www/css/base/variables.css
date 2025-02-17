@@ -46,17 +46,23 @@
     --color-fatal-text: #ffffff;
 
     /* Spacing */
-    --spacing-xs: 0.5rem;   /* 8px */
-    --spacing-sm: 0.75rem;  /* 12px */
-    --spacing-md: 1rem;     /* 16px */
-    --spacing-lg: 1.5rem;   /* 24px */
-    --spacing-xl: 2rem;     /* 32px */
-    --spacing-2xl: 3rem;    /* 48px */
+    --spacing-xs: 0.5rem;
+    /* 8px */
+    --spacing-sm: 0.75rem;
+    /* 12px */
+    --spacing-md: 1rem;
+    /* 16px */
+    --spacing-lg: 1.5rem;
+    /* 24px */
+    --spacing-xl: 2rem;
+    /* 32px */
+    --spacing-2xl: 3rem;
+    /* 48px */
 
     /* Typography */
     --font-family-base: system-ui, -apple-system, sans-serif;
     --font-family-mono: ui-monospace, monospace;
-    
+
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
     --font-size-md: 1rem;
@@ -90,12 +96,32 @@
     /* Panels */
     --panel-bg: var(--color-white);
     --panel-border: var(--color-gray-200);
-    
+
     /* Controls */
     --control-border: var(--color-gray-300);
     --control-bg: var(--color-white);
     --control-bg-hover: var(--color-gray-50);
-    
+
     /* Loading */
     --loading-overlay: rgba(255, 255, 255, 0.8);
+
+    /* Ryan White Theme Colors */
+    --rw-primary: #E63946;
+    --rw-primary-light: #f8d7da;
+    --rw-primary-dark: #dc3545;
+    --rw-secondary: #457B9D;
+    --rw-accent: #F1FAEE;
+
+    /* Theme-specific Component Variables */
+    --theme-navbar-bg: var(--rw-primary);
+    --theme-navbar-text: var(--color-white);
+    --theme-navbar-hover-bg: var(--rw-primary-light);
+    --theme-navbar-hover-text: var(--rw-primary);
+    --theme-navbar-active-bg: var(--rw-primary-dark);
+
+    --theme-body-bg: var(--color-gray-50);
+    --theme-header-bg: var(--rw-accent);
+    --theme-content-bg: var(--color-white);
+    --theme-controls-bg: var(--theme-body-bg);
+    --theme-panel-border: var(--color-gray-200);
 }

@@ -192,25 +192,10 @@ validate_config <- function(config) {
 #' @param page Page type
 #' @return TRUE if valid, throws error if invalid
 validate_page_config <- function(config, page) {
-    # Get requirements from config
-    defaults_config <- get_defaults_config()
-    required <- defaults_config$page_requirements[[page]]$required_sections
-    
-    if (is.null(required)) {
-        warning(sprintf("No requirements defined for page: %s", page))
-        return(TRUE)
+    # Basic validation of config structure
+    if (!is.list(config)) {
+        stop("Configuration must be a list")
     }
-
-    # Check required sections
-    missing <- setdiff(required, names(config))
-    if (length(missing) > 0) {
-        stop(sprintf(
-            "Missing required configuration sections for %s: %s",
-            page,
-            paste(missing, collapse = ", ")
-        ))
-    }
-
     TRUE
 }
 
@@ -250,8 +235,8 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
         } else if (selector_id == "intervention_dates") {
             # Date selector
             config$interventions$dates
-        } else if (selector_id %in% c("testing", "prep", "suppression", "needle_exchange", "moud")) {
-            # Intervention component selectors
+        } else if (selector_id %in% names(config$interventions$components)) {
+            # Any intervention component from the config
             config$interventions$components[[selector_id]]
         } else {
             # Standard selectors

@@ -111,11 +111,3 @@ model_dimensions:
       "hispanic": "hispanic"
       "other": "other"
 
-# Page requirements - defines required sections for each page type
-page_requirements:
-  prerun:
-    required_sections:
-      - selectors
-  custom:
-    required_sections:
-      - interventions

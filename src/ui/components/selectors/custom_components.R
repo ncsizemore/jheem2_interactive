@@ -132,8 +132,8 @@ create_date_range <- function(id, config, container_class = NULL) {
 #' @param type Intervention type (e.g., "testing", "prep")
 #' @param group_num Subgroup number
 #' @param suffix Page suffix
-create_intervention_setting <- function(type, group_num, suffix) {
-    # Debug print
+#' @param fixed_group Optional fixed group configuration
+create_intervention_setting <- function(type, group_num, suffix, fixed_group = NULL) {
     print(paste("Creating intervention setting:", type, "group:", group_num, "suffix:", suffix))
 
     # Get configuration
@@ -141,66 +141,77 @@ create_intervention_setting <- function(type, group_num, suffix) {
     print("Got config:")
     print(str(config))
 
-    # Create compound input with full configuration
-    create_compound_input(
-        id = config$id,
-        config = config, # Pass the full config
-        container_class = paste0("intervention-", type)
-    )
+    # Modify label if we have a fixed group
+    if (!is.null(fixed_group)) {
+        config$label <- paste(fixed_group$label, "-", config$label)
+    }
+
+    # Generate the base ID
+    base_id <- paste0("int_", type, "_", group_num, "_", suffix)
+
+    if (config$type == "numeric") {
+        # Simple numeric input with validation
+        tags$div(
+            class = paste("intervention-component", type),
+            tags$div(
+                class = "input-validation-wrapper numeric",
+                numericInput(
+                    inputId = base_id,
+                    label = config$label,
+                    value = config$value,
+                    min = config$min,
+                    max = config$max,
+                    step = config$step
+                ),
+                tags$div(
+                    class = "input-error-message",
+                    id = paste0(base_id, "_error"),
+                    style = "display: none;"
+                )
+            )
+        )
+    } else if (config$type == "compound") {
+        # Compound input with checkbox and additional inputs
+        config$id <- base_id  # Ensure ID is set correctly
+        create_compound_input(
+            id = base_id,
+            config = config,
+            container_class = paste0("intervention-", type)
+        )
+    } else {
+        warning(sprintf("Unknown component type: %s", config$type))
+        NULL
+    }
 }
 
 #' Create a complete subgroup panel
 #' @param group_num Subgroup number
 #' @param config_or_suffix Configuration object or page suffix
-create_subgroup_panel <- function(group_num, config_or_suffix) {
-    # Ensure we have a string for the page type
-    suffix <- if (is.character(config_or_suffix)) {
-        config_or_suffix
-    } else {
-        "custom" # Default to custom if not a string
-    }
-
-    # Get config to check available interventions
+#' @param fixed_group Optional fixed group configuration for predefined groups
+create_subgroup_panel <- function(group_num, config_or_suffix, fixed_group = NULL) {
+    # Get page type string
+    suffix <- if (is.character(config_or_suffix)) config_or_suffix else "custom"
+    
+    # Get config
     config <- get_page_complete_config(suffix)
-    available_interventions <- names(config$interventions$components)
-
-    # Get date range config
-    date_config <- get_selector_config("intervention_dates", suffix, group_num)
-
+    
+    # Create base container
     tags$div(
         class = "subgroup-panel",
         id = paste0("subgroup-", group_num),
-        tags$h4(paste("Subgroup", group_num, "Characteristics:")),
+        
+        # Title from config
+        tags$h4(fixed_group$label),
 
-        # Characteristics (demographics)
-        tags$div(
-            class = "characteristics-section",
-            create_subgroup_characteristics(group_num, suffix)
-        ),
-
-        # Intervention components
+        # Intervention components section
         tags$div(
             class = "intervention-components",
             tags$h4("Intervention Components:"),
-
-            # Date range
-            tags$div(
-                class = "intervention-dates",
-                create_date_range(
-                    id = date_config$id,
-                    config = date_config
-                )
-            ),
-
-            # Intervention settings in a grid
-            tags$div(
-                class = "intervention-settings-grid",
-                # Only create settings for available interventions
-                lapply(
-                    available_interventions,
-                    function(type) create_intervention_setting(type, group_num, suffix)
-                )
-            )
+            
+            # Create whatever components are specified for this group
+            lapply(names(config$interventions$components), function(type) {
+                create_intervention_setting(type, group_num, suffix, fixed_group)
+            })
         )
     )
 }
