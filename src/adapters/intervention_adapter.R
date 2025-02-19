@@ -27,10 +27,10 @@ create_custom_intervention <- function(settings, session_id = NULL) {
     print("Creating custom intervention with settings:")
     str(settings)
 
-    # Extract location and subgroups
+    # Extract location and components
     location <- settings$location
-    subgroups <- settings$subgroups
-
+    components_list <- settings$components
+    
     # Generate intervention code base (max 25 chars)
     timestamp <- format(Sys.time(), "%m%d%H%M") # Shorter timestamp: MMDDHHMM
     intervention_code_base <- if (!is.null(session_id)) {
@@ -41,110 +41,98 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         paste0("c.", timestamp) # c.02051123
     }
 
-    # If no subgroups have enabled interventions, return null intervention
-    if (!any(sapply(subgroups, function(sg) {
-        any(sapply(sg$interventions[names(MODEL_EFFECTS)], function(int) isTRUE(int$enabled)))
-    }))) {
+    # Return null intervention if no components
+    if (is.null(components_list) || length(components_list) == 0) {
+        print("No components found, returning null intervention")
         return(jheem2:::get.null.intervention())
     }
-
-    # Get dimension configurations
-    config <- get_defaults_config()
-    dimensions <- names(config$model_dimensions)
-
-    # Create an intervention for each subgroup
-    subgroup_interventions <- list()
-
-    for (subgroup in subgroups) {
-        # Skip if no enabled interventions
-        if (!any(sapply(subgroup$interventions[names(MODEL_EFFECTS)], function(int) isTRUE(int$enabled)))) {
+    
+    # Create an intervention for each component group
+    group_interventions <- list()
+    
+    for (group_idx in seq_along(components_list)) {
+        group_components <- components_list[[group_idx]]
+        
+        # Skip if no components
+        if (length(group_components) == 0) {
             next
         }
-
-        # Map UI demographic values to model values for each dimension
-        demographics <- list()
-        name_parts <- c()
-
-        for (dim in dimensions) {
-            # Get UI field name from config
-            ui_field <- config$model_dimensions[[dim]]$ui_field
-
-            # Get values if they exist
-            ui_values <- subgroup$demographics[[ui_field]]
-            if (!is.null(ui_values) && length(ui_values) > 0) {
-                # Map each UI value to model value
-                model_values <- sapply(ui_values, function(val) {
-                    get_model_dimension_value(dim, val)
-                })
-                demographics[[dim]] <- model_values
-
-                # Add to name parts
-                name_parts <- c(
-                    name_parts,
-                    if (length(model_values) > 1) {
-                        paste0(model_values[1], ".", length(model_values))
-                    } else {
-                        model_values[1]
-                    }
-                )
+        
+        for (component in group_components) {
+            # Skip NULL components (disabled components from compound inputs)
+            if (is.null(component)) {
+                next
             }
-        }
-
-        # Create target name
-        target_name <- paste(name_parts, collapse = ".")
-        if (nchar(target_name) > 25) {
-            target_name <- paste0(substr(target_name, 1, 22), "...")
-        }
-        # Replace underscores with dashes in the name only
-        target_name <- gsub("_", "-", target_name)
-
-        # Create target population with mapped demographics
-        target_args <- list(name = target_name)
-        for (dim in names(demographics)) {
-            target_args[[dim]] <- demographics[[dim]]
-        }
-        target_pop <- do.call(create.target.population, target_args)
-
-        # Create effects for this subgroup
-        subgroup_effects <- list()
-        for (intervention_type in names(MODEL_EFFECTS)) {
-            if (isTRUE(subgroup$interventions[[intervention_type]]$enabled)) {
-                effect_config <- get_effect_config(intervention_type)
-                value <- subgroup$interventions[[intervention_type]][[effect_config$value_field]]
-
-                effect <- effect_config$create(
-                    start_time = as.numeric(subgroup$interventions$dates$start),
-                    end_time = as.numeric(subgroup$interventions$dates$end),
-                    value = value
-                )
-                subgroup_effects[[length(subgroup_effects) + 1]] <- effect
+            
+            # Get group ID and component type
+            group_id <- component$group
+            component_type <- component$type
+            component_value <- component$value
+            
+            print(paste("Processing component:", component_type, "for group:", group_id, "with value:", component_value))
+            
+            # Create target population for this group
+            # Replace underscores with dashes for compliance with naming restrictions
+            target_name <- gsub("_", "-", group_id)
+            target_pop <- create.target.population(
+                name = target_name
+            )
+            
+            # Try to find direct effect mapping first
+            # We keep group_id with underscores for effect mapping
+            direct_effect_name <- paste0(group_id, "_", component_type)
+            
+            # Determine which effect configuration to use
+            if (direct_effect_name %in% names(MODEL_EFFECTS)) {
+                effect_config <- MODEL_EFFECTS[[direct_effect_name]]
+                print(paste("Using direct effect:", direct_effect_name))
+            } else if (component_type %in% names(MODEL_EFFECTS)) {
+                # Try generic effect
+                effect_config <- MODEL_EFFECTS[[component_type]]
+                print(paste("Using generic effect:", component_type))
+            } else {
+                warning(paste(
+                    "Unknown effect type:", component_type, "for group", group_id, "\n",
+                    "Tried direct effect name:", direct_effect_name, "\n",
+                    "Available effects:", paste(names(MODEL_EFFECTS), collapse=", ")
+                ))
+                next
             }
-        }
-
-        # Create intervention for this subgroup with unique code
-        if (length(subgroup_effects) > 0) {
-            subgroup_code <- paste0(intervention_code_base, ".", length(subgroup_interventions))
-            subgroup_interventions[[length(subgroup_interventions) + 1]] <-
-                create.intervention(target_pop, subgroup_effects,
-                    code = subgroup_code,
-                    overwrite.existing.intervention = TRUE
-                )
+            
+            # Create effect
+            effect <- effect_config$create(
+                start_time = as.numeric(settings$dates$start),
+                end_time = as.numeric(settings$dates$end),
+                value = component_value,
+                group_id = group_id
+            )
+            
+            # Create intervention with unique code
+            intervention_code <- paste0(intervention_code_base, ".", length(group_interventions))
+            group_interventions[[length(group_interventions) + 1]] <- create.intervention(
+                target_pop, 
+                list(effect),
+                code = intervention_code,
+                overwrite.existing.intervention = TRUE
+            )
         }
     }
-
+    
     # Return combined intervention or null intervention
-    if (length(subgroup_interventions) > 0) {
-        if (length(subgroup_interventions) == 1) {
-            subgroup_interventions[[1]]
+    if (length(group_interventions) > 0) {
+        print(paste("Created", length(group_interventions), "interventions"))
+        if (length(group_interventions) == 1) {
+            group_interventions[[1]]
         } else {
-            # Join all subgroup interventions with unique code
+            # Join all group interventions with unique code
             join.interventions(
-                subgroup_interventions,
+                group_interventions,
                 code = intervention_code_base,
                 overwrite.existing.intervention = TRUE
             )
         }
     } else {
+        print("No valid interventions created, returning null intervention")
         jheem2:::get.null.intervention()
     }
 }
