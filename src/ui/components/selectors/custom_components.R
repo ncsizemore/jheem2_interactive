@@ -3,6 +3,8 @@
 #' @param config UI configuration from YAML
 #' @param container_class Additional CSS class for container
 create_compound_input <- function(id, config, container_class = NULL) {
+    print(paste("Creating compound input with ID:", id))
+    print(paste("Config:", paste(names(config), collapse=",")))
     # Validate inputs
     if (is.null(config) || is.null(config$inputs)) {
         warning(sprintf("Invalid config for compound input %s", id))
@@ -36,11 +38,19 @@ create_compound_input <- function(id, config, container_class = NULL) {
 
     tags$div(
         class = paste(classes, collapse = " "),
-        # Main checkbox
-        create_input_by_type(
-            type = "checkbox",
-            id = paste0(id, "_enabled"),
-            config = enabled_config
+        # Main checkbox with validation wrapper
+        tags$div(
+            class = "input-validation-wrapper checkbox",
+            create_input_by_type(
+                type = "checkbox",
+                id = paste0(id, "_enabled"),
+                config = enabled_config
+            ),
+            tags$div(
+                class = "input-error-message",
+                id = paste0(id, "_enabled_error"),
+                style = "display: none;"
+            )
         ),
         # Additional inputs
         conditionalPanel(
@@ -64,14 +74,24 @@ create_compound_input <- function(id, config, container_class = NULL) {
                 }
 
                 input_id <- paste0(id, "_", input_name)
+                print(paste("Creating compound input element with ID:", input_id))
+                print(paste("Input config type:", input_config$type))
 
                 # Create the input group
                 tags$div(
                     class = "input-group",
-                    create_input_by_type(
-                        type = input_config$type,
-                        id = input_id,
-                        config = input_config
+                    tags$div(
+                        class = paste("input-validation-wrapper", input_config$type),
+                        create_input_by_type(
+                            type = input_config$type,
+                            id = input_id,
+                            config = input_config
+                        ),
+                        tags$div(
+                            class = "input-error-message",
+                            id = paste0(input_id, "_error"),
+                            style = "display: none;"
+                        )
                     )
                 )
             })
@@ -173,10 +193,16 @@ create_intervention_setting <- function(type, group_num, suffix, fixed_group = N
     } else if (config$type == "compound") {
         # Compound input with checkbox and additional inputs
         config$id <- base_id  # Ensure ID is set correctly
-        create_compound_input(
-            id = base_id,
-            config = config,
-            container_class = paste0("intervention-", type)
+        tags$div(
+            class = paste("intervention-component", type),
+            tags$div(
+                class = "input-validation-wrapper compound",
+                create_compound_input(
+                    id = base_id,
+                    config = config,
+                    container_class = paste0("intervention-", type)
+                )
+            )
         )
     } else {
         warning(sprintf("Unknown component type: %s", config$type))

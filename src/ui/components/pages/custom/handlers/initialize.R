@@ -44,12 +44,17 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
 
     # Initialize group panels and components
     if (!is.null(config$subgroups)) {
-        print("Initializing groups")
-        
+        cat("\n\n***** CRITICAL DEBUG *****\n")
+        cat("Available intervention components: ", paste(names(config$interventions$components), collapse=", "), "\n")
+        for (component_name in names(config$interventions$components)) {
+            cat("Component ", component_name, " is type: ", config$interventions$components[[component_name]]$type, "\n")
+        }
+        cat("*************************\n\n")
+
         # Render the group panels
         output$subgroup_panels_custom <- renderUI({
             print("Creating group panels...")
-            
+
             # For fixed groups (ryan-white case)
             if (config$subgroups$fixed) {
                 print(paste("Creating", config$subgroups$count, "fixed groups"))
@@ -73,12 +78,14 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
 
         # Initialize validation for components
         if (config$subgroups$fixed) {
-            # Fixed groups - validate each group's components
+            cat("\n\n***** CRITICAL DEBUG - FIXED GROUPS *****\n")
+            cat("Initializing validation for ", config$subgroups$count, " fixed groups\n")
+            cat("*************************************\n\n")
             for (i in 1:config$subgroups$count) {
                 local({
                     group_num <- i
                     group <- config$subgroups$groups[[i]]
-                    
+
                     # Create validation boundary for this group
                     validation_boundary <- create_validation_boundary(
                         session,
@@ -92,8 +99,11 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                     for (component_name in names(config$interventions$components)) {
                         local({
                             component <- config$interventions$components[[component_name]]
+                            cat("\n\n***** COMPONENT INIT *****\n")
+                            cat("Initializing component: ", component_name, " Type: ", component$type, "\n")
+                            cat("*************************\n\n")
                             value_id <- paste0("int_", component_name, "_", group_num, "_custom")
-                            
+
                             if (component$type == "numeric") {
                                 # Add validation for numeric input
                                 observeEvent(input[[value_id]], {
@@ -133,6 +143,113 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                                             $("#%s").removeClass("is-invalid");
                                             $("#%s_error").hide();
                                         ', value_id, value_id))
+                                    }
+                                })
+                            } else if (component$type == "compound") {
+                                # Add validation for compound input
+                                enabled_id <- paste0(value_id, "_enabled")
+                                # Get all input names from the config
+                                if (!is.null(component$inputs)) {
+                                    # Find the first numeric input for validation (usually called "value")
+                                    value_input_name <- names(component$inputs)[sapply(component$inputs, function(input) input$type == "numeric")][1]
+                                    if (is.null(value_input_name) || length(value_input_name) == 0) {
+                                        value_input_name <- "value" # Default to "value" if no numeric input found
+                                    }
+                                } else {
+                                    value_input_name <- "value" # Default
+                                }
+                                value_input_id <- paste0(value_id, "_", value_input_name)
+                                print(paste("Using value input ID:", value_input_id, "from input name:", value_input_name))
+
+                                # Validate enabled state
+                                observeEvent(input[[enabled_id]], {
+                                    enabled_rules <- list(
+                                        validation_boundary$rules$required(
+                                            sprintf("%s selection is required", component$label)
+                                        )
+                                    )
+
+                                    enabled_valid <- validation_boundary$validate(
+                                        input[[enabled_id]],
+                                        enabled_rules,
+                                        field_id = enabled_id
+                                    )
+
+                                    # Update UI error state for enabled checkbox
+                                    if (!enabled_valid) {
+                                        error_state <- validation_manager$get_field_state(enabled_id)
+                                        if (!is.null(error_state) && !is.null(error_state$message)) {
+                                            runjs(sprintf('
+                                                $("#%s").addClass("is-invalid");
+                                                $("#%s_error").text("%s").show();
+                                            ', enabled_id, enabled_id, error_state$message))
+                                        }
+                                    } else {
+                                        runjs(sprintf('
+                                            $("#%s").removeClass("is-invalid");
+                                            $("#%s_error").hide();
+                                        ', enabled_id, enabled_id))
+                                    }
+                                })
+
+                                # Validate value if enabled
+                                observeEvent(input[[value_input_id]], {
+                                    if (input[[enabled_id]]) {
+                                        value_rules <- list(
+                                            validation_boundary$rules$required(
+                                                sprintf("%s value is required", component$label)
+                                            ),
+                                            validation_boundary$rules$range(
+                                                min = component$inputs$value$min,
+                                                max = component$inputs$value$max,
+                                                message = sprintf(
+                                                    "%s must be between %d and %d",
+                                                    component$label,
+                                                    component$inputs$value$min,
+                                                    component$inputs$value$max
+                                                )
+                                            )
+                                        )
+
+                                        value_valid <- validation_boundary$validate(
+                                            as.numeric(input[[value_input_id]]),
+                                            value_rules,
+                                            field_id = value_input_id
+                                        )
+
+                                        # Update UI error state for value input - use simpler selectors
+                                        if (!value_valid) {
+                                            error_state <- validation_manager$get_field_state(value_input_id)
+                                            if (!is.null(error_state) && !is.null(error_state$message)) {
+                                                # Use basic selectors to avoid quoting issues
+                                                js <- sprintf('
+                                                    // First hide any current errors
+                                                    $(".input-error-message").hide();
+                                                    
+                                                    // Apply error styling
+                                                    $("#%s").addClass("is-invalid");
+                                                    
+                                                    // Show specific error
+                                                    $("#%s_error").text("%s").show();
+                                                ',
+                                                value_input_id,
+                                                value_input_id,
+                                                error_state$message)
+                                                
+                                                runjs(js)
+                                            }
+                                        } else {
+                                            # Also use simpler selectors for clearing
+                                            js <- sprintf('
+                                                // Clear validation styling
+                                                $("#%s").removeClass("is-invalid");
+                                                $("#%s_error").hide();
+                                            ',
+                                            value_input_id,
+                                            value_input_id)
+                                            
+                                            runjs(js)
+                                        }
                                     }
                                 })
                             }
@@ -198,11 +315,33 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                     lapply(1:config$subgroups$count, function(i) {
                         group <- config$subgroups$groups[[i]]
                         lapply(names(config$interventions$components), function(component_name) {
-                            list(
-                                group = group$id,
-                                type = component_name,
-                                value = input[[paste0("int_", component_name, "_", i, "_custom")]]
-                            )
+                            component <- config$interventions$components[[component_name]]
+                            if (component$type == "numeric") {
+                                list(
+                                    group = group$id,
+                                    type = component_name,
+                                    value = input[[paste0("int_", component_name, "_", i, "_custom")]]
+                                )
+                            } else if (component$type == "compound") {
+                                enabled_id <- paste0("int_", component_name, "_", i, "_custom_enabled")
+                                # Find numeric input name
+                                value_input_name <- names(component$inputs)[sapply(component$inputs, function(input) input$type == "numeric")][1]
+                                if (is.null(value_input_name) || length(value_input_name) == 0) {
+                                    value_input_name <- "value" # Default
+                                }
+                                value_input_id <- paste0("int_", component_name, "_", i, "_custom_", value_input_name)
+                                
+                                if (!input[[enabled_id]]) {
+                                    NULL  # Skip if not enabled
+                                } else {
+                                    list(
+                                        group = group$id,
+                                        type = component_name,
+                                        enabled = TRUE,
+                                        value = input[[value_input_id]]
+                                    )
+                                }
+                            }
                         })
                     })
                 })
@@ -220,15 +359,29 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                             ),
                             interventions = lapply(names(config$interventions$components), function(name) {
                                 component <- config$interventions$components[[name]]
-                                enabled_id <- paste0("int_", name, "_", i, "_custom_enabled")
-                                if (component$type == "compound" && !input[[enabled_id]]) {
-                                    NULL
-                                } else {
+                                if (component$type == "numeric") {
                                     list(
                                         type = name,
-                                        enabled = component$type == "compound" && input[[enabled_id]],
                                         value = input[[paste0("int_", name, "_", i, "_custom")]]
                                     )
+                                } else if (component$type == "compound") {
+                                    enabled_id <- paste0("int_", name, "_", i, "_custom_enabled")
+                                    if (!input[[enabled_id]]) {
+                                        NULL
+                                    } else {
+                                        # Find numeric input name
+                                        value_input_name <- names(component$inputs)[sapply(component$inputs, function(input) input$type == "numeric")][1]
+                                        if (is.null(value_input_name) || length(value_input_name) == 0) {
+                                            value_input_name <- "value" # Default
+                                        }
+                                        value_input_id <- paste0("int_", name, "_", i, "_custom_", value_input_name)
+                                        
+                                        list(
+                                            type = name,
+                                            enabled = TRUE,
+                                            value = input[[value_input_id]]
+                                        )
+                                    }
                                 }
                             })
                         )

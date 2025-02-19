@@ -276,4 +276,16 @@ server <- function(input, output, session) {
 }
 
 # Run the application
-shinyApp(ui = ui, server = server)
+shinyApp(
+  ui = ui, server = server,
+  onStart = function() {
+    pkg_env <- asNamespace("jheem2")
+    internal_fns <- ls(pkg_env, all.names = TRUE)
+
+    for (fn in internal_fns) {
+      if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
+        assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
+      }
+    }
+  }
+)

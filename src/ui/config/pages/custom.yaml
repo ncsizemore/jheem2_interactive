@@ -74,7 +74,7 @@ interventions:
           id: "2030.8"
           label: "2030"
 
-  # Suppression loss components
+  # Intervention components
   components:
     suppression_loss:
       type: "numeric"
@@ -86,3 +86,19 @@ interventions:
       step: 1
       value: 0
       format: "percentage"
+    testing:
+      type: "compound"
+      label: "Testing Rate"
+      description: "Changes in testing frequency"
+      inputs:
+        enabled:
+          type: "checkbox"
+          label: "Enable testing changes"
+          value: false
+        value:
+          type: "numeric"
+          label: "New tests per year"
+          min: 0
+          max: 12
+          step: 1
+          value: 1
