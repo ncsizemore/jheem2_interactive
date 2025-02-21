@@ -1,14 +1,4 @@
-# config/pages/custom.yaml - Custom page specific settings
-
-# Custom interventions page configuration
-subgroups:
-  type: "numeric"
-  label: "How Many Distinct Subgroups to Target Interventions To:"
-  min: 1
-  max: 5
-  value: 1
-
-# Demographic selectors for custom interventions
+# Demographics configuration (moved to top level as required by validation)
 demographics:
   age_groups:
     type: "select"
@@ -87,6 +77,17 @@ demographics:
       IDU_in_remission:
         id: "IDU_in_remission"
         label: "IDU in Remission"
+# src/ui/config/pages/custom.yaml - Custom interventions configuration
+
+# Subgroups configuration - user-defined for main branch
+subgroups:
+  fixed: false
+  selector:
+    type: "numeric"
+    label: "How Many Distinct Subgroups to Target Interventions To:"
+    min: 1
+    max: 5
+    value: 1
 
 # Intervention configuration
 interventions:
@@ -170,7 +171,7 @@ interventions:
           type: "checkbox"
           input_style: "native"
           label: "Intervene on Testing"
-          value: true  # Changed this to true to test
+          value: true
         frequency:
           type: "select"
           input_style: "choices"

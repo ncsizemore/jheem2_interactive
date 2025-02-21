@@ -1,3 +1,25 @@
+# Input dimension abbreviations
+abbreviations:
+  # Default shortening rules
+  dimensions:
+    default_length: 2
+    # Specific value overrides
+    values:
+      heterosexual_male: "hm"
+      never_IDU: "nidu"
+      active_IDU: "aidu"
+      IDU_in_remission: "ridu"
+      black: "b"
+      hispanic: "h"
+      other: "o"
+      msm: "msm"
+      female: "f"
+      "13-24": "1324"
+      "25-34": "2534"
+      "35-44": "3544"
+      "45-54": "4554"
+      "55plus": "55pl"
+
 # src/ui/config/defaults.yaml
 # Default configurations used across the application
 

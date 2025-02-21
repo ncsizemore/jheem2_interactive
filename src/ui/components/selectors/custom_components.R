@@ -226,8 +226,17 @@ create_subgroup_panel <- function(group_num, config_or_suffix, fixed_group = NUL
         class = "subgroup-panel",
         id = paste0("subgroup-", group_num),
         
-        # Title from config
-        tags$h4(fixed_group$label),
+        # Title either from fixed group or generated for user-defined groups
+        tags$h4(if (!is.null(fixed_group)) fixed_group$label else paste("Subgroup", group_num)),
+
+        # Demographics selectors - only for user-defined groups
+        if (is.null(fixed_group) && !is.null(config$demographics)) {
+            tags$div(
+                class = "demographics-section",
+                tags$h4("Population Characteristics:"),
+                create_subgroup_characteristics(group_num, suffix)
+            )
+        },
 
         # Intervention components section
         tags$div(

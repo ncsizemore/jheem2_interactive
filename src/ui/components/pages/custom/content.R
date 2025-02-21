@@ -3,31 +3,73 @@
 create_custom_intervention_content <- function(config) {
     print("Creating custom intervention content")
     print("Config structure:")
-    str(config) # This will show us the full config structure
+    str(config)
+
     tagList(
         # Location selector
         create_location_selector("custom"),
-        # Subgroups configuration section
-        tags$div(
-            class = "subgroups-config",
-            # Number of subgroups selector
+
+        # Subgroups count selector (only for non-fixed subgroups)
+        if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector)) {
             tags$div(
                 class = "form-group subgroups-count",
                 tags$label(
-                    config$subgroups$label,
+                    config$subgroups$selector$label,
                     class = "control-label"
                 ),
                 numericInput(
                     "subgroups_count_custom",
                     label = NULL,
-                    value = config$subgroups$value,
-                    min = config$subgroups$min,
-                    max = config$subgroups$max
+                    value = config$subgroups$selector$value,
+                    min = config$subgroups$selector$min,
+                    max = config$subgroups$selector$max
                 )
-            ),
-            # Dynamic subgroup panels
-            uiOutput("subgroup_panels_custom")
+            )
+        },
+
+        # Intervention configuration section
+        tags$div(
+            class = "intervention-config",
+            
+            # Date range selector
+            if (!is.null(config$interventions$dates)) {
+                tags$div(
+                    class = "form-group date-range",
+                    # Start date
+                    tags$div(
+                        class = "date-start",
+                        selectInput(
+                            "int_dates_start_custom",
+                            label = config$interventions$dates$start$label,
+                            choices = setNames(
+                                sapply(config$interventions$dates$start$options, `[[`, "id"),
+                                sapply(config$interventions$dates$start$options, `[[`, "label")
+                            ),
+                            selected = config$interventions$dates$start$value
+                        )
+                    ),
+                    # End date
+                    tags$div(
+                        class = "date-end",
+                        selectInput(
+                            "int_dates_end_custom",
+                            label = config$interventions$dates$end$label,
+                            choices = setNames(
+                                sapply(config$interventions$dates$end$options, `[[`, "id"),
+                                sapply(config$interventions$dates$end$options, `[[`, "label")
+                            ),
+                            selected = config$interventions$dates$end$value
+                        )
+                    )
+                )
+            },
+
+            # Subgroup panels placeholder
+            if (!is.null(config$subgroups)) {
+                uiOutput("subgroup_panels_custom")
+            }
         ),
+
         # Generate button using config settings
         tags$div(
             class = "generate-controls",
@@ -39,11 +81,13 @@ create_custom_intervention_content <- function(config) {
                     config$theme$buttons$primary_class
                 )
             ),
+
             # Feedback area using config
             tags$div(
                 class = "generate-feedback",
                 tags$small(config$defaults$feedback$generate$message),
-                if (config$defaults$feedback$generate$show_chime) {
+                if (!is.null(config$defaults$feedback$generate$show_chime) && 
+                    config$defaults$feedback$generate$show_chime) {
                     tags$div(
                         class = "chime-option",
                         checkboxInput(
@@ -66,9 +110,11 @@ create_custom_plot_controls <- function(config) {
     print("Creating custom plot controls")
     # Create namespace for controls
     ns <- NS("custom")
+
     plot_config <- config$plot_controls
     print("Plot config structure:")
     str(plot_config)
+
     tagList(
         # Outcomes section
         create_control_section(
@@ -77,6 +123,7 @@ create_custom_plot_controls <- function(config) {
             suffix = "custom",
             ns = ns # Add namespace
         ),
+
         # Stratification section
         create_control_section(
             type = "stratification",
@@ -84,6 +131,7 @@ create_custom_plot_controls <- function(config) {
             suffix = "custom",
             ns = ns # Add namespace
         ),
+
         # Display options section
         create_control_section(
             type = "display",
