@@ -14,28 +14,20 @@ get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
     print("Settings:")
     str(settings)
 
-    # Initialize provider
-    provider <- LocalProvider$new("simulations")
-
-    # For development/testing, use test simset
-    if (is.null(settings) || is.null(settings$location)) {
-        return(provider$load_test_simset())
-    }
-
-    # TODO: Get these from config when implemented
-    version <- "v1"
-    calibration <- "baseline"
-
-    simset_key <- paste(
-        settings$location,
-        version,
-        calibration,
-        sep = "_"
+    # Get relevant configs
+    page_config <- get_page_complete_config(mode)
+    sim_config <- page_config[[paste0(mode, "_simulations")]]
+    
+    # Initialize provider with config and mode
+    provider <- LocalProvider$new(
+        "simulations",
+        config = sim_config,
+        mode = mode
     )
-
+    
     # Load base simset
-    simset <- provider$load_simset(simset_key)
-
+    simset <- provider$load_simset(settings)
+    
     # For custom mode, run intervention
     if (mode == "custom") {
         print("Creating intervention...")
@@ -45,6 +37,6 @@ get_simulation_data <- function(settings, mode = c("prerun", "custom")) {
         runner <- SimulationRunner$new(provider)
         simset <- runner$run_intervention(intervention, simset)
     }
-
+    
     simset
 }

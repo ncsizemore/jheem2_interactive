@@ -77,7 +77,6 @@ demographics:
       IDU_in_remission:
         id: "IDU_in_remission"
         label: "IDU in Remission"
-# src/ui/config/pages/custom.yaml - Custom interventions configuration
 
 # Subgroups configuration - user-defined for main branch
 subgroups:
@@ -224,4 +223,8 @@ interventions:
           step: 5
           value: 70
           format: "percentage"
+
+# Simulation file configuration
+custom_simulations:
+  file_pattern: "base/{location}_base.Rdata"
 
