@@ -14,6 +14,16 @@ This directory contains YAML configuration files that define the behavior and st
 - Model dimension mappings (must align with model's expected values)
 - Input type defaults
 - Selector configurations
+- Abbreviation configurations for ID generation
+  ```yaml
+  abbreviations:
+    dimensions:
+      default_length: 2  # Default abbreviation length
+      values:
+        heterosexual_male: "hm"
+        never_IDU: "nidu"
+        # etc.
+  ```
 
 ## Component Configurations
 
@@ -43,9 +53,31 @@ Located in `pages/`:
 
 ### custom.yaml
 - Custom interventions page settings
-- Subgroup configuration
-- Demographic selectors
+- Demographics configuration (specifies available demographic fields)
+- Subgroup configuration (fixed or user-defined)
 - Intervention dates and components
+- Component configurations (compound or simple)
+- Branch-specific settings
+
+## Branch Compatibility
+
+The configuration system supports different branches (e.g., main vs ryan-white) through:
+
+### Demographic Fields
+- Demographics defined in configuration, not hardcoded
+- Fields and values can vary between branches
+- Common input generation code works with any defined fields
+
+### Group ID Generation
+- Common abbreviation system for all demographic values
+- Fixed groups use predefined IDs from config
+- User-defined groups use abbreviated concatenated IDs
+- Length limits enforced through abbreviations
+
+### Component Types
+- Supports both simple and compound components
+- Component types and inputs defined in config
+- Common handling code for all component types
 
 ## Configuration Loading
 
