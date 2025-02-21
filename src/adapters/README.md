@@ -10,11 +10,14 @@ The intervention adapter layer bridges between UI settings and JHEEM2 model inte
 - Handles both custom and prerun modes
 - Transforms UI settings to model format
 - Uses `join.interventions()` to combine multiple subgroup interventions
+- Handles both fixed and user-defined groups
+- Supports compound components with different input types (numeric, select)
 
 #### model_effects.R
 - Defines intervention effect configurations
 - Maps UI values to model parameters
 - Provides extensible effect system
+- Branch-specific configuration for model quantities
 
 ### Technical Details
 
@@ -39,9 +42,20 @@ combined <- join.interventions(subgroup1, subgroup2)
 - Timestamp ensures uniqueness within session
 
 #### Target Population Names
-- Limited to 25 characters (22 + "...")
-- Format: `dimension1.dimension2.dimensionN`
-- Multiple values shown as: `first.count` (e.g., "black.3" for 3 races)
+- Limited to 30 characters
+- Uses configurable abbreviations from defaults.yaml
+- Format for user-defined groups: `dim1-dim2-dimN` with abbreviated values
+- Format for fixed groups: Uses predefined group IDs from config
+- Example: "hm-b-nidu-1324" for "heterosexual male, black, never IDU, age 13-24"
+- Abbreviations are configuration-driven and customizable
+
+#### Component Value Collection
+- Supports both numeric and select input types
+- For compound components:
+  - Handles enabled/disabled state
+  - Collects values from first non-enabled input
+  - Supports different input types within compound components
+  - Preserves selected values in settings collection
 
 #### Effect Creation
 Effects are configured in `model_effects.R`:

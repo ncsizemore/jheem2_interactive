@@ -1,13 +1,13 @@
 # Custom Page Handlers
 
-This directory contains the handlers and initialization logic for the JHEEM2 custom projections page.
+This directory contains the handlers and initialization logic for the JHEEM2 custom projections page. Supports both fixed groups (ryan-white) and user-defined groups (main) through configuration-driven components.
 
 ## Structure
 
 ```
 src/ui/components/pages/custom/
 ├── handlers/
-│   ├── initialize.R        # Core setup and event handlers
+│   ├── initialize.R        # Core setup, event handlers, config-driven group handling
 │   ├── interventions.R     # Intervention validation and settings
 │   ├── visualization.R     # Plot/table display handlers
 └── index.R                # Module exports and loading
@@ -17,16 +17,18 @@ src/ui/components/pages/custom/
 
 ### initialize.R
 - Creates and configures state managers (visualization, validation)
-- Handles subgroup count validation and panel creation
-- Manages the generate button and form submission
+- Handles config-driven demographic collection
+- Manages group ID generation with abbreviations
+- Handles both fixed and user-defined group creation
+- Supports different component types and input values
 - Coordinates between visualization and intervention handlers
 
 ### interventions.R
 - Manages intervention input validation using config-based rules
 - Handles enabled/disabled state for intervention fields
-- Validates numeric inputs against config-defined ranges
+- Validates numeric and select inputs against config-defined rules
 - Collects and formats settings for submission
-- Provides utilities for subgroup settings collection
+- Handles both compound and simple components
 - Uses validation boundaries for consistent error handling
 
 ### visualization.R
@@ -43,7 +45,7 @@ src/ui/components/pages/custom/
 The page uses three main types of state:
 1. **Validation State**: Tracks form validity through validation_manager
 2. **Visualization State**: Manages plot/table display via vis_manager
-3. **Input State**: Handles intervention and subgroup settings
+3. **Input State**: Handles intervention and demographics through config-driven structures
 
 ## Usage
 
@@ -53,10 +55,23 @@ The page is initialized through `initialize_custom_handlers` which sets up all n
 - validation_manager: Manages form validation state
 - vis_manager: Controls visualization display
 - error boundaries: Provides validation and error handling
-- config system: Provides validation rules and UI configuration
+- config system: Provides validation rules, UI configuration, and demographics structure
 
-## Known TODOs
-1. Implement demographic group validation
-   - Handle "all" vs individual selections
-   - Add minimum selection requirements
-2. Move configuration files to src/ui/config/pages/ 
+## Branch Compatibility
+
+This implementation supports both ryan-white and main branches through:
+
+### Fixed Groups
+- Uses predefined groups from config
+- No demographic selection needed
+- Group IDs come directly from config
+
+### User-Defined Groups
+- Dynamic demographic selection
+- Config-driven field collection
+- Abbreviated group ID generation
+
+### Common Features
+- Shared validation logic
+- Config-based component handling
+- Consistent input collection 
