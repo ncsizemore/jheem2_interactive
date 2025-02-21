@@ -9,6 +9,24 @@ create_custom_intervention_content <- function(config) {
         # Location selector
         create_location_selector("custom"),
 
+        # Subgroups count selector (only for non-fixed subgroups)
+        if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector)) {
+            tags$div(
+                class = "form-group subgroups-count",
+                tags$label(
+                    config$subgroups$selector$label,
+                    class = "control-label"
+                ),
+                numericInput(
+                    "subgroups_count_custom",
+                    label = NULL,
+                    value = config$subgroups$selector$value,
+                    min = config$subgroups$selector$min,
+                    max = config$subgroups$selector$max
+                )
+            )
+        },
+
         # Intervention configuration section
         tags$div(
             class = "intervention-config",

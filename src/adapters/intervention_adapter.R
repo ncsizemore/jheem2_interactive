@@ -1,5 +1,37 @@
 source("src/adapters/interventions/model_effects.R")
 
+#' Check if a component is a compound component
+#' @param component Component to check
+#' @return TRUE if component is compound, FALSE otherwise
+is_compound_component <- function(component) {
+    return(!is.null(component$type) && component$type == "compound")
+}
+
+#' Get component value based on type
+#' @param component Component to get value from
+#' @return Component value or NULL if disabled
+get_component_value <- function(component) {
+    if (is_compound_component(component)) {
+        if (!component$enabled) {
+            return(NULL)  # Return NULL for disabled components
+        }
+        # For compound components, value should already be extracted
+        # If value is NULL but component is enabled, try to debug
+        if (is.null(component$value)) {
+            print("WARNING: Enabled compound component has NULL value")
+            print("Full component structure:")
+            str(component)
+        }
+        return(component$value)
+    } else if (is.list(component) && !is.null(component$value)) {
+        # Handle component as a list with value field
+        return(component$value)
+    } else {
+        # Handle simple value (likely numeric)
+        return(component)
+    }
+}
+
 #' Create an intervention from UI settings
 #' @param settings List of settings from UI
 #' @param mode Either "prerun" or "custom"
@@ -61,15 +93,29 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         for (component in group_components) {
             # Skip NULL components (disabled components from compound inputs)
             if (is.null(component)) {
+                print("Skipping NULL component")
                 next
             }
             
-            # Get group ID and component type
+            # Get group ID and component type with better error checking
             group_id <- component$group
             component_type <- component$type
             component_value <- component$value
             
-            print(paste("Processing component:", component_type, "for group:", group_id, "with value:", component_value))
+            # Enhanced debug output
+            print("Component details:")
+            print(paste("  Type:", component_type))
+            print(paste("  Group ID:", group_id))
+            print(paste("  Value:", component_value))
+            print(paste("  Enabled:", component$enabled))
+            print("Full component structure:")
+            str(component)
+            
+            # Validation for group ID
+            if (is.null(group_id) || length(group_id) == 0 || !is.character(group_id)) {
+                warning("Invalid group ID - must be a non-empty character string")
+                next
+            }
             
             # Create target population for this group
             # Replace underscores with dashes for compliance with naming restrictions
@@ -78,34 +124,45 @@ create_custom_intervention <- function(settings, session_id = NULL) {
                 name = target_name
             )
             
-            # Try to find direct effect mapping first
-            # We keep group_id with underscores for effect mapping
-            direct_effect_name <- paste0(group_id, "_", component_type)
-            
-            # Determine which effect configuration to use
-            if (direct_effect_name %in% names(MODEL_EFFECTS)) {
-                effect_config <- MODEL_EFFECTS[[direct_effect_name]]
-                print(paste("Using direct effect:", direct_effect_name))
-            } else if (component_type %in% names(MODEL_EFFECTS)) {
-                # Try generic effect
-                effect_config <- MODEL_EFFECTS[[component_type]]
-                print(paste("Using generic effect:", component_type))
-            } else {
+            # Get appropriate effect configuration using enhanced function
+            # This will try both direct and generic effects
+            effect_config <- tryCatch({
+                get_effect_config(component_type, group_id)
+            }, error = function(e) {
                 warning(paste(
                     "Unknown effect type:", component_type, "for group", group_id, "\n",
-                    "Tried direct effect name:", direct_effect_name, "\n",
                     "Available effects:", paste(names(MODEL_EFFECTS), collapse=", ")
                 ))
+                NULL
+            })
+            
+            # Skip if no effect configuration found
+            if (is.null(effect_config)) {
                 next
             }
             
             # Create effect
-            effect <- effect_config$create(
-                start_time = as.numeric(settings$dates$start),
-                end_time = as.numeric(settings$dates$end),
-                value = component_value,
-                group_id = group_id
-            )
+            effect <- tryCatch({
+                # Get actual value from component (handles different formats)
+                actual_value <- get_component_value(component)
+                print(paste("Using actual value for effect:", actual_value))
+                
+                effect_config$create(
+                    start_time = as.numeric(settings$dates$start),
+                    end_time = as.numeric(settings$dates$end),
+                    value = actual_value,
+                    group_id = group_id
+                )
+            }, error = function(e) {
+                warning(paste("Error creating effect:", e$message))
+                NULL
+            })
+            
+            # Skip if effect creation failed
+            if (is.null(effect)) {
+                warning("Failed to create effect, skipping component")
+                next
+            }
             
             # Create intervention with unique code
             intervention_code <- paste0(intervention_code_base, ".", length(group_interventions))

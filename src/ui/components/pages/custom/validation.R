@@ -11,13 +11,25 @@ validate_custom_config <- function(config) {
         return(TRUE)
     }
 
-    missing <- setdiff(required_sections, names(config))
-    if (length(missing) > 0) {
+    # For each required section
+    for (section in required_sections) {
+        # First check if section exists in page-specific config
+        if (section %in% names(config)) {
+            next
+        }
+
+        # If not in page config, check if it's in selectors (common sections)
+        if (!is.null(config$selectors) && section %in% names(config$selectors)) {
+            next
+        }
+
+        # If not found in either place, it's missing
         stop(sprintf(
-            "Missing required custom configuration sections: %s",
-            paste(missing, collapse = ", ")
+            "Missing required configuration section '%s' for custom. Section must be defined either in page config or in common selectors.",
+            section
         ))
     }
+    
     TRUE
 }
 
