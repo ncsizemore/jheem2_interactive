@@ -67,7 +67,7 @@ create_input_by_type <- function(type, id, config) {
     print(paste("Creating input:", id, "of type:", type))
     print("Config:")
     str(config)
-    
+
     # Ensure default values based on type
     config$value <- config$value %||% switch(type,
         "checkbox" = FALSE,
@@ -113,7 +113,7 @@ create_input_by_type <- function(type, id, config) {
                 inputId = id,
                 label = NULL,
                 choices = choices,
-                selected = config$value,  # Pass through the default value
+                selected = config$value, # Pass through the default value
                 multiple = multiple,
                 placeholder = config$placeholder %||% config$label
             )
@@ -125,7 +125,7 @@ create_input_by_type <- function(type, id, config) {
                     sapply(choices, `[[`, "value"),
                     sapply(choices, `[[`, "label")
                 ),
-                selected = config$value,  # Pass through the default value
+                selected = config$value, # Pass through the default value
                 multiple = multiple
             )
         },
@@ -136,19 +136,19 @@ create_input_by_type <- function(type, id, config) {
                 sapply(choices, `[[`, "value"),
                 sapply(choices, `[[`, "label")
             ),
-            selected = config$value  # Pass through the default value
+            selected = config$value # Pass through the default value
         ),
         "checkbox" = checkboxInput(
             inputId = id,
             label = config$label,
-            value = config$value  # Already properly passed through
+            value = config$value # Already properly passed through
         ),
         "numeric" = tags$div(
             class = "numeric-input-container",
             numericInput(
                 inputId = id,
                 label = config$label,
-                value = config$value,  # Already properly passed through
+                value = config$value, # Already properly passed through
                 min = config$min %||% NA,
                 max = config$max %||% NA,
                 step = config$step %||% 1
