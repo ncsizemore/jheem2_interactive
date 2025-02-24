@@ -128,3 +128,36 @@ sync_buttons_to_plot(input, plot_data)
 - Coordinate plot/table transitions
 - Ensure proper event handler initialization
 - Maintain button state synchronization
+
+## Data Access Patterns
+Components now use simulation state:
+
+### Plot Panel
+- Gets raw simset from simulation state
+- Uses simplot for visualization
+- Direct use of JHEEM2 simulation objects
+- Example:
+```r
+sim_state <- store$get_current_simulation_data(id)
+plot <- simplot(
+    sim_state$simset,
+    outcomes = settings$outcomes,
+    ...
+)
+```
+
+### Table Panel
+- Uses transformed data from simulation state
+- Handles pagination locally
+- Format and display logic separated
+- Example:
+```r
+transformed_data <- store$get_current_transformed_data(id, settings)
+formatted <- format_table_data(transformed_data, config)
+```
+
+### State Integration
+- Components check simulation state
+- Use store methods for data access
+- Maintain view synchronization
+- Handle state transitions properly
