@@ -89,6 +89,8 @@ Located in `store.R`, manages:
 - Simulation storage and retrieval
 - Current simulation tracking per page
 - Raw and transformed data handling
+- Simulation matching to prevent unnecessary runs
+- Automatic cleanup of old simulations
 
 #### State Structure
 ```r
@@ -116,3 +118,21 @@ simulation_state = list(
 - Table components use transformed data
 - Store manages transformation caching
 - Avoids unnecessary retransformation
+
+#### Simulation Matching
+- Checks for simulations with matching settings before creating new ones
+- Compares settings objects for equality
+- Reuses existing simulations when possible
+- Separate matching for prerun and custom modes
+- Reduces unnecessary computation
+
+#### Automatic Cleanup
+- Removes old simulations to manage memory usage
+- Configurable through `state_management.yaml`
+- Preserves simulations currently in use
+- Parameters:
+  - `default_max_age`: Standard maximum age before cleanup
+  - `cleanup_interval`: How often cleanup runs
+  - `high_count_threshold`: When to use aggressive cleanup
+  - `aggressive_max_age`: Maximum age during aggressive cleanup
+- Prevents memory issues during extended usage

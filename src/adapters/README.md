@@ -163,12 +163,20 @@ Each simulation has:
   - Transformed data (for table display)
 - Status tracking (ready/running/complete/error)
 
+#### Simulation Matching
+- Before creating a new simulation, checks for existing simulations with matching settings
+- Returns existing simulation ID if match found
+- Creates new simulation only when necessary
+- Optimizes performance by avoiding redundant computation
+
 #### Data Flow
 1. UI requests simulation via adapter
-2. Adapter creates/updates state in store
-3. Raw simset used directly for plots
-4. Transformed data used for tables
-5. State tracked to avoid unnecessary re-runs
+2. Adapter checks for matching simulations
+3. If match found, returns existing simulation ID
+4. Otherwise, creates new simulation and updates state in store
+5. Raw simset used directly for plots
+6. Transformed data used for tables
+7. State tracked to avoid unnecessary re-runs
 
 #### Integration with Core Layer
 - Uses SimulationRunner from core layer

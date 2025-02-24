@@ -258,6 +258,27 @@ server <- function(input, output, session) {
 
   # Add contact handlers
   add.contact.handlers(session, input, output)
+  
+  # Periodic cleanup of old simulations
+  observe({
+    # Get cleanup interval from config with fallback
+    cleanup_interval <- 600000  # Default: 10 minutes
+    
+    tryCatch({
+      cleanup_config <- get_component_config("state_management")$cleanup
+      if (!is.null(cleanup_config$cleanup_interval)) {
+        cleanup_interval <- cleanup_config$cleanup_interval
+      }
+    }, error = function(e) {
+      print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
+    })
+    
+    invalidateLater(cleanup_interval)
+    print("[APP] Running scheduled simulation cleanup")
+    
+    # Run cleanup using default max age from config
+    get_store()$cleanup_old_simulations(force = FALSE)
+  })
 }
 
 # Run the application

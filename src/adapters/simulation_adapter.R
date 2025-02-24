@@ -24,7 +24,19 @@ SimulationAdapter <- R6::R6Class(
             print(paste("Mode:", mode))
             print("Settings:")
             str(settings)
-
+            
+            # First check if we have a matching simulation
+            existing_sim_id <- private$store$find_matching_simulation(settings, mode)
+            if (!is.null(existing_sim_id)) {
+                print(paste0("[SIMULATION_ADAPTER] Using existing simulation with ID: ", existing_sim_id))
+                
+                # Set as current simulation for the page
+                private$store$set_current_simulation(mode, existing_sim_id)
+                return(existing_sim_id)
+            }
+            
+            print("[SIMULATION_ADAPTER] Creating new simulation")
+            
             # Get relevant configs
             page_config <- get_page_complete_config(mode)
             sim_config <- page_config[[paste0(mode, "_simulations")]]
