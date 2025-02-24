@@ -13,6 +13,7 @@ create_visualization_manager <- function(session, page_id, id) {
 
     # Define set_display first so it can be used by other functions
     set_display <- function(input, output, transformed_data) {
+        print("[VISUALIZATION] === set_display called ===")
         # Use the full page_id prefix for input IDs
         vis_state_id <- paste0(page_id, "-visualization_state")
         display_type_id <- paste0(page_id, "-display_type")
@@ -35,6 +36,7 @@ create_visualization_manager <- function(session, page_id, id) {
         display_size <- get.display.size(input, page_id)
 
         # 4. Update plot output
+        print("[VISUALIZATION] About to render plot...")
         output[[ns("mainPlot")]] <- renderPlot({
             # Validate outcomes before plotting
             if (is.null(transformed_data$plot$control.settings$outcomes) ||
@@ -45,6 +47,7 @@ create_visualization_manager <- function(session, page_id, id) {
 
             transformed_data$plot
         })
+        print("[VISUALIZATION] Plot render function set up")
 
         # 5. Update buttons state
         sync_buttons_to_plot(input, list(
@@ -89,28 +92,44 @@ create_visualization_manager <- function(session, page_id, id) {
         },
         # Add back the update_display function that handles simulation
         update_display = function(input, output, intervention_settings) {
-            print("=== update_display called ===")
+            print("[VISUALIZATION] === update_display called ===")
+            
             # Get current control state from store
             control_state <- store$get_panel_state(page_id)$controls
-            print("Control state:")
+            print("[VISUALIZATION] Control state:")
             str(control_state)
 
-            # Create settings structure to match existing format
+            # Create settings structure
             settings <- list(
                 outcomes = control_state$outcomes,
                 facet.by = control_state$facet.by,
                 summary.type = control_state$summary.type
             )
 
-            # Transform data using control state
-            print("Getting simulation data...")
-            simset <- get_simulation_data(intervention_settings, mode = page_id)
-            print("Transforming simulation data...")
-            transformed <- transform_simulation_data(simset, settings)
-            print("Transformed data:")
-            str(transformed)
+            # Set status to loading while we work
+            store$update_visualization_state(page_id, plot_status = "loading")
 
-            # Create plot-and-table structure to match existing expectations
+            # Get/create simulation and set as current
+            print("[VISUALIZATION] Getting simulation data...")
+            sim_id <- get_simulation_adapter()$get_simulation_data(intervention_settings, mode = page_id)
+            store$set_current_simulation(page_id, sim_id)
+            
+            # Get simulation state
+            sim_state <- store$get_simulation(sim_id)
+            
+            # Transform data for display
+            print("[VISUALIZATION] Transforming simulation data...")
+            transformed <- transform_simulation_data(sim_state$results$simset, settings)
+            
+            # Update simulation state with transformed data
+            store$update_simulation(sim_id, list(
+                results = list(
+                    simset = sim_state$results$simset,
+                    transformed = transformed
+                )
+            ))
+
+            # Create plot-and-table structure
             new_plot_and_table <- list(
                 plot = transformed$plot,
                 main.settings = list(),
@@ -118,15 +137,8 @@ create_visualization_manager <- function(session, page_id, id) {
                 int.settings = intervention_settings
             )
 
-            # Update visualization state
-            store$update_visualization_state(
-                page_id,
-                visibility = "visible",
-                plot_status = "ready"
-            )
-
-            # Update display using the set_display function defined above
-            print("Calling set_display...")
+            # Update display
+            print("[VISUALIZATION] Updating display...")
             set_display(input, output, new_plot_and_table)
         },
         reset = function() {

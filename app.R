@@ -31,7 +31,7 @@ source("src/ui/components/common/display/plot_controls.R")
 
 # Source error handling
 source("src/ui/components/common/errors/boundaries.R")
-source("components/layout/panel.R")
+source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")
 source("src/ui/components/selectors/choices_select.R")
@@ -45,7 +45,7 @@ source("src/ui/components/pages/prerun/index.R")
 source("src/ui/components/pages/custom/index.R")
 
 # Source other required files
-source("helpers/display_size.R")
+source("src/ui/components/common/display/display_size.R")
 source("src/ui/components/common/display/handlers.R")
 source("server/contact_handlers.R")
 
@@ -64,7 +64,7 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-source("../jheem_analyses/applications/ryan_white/ryan_white_specification.R")
+source("../jheem_analyses/applications/EHE/ehe_specification.R")
 
 
 
@@ -220,21 +220,9 @@ server <- function(input, output, session) {
     evict = cache_config$cache2$evict_strategy
   )
 
-  # Create reactive data sources for each panel
-  prerun_data <- reactive({
-    settings <- get_control_settings(input, "prerun")
-    get_simulation_data(settings, mode = "prerun")
-  })
-
-  custom_data <- reactive({
-    settings <- get_control_settings(input, "custom")
-    get_simulation_data(settings, mode = "custom")
-  })
-
-  # Initialize panel servers with reactive data sources
+  # Initialize panel servers with reactive settings
   plot_panel_server(
     "prerun",
-    data = prerun_data,
     settings = reactive({
       get_control_settings(input, "prerun")
     })
@@ -242,7 +230,6 @@ server <- function(input, output, session) {
 
   table_panel_server(
     "prerun",
-    data = prerun_data,
     settings = reactive({
       get_control_settings(input, "prerun")
     })
@@ -250,7 +237,6 @@ server <- function(input, output, session) {
 
   plot_panel_server(
     "custom",
-    data = custom_data,
     settings = reactive({
       get_control_settings(input, "custom")
     })
@@ -258,7 +244,6 @@ server <- function(input, output, session) {
 
   table_panel_server(
     "custom",
-    data = custom_data,
     settings = reactive({
       get_control_settings(input, "custom")
     })
@@ -276,16 +261,13 @@ server <- function(input, output, session) {
 }
 
 # Run the application
-shinyApp(
-  ui = ui, server = server,
-  onStart = function() {
-    pkg_env <- asNamespace("jheem2")
-    internal_fns <- ls(pkg_env, all.names = TRUE)
+shinyApp(ui = ui, server = server, onStart = function() {
+  pkg_env <- asNamespace("jheem2")
+  internal_fns <- ls(pkg_env, all.names = TRUE)
 
-    for (fn in internal_fns) {
-      if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
-        assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
-      }
+  for (fn in internal_fns) {
+    if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
+      assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
     }
   }
-)
+})

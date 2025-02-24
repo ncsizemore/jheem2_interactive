@@ -19,3 +19,8 @@ selectors:
       pessimistic:
         id: "pessimistic"
         label: "Pessimistic Scenario"
+
+# Simulation file configuration
+prerun_simulations:
+  file_pattern: "prerun/{location}/{aspect}_{population}_{timeframe}_{intensity}.Rdata"
+

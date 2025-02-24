@@ -78,9 +78,10 @@ create_table_panel <- function(id) {
 #' @param data Reactive source for table data
 #' @param settings Reactive source for display settings
 #' @return None
-table_panel_server <- function(id, data, settings) {
+table_panel_server <- function(id, settings) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    store <- get_store()
 
     # Get config once at initialization
     config <- get_component_config("controls")
@@ -110,48 +111,54 @@ table_panel_server <- function(id, data, settings) {
       vis_manager$set_plot_status("loading")
       current_settings <- control_manager$get_settings()
 
-      tryCatch(
-        {
-          # Get data with pagination
-          result <- get_table_data(
-            data(),
-            current_settings,
-            pagination = list(
-              page = current_page(),
-              page_size = as.numeric(input$page_size %||% 50)
+      tryCatch({
+        # Get transformed data - this will retransform if settings changed
+        transformed_data <- store$get_current_transformed_data(id, current_settings)
+        
+        # Format and paginate
+        formatted <- format_table_data(transformed_data, get_component_config("controls"))
+        
+        # Apply pagination
+        total_rows <- nrow(formatted)
+        start_idx <- ((current_page() - 1) * as.numeric(input$page_size %||% 50)) + 1
+        end_idx <- min(start_idx + as.numeric(input$page_size %||% 50) - 1, total_rows)
+        
+        # Create result structure
+        result <- list(
+            data = formatted[start_idx:end_idx, , drop = FALSE],
+            metadata = list(
+                total_rows = total_rows,
+                current_page = current_page(),
+                has_more = end_idx < total_rows
             )
-          )
+        )
 
-          # Update has_more_data state
-          has_more_data(result$metadata$has_more)
+        # Update pagination state
+        has_more_data(result$metadata$has_more)
 
-          # Update pagination info if available
-          if (!is.null(result$metadata)) {
+        # Update pagination info if available
+        if (!is.null(result$metadata)) {
             output$page_info <- renderText({
-              total <- result$metadata$total_rows
-              page <- result$metadata$current_page
-              size <- as.numeric(input$page_size %||% 50)
-              start_row <- ((page - 1) * size) + 1
-              end_row <- min(page * size, total)
-              sprintf("%d-%d of %d", start_row, end_row, total)
+                total <- result$metadata$total_rows
+                page <- result$metadata$current_page
+                size <- as.numeric(input$page_size %||% 50)
+                start_row <- ((page - 1) * size) + 1
+                end_row <- min(page * size, total)
+                sprintf("%d-%d of %d", start_row, end_row, total)
             })
-          }
-
-          output$error_message <- renderText({
-            NULL
-          })
-          vis_manager$set_plot_status("ready")
-
-          result$data
-        },
-        error = function(e) {
-          print(paste("Error in table creation:", conditionMessage(e)))
-          output$error_message <- renderText({
-            sprintf("Error: %s", conditionMessage(e))
-          })
-          NULL
         }
-      )
+
+        output$error_message <- renderText({ NULL })
+        vis_manager$set_plot_status("ready")
+
+        result$data
+      }, error = function(e) {
+        print(paste("Error in table creation:", conditionMessage(e)))
+        output$error_message <- renderText({
+          sprintf("Error: %s", conditionMessage(e))
+        })
+        NULL
+      })
     })
 
     # Combined observer for all control changes
@@ -192,29 +199,38 @@ table_panel_server <- function(id, data, settings) {
           control_manager$update_settings(new_settings)
           current_page(1) # Reset to first page on control changes
 
-          # Direct table update using data layer
+          # Update table display
           vis_manager$set_plot_status("loading")
           output$mainTable <- renderTable({
-            tryCatch(
-              {
-                result <- get_table_data(
-                  data(),
-                  new_settings,
-                  pagination = list(
-                    page = current_page(),
-                    page_size = as.numeric(input$page_size %||% 50)
+            tryCatch({
+              # Get transformed data - this will retransform if settings changed
+              transformed_data <- store$get_current_transformed_data(id, new_settings)
+              
+              # Format and paginate
+              formatted <- format_table_data(transformed_data, get_component_config("controls"))
+              
+              # Apply pagination
+              total_rows <- nrow(formatted)
+              start_idx <- ((current_page() - 1) * as.numeric(input$page_size %||% 50)) + 1
+              end_idx <- min(start_idx + as.numeric(input$page_size %||% 50) - 1, total_rows)
+              
+              # Create result structure
+              result <- list(
+                  data = formatted[start_idx:end_idx, , drop = FALSE],
+                  metadata = list(
+                      total_rows = total_rows,
+                      current_page = current_page(),
+                      has_more = end_idx < total_rows
                   )
-                )
+              )
 
-                # Update has_more_data state here too
-                has_more_data(result$metadata$has_more)
+              # Update pagination state
+              has_more_data(result$metadata$has_more)
 
-                output$error_message <- renderText({
-                  NULL
-                })
-                vis_manager$set_plot_status("ready")
+              output$error_message <- renderText({ NULL })
+              vis_manager$set_plot_status("ready")
 
-                result$data
+              result$data
               },
               error = function(e) {
                 print(paste("Error in table update:", conditionMessage(e)))

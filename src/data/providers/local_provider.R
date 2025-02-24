@@ -5,57 +5,163 @@ LocalProvider <- R6::R6Class(
     inherit = SimulationProvider,
     public = list(
         root_dir = NULL,
-        initialize = function(root_dir = "simulations") {
+        config = NULL,
+        mode = NULL,
+
+        initialize = function(root_dir = "simulations", config = NULL, mode = "prerun") {
             self$root_dir <- root_dir
+            self$config <- config
+            self$mode <- mode
             if (!dir.exists(root_dir)) {
                 dir.create(root_dir, recursive = TRUE)
             }
+            print(sprintf("LocalProvider initialized with mode: %s", mode))
+            print("Config:")
+            print(str(config))
         },
 
-        #' Load a production simulation set
-        #' @param simset_key String in format "location_version_calibration"
-        load_simset = function(simset_key) {
-            private$validate_simset_key(simset_key)
+        #' Load a simulation set based on settings
+        #' @param settings List of settings that determine the simulation
+        load_simset = function(settings) {
+            print("\n=== load_simset ===")
+            print("Settings:")
+            print(str(settings))
+            
+            # First check if we're in test mode
+            file_path <- private$get_file_path(settings)
+            private$load_file(file_path)
+        },
 
-            # Check if simset exists
-            if (!self$has_simset(simset_key)) {
-                metadata <- private$parse_simset_key(simset_key)
-                stop(sprintf(
-                    "No simulation set found for location '%s' with version '%s' and calibration '%s'",
-                    metadata$location, metadata$version, metadata$calibration
-                ))
+        has_simset = function(settings) {
+            file_path <- private$get_file_path(settings)
+            file.exists(file_path)
+        },
+
+        get_simset_metadata = function(settings) {
+            file_path <- private$get_file_path(settings)
+            defaults_config <- get_defaults_config()
+            test_mode <- !is.null(defaults_config$testing) && defaults_config$testing$enabled
+            
+            if (test_mode) {
+                list(
+                    test_mode = TRUE,
+                    path = file_path
+                )
+            } else {
+                list(
+                    settings = settings,
+                    path = file_path
+                )
             }
-
-            private$load_file(private$get_simset_path(simset_key))
-        },
-
-        #' Load development test simset (no validation)
-        #' @return JHEEM2 simulation set
-        load_test_simset = function() {
-            test_key <- "C.12580_v1_baseline"
-            private$load_file(file.path(self$root_dir, paste0(test_key, ".Rdata")))
-        },
-        has_simset = function(simset_key) {
-            private$validate_simset_key(simset_key)
-            file.exists(private$get_simset_path(simset_key))
-        },
-        get_simset_metadata = function(simset_key) {
-            private$validate_simset_key(simset_key)
-
-            # Parse key parts
-            parts <- strsplit(simset_key, "_")[[1]]
-            list(
-                location = parts[1],
-                version = parts[2],
-                calibration = parts[3],
-                path = private$get_simset_path(simset_key)
-            )
         }
     ),
     private = list(
+        #' Get the appropriate file path based on mode and settings
+        #' @param settings List of settings
+        #' @return String file path
+        get_file_path = function(settings) {
+            print("\n=== get_file_path ===")
+            # Check if we're in test mode
+            defaults_config <- get_defaults_config()
+            print("Defaults config:")
+            print(str(defaults_config))
+            
+            test_mode <- !is.null(defaults_config$testing) && defaults_config$testing$enabled
+            print(sprintf("Test mode: %s", test_mode))
+            
+            if (test_mode) {
+                print("In test mode - getting test file")
+                test_file <- defaults_config$testing$simulations[[self$mode]]$file
+                print(sprintf("Test file: %s", test_file))
+                return(file.path(self$root_dir, test_file))
+            }
+            
+            print("Not in test mode - validating settings")
+            # Not in test mode - validate settings
+            if (is.null(settings) || is.null(settings$location)) {
+                stop("Settings with location must be provided when not in test mode")
+            }
+            
+            # Get filename using pattern
+            filename <- private$build_filename_from_pattern(settings)
+            file.path(self$root_dir, filename)
+        },
+
+        #' Build filename from pattern and settings
+        #' @param settings List of settings
+        #' @return String filename
+        build_filename_from_pattern = function(settings) {
+            print("\n=== build_filename_from_pattern ===")
+            # Get pattern from config
+            if (is.null(self$config) || is.null(self$config$file_pattern)) {
+                stop(sprintf("No file pattern configured for %s mode", self$mode))
+            }
+            
+            # Extract all placeholders from pattern {xyz}
+            placeholders <- regmatches(
+                self$config$file_pattern,
+                gregexpr("\\{([^}]+)\\}", self$config$file_pattern)
+            )[[1]]
+            
+            # Strip the braces
+            selector_names <- gsub("[{}]", "", placeholders)
+            
+            # For custom mode, we only expect location
+            if (self$mode == "custom") {
+                if (!identical(selector_names, "location")) {
+                    stop("Custom mode file pattern should only contain {location}")
+                }
+            } else {
+                # For prerun, validate against top-level config sections
+                config <- get_page_complete_config("prerun")
+                
+                # Map our pattern fields to config sections
+                field_to_section <- list(
+                    location = "location",
+                    aspect = "intervention_aspects",
+                    population = "population_groups",
+                    timeframe = "timeframes",
+                    intensity = "intensities"
+                )
+                
+                # Check that all our selectors correspond to config sections
+                invalid_selectors <- setdiff(selector_names, names(field_to_section))
+                if (length(invalid_selectors) > 0) {
+                    stop(sprintf(
+                        "Invalid selectors in file pattern: %s. Valid selectors are: %s",
+                        paste(invalid_selectors, collapse=", "),
+                        paste(names(field_to_section), collapse=", ")
+                    ))
+                }
+            }
+            
+            # Replace each placeholder
+            filename <- self$config$file_pattern
+            for (selector in selector_names) {
+                value <- settings[[selector]]
+                if (is.null(value)) {
+                    stop(sprintf("No value provided for required selector: %s", selector))
+                }
+                filename <- gsub(
+                    sprintf("\\{%s\\}", selector),
+                    value,
+                    filename
+                )
+            }
+            
+            # Add .Rdata extension if not present
+            if (!grepl("\\.Rdata$", filename)) {
+                filename <- paste0(filename, ".Rdata")
+            }
+            
+            filename
+        },
+
         #' Load a simulation file
         #' @param file_path Path to .Rdata file
         load_file = function(file_path) {
+            print("\n=== load_file ===")
+            print(sprintf("Loading file: %s", file_path))
             if (!file.exists(file_path)) {
                 stop(paste("Simulation file not found:", file_path))
             }
@@ -69,9 +175,6 @@ LocalProvider <- R6::R6Class(
                     stop(paste("Error loading simulation:", e$message))
                 }
             )
-        },
-        get_simset_path = function(key) {
-            file.path(self$root_dir, paste0(key, ".Rdata"))
         }
     )
 )

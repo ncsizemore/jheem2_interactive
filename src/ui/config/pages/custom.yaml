@@ -87,3 +87,7 @@ interventions:
       value: 0
       format: "percentage"
 
+# Simulation file configuration
+custom_simulations:
+  file_pattern: "base/{location}_base.Rdata"
+

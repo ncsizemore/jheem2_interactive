@@ -55,9 +55,10 @@ create_plot_panel <- function(id, type = "static") {
 #' @param data Reactive source for plot data
 #' @param settings Reactive source for plot settings
 #' @return None
-plot_panel_server <- function(id, data, settings) {
+plot_panel_server <- function(id, settings) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    store <- get_store()
 
     # Create state managers
     vis_manager <- create_visualization_manager(session, id, ns("visualization"))
@@ -83,15 +84,15 @@ plot_panel_server <- function(id, data, settings) {
 
       tryCatch(
         {
-          # Use data layer to get plot data
-          plot_data <- get_plot_data(data(), current_settings)
-
-          # Create plot using prepared data
+          # Get current simulation data 
+          sim_state <- store$get_current_simulation_data(id)
+          
+          # Create plot using raw simset
           plot <- simplot(
-            plot_data,
-            outcomes = current_settings$outcomes,
-            facet.by = current_settings$facet.by,
-            summary.type = current_settings$summary.type
+              sim_state$simset,
+              outcomes = current_settings$outcomes,
+              facet.by = current_settings$facet.by,
+              summary.type = current_settings$summary.type
           )
           output$error_message <- renderText({
             NULL
@@ -145,20 +146,20 @@ plot_panel_server <- function(id, data, settings) {
           # Update control state
           control_manager$update_settings(new_settings)
 
-          # Direct plot update using data layer
+          # Direct plot update
           vis_manager$set_plot_status("loading")
           output$mainPlot <- renderPlot({
             tryCatch(
               {
-                # Use data layer to get plot data
-                plot_data <- get_plot_data(data(), new_settings)
-
-                # Create plot using prepared data
+                # Get current simulation data
+                sim_state <- store$get_current_simulation_data(id)
+                
+                # Create plot using raw simset
                 plot <- simplot(
-                  plot_data,
-                  outcomes = new_settings$outcomes,
-                  facet.by = new_settings$facet.by,
-                  summary.type = new_settings$summary.type
+                    sim_state$simset,
+                    outcomes = new_settings$outcomes,
+                    facet.by = new_settings$facet.by,
+                    summary.type = new_settings$summary.type
                 )
                 output$error_message <- renderText({
                   NULL
