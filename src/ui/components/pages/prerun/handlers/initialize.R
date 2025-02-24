@@ -61,21 +61,22 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
 
     # Handle generate button
     observeEvent(input$generate_projections_prerun, {
-        print("\n=== Generate Button Event ===")
+        print("[PRERUN] === Generate Button Event ===")
 
         # Check all validations
+        print("[PRERUN] 1. Checking validations...")
         validation_results <- validation_manager$is_valid()
 
         if (validation_results) {
-            print("2. Collecting settings...")
+            print("[PRERUN] 2. Collecting settings...")
             settings <- collect_prerun_settings(input)
-            print("Settings collected:")
-            print(settings)
+            print("[PRERUN] Settings collected:")
+            str(settings)
 
-            print("3. Updating visualization state...")
+            print("[PRERUN] 3. Updating visibility...")
             vis_manager$set_visibility("visible")
 
-            print("4. Calling update_display...")
+            print("[PRERUN] 4. Calling update_display...")
             vis_manager$update_display(input, output, settings)
         } else {
             showNotification(

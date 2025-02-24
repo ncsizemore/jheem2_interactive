@@ -19,6 +19,88 @@ create_visualization_state <- function(
     ))
 }
 
+#' Create a simulation state object
+#' @param id Character: unique simulation identifier
+#' @param mode Character: "prerun" or "custom"
+#' @param settings List: complete simulation settings
+#' @param results List: simulation results including transformed data
+#' @param timestamp POSIXct: when simulation was created/updated
+#' @param status Character: simulation status
+#' @return List with simulation state properties
+create_simulation_state <- function(
+    id,
+    mode,
+    settings = list(),
+    results = list(simset = NULL, transformed = NULL),
+    timestamp = Sys.time(),
+    status = "ready") {
+    
+    validate_simulation_state(list(
+        id = id,
+        mode = mode,
+        settings = settings,
+        results = results,
+        timestamp = timestamp,
+        status = status
+    ))
+}
+
+#' Validate simulation state object
+#' @param state List containing simulation state properties
+#' @return The state object if valid, otherwise throws error
+validate_simulation_state <- function(state) {
+    if (!is.list(state)) stop("Simulation state must be a list")
+
+    # Required fields
+    required <- c("id", "mode", "settings", "results", "timestamp", "status")
+    missing <- setdiff(required, names(state))
+    if (length(missing) > 0) {
+        stop(sprintf(
+            "Missing required simulation state fields: %s",
+            paste(missing, collapse = ", ")
+        ))
+    }
+
+    # Validate id
+    if (!is.character(state$id) || length(state$id) != 1) {
+        stop("id must be a single character string")
+    }
+
+    # Validate mode
+    if (!state$mode %in% c("prerun", "custom")) {
+        stop("mode must be either 'prerun' or 'custom'")
+    }
+
+    # Validate settings
+    if (!is.list(state$settings)) {
+        stop("settings must be a list")
+    }
+
+    # Validate results structure
+    if (!is.list(state$results)) {
+        stop("results must be a list")
+    }
+    if (!all(c("simset", "transformed") %in% names(state$results))) {
+        stop("results must contain 'simset' and 'transformed' elements")
+    }
+
+    # Validate timestamp
+    if (!inherits(state$timestamp, "POSIXct")) {
+        stop("timestamp must be a POSIXct object")
+    }
+
+    # Validate status
+    valid_statuses <- c("ready", "running", "complete", "error")
+    if (!state$status %in% valid_statuses) {
+        stop(sprintf(
+            "Invalid status. Must be one of: %s",
+            paste(valid_statuses, collapse = ", ")
+        ))
+    }
+
+    state
+}
+
 #' Create a new control state object
 #' @param outcomes Character vector of selected outcomes
 #' @param facet_by Character vector of faceting dimensions
@@ -52,12 +134,14 @@ create_control_state <- function(outcomes = NULL,
 create_panel_state <- function(page_id,
                                visualization = create_visualization_state(),
                                controls = create_control_state(),
-                               validation = create_validation_state()) {
+                               validation = create_validation_state(),
+                               current_simulation_id = NULL) {
     validate_panel_state(list(
         page_id = page_id,
         visualization = visualization,
         controls = controls,
-        validation = validation
+        validation = validation,
+        current_simulation_id = current_simulation_id
     ))
 }
 
@@ -177,7 +261,7 @@ validate_panel_state <- function(state) {
     if (!is.list(state)) stop("Panel state must be a list")
 
     # Required fields
-    required <- c("page_id", "visualization", "controls", "validation")
+    required <- c("page_id", "visualization", "controls", "validation", "current_simulation_id")
     missing <- setdiff(required, names(state))
     if (length(missing) > 0) {
         stop(sprintf(
@@ -189,6 +273,12 @@ validate_panel_state <- function(state) {
     # Validate page_id
     if (!state$page_id %in% c("prerun", "custom")) {
         stop("page_id must be either 'prerun' or 'custom'")
+    }
+
+    # Validate current_simulation_id
+    if (!is.null(state$current_simulation_id) && 
+        (!is.character(state$current_simulation_id) || length(state$current_simulation_id) != 1)) {
+        stop("current_simulation_id must be NULL or a single character string")
     }
 
     # Validate nested states

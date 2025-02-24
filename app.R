@@ -220,21 +220,9 @@ server <- function(input, output, session) {
     evict = cache_config$cache2$evict_strategy
   )
 
-  # Create reactive data sources for each panel
-  prerun_data <- reactive({
-    settings <- get_control_settings(input, "prerun")
-    get_simulation_data(settings, mode = "prerun")
-  })
-
-  custom_data <- reactive({
-    settings <- get_control_settings(input, "custom")
-    get_simulation_data(settings, mode = "custom")
-  })
-
-  # Initialize panel servers with reactive data sources
+  # Initialize panel servers with reactive settings
   plot_panel_server(
     "prerun",
-    data = prerun_data,
     settings = reactive({
       get_control_settings(input, "prerun")
     })
@@ -242,7 +230,6 @@ server <- function(input, output, session) {
 
   table_panel_server(
     "prerun",
-    data = prerun_data,
     settings = reactive({
       get_control_settings(input, "prerun")
     })
@@ -250,7 +237,6 @@ server <- function(input, output, session) {
 
   plot_panel_server(
     "custom",
-    data = custom_data,
     settings = reactive({
       get_control_settings(input, "custom")
     })
@@ -258,7 +244,6 @@ server <- function(input, output, session) {
 
   table_panel_server(
     "custom",
-    data = custom_data,
     settings = reactive({
       get_control_settings(input, "custom")
     })
