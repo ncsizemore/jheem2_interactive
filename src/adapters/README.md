@@ -1,6 +1,8 @@
-# Intervention Adapter Layer
+# Adapter Layer
 
-## Overview
+## Intervention Adapter Layer
+
+### Overview
 The intervention adapter layer bridges between UI settings and JHEEM2 model interventions.
 
 ### Key Components
@@ -134,4 +136,42 @@ MODEL_EFFECTS <- list(
 - Receives settings from UI layer
 - Creates JHEEM2 interventions
 - Returns intervention objects
-- Will integrate with simulation runner 
+- Will integrate with simulation runner
+
+## Simulation Adapter Layer
+
+### Overview
+The simulation adapter layer manages simulation creation, execution, and state management.
+
+### Key Components
+
+#### simulation_adapter.R
+- Main interface for simulation operations
+- Coordinates with state store for simulation management
+- Handles both prerun and custom modes
+- Works with core simulation functionality
+
+### Technical Details
+
+#### Simulation State Management
+Each simulation has:
+- Unique ID (format: sim_{timestamp}_{random})
+- Mode (prerun/custom)
+- Settings used to create it
+- Results containing:
+  - Raw simset (for plot generation)
+  - Transformed data (for table display)
+- Status tracking (ready/running/complete/error)
+
+#### Data Flow
+1. UI requests simulation via adapter
+2. Adapter creates/updates state in store
+3. Raw simset used directly for plots
+4. Transformed data used for tables
+5. State tracked to avoid unnecessary re-runs
+
+#### Integration with Core Layer
+- Uses SimulationRunner from core layer
+- Maintains provider configuration
+- Handles intervention application
+- Preserves core simulation functionality 

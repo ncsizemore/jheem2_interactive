@@ -81,3 +81,38 @@ vis_manager$set_visibility("visible")
 - Using namespaced IDs instead of full prefixed IDs
 - Updating UI inputs before store state
 - Not maintaining atomic state updates
+
+## Simulation State Management
+
+### Simulation State
+Located in `store.R`, manages:
+- Simulation storage and retrieval
+- Current simulation tracking per page
+- Raw and transformed data handling
+
+#### State Structure
+```r
+simulation_state = list(
+    id = character(),          # Unique simulation identifier
+    mode = character(),        # "prerun" or "custom"
+    settings = list(),         # Settings that created this simulation
+    results = list(
+        simset = NULL,         # Raw JHEEM2 simulation set
+        transformed = NULL     # Transformed data for display
+    ),
+    timestamp = POSIXct(),     # When created/updated
+    status = character()       # Status tracking
+)
+```
+
+#### Page-Simulation Relationship
+- Each page tracks its current simulation
+- Simulation ID stored in panel state
+- Prevents cross-page interference
+- Maintains independent state
+
+#### Data Access Patterns
+- Plot components use raw simset
+- Table components use transformed data
+- Store manages transformation caching
+- Avoids unnecessary retransformation
