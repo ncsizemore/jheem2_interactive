@@ -1,50 +1,50 @@
-# components/layout/panel.R
+# src/ui/components/common/layout/panel.R
 
 #' Create a panel component
-#' @param id Panel identifier 
+#' @param id Panel identifier
 #' @param type Panel type ("left" or "right")
 #' @param config Configuration from get_page_complete_config()
 #' @param content Panel content
 create_panel <- function(id, type, config, content) {
-    if(id == "settings") {
+    if (id == "settings") {
         print("=== Creating Right Panel ===")
         print(paste("Panel ID:", id))
         print(paste("Panel Type:", type))
     }
-    
+
     # Validate inputs
     validate_panel_inputs(id, type, config)
-    
+
     # Get panel-specific config
     panel_config <- config$panels[[type]]
     theme_config <- config$theme
-    
+
     # Generate namespaced ID
     ns <- NS(id)
-    
+
     # Build CSS classes
     classes <- build_panel_classes(type, panel_config)
-    
+
     # Create panel structure with configuration
     tags$div(
         id = ns(panel_config$id),
         class = classes,
         style = build_panel_styles(panel_config, theme_config),
-        
+
         # Header with configured styles
         tags$div(
             class = "panel-header",
             style = build_header_styles(theme_config),
             panel_config$header
         ),
-        
+
         # Content wrapper with configured styles
         tags$div(
             class = "panel-content",
             style = build_content_styles(theme_config),
             content
         ),
-        
+
         # Configurable toggle button
         if (panel_config$collapsible) {
             create_panel_toggle(ns, type, theme_config)
@@ -62,16 +62,16 @@ validate_panel_inputs <- function(id, type, config) {
     if (is.null(id) || !is.character(id)) {
         stop("Panel ID must be a character string")
     }
-    
+
     if (!type %in% c("left", "right")) {
         stop("Panel type must be 'left' or 'right'")
     }
-    
+
     # Validate configuration
     if (is.null(config$panels) || is.null(config$panels[[type]])) {
         stop(sprintf("Missing configuration for %s panel", type))
     }
-    
+
     required_fields <- c("id", "header", "width", "collapsible")
     missing <- setdiff(required_fields, names(config$panels[[type]]))
     if (length(missing) > 0) {
@@ -80,7 +80,7 @@ validate_panel_inputs <- function(id, type, config) {
             paste(missing, collapse = ", ")
         ))
     }
-    
+
     TRUE
 }
 
@@ -94,12 +94,12 @@ build_panel_classes <- function(type, panel_config) {
         "side-panel",
         sprintf("%s-panel", type)
     )
-    
+
     # Add any custom classes from config
     if (!is.null(panel_config$classes)) {
         classes <- c(classes, panel_config$classes)
     }
-    
+
     paste(classes, collapse = " ")
 }
 
@@ -109,25 +109,25 @@ build_panel_classes <- function(type, panel_config) {
 #' @return CSS style string
 build_panel_styles <- function(panel_config, theme_config) {
     styles <- list()
-    
+
     # Width from panel config
     if (!is.null(panel_config$width)) {
         styles$width <- sprintf("%dpx", panel_config$width)
     }
-    
+
     # Colors from theme
     if (!is.null(theme_config$colors)) {
         styles$backgroundColor <- theme_config$colors$background
         styles$borderColor <- theme_config$colors$border
     }
-    
+
     # Convert to CSS string
     style_strings <- mapply(
         function(name, value) sprintf("%s: %s;", name, value),
         names(styles),
         styles
     )
-    
+
     paste(style_strings, collapse = " ")
 }
 
@@ -136,24 +136,24 @@ build_panel_styles <- function(panel_config, theme_config) {
 #' @return CSS style string
 build_header_styles <- function(theme_config) {
     styles <- list()
-    
+
     # Colors
     if (!is.null(theme_config$colors)) {
         styles$backgroundColor <- theme_config$colors$primary
     }
-    
+
     # Spacing
     if (!is.null(theme_config$spacing$padding)) {
         styles$padding <- sprintf("%dpx", theme_config$spacing$padding)
     }
-    
+
     # Convert to CSS string
     style_strings <- mapply(
         function(name, value) sprintf("%s: %s;", name, value),
         names(styles),
         styles
     )
-    
+
     paste(style_strings, collapse = " ")
 }
 
@@ -162,19 +162,19 @@ build_header_styles <- function(theme_config) {
 #' @return CSS style string
 build_content_styles <- function(theme_config) {
     styles <- list()
-    
+
     # Spacing
     if (!is.null(theme_config$spacing$padding)) {
         styles$padding <- sprintf("%dpx", theme_config$spacing$padding)
     }
-    
+
     # Convert to CSS string
     style_strings <- mapply(
         function(name, value) sprintf("%s: %s;", name, value),
         names(styles),
         styles
     )
-    
+
     paste(style_strings, collapse = " ")
 }
 
@@ -184,8 +184,8 @@ build_content_styles <- function(theme_config) {
 #' @param theme_config Theme configuration
 #' @return Shiny tag object
 create_panel_toggle <- function(ns, type, theme_config) {
-    toggle_icon <- if(type == "left") "chevron-left" else "chevron-right"
-    
+    toggle_icon <- if (type == "left") "chevron-left" else "chevron-right"
+
     tags$button(
         id = ns(sprintf("toggle-%s", type)),
         class = sprintf("toggle-button toggle-%s", type),
@@ -199,20 +199,20 @@ create_panel_toggle <- function(ns, type, theme_config) {
 #' @return CSS style string
 build_toggle_styles <- function(theme_config) {
     styles <- list()
-    
+
     # Colors
     if (!is.null(theme_config$colors)) {
         styles$backgroundColor <- theme_config$colors$primary
         styles$borderColor <- theme_config$colors$border
     }
-    
+
     # Convert to CSS string
     style_strings <- mapply(
         function(name, value) sprintf("%s: %s;", name, value),
         names(styles),
         styles
     )
-    
+
     paste(style_strings, collapse = " ")
 }
 
@@ -226,7 +226,7 @@ initialize_panel <- function(id, session, config) {
         visible = config$defaultVisible,
         width = config$width
     ))
-    
+
     # Return state management functions
     list(
         get_state = panel_state,

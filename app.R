@@ -31,7 +31,7 @@ source("src/ui/components/common/display/plot_controls.R")
 
 # Source error handling
 source("src/ui/components/common/errors/boundaries.R")
-source("components/layout/panel.R")
+source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")
 source("src/ui/components/selectors/choices_select.R")
@@ -45,7 +45,7 @@ source("src/ui/components/pages/prerun/index.R")
 source("src/ui/components/pages/custom/index.R")
 
 # Source other required files
-source("helpers/display_size.R")
+source("src/ui/components/common/display/display_size.R")
 source("src/ui/components/common/display/handlers.R")
 source("server/contact_handlers.R")
 
@@ -264,10 +264,10 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server, onStart = function() {
   pkg_env <- asNamespace("jheem2")
   internal_fns <- ls(pkg_env, all.names = TRUE)
-  
+
   for (fn in internal_fns) {
     if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
-      assign(fn, get(fn, pkg_env), envir = .GlobalEnv)  
+      assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
     }
   }
 })
