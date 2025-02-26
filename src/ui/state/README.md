@@ -82,6 +82,69 @@ vis_manager$set_visibility("visible")
 - Updating UI inputs before store state
 - Not maintaining atomic state updates
 
+## Error State Management
+
+The state management system also handles error state persistence across different views:
+
+### Page Error State
+- Maintains error information at the page level
+- Ensures errors persist when switching between views (plot/table)
+- Provides a central source of truth for error conditions
+
+#### Error State Structure
+```r
+page_error_state = reactiveValues(
+    has_error = logical(),       # Whether an error exists
+    message = character(),       # Error message
+    type = character(),          # Error type from ERROR_TYPES
+    severity = character(),      # Severity from SEVERITY_LEVELS
+    timestamp = POSIXct()        # When the error occurred
+)
+```
+
+#### Error State API
+- `update_page_error_state`: Set an error for a page
+- `get_page_error_state`: Get the current error state for a page
+- `clear_page_error_state`: Clear error state for a page
+
+#### Usage Pattern
+```r
+# Setting an error
+store$update_page_error_state(
+  page_id,
+  has_error = TRUE,
+  message = "Error message",
+  type = ERROR_TYPES$SIMULATION,
+  severity = SEVERITY_LEVELS$ERROR
+)
+
+# Getting error state
+page_error_state <- store$get_page_error_state(page_id)
+if (page_error_state$has_error) {
+  # Handle error
+}
+
+# Clearing error state
+store$clear_page_error_state(page_id)
+```
+
+#### Error State Synchronization
+Components should include an observer to sync with the global error state:
+
+```r
+# Error persistence observer
+observe({
+  # Get page error state
+  page_error_state <- store$get_page_error_state(id)
+  
+  # Check if there's a global error for this page
+  if (page_error_state$has_error && !is.null(page_error_state$message)) {
+    # Set error in local component
+    # ...
+  }
+})
+```
+
 ## Simulation State Management
 
 ### Simulation State
