@@ -100,6 +100,15 @@ selectors:
       chicago:
         id: "C.16980"
         label: "Chicago-Naperville-Elgin, IL-IN-WI"
+      test_error:
+        id: "test_error"
+        label: "[TEST] Simulation Error"
+      test_existing_error:
+        id: "test_existing_error"
+        label: "[TEST] Existing Error"
+      test_transform_error:
+        id: "test_transform_error"
+        label: "[TEST] Transform Error"
 
 # Model dimension mappings - used for translating UI to model values
 model_dimensions:

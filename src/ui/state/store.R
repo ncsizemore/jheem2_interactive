@@ -14,6 +14,7 @@ StateStore <- R6Class("StateStore",
         initialize = function(page_ids = c("prerun", "custom")) {
             private$setup_panel_states(page_ids)
             private$setup_simulation_storage()
+            private$setup_page_error_states(page_ids)
         },
 
         # Panel State Methods ------------------------------------------------
@@ -374,6 +375,70 @@ StateStore <- R6Class("StateStore",
                 referenced_count = length(unique(referenced_ids)),
                 referenced_ids = unique(referenced_ids)
             )
+        },
+        
+        # Page Error State Methods ---------------------------------------
+        
+        #' @description Update error state for a page
+        #' @param page_id Character: page identifier
+        #' @param has_error Logical: whether an error exists
+        #' @param message Character: error message
+        #' @param type Character: error type
+        #' @param severity Character: error severity
+        #' @return Invisible self (for chaining)
+        update_page_error_state = function(page_id, has_error, message = NULL, type = NULL, severity = NULL) {
+            if (is.null(private$page_error_states[[page_id]])) {
+                # Create reactive values object if it doesn't exist
+                private$page_error_states[[page_id]] <- reactiveValues(
+                    has_error = has_error,
+                    message = message,
+                    type = type,
+                    severity = severity,
+                    timestamp = Sys.time()
+                )
+            } else {
+                # Update existing reactive values
+                private$page_error_states[[page_id]]$has_error <- has_error
+                private$page_error_states[[page_id]]$message <- message
+                private$page_error_states[[page_id]]$type <- type
+                private$page_error_states[[page_id]]$severity <- severity
+                private$page_error_states[[page_id]]$timestamp <- Sys.time()
+            }
+            
+            invisible(self)
+        },
+        
+        #' @description Get error state for a page
+        #' @param page_id Character: page identifier
+        #' @return ReactiveValues object containing error state
+        get_page_error_state = function(page_id) {
+            if (is.null(private$page_error_states[[page_id]])) {
+                # Create empty error state if it doesn't exist
+                private$page_error_states[[page_id]] <- reactiveValues(
+                    has_error = FALSE,
+                    message = NULL,
+                    type = NULL,
+                    severity = NULL,
+                    timestamp = NULL
+                )
+            }
+            
+            private$page_error_states[[page_id]]
+        },
+        
+        #' @description Clear error state for a page
+        #' @param page_id Character: page identifier
+        #' @return Invisible self (for chaining)
+        clear_page_error_state = function(page_id) {
+            if (!is.null(private$page_error_states[[page_id]])) {
+                private$page_error_states[[page_id]]$has_error <- FALSE
+                private$page_error_states[[page_id]]$message <- NULL
+                private$page_error_states[[page_id]]$type <- NULL
+                private$page_error_states[[page_id]]$severity <- NULL
+                private$page_error_states[[page_id]]$timestamp <- NULL
+            }
+            
+            invisible(self)
         }
     ),
 
@@ -390,6 +455,21 @@ StateStore <- R6Class("StateStore",
         #' @description Set up simulation storage
         setup_simulation_storage = function() {
             private$simulations <- list()
+        },
+        
+        #' @description Set up page error states
+        #' @param page_ids Character vector of page identifiers
+        setup_page_error_states = function(page_ids) {
+            private$page_error_states <- list()
+            for (id in page_ids) {
+                private$page_error_states[[id]] <- reactiveValues(
+                    has_error = FALSE,
+                    message = NULL,
+                    type = NULL,
+                    severity = NULL,
+                    timestamp = NULL
+                )
+            }
         },
 
         #' @description Generate unique simulation ID
@@ -410,7 +490,10 @@ StateStore <- R6Class("StateStore",
         },
 
         #' @field simulations Internal storage for simulation ReactiveVals
-        simulations = NULL
+        simulations = NULL,
+        
+        #' @field page_error_states Internal storage for page error states
+        page_error_states = NULL
     )
 )
 

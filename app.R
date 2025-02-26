@@ -31,6 +31,7 @@ source("src/ui/components/common/display/plot_controls.R")
 
 # Source error handling
 source("src/ui/components/common/errors/boundaries.R")
+source("src/ui/components/common/errors/handlers.R")
 source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")

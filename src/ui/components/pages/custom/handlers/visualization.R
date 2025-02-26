@@ -6,6 +6,10 @@
 #' @param session Shiny session object
 #' @param vis_manager Visualization manager instance
 initialize_custom_visualization_handlers <- function(input, output, session, vis_manager) {
+    # Register simulation error boundary for custom page
+    get_simulation_adapter()$register_error_boundary("custom", session, output)
+    print("[CUSTOM] Registered simulation error boundary")
+
     # Handle plot toggle
     observeEvent(input[["custom-toggle_plot"]],
         {

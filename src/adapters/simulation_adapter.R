@@ -12,6 +12,23 @@ SimulationAdapter <- R6::R6Class(
         #' @param store StateStore instance
         initialize = function(store) {
             private$store <- store
+            private$error_boundaries <- list()
+        },
+
+        #' @description Register error boundary for a page
+        #' @param page_id Character: page identifier
+        #' @param session Shiny session object
+        #' @param output Shiny output object
+        register_error_boundary = function(page_id, session, output) {
+            if (!is.null(session) && !is.null(output)) {
+                # Create a simulation boundary for the adapter
+                private$error_boundaries[[page_id]] <- create_simulation_boundary(
+                    session, output, page_id, "simulation", state_manager = private$store
+                )
+                
+                print(sprintf("[SIMULATION_ADAPTER] Registered error boundary for page %s", page_id))
+            }
+            invisible(self)
         },
 
         #' @description Get simulation data based on settings and mode
@@ -30,12 +47,36 @@ SimulationAdapter <- R6::R6Class(
             if (!is.null(existing_sim_id)) {
                 print(paste0("[SIMULATION_ADAPTER] Using existing simulation with ID: ", existing_sim_id))
                 
+                # Check if existing simulation has error status
+                sim_state <- private$store$get_simulation(existing_sim_id)
+                if (sim_state$status == "error") {
+                    # If sim has error and we have an error boundary, set it
+                    if (!is.null(private$error_boundaries[[mode]])) {
+                        private$error_boundaries[[mode]]$set_error(
+                            message = sim_state$error_message,
+                            type = ERROR_TYPES$SIMULATION,
+                            severity = SEVERITY_LEVELS$ERROR
+                        )
+                    }
+                    
+                    # Set as current simulation for the page
+                    private$store$set_current_simulation(mode, existing_sim_id)
+                    
+                    # Still return the ID so page can handle appropriately
+                    return(existing_sim_id)
+                }
+                
                 # Set as current simulation for the page
                 private$store$set_current_simulation(mode, existing_sim_id)
                 return(existing_sim_id)
             }
             
             print("[SIMULATION_ADAPTER] Creating new simulation")
+            
+            # Clear any existing error for this page/mode
+            if (!is.null(private$error_boundaries[[mode]])) {
+                private$error_boundaries[[mode]]$clear()
+            }
             
             # Get relevant configs
             page_config <- get_page_complete_config(mode)
@@ -57,6 +98,85 @@ SimulationAdapter <- R6::R6Class(
 
             # Update to running status
             private$store$update_simulation(sim_id, list(status = "running"))
+            
+            # TEST CASES - Force errors for testing purposes
+            if (identical(settings$location, "test_error")) {
+                print("[TEST] Forcing a simulation error for testing")
+                
+                # Create a test error message
+                error_message <- "TEST ERROR: This is a forced error for testing purposes"
+                
+                # Update with error status
+                private$store$update_simulation(
+                    sim_id,
+                    list(
+                        status = "error",
+                        error_message = error_message
+                    )
+                )
+                
+                # If we have an error boundary, set the error
+                if (!is.null(private$error_boundaries[[mode]])) {
+                    private$error_boundaries[[mode]]$set_error(
+                        message = error_message,
+                        type = ERROR_TYPES$SIMULATION,
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                }
+                
+                # Return the ID for proper state management
+                return(sim_id)
+            }
+            
+            # TEST CASE - Pre-existing error
+            if (identical(settings$location, "test_existing_error")) {
+                # Create an error simulation and return it
+                print("[TEST] Creating a pre-existing simulation with error")
+                
+                # Update with error status
+                private$store$update_simulation(
+                    sim_id,
+                    list(
+                        status = "error",
+                        error_message = "TEST ERROR: This is a pre-existing simulation error"
+                    )
+                )
+                
+                # Use error boundary to communicate error
+                if (!is.null(private$error_boundaries[[mode]])) {
+                    private$error_boundaries[[mode]]$set_error(
+                        message = "TEST ERROR: This is a pre-existing simulation error",
+                        type = ERROR_TYPES$SIMULATION,
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                }
+                
+                return(sim_id)
+            }
+            
+            # TEST CASE - Transform error
+            if (identical(settings$location, "test_transform_error")) {
+                # Create a simulation with missing properties that will fail transformation
+                print("[TEST] Creating a simulation that will cause a transform error")
+                
+                # Get a minimal simset that will cause transform errors
+                dummy_simset <- list()
+                class(dummy_simset) <- "simset"
+                
+                # Update with the dummy simset
+                private$store$update_simulation(
+                    sim_id,
+                    list(
+                        results = list(
+                            simset = dummy_simset,
+                            transformed = NULL
+                        ),
+                        status = "complete"
+                    )
+                )
+                
+                return(sim_id)
+            }
             
             tryCatch({
                 # Load base simset
@@ -84,21 +204,44 @@ SimulationAdapter <- R6::R6Class(
                     )
                 )
                 
+                # Clear any errors that might have been set
+                if (!is.null(private$error_boundaries[[mode]])) {
+                    private$error_boundaries[[mode]]$clear()
+                }
+                
                 sim_id
             }, error = function(e) {
+                # Convert error message to string and ensure it is properly formatted
+                error_message <- as.character(conditionMessage(e))
+                
+                # 1. Update simulation state with error info
                 private$store$update_simulation(
                     sim_id,
                     list(
                         status = "error",
-                        error_message = e$message
+                        error_message = error_message
                     )
                 )
-                stop(e)
+                
+                # 2. Use error boundary for structured error communication
+                if (!is.null(private$error_boundaries[[mode]])) {
+                    private$error_boundaries[[mode]]$set_error(
+                        message = error_message,
+                        type = ERROR_TYPES$SIMULATION,
+                        severity = SEVERITY_LEVELS$ERROR,
+                        details = as.character(e)  # Include full error details
+                    )
+                }
+                
+                # Return the simulation ID despite the error
+                # This allows proper state management
+                sim_id
             })
         }
     ),
     private = list(
-        store = NULL
+        store = NULL,
+        error_boundaries = NULL
     )
 )
 
