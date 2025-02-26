@@ -48,7 +48,8 @@ source("src/ui/components/pages/custom/index.R")
 # Source other required files
 source("src/ui/components/common/display/display_size.R")
 source("src/ui/components/common/display/handlers.R")
-source("server/contact_handlers.R")
+# Legacy contact handler - now sourced from within contact.R
+# source("server/contact_handlers.R")
 
 # Source page components
 source("src/ui/components/pages/about/about.R")
@@ -257,8 +258,8 @@ server <- function(input, output, session) {
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
 
-  # Add contact handlers
-  add.contact.handlers(session, input, output)
+  # Initialize contact handlers using new framework-agnostic handler
+  initialize_contact_handler(input, output, session)
   
   # Periodic cleanup of old simulations
   observe({
