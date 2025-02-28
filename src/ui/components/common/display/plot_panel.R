@@ -1,5 +1,7 @@
 # src/ui/components/common/display/plot_panel.R
 
+library(plotly)
+
 
 #' Create the plot panel UI component
 #' @param id Panel identifier
@@ -20,7 +22,7 @@ create_plot_panel <- function(id, type = "static") {
         class = "panel-container",
         tags$div(
           class = "panel-content",
-          plotOutput(
+          plotlyOutput(
             ns("mainPlot"),
             height = "600px",
             width = "100%"
@@ -106,7 +108,8 @@ plot_panel_server <- function(id, settings) {
     )
 
     # Initial plot output definition
-    output$mainPlot <- renderPlot({
+    output$mainPlot <- renderPlotly({
+      message("STARTING renderPlot execution")
       req(input$visualization_state == "visible")
 
       # Check if there's an error in the current simulation first
@@ -149,12 +152,59 @@ plot_panel_server <- function(id, settings) {
           # Get current simulation data 
           sim_state <- store$get_current_simulation_data(id)
           
-          # Create plot using raw simset
-          plot <- simplot(
-              sim_state$simset,
-              outcomes = current_settings$outcomes,
+          # Add detailed debug messages
+          message("Preparing to call plot.simulations with these parameters:")
+          message(paste0("simset class: ", paste(class(sim_state$simset), collapse=", ")))
+          message(paste0("outcomes: ", paste(current_settings$outcomes, collapse=", ")))
+          if (is.null(current_settings$facet.by)) {
+            message("facet.by: NULL")
+          } else {
+            message(paste0("facet.by: ", paste(current_settings$facet.by, collapse=", ")))
+          }
+          message(paste0("summary.type: ", current_settings$summary.type))
+          
+          # Add detailed debug messages about simset type
+          message("DEBUG: Examining sim_state$simset")
+          message(paste("Class of sim_state:", paste(class(sim_state), collapse=", ")))
+          message(paste("Names in sim_state:", paste(names(sim_state), collapse=", ")))
+          message(paste("Class of sim_state$simset:", paste(class(sim_state$simset), collapse=", ")))
+          message("Is sim_state$simset an R6 object? ", R6::is.R6(sim_state$simset))
+          
+          # Check if it has key methods required
+          if ("simset" %in% names(sim_state) && !is.null(sim_state$simset)) {
+            message("Keys in sim_state$simset:")
+            if (is.list(sim_state$simset) || is.environment(sim_state$simset)) {
+              message(paste(names(sim_state$simset), collapse=", "))
+            } else {
+              message("sim_state$simset is not a list or environment")
+            }
+          }
+          
+          # Convert simplot output to plotly
+          tryCatch(
+            {
+              # Using simplot + ggplotly approach for more reliable plotting
+              simset <- sim_state$simset
+              
+              # Get the default plotly style manager
+              default_plotly_style <- get.default.style.manager('plotly')
+              
+              # Create ggplot object using simplot
+              ggplot_obj <- simplot(
+                simset,
+                outcomes = current_settings$outcomes,
               facet.by = current_settings$facet.by,
-              summary.type = current_settings$summary.type
+              summary.type = current_settings$summary.type,
+              style.manager = default_plotly_style  # Use default plotly style manager
+              )
+              
+              # Convert ggplot to plotly
+              plot <- ggplotly(ggplot_obj)
+            },
+            error = function(e) {
+              print(paste("Error creating plot:", conditionMessage(e)))
+              stop(e) # Re-throw to outer handler
+            }
           )
           # When plot is created successfully, clear any errors
           sim_boundary$clear()
@@ -191,17 +241,17 @@ plot_panel_server <- function(id, settings) {
 
     # Combined observer for all control changes
     observe({
-      print("\n=== Plot Panel Control Update ===")
+      message("=== Plot Panel Control Observer Executed ===")
 
       # Get all current control values
       outcomes <- input[[paste0("outcomes_", id)]]
       facet_by <- input[[paste0("facet_by_", id)]]
       summary_type <- input[[paste0("summary_type_", id)]]
 
-      print("Current control values:")
-      print(paste("- outcomes:", paste(outcomes, collapse = ", ")))
-      print(paste("- facet_by:", paste(facet_by, collapse = ", ")))
-      print(paste("- summary_type:", summary_type))
+      message("DEBUG: Using renderPlotly with plot.simulations and debug mode")
+      message(paste("- outcomes:", paste(outcomes, collapse=", ")))
+      message(paste("- facet_by:", paste(facet_by, collapse=", ")))
+      message(paste("- summary_type:", summary_type))
 
       # Only proceed if we have a visible plot and any controls are set
       if (!is.null(input$visualization_state) &&
@@ -217,8 +267,10 @@ plot_panel_server <- function(id, settings) {
           summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
         )
 
-        print("\nSettings for plot:")
-        str(new_settings)
+        message("\nSettings for plot:")
+        message(paste("- outcomes: ", paste(new_settings$outcomes, collapse=", ")))
+        message(paste("- facet.by: ", paste(new_settings$facet.by, collapse=", ")))
+        message(paste("- summary.type: ", new_settings$summary.type))
 
         # Update state and plot together
         isolate({
@@ -251,18 +303,37 @@ plot_panel_server <- function(id, settings) {
             }
           }
           
-          output$mainPlot <- renderPlot({
+          output$mainPlot <- renderPlotly({
             tryCatch(
               {
                 # Get current simulation data
                 sim_state <- store$get_current_simulation_data(id)
                 
-                # Create plot using raw simset
-                plot <- simplot(
-                    sim_state$simset,
-                    outcomes = new_settings$outcomes,
-                    facet.by = new_settings$facet.by,
-                    summary.type = new_settings$summary.type
+                # Convert simplot output to plotly
+                tryCatch(
+                  {
+                    # Using simplot + ggplotly approach for more reliable plotting
+                    simset <- sim_state$simset
+                    
+                    # Get the default plotly style manager
+                    default_plotly_style <- get.default.style.manager('plotly')
+                    
+                    # Create ggplot object using simplot
+                    ggplot_obj <- simplot(
+                      simset,
+                      outcomes = new_settings$outcomes,
+                      facet.by = new_settings$facet.by,
+                      summary.type = new_settings$summary.type,
+                      style.manager = default_plotly_style  # Use default plotly style manager
+                    )
+                    
+                    # Convert ggplot to plotly
+                    plot <- ggplotly(ggplot_obj)
+                  },
+                  error = function(e) {
+                    print(paste("Error updating plot:", conditionMessage(e)))
+                    stop(e) # Re-throw to outer handler
+                  }
                 )
                 # When plot is updated successfully, clear any errors
                 sim_boundary$clear()
