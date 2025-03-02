@@ -1768,6 +1768,41 @@
         "Archs": "isoband.so.dSYM"
       }
     },
+    "jheem2": {
+      "Source": "github",
+      "Repository": null,
+      "description": {
+        "Package": "jheem2",
+        "Type": "Package",
+        "Title": "Code to set up and run simulations using the JHEEM Engine",
+        "Version": "1.5.8.9000",
+        "Date": "2022-10-06",
+        "Author": "Anthony Fojo",
+        "Maintainer": "Anthony Fojo <anthony.fojo@jhmi.edu>",
+        "Description": "One paragraph description of what the package does as one or more full sentences.",
+        "License": "GPL (>= 2)",
+        "Imports": "Rcpp (>= 1.0.10), reshape2, deSolve, ggplot2, locations, ggsci",
+        "LinkingTo": "Rcpp",
+        "RoxygenNote": "7.2.3",
+        "Depends": "R (>= 3.5.0)",
+        "Suggests": "testthat (>= 3.0.0)",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "RemoteType": "github",
+        "RemoteHost": "api.github.com",
+        "RemoteRepo": "jheem2",
+        "RemoteUsername": "tfojo1",
+        "RemoteRef": "test_deploy",
+        "RemoteSha": "dc856748bc2d477998cff67e25a105a516e9e097",
+        "GithubRepo": "jheem2",
+        "GithubUsername": "tfojo1",
+        "GithubRef": "test_deploy",
+        "GithubSHA1": "dc856748bc2d477998cff67e25a105a516e9e097",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-02-27 15:13:33 UTC; nicholas",
+        "Built": "R 4.4.2; aarch64-apple-darwin20; 2025-02-27 15:13:35 UTC; unix"
+      }
+    },
     "jpeg": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
