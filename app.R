@@ -63,8 +63,8 @@ source("src/ui/components/pages/contact/form.R")
 source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
-library(jheem2)
-source("../jheem_analyses/applications/EHE/ehe_specification.R")
+#library(jheem2)
+#source("../jheem_analyses/applications/EHE/ehe_specification.R")
 
 
 
