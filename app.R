@@ -67,7 +67,8 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 # Load EHE specification
-source("../jheem_analyses/applications/EHE/ehe_specification.R")
+# Use local copy of the EHE specification
+source("vendor/jheem_analyses/applications/EHE/ehe_specification.R")
 
 
 

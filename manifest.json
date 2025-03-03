@@ -2805,7 +2805,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "c5f76ce025cc3391b24e9afec350ad9b"
+      "checksum": "3a892dfb6b81e8f7552bad11a4a91756"
     },
     "init-jheem2.R": {
       "checksum": "97e1886fb580bf6880331c308d6c1af4"
@@ -3069,7 +3069,10 @@
       "checksum": "f6833f0053ba6d6f0a209bb890f07423"
     },
     "update-jheem2.sh": {
-      "checksum": "20163377adbc2c2f8231ffe10a7987ac"
+      "checksum": "f27878433455d8a5924984878c549040"
+    },
+    "vendor/jheem_analyses/applications/EHE/ehe_specification.R": {
+      "checksum": "8d225f6978d4385df82540aaf41f9e68"
     },
     "vendor/jheem2/R/beta_code/calculate_outcome_differences.R": {
       "checksum": "adb519a5141666892043cf576642afde"
