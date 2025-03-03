@@ -33,6 +33,7 @@ create_deployment_manifest <- function() {
     "app.R", 
     "init-jheem2.R",
     "update-jheem2.sh",
+    "app_diagnostics.R",
     
     # Configuration files
     if (file.exists("config.yml")) "config.yml",

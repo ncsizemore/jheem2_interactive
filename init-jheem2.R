@@ -1,4 +1,16 @@
 # Initialize jheem2 by sourcing all components
+
+# If debug_log function exists, use it; otherwise create a simple version
+if (!exists("debug_log")) {
+  debug_log <- function(msg) {
+    message(msg)
+    # Also write to a file
+    cat(paste0(Sys.time(), ": ", msg, "\n"), file = "jheem2_init_log.txt", append = TRUE)
+  }
+  # Start fresh log
+  if (file.exists("jheem2_init_log.txt")) file.remove("jheem2_init_log.txt")
+  debug_log("Starting jheem2 initialization")
+}
 # This is a modified version of source_jheem2_package.R adjusted for local paths
 
 if (!exists("JHEEM2.FUNCTION.NAMES"))
@@ -10,11 +22,48 @@ PRE.SOURCE.JHEEM2.FUNCTION.NAMES = names(get(".GlobalEnv"))[sapply(get(".GlobalE
 R_BASE = "vendor/jheem2/R"
 SRC_BASE = "vendor/jheem2/src"
 
-# Source all files with adjusted paths
-source(file.path(R_BASE, "FILE_MANAGER_file_manager.R"))
+# Define a safe source function that logs errors
+safe_source <- function(file_path) {
+  debug_log(paste("Sourcing file:", file_path))
+  if (!file.exists(file_path)) {
+    debug_log(paste("ERROR: File does not exist:", file_path))
+    return(FALSE)
+  }
+  
+  tryCatch({
+    source(file_path)
+    debug_log(paste("Successfully sourced:", file_path))
+    return(TRUE)
+  }, error = function(e) {
+    debug_log(paste("ERROR sourcing file:", file_path, "-", e$message))
+    return(FALSE)
+  })
+}
 
-source(file.path(R_BASE, "ONTOLOGY_ontology_mappings.R"))
-Rcpp::sourceCpp(file.path(SRC_BASE, "ontology_mappings.cpp"))
+# Define a safe Rcpp source function
+safe_rcpp_source <- function(file_path) {
+  debug_log(paste("Sourcing Rcpp file:", file_path))
+  if (!file.exists(file_path)) {
+    debug_log(paste("ERROR: Rcpp file does not exist:", file_path))
+    return(FALSE)
+  }
+  
+  tryCatch({
+    Rcpp::sourceCpp(file_path)
+    debug_log(paste("Successfully sourced Rcpp file:", file_path))
+    return(TRUE)
+  }, error = function(e) {
+    debug_log(paste("ERROR sourcing Rcpp file:", file_path, "-", e$message))
+    return(FALSE)
+  })
+}
+
+# Source all files with adjusted paths
+debug_log("Starting to source jheem2 files")
+
+safe_source(file.path(R_BASE, "FILE_MANAGER_file_manager.R"))
+safe_source(file.path(R_BASE, "ONTOLOGY_ontology_mappings.R"))
+safe_rcpp_source(file.path(SRC_BASE, "ontology_mappings.cpp"))
 
 source(file.path(R_BASE, "HELPERS_misc_helpers.R"))
 source(file.path(R_BASE, "HELPERS_dim_names_helpers.R"))

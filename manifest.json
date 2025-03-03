@@ -2804,11 +2804,14 @@
     }
   },
   "files": {
+    "app_diagnostics.R": {
+      "checksum": "ae23278b588586b5fd0d24b125b3534c"
+    },
     "app.R": {
-      "checksum": "3a892dfb6b81e8f7552bad11a4a91756"
+      "checksum": "ec07caea6807b58612038d30d5e6dbb5"
     },
     "init-jheem2.R": {
-      "checksum": "97e1886fb580bf6880331c308d6c1af4"
+      "checksum": "704dc5c6096f09e6a109db0a583f5495"
     },
     "src/adapters/intervention_adapter.R": {
       "checksum": "0e152e5b8f9550ff780bfe57df05f71f"

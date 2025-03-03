@@ -1,5 +1,8 @@
 # app.R
 
+# Start diagnostic logging
+source("app_diagnostics.R")
+
 library(shiny)
 library(shinyjs)
 library(shinycssloaders)
