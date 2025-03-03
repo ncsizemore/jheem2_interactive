@@ -1,16 +1,13 @@
 # app.R
 
-# Start diagnostic logging
-source("app_diagnostics.R")
 
 library(shiny)
 library(shinyjs)
 library(shinycssloaders)
 library(cachem)
 library(magrittr)
+library(ggsci)
 
-# Source jheem2 directly instead of using the library
-source("init-jheem2.R")
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -68,6 +65,18 @@ source("src/ui/components/pages/contact/content.R")
 source("src/ui/components/pages/contact/form.R")
 source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
+
+if (!requireNamespace("jheem2", quietly = TRUE)) {
+  # If using GitHub release
+  #install.packages(
+  #  "https://github.com/username/repo/releases/download/v1.0/jheem2_1.5.8.9000_R_x86_64-pc-linux-gnu.tar.gz", 
+  #  repos = NULL, 
+  #  type = "binary"
+ # )
+  
+  # Or if including in your app
+  install.packages("binary_packages/jheem2_1.5.8.9000_R_x86_64-pc-linux-gnu.tar.gz", repos = NULL, type = "binary")
+}
 
 # Load EHE specification
 # Use local copy of the EHE specification
