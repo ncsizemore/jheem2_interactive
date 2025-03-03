@@ -2,6 +2,14 @@
 
 library(plotly)
 
+# Import local plotly adapter functions
+source("src/ui/plotly_adapters/plotly_plot_adapter.R")
+
+# Flag to control which plotting approach to use
+# Set to TRUE to use direct plotly generation
+# Set to FALSE to use simplot + ggplotly conversion
+USE_DIRECT_PLOTLY <- TRUE
+
 
 #' Create the plot panel UI component
 #' @param id Panel identifier
@@ -180,26 +188,36 @@ plot_panel_server <- function(id, settings) {
             }
           }
           
-          # Convert simplot output to plotly
+          # Generate plot based on selected approach
           tryCatch(
-            {
-              # Using simplot + ggplotly approach for more reliable plotting
-              simset <- sim_state$simset
-              
-              # Get the default plotly style manager
-              default_plotly_style <- get.default.style.manager('plotly')
-              
-              # Create ggplot object using simplot
-              ggplot_obj <- simplot(
-                simset,
-                outcomes = current_settings$outcomes,
-              facet.by = current_settings$facet.by,
+          {
+          simset <- sim_state$simset
+          
+          # Get the default plotly style manager
+          default_plotly_style <- get.default.style.manager('plotly')
+          
+          if (USE_DIRECT_PLOTLY) {
+            # Use direct plotly generation with fixed functions
+            plot <- fixed_plot_simulations(
+            simset,
+            outcomes = current_settings$outcomes,
+            facet.by = current_settings$facet.by,
               summary.type = current_settings$summary.type,
-              style.manager = default_plotly_style  # Use default plotly style manager
-              )
-              
-              # Convert ggplot to plotly
-              plot <- ggplotly(ggplot_obj)
+              style.manager = default_plotly_style
+            )
+          } else {
+            # Use simplot + ggplotly approach
+            ggplot_obj <- simplot(
+                simset,
+                  outcomes = current_settings$outcomes,
+                  facet.by = current_settings$facet.by,
+                  summary.type = current_settings$summary.type,
+                  style.manager = default_plotly_style
+                )
+                
+                # Convert ggplot to plotly
+                plot <- ggplotly(ggplot_obj)
+              }
             },
             error = function(e) {
               print(paste("Error creating plot:", conditionMessage(e)))
@@ -309,26 +327,36 @@ plot_panel_server <- function(id, settings) {
                 # Get current simulation data
                 sim_state <- store$get_current_simulation_data(id)
                 
-                # Convert simplot output to plotly
+                # Generate plot based on selected approach
                 tryCatch(
                   {
-                    # Using simplot + ggplotly approach for more reliable plotting
                     simset <- sim_state$simset
                     
                     # Get the default plotly style manager
                     default_plotly_style <- get.default.style.manager('plotly')
                     
-                    # Create ggplot object using simplot
-                    ggplot_obj <- simplot(
-                      simset,
-                      outcomes = new_settings$outcomes,
-                      facet.by = new_settings$facet.by,
-                      summary.type = new_settings$summary.type,
-                      style.manager = default_plotly_style  # Use default plotly style manager
-                    )
-                    
-                    # Convert ggplot to plotly
-                    plot <- ggplotly(ggplot_obj)
+                    if (USE_DIRECT_PLOTLY) {
+                      # Use direct plotly generation with fixed functions
+                      plot <- fixed_plot_simulations(
+                        simset,
+                        outcomes = new_settings$outcomes,
+                        facet.by = new_settings$facet.by,
+                        summary.type = new_settings$summary.type,
+                        style.manager = default_plotly_style
+                      )
+                    } else {
+                      # Use simplot + ggplotly approach
+                      ggplot_obj <- simplot(
+                        simset,
+                        outcomes = new_settings$outcomes,
+                        facet.by = new_settings$facet.by,
+                        summary.type = new_settings$summary.type,
+                        style.manager = default_plotly_style
+                      )
+                      
+                      # Convert ggplot to plotly
+                      plot <- ggplotly(ggplot_obj)
+                    }
                   },
                   error = function(e) {
                     print(paste("Error updating plot:", conditionMessage(e)))
