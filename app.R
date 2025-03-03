@@ -6,6 +6,9 @@ library(shinycssloaders)
 library(cachem)
 library(magrittr)
 
+# Source jheem2 directly instead of using the library
+source("init-jheem2.R")
+
 # Source configuration system
 source("src/ui/config/load_config.R")
 
@@ -63,7 +66,7 @@ source("src/ui/components/pages/contact/form.R")
 source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
-library(jheem2)
+# Load EHE specification
 source("../jheem_analyses/applications/EHE/ehe_specification.R")
 
 
@@ -282,13 +285,4 @@ server <- function(input, output, session) {
 }
 
 # Run the application
-shinyApp(ui = ui, server = server, onStart = function() {
-  pkg_env <- asNamespace("jheem2")
-  internal_fns <- ls(pkg_env, all.names = TRUE)
-
-  for (fn in internal_fns) {
-    if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
-      assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
-    }
-  }
-})
+shinyApp(ui = ui, server = server)
