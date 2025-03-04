@@ -64,7 +64,28 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-source("../jheem_analyses/applications/EHE/ehe_specification.R")
+
+# Function to source the EHE specification file from appropriate location
+source_ehe_spec <- function() {
+  # First try development path (outside the app directory)
+  external_path <- "../jheem_analyses/applications/EHE/ehe_specification.R"
+  
+  # Then try deployment path (inside the app directory)
+  internal_path <- "external/jheem_analyses/applications/EHE/ehe_specification.R"
+  
+  if (file.exists(external_path)) {
+    message("Sourcing EHE specification from development path")
+    source(external_path)
+  } else if (file.exists(internal_path)) {
+    message("Sourcing EHE specification from deployment path")
+    source(internal_path)
+  } else {
+    stop("EHE specification file not found in either location")
+  }
+}
+
+# Source the EHE specification file
+source_ehe_spec()
 
 
 
