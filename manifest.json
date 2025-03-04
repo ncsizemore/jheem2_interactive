@@ -4999,7 +4999,7 @@
       "checksum": "662d93b1d1512975dc809a25acaefa6a"
     },
     "deploy.R": {
-      "checksum": "4de40dd6885f625efc4b77150bf3ad1c"
+      "checksum": "939a248acd43dc40491d982be11f9fa5"
     },
     "dev/apps/state_store_test.R": {
       "checksum": "50c825fcf45fa9c32563a6c904f54ab5"
@@ -5019,20 +5019,41 @@
     "external/jheem_analyses/applications/EHE/ehe_specification.R": {
       "checksum": "c949d18cf97d25b9399e79f94a168144"
     },
+    "external/jheem_analyses/cached/brfss.subset.9.30.24.RData": {
+      "checksum": "0c0b6068e0287cf0e2f81321391186eb"
+    },
+    "external/jheem_analyses/cached/census.manager.rdata": {
+      "checksum": "45198b3d5676c8f5aac36631fe07527a"
+    },
+    "external/jheem_analyses/cached/google_mobility_data.Rdata": {
+      "checksum": "448b05e939eb6deb57bdbef7f9623db0"
+    },
+    "external/jheem_analyses/cached/surveillance.manager.rdata": {
+      "checksum": "cbf4da74ee103f742079660bdcf5bf9f"
+    },
+    "external/jheem_analyses/cached/syphilis.manager.rdata": {
+      "checksum": "3eefafa88b8952de6da4fb1b9ecaccf6"
+    },
     "external/jheem_analyses/commoncode/age_mappings.R": {
       "checksum": "985ef28a814bd45dd03f85115b720aca"
     },
     "external/jheem_analyses/commoncode/cache_manager.R": {
-      "checksum": "ea97712fc578b8cfc4ba9ab0dcd7ebcd"
+      "checksum": "e0f36117d05bcd6d801dfe635492ec39"
     },
     "external/jheem_analyses/commoncode/cache_object_for_version_functions.R": {
       "checksum": "b74f95b577b6378be03983868124d131"
+    },
+    "external/jheem_analyses/commoncode/data_manager_cache_metadata.Rdata": {
+      "checksum": "23d3f23c5d83cd9b6997817ff581c5f2"
     },
     "external/jheem_analyses/commoncode/file_paths.R": {
       "checksum": "4ab2ead3e1f55798486d60c78ff90ee1"
     },
     "external/jheem_analyses/commoncode/logitnorm_helpers.R": {
       "checksum": "8d988642db03dd0069b904825bd1a911"
+    },
+    "external/jheem_analyses/commoncode/package_version_cache.Rdata": {
+      "checksum": "1287c9ac731092434c69f4a4f515c401"
     },
     "external/jheem_analyses/commoncode/target_populations.R": {
       "checksum": "fb5d1d030860e443b743d20a83505350"

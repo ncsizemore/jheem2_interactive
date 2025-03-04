@@ -3,18 +3,13 @@ if (nchar(system.file(package = "httr2")) == 0) {
     install.packages("httr2")
 }
 
-JHEEM.CACHE.DIR <- NULL
-if (dir.exists("../../cached")) {
-    JHEEM.CACHE.DIR <- "../../cached"
-}
-if (dir.exists("../jheem_analyses/cached")) {
-    JHEEM.CACHE.DIR <- "../jheem_analyses/cached"
-}
-DATA.MANAGER.CACHE.METADATA.FILE <- "../jheem_analyses/commoncode/data_manager_cache_metadata.Rdata"
-PACKAGE.VERSION.CACHE.FILE <- "../jheem_analyses/commoncode/package_version_cache.Rdata"
+# Set cache directory for deployment
+JHEEM.CACHE.DIR <- "external/jheem_analyses/cached"
+DATA.MANAGER.CACHE.METADATA.FILE <- "external/jheem_analyses/commoncode/data_manager_cache_metadata.Rdata"
+PACKAGE.VERSION.CACHE.FILE <- "external/jheem_analyses/commoncode/package_version_cache.Rdata"
 
-if (is.null(JHEEM.CACHE.DIR)) {
-    stop("No 'cached' directory exists - you need to get this from Todd's One-Drive")
+if (!dir.exists(JHEEM.CACHE.DIR)) {
+    stop("Cannot find the cached directory in the deployment folder. Please check that the deploy.R script ran correctly.")
 }
 
 ## PUBLIC----

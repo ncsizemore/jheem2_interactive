@@ -12,7 +12,36 @@ ensure_dir <- function(path) {
   }
 }
 
-# Function to copy a file, creating parent directories if needed, and adjust file paths
+# Function to copy a directory and all its contents
+copy_directory_recursive <- function(source_dir, target_dir) {
+  if (!dir.exists(source_dir)) {
+    cat(sprintf("WARNING: Source directory does not exist: %s\n", source_dir))
+    return()
+  }
+  
+  # Create target directory if it doesn't exist
+  ensure_dir(target_dir)
+  
+  # Get all files in source directory
+  files <- list.files(source_dir, full.names = TRUE)
+  
+  # Copy each file or directory
+  for (file_path in files) {
+    file_name <- basename(file_path)
+    target_path <- file.path(target_dir, file_name)
+    
+    if (dir.exists(file_path)) {
+      # If it's a directory, recursively copy it
+      copy_directory_recursive(file_path, target_path)
+    } else {
+      # If it's a file, copy it
+      file.copy(file_path, target_path, overwrite = TRUE)
+      cat(sprintf("Copied: %s\n", target_path))
+    }
+  }
+}
+
+# Function to copy a file and modify source paths
 copy_file <- function(source_path, target_path) {
   # Create parent directory if needed
   target_dir <- dirname(target_path)
@@ -38,12 +67,52 @@ copy_file <- function(source_path, target_path) {
   }
 }
 
+# Function to create a custom cache_manager.R for deployment
+create_deployment_cache_manager <- function(source_path, target_path) {
+  # Read the original file
+  original_content <- readLines(source_path, warn = FALSE)
+  
+  # Find where to cut the beginning of the file
+  header_end <- which(grepl("^## PUBLIC", original_content))[1] - 1
+  
+  if (is.na(header_end) || header_end < 1) {
+    header_end <- 15  # Default if we can't find the marker
+  }
+  
+  # Create new header with hard-coded paths
+  new_header <- c(
+    "# A lot of people have done the \"first time setup\" already, so they need to install this new dependency",
+    "if (nchar(system.file(package = \"httr2\")) == 0) {",
+    "    install.packages(\"httr2\")",
+    "}",
+    "",
+    "# Set cache directory for deployment",
+    "JHEEM.CACHE.DIR <- \"external/jheem_analyses/cached\"",
+    "DATA.MANAGER.CACHE.METADATA.FILE <- \"external/jheem_analyses/commoncode/data_manager_cache_metadata.Rdata\"",
+    "PACKAGE.VERSION.CACHE.FILE <- \"external/jheem_analyses/commoncode/package_version_cache.Rdata\"",
+    "",
+    "if (!dir.exists(JHEEM.CACHE.DIR)) {",
+    "    stop(\"Cannot find the cached directory in the deployment folder. Please check that the deploy.R script ran correctly.\")",
+    "}"
+  )
+  
+  # Combine the new header with the rest of the file
+  file_content <- c(
+    new_header,
+    original_content[header_end:length(original_content)]
+  )
+  
+  # Write modified content to target file
+  writeLines(file_content, target_path)
+  cat(sprintf("Created custom deployment version: %s\n", target_path))
+}
+
 # List of specific files we need to copy
 copy_deployment_files <- function() {
   source_base <- "../jheem_analyses"
   target_base <- "external/jheem_analyses"
   
-  # Explicitly list required files
+  # Copy and adjust standard files
   files_to_copy <- c(
     # The main specification file
     "applications/EHE/ehe_specification.R",
@@ -56,13 +125,16 @@ copy_deployment_files <- function() {
     "applications/EHE/ehe_ontology_mappings.R",
     "applications/EHE/ehe_sampled_parameters.R",
     
-    # Add more files as needed if deployment issues arise
+    # Common code files
     "commoncode/target_populations.R",
     "commoncode/file_paths.R",
-    "commoncode/cache_manager.R",
     "commoncode/age_mappings.R",
     "commoncode/cache_object_for_version_functions.R",
     "commoncode/logitnorm_helpers.R",
+    
+    # Metadata files
+    "commoncode/data_manager_cache_metadata.Rdata",
+    "commoncode/package_version_cache.Rdata",
     
     # Input managers
     "input_managers/input_helpers.R",
@@ -81,6 +153,18 @@ copy_deployment_files <- function() {
     target_path <- file.path(target_base, file)
     copy_file(source_path, target_path)
   }
+  
+  # Create custom cache_manager.R
+  cache_manager_source <- file.path(source_base, "commoncode/cache_manager.R")
+  cache_manager_target <- file.path(target_base, "commoncode/cache_manager.R")
+  create_deployment_cache_manager(cache_manager_source, cache_manager_target)
+  
+  # Copy the entire cached directory
+  source_cache_dir <- file.path(source_base, "cached")
+  target_cache_dir <- file.path(target_base, "cached")
+  
+  cat(sprintf("Copying entire cached directory from %s to %s...\n", source_cache_dir, target_cache_dir))
+  copy_directory_recursive(source_cache_dir, target_cache_dir)
 }
 
 # Run the function to copy deployment files
