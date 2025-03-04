@@ -75,6 +75,46 @@
     font-weight: normal;
 }
 
+/* Make sure errors display at all times */
+.plot-error,
+.component-error,
+.validation-error,
+#prerun-error_display,
+#custom-error_display,
+#prerun-table_error_message,
+#custom-table_error_message,
+#prerun-plot_error_message,
+#custom-plot_error_message {
+    display: block !important;
+}
+
+/* Simulation error styling to match screenshot */
+.plot-error:has([id$="plot_error_message"]:not(:empty)),
+.plot-error:has([id$="table_error_message"]:not(:empty)),
+.table-error:has([id$="table_error_message"]:not(:empty)) {
+    background-color: #f8d7da; /* Light red background */
+    border-left: 5px solid #721c24; /* Darker red left border */
+    color: #721c24; /* Darker red text */
+    padding: 12px 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 4px 4px 0;
+    display: block !important;
+    font-weight: normal;
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+/* Fallback for browsers without :has() support and to ensure visibility */
+.main-panel-table .plot-error:not(:empty),
+.main-panel-table .table-error:not(:empty),
+.main-panel-table .error-display:not(:empty),
+.main-panel-plot .plot-error:not(:empty),
+.main-panel-plot .error-display:not(:empty) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* Animation */
 .error-boundary>div {
     animation: errorFadeIn 0.3s ease-in-out;
@@ -85,7 +125,6 @@
         opacity: 0;
         transform: translateY(-10px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);

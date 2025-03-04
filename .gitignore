@@ -5,6 +5,7 @@
 *.RDataTmp
 *.Ruserdata
 *.Rproj
+.Renviron
 
 # Project-specific
 shiny/sim_cache

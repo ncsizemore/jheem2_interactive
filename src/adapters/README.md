@@ -163,12 +163,90 @@ Each simulation has:
   - Transformed data (for table display)
 - Status tracking (ready/running/complete/error)
 
-#### Data Flow
+#### Simulation Matching
+- Before creating a new simulation, checks for existing simulations with matching settings
+- Returns existing simulation ID if match found
+- Creates new simulation only when necessary
+- Optimizes performance by avoiding redundant computation
+
+#### Error Handling
+
+The simulation adapter includes robust error handling mechanisms:
+
+#### Error Boundaries
+- Registers error boundaries for each page
+- Propagates errors from simulations to the UI
+- Maintains consistent error state across views
+
+```r
+# Register an error boundary for a page
+register_error_boundary = function(page_id, session, output) {
+    if (!is.null(session) && !is.null(output)) {
+        # Create a simulation boundary for the adapter
+        private$error_boundaries[[page_id]] <- create_simulation_boundary(
+            session, output, page_id, "simulation", state_manager = private$store
+        )
+        
+        print(sprintf("[SIMULATION_ADAPTER] Registered error boundary for page %s", page_id))
+    }
+    invisible(self)
+}
+```
+
+#### Error Processing
+- Converts errors to structured format
+- Preserves error message and context
+- Updates simulation status to "error"
+- Sets error in registered boundary
+
+```r
+# Handle simulation errors
+tryCatch({
+    # Simulation code
+}, error = function(e) {
+    # Convert error message to string
+    error_message <- as.character(conditionMessage(e))
+    
+    # Update simulation state
+    private$store$update_simulation(
+        sim_id,
+        list(
+            status = "error",
+            error_message = error_message
+        )
+    )
+    
+    # Set error in boundary
+    if (!is.null(private$error_boundaries[[mode]])) {
+        private$error_boundaries[[mode]]$set_error(
+            message = error_message,
+            type = ERROR_TYPES$SIMULATION,
+            severity = SEVERITY_LEVELS$ERROR
+        )
+    }
+    
+    # Return simulation ID for proper state management
+    sim_id
+})
+```
+
+#### Test Error Cases
+The adapter includes test cases for error handling:
+
+- `test_error`: Forces a simulation error
+- `test_existing_error`: Creates a simulation with a pre-existing error
+- `test_transform_error`: Creates a simulation that will cause transform errors
+
+These test cases can be triggered by setting `settings$location` to the corresponding value.
+
+### Data Flow
 1. UI requests simulation via adapter
-2. Adapter creates/updates state in store
-3. Raw simset used directly for plots
-4. Transformed data used for tables
-5. State tracked to avoid unnecessary re-runs
+2. Adapter checks for matching simulations
+3. If match found, returns existing simulation ID
+4. Otherwise, creates new simulation and updates state in store
+5. Raw simset used directly for plots
+6. Transformed data used for tables
+7. State tracked to avoid unnecessary re-runs
 
 #### Integration with Core Layer
 - Uses SimulationRunner from core layer

@@ -8,3 +8,6 @@ create_contact_page <- function(config) {
     # Render content
     create_contact_content(contact_config)
 }
+
+#' Source the contact handler
+source("src/ui/handlers/contact_handler.R")

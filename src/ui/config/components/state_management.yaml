@@ -1,0 +1,15 @@
+# State management configuration
+
+# Simulation cleanup settings
+cleanup:
+  # Default maximum age (in seconds) before a simulation is considered old
+  default_max_age: 1800  # 30 minutes
+  
+  # Periodic cleanup interval (in milliseconds)
+  cleanup_interval: 600000  # 10 minutes
+  
+  # Threshold for high simulation count
+  high_count_threshold: 20
+  
+  # Maximum age for aggressive cleanup when count is high (in seconds)
+  aggressive_max_age: 900  # 15 minutes

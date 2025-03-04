@@ -31,6 +31,7 @@ source("src/ui/components/common/display/plot_controls.R")
 
 # Source error handling
 source("src/ui/components/common/errors/boundaries.R")
+source("src/ui/components/common/errors/handlers.R")
 source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")
@@ -47,7 +48,6 @@ source("src/ui/components/pages/custom/index.R")
 # Source other required files
 source("src/ui/components/common/display/display_size.R")
 source("src/ui/components/common/display/handlers.R")
-source("server/contact_handlers.R")
 
 # Source page components
 source("src/ui/components/pages/about/about.R")
@@ -256,8 +256,29 @@ server <- function(input, output, session) {
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
 
-  # Add contact handlers
-  add.contact.handlers(session, input, output)
+  # Initialize contact handlers using new framework-agnostic handler
+  initialize_contact_handler(input, output, session)
+  
+  # Periodic cleanup of old simulations
+  observe({
+    # Get cleanup interval from config with fallback
+    cleanup_interval <- 600000  # Default: 10 minutes
+    
+    tryCatch({
+      cleanup_config <- get_component_config("state_management")$cleanup
+      if (!is.null(cleanup_config$cleanup_interval)) {
+        cleanup_interval <- cleanup_config$cleanup_interval
+      }
+    }, error = function(e) {
+      print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
+    })
+    
+    invalidateLater(cleanup_interval)
+    print("[APP] Running scheduled simulation cleanup")
+    
+    # Run cleanup using default max age from config
+    get_store()$cleanup_old_simulations(force = FALSE)
+  })
 }
 
 # Run the application

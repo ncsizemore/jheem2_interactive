@@ -14,6 +14,7 @@ StateStore <- R6Class("StateStore",
         initialize = function(page_ids = c("prerun", "custom")) {
             private$setup_panel_states(page_ids)
             private$setup_simulation_storage()
+            private$setup_page_error_states(page_ids)
         },
 
         # Panel State Methods ------------------------------------------------
@@ -193,6 +194,31 @@ StateStore <- R6Class("StateStore",
 
         # Current Simulation Methods ---------------------------------------
 
+        #' @description Find a simulation with matching settings
+        #' @param settings List: simulation settings to match
+        #' @param mode Character: simulation mode ("prerun" or "custom")
+        #' @return Character: ID of matching simulation or NULL if no match found
+        find_matching_simulation = function(settings, mode) {
+            print("[STATE_STORE] Looking for matching simulation...")
+            # Look through existing simulations for matching settings
+            for (id in names(private$simulations)) {
+                sim_state <- private$simulations[[id]]()
+                
+                # Only match simulations of the same mode
+                if (sim_state$mode == mode) {
+                    # Check if settings match
+                    if (private$are_settings_equal(sim_state$settings, settings)) {
+                        print(paste0("[STATE_STORE] Found matching simulation with ID: ", id))
+                        return(id)
+                    }
+                }
+            }
+            
+            # No match found
+            print("[STATE_STORE] No matching simulation found")
+            NULL
+        },
+
         #' @description Get the current simulation ID for a panel
         #' @param page_id Character: panel identifier
         #' @return Character: current simulation ID or NULL
@@ -217,6 +243,202 @@ StateStore <- R6Class("StateStore",
             self$panel_states[[page_id]](current_state)
             
             invisible(self)
+        },
+        
+        #' @description Clean up old simulations to prevent memory issues
+        #' @param max_age Numeric: maximum age in seconds before a simulation is considered old
+        #' @param force Logical: whether to force removal of referenced simulations
+        #' @return Invisible self (for chaining)
+        cleanup_old_simulations = function(max_age = NULL, force = FALSE) {
+            # Get cleanup config
+            tryCatch({
+                config <- get_component_config("state_management")
+                
+                # Use config values if not explicitly provided
+                if (is.null(max_age)) {
+                    max_age <- config$cleanup$default_max_age
+                }
+                
+                high_count_threshold <- 20 # Default fallback
+                aggressive_max_age <- 900  # Default fallback: 15 minutes
+                
+                # Safely access config values with defaults
+                if (!is.null(config$cleanup$high_count_threshold)) {
+                    high_count_threshold <- config$cleanup$high_count_threshold
+                }
+                
+                if (!is.null(config$cleanup$aggressive_max_age)) {
+                    aggressive_max_age <- config$cleanup$aggressive_max_age
+                }
+            }, error = function(e) {
+                # If config can't be loaded, use reasonable defaults
+                print(sprintf("[STATE_STORE] Error loading config: %s. Using default values.", e$message))
+                if (is.null(max_age)) {
+                    max_age <<- 1800  # 30 minutes default
+                }
+                high_count_threshold <<- 20
+                aggressive_max_age <<- 900
+            })
+            
+            # Ensure max_age has a value (in case both config and parameter fail)
+            if (is.null(max_age)) {
+                max_age <- 1800  # 30 minutes absolute fallback
+            }
+            
+            current_time <- Sys.time()
+            
+            # Get list of simulation IDs to check
+            sim_ids <- names(private$simulations)
+            print(sprintf("[STATE_STORE] Running cleanup. Found %d simulations to check", length(sim_ids)))
+            
+            # If we have too many simulations, adjust the age threshold
+            if (length(sim_ids) > high_count_threshold) {
+                print(sprintf("[STATE_STORE] High simulation count (%d). Using shorter retention period.", 
+                               length(sim_ids)))
+                max_age <- min(max_age, aggressive_max_age)
+            }
+            
+            removed_count <- 0
+            for (id in sim_ids) {
+                sim_state <- private$simulations[[id]]()
+                age <- difftime(current_time, sim_state$timestamp, units = "secs")
+                
+                # Check if simulation is old enough to remove
+                age_numeric <- as.numeric(age)
+                if (!is.na(age_numeric) && (age_numeric > max_age || force)) {
+                    # Check if this simulation is currently being referenced
+                    is_referenced <- FALSE
+                    for (page_id in names(self$panel_states)) {
+                        current_sim_id <- self$get_current_simulation_id(page_id)
+                        if (!is.null(current_sim_id) && current_sim_id == id) {
+                            is_referenced <- TRUE
+                            break
+                        }
+                    }
+                    
+                    # Only remove if not referenced or force is TRUE
+                    if (!is_referenced || force) {
+                        private$simulations[[id]] <- NULL
+                        removed_count <- removed_count + 1
+                    }
+                }
+            }
+            
+            print(sprintf("[STATE_STORE] Cleanup complete. Removed %d simulations", removed_count))
+            invisible(self)
+        },
+        
+        #' @description Get statistics about simulations in the store
+        #' @return List with statistics
+        get_simulation_stats = function() {
+            sim_ids <- names(private$simulations)
+            
+            # Count simulations by mode
+            mode_counts <- list(
+                prerun = 0,
+                custom = 0
+            )
+            
+            # Track other stats
+            oldest_timestamp <- Sys.time()
+            newest_timestamp <- as.POSIXct("1970-01-01")
+            
+            for (id in sim_ids) {
+                sim_state <- private$simulations[[id]]()
+                
+                # Count by mode
+                mode_counts[[sim_state$mode]] <- mode_counts[[sim_state$mode]] + 1
+                
+                # Track oldest/newest
+                if (sim_state$timestamp < oldest_timestamp) {
+                    oldest_timestamp <- sim_state$timestamp
+                }
+                if (sim_state$timestamp > newest_timestamp) {
+                    newest_timestamp <- sim_state$timestamp
+                }
+            }
+            
+            # Get currently referenced simulations
+            referenced_ids <- character()
+            for (page_id in names(self$panel_states)) {
+                sim_id <- self$get_current_simulation_id(page_id)
+                if (!is.null(sim_id)) {
+                    referenced_ids <- c(referenced_ids, sim_id)
+                }
+            }
+            
+            list(
+                total_count = length(sim_ids),
+                by_mode = mode_counts,
+                oldest_timestamp = oldest_timestamp,
+                newest_timestamp = newest_timestamp,
+                referenced_count = length(unique(referenced_ids)),
+                referenced_ids = unique(referenced_ids)
+            )
+        },
+        
+        # Page Error State Methods ---------------------------------------
+        
+        #' @description Update error state for a page
+        #' @param page_id Character: page identifier
+        #' @param has_error Logical: whether an error exists
+        #' @param message Character: error message
+        #' @param type Character: error type
+        #' @param severity Character: error severity
+        #' @return Invisible self (for chaining)
+        update_page_error_state = function(page_id, has_error, message = NULL, type = NULL, severity = NULL) {
+            if (is.null(private$page_error_states[[page_id]])) {
+                # Create reactive values object if it doesn't exist
+                private$page_error_states[[page_id]] <- reactiveValues(
+                    has_error = has_error,
+                    message = message,
+                    type = type,
+                    severity = severity,
+                    timestamp = Sys.time()
+                )
+            } else {
+                # Update existing reactive values
+                private$page_error_states[[page_id]]$has_error <- has_error
+                private$page_error_states[[page_id]]$message <- message
+                private$page_error_states[[page_id]]$type <- type
+                private$page_error_states[[page_id]]$severity <- severity
+                private$page_error_states[[page_id]]$timestamp <- Sys.time()
+            }
+            
+            invisible(self)
+        },
+        
+        #' @description Get error state for a page
+        #' @param page_id Character: page identifier
+        #' @return ReactiveValues object containing error state
+        get_page_error_state = function(page_id) {
+            if (is.null(private$page_error_states[[page_id]])) {
+                # Create empty error state if it doesn't exist
+                private$page_error_states[[page_id]] <- reactiveValues(
+                    has_error = FALSE,
+                    message = NULL,
+                    type = NULL,
+                    severity = NULL,
+                    timestamp = NULL
+                )
+            }
+            
+            private$page_error_states[[page_id]]
+        },
+        
+        #' @description Clear error state for a page
+        #' @param page_id Character: page identifier
+        #' @return Invisible self (for chaining)
+        clear_page_error_state = function(page_id) {
+            if (!is.null(private$page_error_states[[page_id]])) {
+                private$page_error_states[[page_id]]$has_error <- FALSE
+                private$page_error_states[[page_id]]$message <- NULL
+                private$page_error_states[[page_id]]$type <- NULL
+                private$page_error_states[[page_id]]$severity <- NULL
+                private$page_error_states[[page_id]]$timestamp <- NULL
+            }
+            
+            invisible(self)
         }
     ),
 
@@ -234,6 +456,21 @@ StateStore <- R6Class("StateStore",
         setup_simulation_storage = function() {
             private$simulations <- list()
         },
+        
+        #' @description Set up page error states
+        #' @param page_ids Character vector of page identifiers
+        setup_page_error_states = function(page_ids) {
+            private$page_error_states <- list()
+            for (id in page_ids) {
+                private$page_error_states[[id]] <- reactiveValues(
+                    has_error = FALSE,
+                    message = NULL,
+                    type = NULL,
+                    severity = NULL,
+                    timestamp = NULL
+                )
+            }
+        },
 
         #' @description Generate unique simulation ID
         #' @return Character: unique ID
@@ -241,9 +478,22 @@ StateStore <- R6Class("StateStore",
             paste0("sim_", format(Sys.time(), "%Y%m%d_%H%M%S"), "_", 
                    sprintf("%04d", sample.int(9999, 1)))
         },
+        
+        #' @description Compare two settings objects for equality
+        #' @param settings1 First settings object
+        #' @param settings2 Second settings object
+        #' @return Logical: TRUE if settings are equivalent
+        are_settings_equal = function(settings1, settings2) {
+            # Basic implementation using deep comparison
+            # This can be enhanced later for more complex comparisons
+            identical(settings1, settings2)
+        },
 
         #' @field simulations Internal storage for simulation ReactiveVals
-        simulations = NULL
+        simulations = NULL,
+        
+        #' @field page_error_states Internal storage for page error states
+        page_error_states = NULL
     )
 )
 

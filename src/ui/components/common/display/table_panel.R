@@ -66,10 +66,13 @@ create_table_panel <- function(id) {
         )
       )
     ),
+    # Error displays moved outside conditionalPanel for guaranteed visibility
     tags$div(
-      class = "plot-error error",
-      textOutput(ns("error_message"))
-    )
+      class = "plot-error error table-error", # Added table-error class for specific targeting
+      textOutput(ns("table_error_message"), inline = FALSE)
+    ),
+    # Error boundary output for structured errors
+    uiOutput(ns("error_display"))
   )
 }
 
@@ -82,6 +85,12 @@ table_panel_server <- function(id, settings) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     store <- get_store()
+    
+    # Initialize error message with an empty string instead of NULL
+    # This ensures the output is rendered immediately
+    output$table_error_message <- renderText({
+      NULL
+    })
 
     # Get config once at initialization
     config <- get_component_config("controls")
@@ -98,6 +107,12 @@ table_panel_server <- function(id, settings) {
       "validation",
       state_manager = vis_manager
     )
+    
+    # Create simulation error boundary
+    sim_boundary <- create_simulation_boundary(
+      session, output, id, "simulation",
+      state_manager = vis_manager
+    )
 
     # Add pagination state
     current_page <- reactiveVal(1)
@@ -107,6 +122,29 @@ table_panel_server <- function(id, settings) {
     output$mainTable <- renderTable({
       req(input$visualization_state == "visible")
       req(input$display_type == "table")
+
+      # Check if there's an error in the current simulation first
+      sim_id <- store$get_current_simulation_id(id)
+      if (!is.null(sim_id)) {
+        sim_state <- store$get_simulation(sim_id)
+        if (sim_state$status == "error") {
+          # If simulation has error, don't try to render table
+          # Use the simulation boundary to display the error
+          sim_boundary$set_error(
+            message = sim_state$error_message,
+            type = ERROR_TYPES$SIMULATION,
+            severity = SEVERITY_LEVELS$ERROR
+          )
+          
+          # Also set direct error output as fallback
+          output$table_error_message <- renderText({
+            sprintf("Error: %s", sim_state$error_message)
+          })
+          
+          vis_manager$set_plot_status("error")
+          return(NULL) # Don't render anything
+        }
+      }
 
       vis_manager$set_plot_status("loading")
       current_settings <- control_manager$get_settings()
@@ -148,15 +186,31 @@ table_panel_server <- function(id, settings) {
             })
         }
 
-        output$error_message <- renderText({ NULL })
+        # Clear any errors when successful
+        sim_boundary$clear()
+        validation_boundary$clear()
+        output$table_error_message <- renderText({ NULL })
+        
+        # Clear global error state
+        store$clear_page_error_state(id)
+        
         vis_manager$set_plot_status("ready")
 
         result$data
       }, error = function(e) {
         print(paste("Error in table creation:", conditionMessage(e)))
-        output$error_message <- renderText({
+        # Set error using simulation boundary
+        sim_boundary$set_error(
+          message = conditionMessage(e),
+          type = ERROR_TYPES$DATA,
+          severity = SEVERITY_LEVELS$ERROR
+        )
+        
+        # Also set direct error output as fallback
+        output$table_error_message <- renderText({
           sprintf("Error: %s", conditionMessage(e))
         })
+        
         NULL
       })
     })
@@ -227,16 +281,28 @@ table_panel_server <- function(id, settings) {
               # Update pagination state
               has_more_data(result$metadata$has_more)
 
-              output$error_message <- renderText({ NULL })
+              # Clear any errors when successful
+              sim_boundary$clear()
+              validation_boundary$clear()
+              output$table_error_message <- renderText({ NULL })
               vis_manager$set_plot_status("ready")
 
               result$data
               },
               error = function(e) {
                 print(paste("Error in table update:", conditionMessage(e)))
-                output$error_message <- renderText({
+                # Set error using simulation boundary
+                sim_boundary$set_error(
+                  message = conditionMessage(e),
+                  type = ERROR_TYPES$DATA,
+                  severity = SEVERITY_LEVELS$ERROR
+                )
+                
+                # Also set direct error output as fallback
+                output$table_error_message <- renderText({
                   sprintf("Error: %s", conditionMessage(e))
                 })
+                
                 NULL
               }
             )
@@ -262,20 +328,155 @@ table_panel_server <- function(id, settings) {
       current_page(1) # Reset to first page when changing page size
     })
 
+    # Watch for current simulation changes and errors
+    observe({
+      # Get current simulation ID
+      sim_id <- store$get_current_simulation_id(id)
+      
+      if (!is.null(sim_id)) {
+        # Check if simulation has error status
+        sim_state <- store$get_simulation(sim_id)
+        
+        if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
+          # Display the error using simulation boundary
+          sim_boundary$set_error(
+            message = sim_state$error_message,
+            type = ERROR_TYPES$SIMULATION,
+            severity = SEVERITY_LEVELS$ERROR
+          )
+          
+          # Also set direct error output as fallback
+          output$table_error_message <- renderText({
+            sprintf("Error: %s", sim_state$error_message)
+          })
+          
+          # Update global error state for cross-panel persistence
+          store$update_page_error_state(
+            id,
+            has_error = TRUE,
+            message = sim_state$error_message,
+            type = ERROR_TYPES$SIMULATION,
+            severity = SEVERITY_LEVELS$ERROR
+          )
+          
+          # Update visualization status
+          vis_manager$set_plot_status("error")
+        }
+      }
+    })
+    
     # Reset states when visibility changes
     observeEvent(input$visualization_state, {
       if (input$visualization_state == "hidden") {
         vis_manager$reset()
         control_manager$reset()
         validation_boundary$clear()
+        sim_boundary$clear()
         current_page(1) # Reset pagination
         has_more_data(FALSE) # Reset has_more_data
-        output$error_message <- renderText({
+        output$table_error_message <- renderText({
           NULL
         })
+        
+        # Clear global error state
+        store$clear_page_error_state(id)
+        
+        # Clear simulation errors for this page if they exist
+        sim_adapter <- get_simulation_adapter()
+        if (!is.null(sim_adapter$error_boundaries) && !is.null(sim_adapter$error_boundaries[[id]])) {
+          sim_adapter$error_boundaries[[id]]$clear()
+        }
+      } else if (input$visualization_state == "visible") {
+        # Check for errors when becoming visible
+        sim_id <- store$get_current_simulation_id(id)
+        if (!is.null(sim_id)) {
+          sim_state <- store$get_simulation(sim_id)
+          if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
+            # Display the error using simulation boundary
+            sim_boundary$set_error(
+              message = sim_state$error_message,
+              type = ERROR_TYPES$SIMULATION,
+              severity = SEVERITY_LEVELS$ERROR
+            )
+            
+            # Also set direct error output as fallback
+            output$table_error_message <- renderText({
+              sprintf("Error: %s", sim_state$error_message)
+            })
+            
+            vis_manager$set_plot_status("error")
+          }
+        }
       }
     })
 
+    # Error persistence observer to sync with global error state
+    observe({
+      # Get page error state
+      page_error_state <- store$get_page_error_state(id)
+      
+      # Check if there's a global error for this page
+      if (page_error_state$has_error && !is.null(page_error_state$message)) {
+        # Set error in local boundary
+        sim_boundary$set_error(
+          message = page_error_state$message,
+          type = page_error_state$type %||% ERROR_TYPES$SIMULATION,
+          severity = page_error_state$severity %||% SEVERITY_LEVELS$ERROR
+        )
+        
+        # Also set direct error output
+        output$table_error_message <- renderText({
+          sprintf("Error: %s", page_error_state$message)
+        })
+      }
+    })
+    
+    # Debug observer for error state visibility
+    # Create a tracker for last error state
+    last_error_state <- reactiveVal(list(has_error = FALSE, message = NULL))
+    
+    observe({
+      # Check error boundary state
+      error_state <- if (!is.null(sim_boundary)) sim_boundary$get_state() else NULL
+      error_visible <- !is.null(error_state) && error_state$has_error
+      
+      # Check direct error output
+      has_direct_error <- FALSE
+      tryCatch({
+        direct_error <- output$table_error_message()
+        has_direct_error <- !is.null(direct_error) && nchar(direct_error) > 0
+      }, error = function(e) {
+        # Just catch any errors silently
+      })
+      
+      # Only log when error state changes
+      current <- list(
+        has_error = error_visible,
+        message = if(error_visible) error_state$message else NULL,
+        direct_error = has_direct_error
+      )
+      
+      prev <- last_error_state()
+      if (!identical(current$has_error, prev$has_error) || 
+          !identical(current$message, prev$message) ||
+          !identical(current$direct_error, prev$direct_error)) {
+        
+        # Log debug info if there's any error state
+        if(error_visible || has_direct_error) {
+          print(sprintf("[DEBUG][%s] Error boundary: %s, Direct error: %s", 
+                      id, 
+                      if(error_visible) "VISIBLE" else "HIDDEN",
+                      if(has_direct_error) "VISIBLE" else "HIDDEN"))
+          if(error_visible) {
+            print(sprintf("  Message: %s", error_state$message))
+          }
+        }
+        
+        # Update last state
+        last_error_state(current)
+      }
+    })
+    
     # Update button states
     observe({
       if (current_page() <= 1) {

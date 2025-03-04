@@ -108,18 +108,84 @@ create_visualization_manager <- function(session, page_id, id) {
 
             # Set status to loading while we work
             store$update_visualization_state(page_id, plot_status = "loading")
+            
+            # Clear any previous error message
+            output[[paste0(page_id, "-error_message")]] <- renderText({ NULL })
 
             # Get/create simulation and set as current
             print("[VISUALIZATION] Getting simulation data...")
-            sim_id <- get_simulation_adapter()$get_simulation_data(intervention_settings, mode = page_id)
+            sim_id <- tryCatch({
+                get_simulation_adapter()$get_simulation_data(intervention_settings, mode = page_id)
+            }, error = function(e) {
+                # Handle any unexpected errors that weren't caught by the adapter
+                print(sprintf("[VISUALIZATION] Error getting simulation data: %s", conditionMessage(e)))
+                
+                # Set error message in the plot panel
+                output[[paste0(page_id, "-error_message")]] <- renderText({
+                    sprintf("Error: %s", conditionMessage(e))
+                })
+                
+                # Update visualization state
+                store$update_visualization_state(page_id, plot_status = "error")
+                store$update_visualization_state(page_id, visibility = "visible")
+                
+                # Return NULL to indicate failure
+                return(NULL)
+            })
+            
+            # If simulation failed completely (returned NULL), stop processing
+            if (is.null(sim_id)) {
+                return()
+            }
+            
+            # Set as current simulation
             store$set_current_simulation(page_id, sim_id)
             
             # Get simulation state
             sim_state <- store$get_simulation(sim_id)
             
+            # Check if simulation has error status
+            if (sim_state$status == "error") {
+                print(sprintf("[VISUALIZATION] Simulation has error status: %s", sim_state$error_message))
+                
+                # Set error message in the plot panel - this is a backup to the error boundary
+                output[[paste0(page_id, "-error_message")]] <- renderText({
+                    sprintf("Error: %s", sim_state$error_message)
+                })
+                
+                # Update visualization state
+                store$update_visualization_state(page_id, plot_status = "error")
+                
+                # Still show visualization as visible
+                store$update_visualization_state(page_id, visibility = "visible")
+                
+                return()
+            }
+            
             # Transform data for display
             print("[VISUALIZATION] Transforming simulation data...")
-            transformed <- transform_simulation_data(sim_state$results$simset, settings)
+            transformed <- tryCatch({
+                transform_simulation_data(sim_state$results$simset, settings)
+            }, error = function(e) {
+                # Handle transformation errors
+                print(sprintf("[VISUALIZATION] Error transforming data: %s", conditionMessage(e)))
+                
+                # Set error message
+                output[[paste0(page_id, "-error_message")]] <- renderText({
+                    sprintf("Error transforming data: %s", conditionMessage(e))
+                })
+                
+                # Update visualization state
+                store$update_visualization_state(page_id, plot_status = "error")
+                
+                # Return NULL to indicate failure
+                return(NULL)
+            })
+            
+            # If transformation failed, stop processing
+            if (is.null(transformed)) {
+                return()
+            }
             
             # Update simulation state with transformed data
             store$update_simulation(sim_id, list(

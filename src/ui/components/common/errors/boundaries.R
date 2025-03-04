@@ -7,7 +7,8 @@ ERROR_TYPES <- list(
     PLOT = "plot",
     DATA = "data",
     SYSTEM = "system",
-    STATE = "state"
+    STATE = "state",
+    SIMULATION = "simulation"    # Simulation errors
 )
 
 #' Error severity levels
@@ -335,6 +336,37 @@ create_validation_boundary <- function(session, output, page_id, id,
         clear = error_boundary$clear_error,
         get_state = error_boundary$get_error,
         set_error = error_boundary$set_error,
+        propagate_error = error_boundary$propagate_error
+    )
+}
+
+#' Create simulation error boundary
+#' @param session Shiny session object
+#' @param output Shiny output object
+#' @param page_id Character: page identifier
+#' @param id Character: component identifier
+#' @param state_manager Optional visualization manager for integration
+#' @return Simulation error handler
+create_simulation_boundary <- function(session, output, page_id, id, state_manager = NULL) {
+    print(sprintf("Creating simulation boundary for %s on page %s", id, page_id))
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
+    
+    list(
+        # Handle simulation errors
+        handle_simulation = function(expr, severity = SEVERITY_LEVELS$ERROR) {
+            error_boundary$handle(
+                expr,
+                type = ERROR_TYPES$SIMULATION,
+                message = "Error in simulation",
+                severity = severity
+            )
+        },
+        
+        # Inherit base error boundary methods
+        clear = error_boundary$clear_error,
+        set_error = error_boundary$set_error,
+        ui = error_boundary$ui,
+        get_state = error_boundary$get_error,
         propagate_error = error_boundary$propagate_error
     )
 }
