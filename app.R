@@ -5,6 +5,7 @@ library(shinyjs)
 library(shinycssloaders)
 library(cachem)
 library(magrittr)
+library(plotly)
 
 # Source configuration system
 source("src/ui/config/load_config.R")
