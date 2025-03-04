@@ -3,7 +3,7 @@
     
     
 # Source supporting files
-source('../jheem_analyses/source_code.R')
+source('external/jheem_analyses/source_code.R')
  
 
 ##--------------------##
@@ -2166,9 +2166,9 @@ track.integrated.outcome(EHE.SPECIFICATION,
 
 register.model.specification(EHE.SPECIFICATION)
 
-source('../jheem_analyses/applications/EHE/ehe_parameters_helpers.R')
-source('../jheem_analyses/applications/EHE/ehe_parameters.R')
-source('../jheem_analyses/applications/EHE/ehe_parameter_mapping.R')
+source('external/jheem_analyses/applications/EHE/ehe_parameters_helpers.R')
+source('external/jheem_analyses/applications/EHE/ehe_parameters.R')
+source('external/jheem_analyses/applications/EHE/ehe_parameter_mapping.R')
 
 register.calibrated.parameters.for.version('ehe',
                                            distribution = EHE.PARAMETERS.PRIOR,

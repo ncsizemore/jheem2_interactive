@@ -12,16 +12,27 @@ ensure_dir <- function(path) {
   }
 }
 
-# Function to copy a file, creating parent directories if needed
+# Function to copy a file, creating parent directories if needed, and adjust file paths
 copy_file <- function(source_path, target_path) {
   # Create parent directory if needed
   target_dir <- dirname(target_path)
   ensure_dir(target_dir)
   
-  # Copy the file
+  # If file exists, read content and adjust paths
   if (file.exists(source_path)) {
-    file.copy(source_path, target_path, overwrite = TRUE)
-    cat(sprintf("Copied: %s\n", target_path))
+    # Read the file content
+    file_content <- readLines(source_path, warn = FALSE)
+    
+    # Replace source paths for deployment
+    file_content <- gsub(
+      "source\\(['\"]\\.\\./(jheem_analyses/.*)['\"]\\)",
+      "source('external/\\1')",
+      file_content
+    )
+    
+    # Write modified content to target file
+    writeLines(file_content, target_path)
+    cat(sprintf("Copied and adjusted: %s\n", target_path))
   } else {
     cat(sprintf("WARNING: Source file not found: %s\n", source_path))
   }
@@ -39,6 +50,7 @@ copy_deployment_files <- function() {
     
     # Files we know are sourced from source_code.R
     "use_jheem2_package_setting.R",
+    "source_code.R",
     "applications/EHE/ehe_base_parameters.R",
     "applications/EHE/ehe_specification_helpers.R",
     "applications/EHE/ehe_ontology_mappings.R",
@@ -47,7 +59,20 @@ copy_deployment_files <- function() {
     # Add more files as needed if deployment issues arise
     "commoncode/target_populations.R",
     "commoncode/file_paths.R",
-    "commoncode/cache_manager.R"
+    "commoncode/cache_manager.R",
+    "commoncode/age_mappings.R",
+    "commoncode/cache_object_for_version_functions.R",
+    "commoncode/logitnorm_helpers.R",
+    
+    # Input managers
+    "input_managers/input_helpers.R",
+    "input_managers/covid_mobility_manager.R",
+    "input_managers/covid_input_manager.R",
+    "input_managers/idu_input_manager.R",
+    "input_managers/prep_input_manager.R",
+    "input_managers/pairing_input_manager.R",
+    "input_managers/continuum_input_manager.R",
+    "input_managers/idu_sexual_oes.R"
   )
   
   # Copy each file

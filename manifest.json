@@ -955,6 +955,37 @@
         "Archs": "digest.so.dSYM"
       }
     },
+    "distributions": {
+      "Source": "github",
+      "Repository": null,
+      "description": {
+        "Package": "distributions",
+        "Type": "Package",
+        "Title": "What the Package Does (Title Case)",
+        "Version": "1.0.0",
+        "Author": "Who wrote it",
+        "Maintainer": "The package maintainer <yourself@somewhere.net>",
+        "Description": "More about what it does (maybe more than one line)\n    Use four spaces when indenting paragraphs within the Description.",
+        "License": "What license is it under?",
+        "Encoding": "UTF-8",
+        "Collate": "generics_definition.R support.R transformations.R\nmaster_class.R helpers.R empiric_distribution.R\nsmoothed_empiric_distribution.R\njoint_independent_distributions.R\nunivariate_canonical_distribution.R\nunivariate_canonical_constructors.R\ncanonical_mixture_distribution.R\ncanonical_mixture_constructors.R\nmultivariate_normal_distribution.R multivariate_constructors.R\ndiscrete_set_distributions.R",
+        "Imports": "mvtnorm, tmvtnorm, matrixcalc",
+        "RoxygenNote": "7.1.1",
+        "RemoteType": "github",
+        "RemoteHost": "api.github.com",
+        "RemoteRepo": "distributions",
+        "RemoteUsername": "tfojo1",
+        "RemoteRef": "HEAD",
+        "RemoteSha": "808b78e8b6ecb83c9e0c8ee37ad4e258fee5361d",
+        "GithubRepo": "distributions",
+        "GithubUsername": "tfojo1",
+        "GithubRef": "HEAD",
+        "GithubSHA1": "808b78e8b6ecb83c9e0c8ee37ad4e258fee5361d",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-02-04 18:00:36 UTC; nicholas",
+        "Built": "R 4.4.2; ; 2025-02-04 18:00:36 UTC; unix"
+      }
+    },
     "downlit": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1497,6 +1528,33 @@
         "Date/Publication": "2024-09-30 22:30:01 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:45:00 UTC; unix",
         "Archs": "glue.so.dSYM"
+      }
+    },
+    "gmm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "gmm",
+        "Version": "1.8",
+        "Date": "2023-06-04",
+        "Title": "Generalized Method of Moments and Generalized Empirical\nLikelihood",
+        "Author": "Pierre Chausse <pchausse@uwaterloo.ca>",
+        "Maintainer": "Pierre Chausse <pchausse@uwaterloo.ca>",
+        "Description": "It is a complete suite to estimate models based on moment conditions. It includes the two step Generalized method of moments (Hansen 1982; <doi:10.2307/1912775>), the iterated GMM and continuous updated estimator (Hansen, Eaton and Yaron 1996; <doi:10.2307/1392442>) and several methods that belong to the Generalized Empirical Likelihood family of estimators (Smith 1997; <doi:10.1111/j.0013-0133.1997.174.x>, Kitamura 1997; <doi:10.1214/aos/1069362388>, Newey and Smith 2004; <doi:10.1111/j.1468-0262.2004.00482.x>, and Anatolyev 2005 <doi:10.1111/j.1468-0262.2005.00601.x>).\t",
+        "Depends": "R (>= 2.10.0), sandwich",
+        "NeedsCompilation": "yes",
+        "Suggests": "knitr, mvtnorm, car, stabledist, MASS, timeDate, timeSeries",
+        "Imports": "stats, methods, grDevices, graphics",
+        "License": "GPL (>= 2)",
+        "VignetteBuilder": "knitr",
+        "Repository": "CRAN",
+        "Repository/R-Forge/Project": "gmm",
+        "Repository/R-Forge/Revision": "212",
+        "Repository/R-Forge/DateTimeStamp": "2023-06-06 14:44:35",
+        "Date/Publication": "2023-06-06 15:50:02 UTC",
+        "Packaged": "2023-06-06 15:04:25 UTC; rforge",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-24 21:06:54 UTC; unix",
+        "Archs": "gmm.so.dSYM"
       }
     },
     "gtable": {
@@ -2125,6 +2183,28 @@
         "Archs": "magrittr.so.dSYM"
       }
     },
+    "matrixcalc": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "matrixcalc",
+        "Version": "1.0-6",
+        "Date": "2022-09-10",
+        "Title": "Collection of Functions for Matrix Calculations",
+        "Author": "Frederick Novomestky <fnovomes@poly.edu>",
+        "Maintainer": "S. Thomas Kelly <tomkellygenetics@gmail.com>",
+        "Depends": "R (>= 2.0.1)",
+        "Description": "A collection of functions to support matrix calculations\n        for probability, econometric and numerical analysis. There are\n        additional functions that are comparable to APL functions which\n        are useful for actuarial models such as pension mathematics.\n        This package is used for teaching and research purposes at the\n        Department of Finance and Risk Engineering, New York\n        University, Polytechnic Institute, Brooklyn, NY 11201.\n        Horn, R.A. (1990) Matrix Analysis. ISBN 978-0521386326.\n        Lancaster, P. (1969) Theory of Matrices. ISBN 978-0124355507.\n        Lay, D.C. (1995) Linear Algebra: And Its Applications. ISBN 978-0201845563.",
+        "License": "GPL (>= 2)",
+        "BugReports": "https://github.com/TomKellyGenetics/matrixcalc/issues",
+        "Packaged": "2022-09-14 20:41:38 UTC; tom",
+        "Repository": "CRAN",
+        "Date/Publication": "2022-09-14 21:20:02 UTC",
+        "RoxygenNote": "7.1.2",
+        "NeedsCompilation": "no",
+        "Built": "R 4.4.1; ; 2025-01-24 20:27:23 UTC; unix"
+      }
+    },
     "memoise": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2246,6 +2326,31 @@
         "Repository": "CRAN",
         "Date/Publication": "2024-04-01 23:40:10 UTC",
         "Built": "R 4.4.1; ; 2025-02-01 04:52:57 UTC; unix"
+      }
+    },
+    "mvtnorm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "mvtnorm",
+        "Title": "Multivariate Normal and t Distributions",
+        "Version": "1.3-3",
+        "Date": "2025-01-09",
+        "Authors@R": "c(person(\"Alan\", \"Genz\", role = \"aut\"),\n             person(\"Frank\", \"Bretz\", role = \"aut\"),\n             person(\"Tetsuhisa\", \"Miwa\", role = \"aut\"),\n             person(\"Xuefei\", \"Mi\", role = \"aut\"),\n             person(\"Friedrich\", \"Leisch\", role = \"ctb\"),\n             person(\"Fabian\", \"Scheipl\", role = \"ctb\"),\n             person(\"Bjoern\", \"Bornkamp\", role = \"ctb\", comment = c(ORCID = \"0000-0002-6294-8185\")),\n             person(\"Martin\", \"Maechler\", role = \"ctb\", comment = c(ORCID = \"0000-0002-8685-9910\")),\n             person(\"Torsten\", \"Hothorn\", role = c(\"aut\", \"cre\"),\n                    email = \"Torsten.Hothorn@R-project.org\", comment = c(ORCID = \"0000-0001-8301-0471\")))",
+        "Description": "Computes multivariate normal and t probabilities, quantiles, random deviates, \n  and densities. Log-likelihoods for multivariate Gaussian models and Gaussian copulae \n  parameterised by Cholesky factors of covariance or precision matrices are implemented \n  for interval-censored and exact data, or a mix thereof. Score functions for these \n  log-likelihoods are available. A class representing multiple lower triangular matrices \n  and corresponding methods are part of this package.",
+        "Imports": "stats",
+        "Depends": "R(>= 3.5.0)",
+        "Suggests": "qrng, numDeriv",
+        "License": "GPL-2",
+        "URL": "http://mvtnorm.R-forge.R-project.org",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-01-09 13:02:57 UTC; hothorn",
+        "Author": "Alan Genz [aut],\n  Frank Bretz [aut],\n  Tetsuhisa Miwa [aut],\n  Xuefei Mi [aut],\n  Friedrich Leisch [ctb],\n  Fabian Scheipl [ctb],\n  Bjoern Bornkamp [ctb] (<https://orcid.org/0000-0002-6294-8185>),\n  Martin Maechler [ctb] (<https://orcid.org/0000-0002-8685-9910>),\n  Torsten Hothorn [aut, cre] (<https://orcid.org/0000-0001-8301-0471>)",
+        "Maintainer": "Torsten Hothorn <Torsten.Hothorn@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-01-10 16:20:10 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:50:46 UTC; unix",
+        "Archs": "mvtnorm.so.dSYM"
       }
     },
     "nlme": {
@@ -3198,6 +3303,31 @@
         "Archs": "s2.so.dSYM"
       }
     },
+    "sandwich": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "sandwich",
+        "Version": "3.1-1",
+        "Date": "2024-09-16",
+        "Title": "Robust Covariance Matrix Estimators",
+        "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\", comment = c(ORCID = \"0000-0003-0918-3766\")),\n             person(given = \"Thomas\", family = \"Lumley\", role = \"aut\", email = \"t.lumley@auckland.ac.nz\", comment = c(ORCID = \"0000-0003-4255-5437\")),\n\t     person(given = \"Nathaniel\", family = \"Graham\", role = \"ctb\", email = \"npgraham1@gmail.com\", comment = c(ORCID = \"0009-0002-1215-5256\")),\n\t     person(given = \"Susanne\", family = \"Koell\", role = \"ctb\"))",
+        "Description": "Object-oriented software for model-robust covariance matrix estimators. Starting out from the basic \n             robust Eicker-Huber-White sandwich covariance methods include: heteroscedasticity-consistent (HC)\n\t     covariances for cross-section data; heteroscedasticity- and autocorrelation-consistent (HAC)\n\t     covariances for time series data (such as Andrews' kernel HAC, Newey-West, and WEAVE estimators);\n\t     clustered covariances (one-way and multi-way); panel and panel-corrected covariances;\n\t     outer-product-of-gradients covariances; and (clustered) bootstrap covariances. All methods are\n\t     applicable to (generalized) linear model objects fitted by lm() and glm() but can also be adapted\n\t     to other classes through S3 methods. Details can be found in Zeileis et al. (2020) <doi:10.18637/jss.v095.i01>,\n\t     Zeileis (2004) <doi:10.18637/jss.v011.i10> and Zeileis (2006) <doi:10.18637/jss.v016.i09>.",
+        "Depends": "R (>= 3.0.0)",
+        "Imports": "stats, utils, zoo",
+        "Suggests": "AER, car, geepack, lattice, lme4, lmtest, MASS, multiwayvcov,\nparallel, pcse, plm, pscl, scatterplot3d, stats4, strucchange,\nsurvival",
+        "License": "GPL-2 | GPL-3",
+        "URL": "https://sandwich.R-Forge.R-project.org/",
+        "BugReports": "https://sandwich.R-Forge.R-project.org/contact.html",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-09-15 20:36:02 UTC; zeileis",
+        "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>),\n  Thomas Lumley [aut] (<https://orcid.org/0000-0003-4255-5437>),\n  Nathaniel Graham [ctb] (<https://orcid.org/0009-0002-1215-5256>),\n  Susanne Koell [ctb]",
+        "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-09-15 21:50:01 UTC",
+        "Built": "R 4.4.1; ; 2025-01-24 20:39:24 UTC; unix"
+      }
+    },
     "sass": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -3757,6 +3887,32 @@
         "Built": "R 4.4.1; ; 2025-02-01 04:51:57 UTC; unix"
       }
     },
+    "tmvtnorm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "tmvtnorm",
+        "Version": "1.6",
+        "Date": "2023-12-05",
+        "Title": "Truncated Multivariate Normal and Student t Distribution",
+        "Authors@R": "c(\n  person(\"Stefan\", \"Wilhelm\", email = \"wilhelm@financial.com\", role = c(\"aut\", \"cre\")),\n  person(\"Manjunath\", \"B G\", email = \"bgmanjunath@gmail.com\", role = \"aut\")\n  )",
+        "Imports": "stats, methods",
+        "Depends": "R (>= 1.9.0), mvtnorm, utils, Matrix, stats4, gmm",
+        "Encoding": "UTF-8",
+        "Suggests": "lattice",
+        "Description": "Random number generation for the truncated multivariate normal and Student t distribution. \n  Computes probabilities, quantiles and densities, \n  including one-dimensional and bivariate marginal densities. Computes first and second moments (i.e. mean and covariance matrix) for the double-truncated multinormal case.",
+        "License": "GPL (>= 2)",
+        "URL": "https://www.r-project.org",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-12-05 08:47:20 UTC; stefan",
+        "Author": "Stefan Wilhelm [aut, cre],\n  Manjunath B G [aut]",
+        "Maintainer": "Stefan Wilhelm <wilhelm@financial.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-12-05 16:10:02 UTC",
+        "Built": "R 4.4.0; aarch64-apple-darwin20; 2024-04-05 23:02:21 UTC; unix",
+        "Archs": "tmvtnorm.so.dSYM"
+      }
+    },
     "units": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -4225,6 +4381,31 @@
         "Repository": "CRAN",
         "Date/Publication": "2025-02-01 23:00:02 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 23:37:09 UTC; unix"
+      }
+    },
+    "zoo": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "zoo",
+        "Version": "1.8-12",
+        "Date": "2023-04-11",
+        "Title": "S3 Infrastructure for Regular and Irregular Time Series (Z's\nOrdered Observations)",
+        "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\",\n                    comment = c(ORCID = \"0000-0003-0918-3766\")),\n             person(given = \"Gabor\", family = \"Grothendieck\", role = \"aut\", email = \"ggrothendieck@gmail.com\"),\n             person(given = c(\"Jeffrey\", \"A.\"), family = \"Ryan\", role = \"aut\", email = \"jeff.a.ryan@gmail.com\"),\n             person(given = c(\"Joshua\", \"M.\"), family = \"Ulrich\", role = \"ctb\", email = \"josh.m.ulrich@gmail.com\"),\n             person(given = \"Felix\", family = \"Andrews\", role = \"ctb\", email = \"felix@nfrac.org\"))",
+        "Description": "An S3 class with methods for totally ordered indexed\n             observations. It is particularly aimed at irregular time series\n             of numeric vectors/matrices and factors. zoo's key design goals\n             are independence of a particular index/date/time class and\n             consistency with ts and base R by providing methods to extend\n             standard generics.",
+        "Depends": "R (>= 3.1.0), stats",
+        "Suggests": "AER, coda, chron, ggplot2 (>= 3.0.0), mondate, scales,\nstinepack, strucchange, timeDate, timeSeries, tis, tseries, xts",
+        "Imports": "utils, graphics, grDevices, lattice (>= 0.20-27)",
+        "License": "GPL-2 | GPL-3",
+        "URL": "https://zoo.R-Forge.R-project.org/",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-04-11 21:24:32 UTC; zeileis",
+        "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>),\n  Gabor Grothendieck [aut],\n  Jeffrey A. Ryan [aut],\n  Joshua M. Ulrich [ctb],\n  Felix Andrews [ctb]",
+        "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-04-13 12:13:20 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:51:26 UTC; unix",
+        "Archs": "zoo.so.dSYM"
       }
     }
   },
@@ -4818,7 +4999,7 @@
       "checksum": "662d93b1d1512975dc809a25acaefa6a"
     },
     "deploy.R": {
-      "checksum": "c320557ba03cc6401662ab64f994d81a"
+      "checksum": "4de40dd6885f625efc4b77150bf3ad1c"
     },
     "dev/apps/state_store_test.R": {
       "checksum": "50c825fcf45fa9c32563a6c904f54ab5"
@@ -4830,25 +5011,61 @@
       "checksum": "aa0e43dae11576a651737fcf925371fb"
     },
     "external/jheem_analyses/applications/EHE/ehe_sampled_parameters.R": {
-      "checksum": "e0a98c12382e27cac825b840a6b16b7e"
+      "checksum": "8b03660cd30f26e4c6b5cb19427878a5"
     },
     "external/jheem_analyses/applications/EHE/ehe_specification_helpers.R": {
       "checksum": "477ab6bcfbbe9c77ec10dc8a87266dc1"
     },
     "external/jheem_analyses/applications/EHE/ehe_specification.R": {
-      "checksum": "8d225f6978d4385df82540aaf41f9e68"
+      "checksum": "c949d18cf97d25b9399e79f94a168144"
+    },
+    "external/jheem_analyses/commoncode/age_mappings.R": {
+      "checksum": "985ef28a814bd45dd03f85115b720aca"
     },
     "external/jheem_analyses/commoncode/cache_manager.R": {
       "checksum": "ea97712fc578b8cfc4ba9ab0dcd7ebcd"
     },
+    "external/jheem_analyses/commoncode/cache_object_for_version_functions.R": {
+      "checksum": "b74f95b577b6378be03983868124d131"
+    },
     "external/jheem_analyses/commoncode/file_paths.R": {
-      "checksum": "5ce3d83941cb156648bf81f7f00e6227"
+      "checksum": "4ab2ead3e1f55798486d60c78ff90ee1"
+    },
+    "external/jheem_analyses/commoncode/logitnorm_helpers.R": {
+      "checksum": "8d988642db03dd0069b904825bd1a911"
     },
     "external/jheem_analyses/commoncode/target_populations.R": {
-      "checksum": "32ed0a58203c4a4581cea3518d419c83"
+      "checksum": "fb5d1d030860e443b743d20a83505350"
+    },
+    "external/jheem_analyses/input_managers/continuum_input_manager.R": {
+      "checksum": "960b60431841229d49360db11e3a78e2"
+    },
+    "external/jheem_analyses/input_managers/covid_input_manager.R": {
+      "checksum": "c53172f108a8ccbbdde2e18bb7f0f0cc"
+    },
+    "external/jheem_analyses/input_managers/covid_mobility_manager.R": {
+      "checksum": "1223720d349d0234da2d2a688a76ca17"
+    },
+    "external/jheem_analyses/input_managers/idu_input_manager.R": {
+      "checksum": "0e962f331574d1871fc3a2c227274c79"
+    },
+    "external/jheem_analyses/input_managers/idu_sexual_oes.R": {
+      "checksum": "815d3d14e2b685a2ce8212894c51e809"
+    },
+    "external/jheem_analyses/input_managers/input_helpers.R": {
+      "checksum": "103ae0c355d2c5fede9da5d4950cf0cd"
+    },
+    "external/jheem_analyses/input_managers/pairing_input_manager.R": {
+      "checksum": "6e49c48180763fdf7ca0c224ed4c011f"
+    },
+    "external/jheem_analyses/input_managers/prep_input_manager.R": {
+      "checksum": "fbf057c8196a9e2b1d41117c33aa3f38"
+    },
+    "external/jheem_analyses/source_code.R": {
+      "checksum": "20d907eccfdb4c6377b4f1b1bd1360b2"
     },
     "external/jheem_analyses/use_jheem2_package_setting.R": {
-      "checksum": "31cd0c5caacf639b46506d1a41ff103e"
+      "checksum": "c951ddb68b0223e1f67eb61c39319214"
     },
     "simulations/base/C.12580_base.Rdata": {
       "checksum": "16a6f1d280bda0b98e68f0ed5bd14b0d"
