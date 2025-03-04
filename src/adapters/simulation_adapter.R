@@ -42,6 +42,68 @@ SimulationAdapter <- R6::R6Class(
             print("Settings:")
             str(settings)
             
+            # Get Shiny session
+            shiny_session <- getDefaultReactiveDomain()
+            
+            # Check if EHE specification is loaded
+            if (!is.null(shiny_session$userData$is_ehe_spec_loaded) && 
+                !shiny_session$userData$is_ehe_spec_loaded()) {
+                
+                print("EHE specification not loaded. Creating pending simulation...")
+                
+                # Create initial simulation state
+                sim_id <- private$store$add_simulation(
+                    mode = mode,
+                    settings = settings,
+                    results = list(simset = NULL, transformed = NULL)
+                )
+                
+                # Update to pending status
+                private$store$update_simulation(sim_id, list(status = "pending"))
+                
+                # Set as current simulation for the page
+                private$store$set_current_simulation(mode, sim_id)
+                
+                # Show loading notification
+                shiny::showNotification(
+                    "Loading simulation environment before running...",
+                    id = "loading_sim_env",
+                    duration = NULL
+                )
+                
+                # Trigger loading the EHE specification
+                if (!is.null(shiny_session$userData$load_ehe_spec)) {
+                    # Load the EHE specification
+                    if (shiny_session$userData$load_ehe_spec()) {
+                        # Successfully loaded, remove notification
+                        shiny::removeNotification(id = "loading_sim_env")
+                        
+                        # Now we can continue with the simulation
+                        return(self$get_simulation_data(settings, mode))
+                    } else {
+                        # Loading failed
+                        shiny::removeNotification(id = "loading_sim_env")
+                        shiny::showNotification(
+                            "Failed to load simulation environment. Please try again later.",
+                            type = "error",
+                            duration = NULL
+                        )
+                        
+                        return(sim_id)
+                    }
+                } else {
+                    # Can't load the EHE specification
+                    shiny::removeNotification(id = "loading_sim_env")
+                    shiny::showNotification(
+                        "Cannot load simulation environment.",
+                        type = "error",
+                        duration = NULL
+                    )
+                    
+                    return(sim_id)
+                }
+            }
+            
             # First check if we have a matching simulation
             existing_sim_id <- private$store$find_matching_simulation(settings, mode)
             if (!is.null(existing_sim_id)) {

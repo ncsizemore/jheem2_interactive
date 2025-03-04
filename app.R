@@ -85,10 +85,8 @@ source_ehe_spec <- function() {
   }
 }
 
-# Source the EHE specification file
-source_ehe_spec()
-
-
+# We'll load the EHE specification when it's needed, not at startup
+ehe_spec_loaded <- FALSE
 
 # UI Creation
 ui <- function() {
@@ -225,6 +223,35 @@ ui <- function() {
 
 # Server function
 server <- function(input, output, session) {
+  # Create a simple function to load the EHE specification if not already loaded
+  load_ehe_spec <- function() {
+    if (!ehe_spec_loaded) {
+      # Show loading message
+      showNotification("Loading simulation environment...", id = "ehe_loading", duration = NULL)
+      
+      # Source the EHE specification
+      tryCatch({
+        source_ehe_spec()
+        ehe_spec_loaded <<- TRUE
+        removeNotification(id = "ehe_loading")
+        showNotification("Simulation environment loaded successfully", type = "message", duration = 3)
+      }, error = function(e) {
+        removeNotification(id = "ehe_loading")
+        showNotification(
+          paste("Error loading simulation environment:", e$message),
+          type = "error",
+          duration = NULL
+        )
+      })
+    }
+    
+    return(ehe_spec_loaded)
+  }
+  
+  # Make the loading function available
+  session$userData$load_ehe_spec <- load_ehe_spec
+  session$userData$is_ehe_spec_loaded <- function() { ehe_spec_loaded }
+  
   # Create reactive value at server level
   plot_state <- reactiveVal(
     lapply(c("prerun", "custom"), function(x) NULL) %>%

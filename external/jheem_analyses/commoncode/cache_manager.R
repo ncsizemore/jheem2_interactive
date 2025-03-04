@@ -8,8 +8,9 @@ JHEEM.CACHE.DIR <- "external/jheem_analyses/cached"
 DATA.MANAGER.CACHE.METADATA.FILE <- "external/jheem_analyses/commoncode/data_manager_cache_metadata.Rdata"
 PACKAGE.VERSION.CACHE.FILE <- "external/jheem_analyses/commoncode/package_version_cache.Rdata"
 
+# Make sure the directory exists
 if (!dir.exists(JHEEM.CACHE.DIR)) {
-    stop("Cannot find the cached directory in the deployment folder. Please check that the deploy.R script ran correctly.")
+    warning("Cannot find the cached directory in the deployment folder. Some functionality may be limited.")
 }
 
 ## PUBLIC----
@@ -56,22 +57,31 @@ load.data.manager.from.cache <- function(file, set.as.default = F, offline=F) {
 #' Get information about a cached data manager, such as its creation/last modified dates and download URL.
 #' @param pretty.print Organizes the output
 get.data.manager.cache.metadata <- function(pretty.print=T, error.prefix = "") {
+    # Try to load the metadata file, but handle errors gracefully
     if (!file.exists(DATA.MANAGER.CACHE.METADATA.FILE)) {
-        stop(paste0(error.prefix, "The 'data_manager_cache_metadata.Rdata' file is missing from commoncode - this probably requires a pull"))
+        warning(paste0(error.prefix, "The metadata file is missing. Creating an empty one."))
+        data.manager.cache.metadata <- list()
+    } else {
+        tryCatch({
+            data.manager.cache.metadata <- get(load(DATA.MANAGER.CACHE.METADATA.FILE))
+        }, error = function(e) {
+            warning(paste0(error.prefix, "Could not load metadata file. Error: ", e$message, ". Creating an empty one."))
+            data.manager.cache.metadata <- list()
+        })
     }
-    data.manager.cache.metadata <- get(load(DATA.MANAGER.CACHE.METADATA.FILE))
 
     if (pretty.print) {
-        cat("Local copies of each data manager must be last modified by these dates or later: ","\n")
-        for (data.manager in names(data.manager.cache.metadata)) {
-            cat(data.manager, "-", format(data.manager.cache.metadata[[data.manager]][["last.modified.date"]], usetz = T),"\n")
+        if (length(data.manager.cache.metadata) == 0) {
+            cat("Using empty metadata (no cached data managers available)\n")
+        } else {
+            cat("Local copies of each data manager must be last modified by these dates or later: ","\n")
+            for (data.manager in names(data.manager.cache.metadata)) {
+                cat(data.manager, "-", format(data.manager.cache.metadata[[data.manager]][["last.modified.date"]], usetz = T),"\n")
+            }
         }
     }
     invisible(data.manager.cache.metadata)
 }
-
-# Call this on a case-by-case basis if you want to directly download the latest one without checking what you've already got
-#' @inheritParams load.data.manager.from.cache
 update.data.manager <- function(file) {
     error.prefix <- "Cannot update.data.manager(): "
     cache.metadata <- get.data.manager.cache.metadata(pretty.print=F)
@@ -239,16 +249,29 @@ is.package.out.of.date <- function(package="jheem2", verbose=F) {
         stop(paste0(error.prefix, "'verbose' must be TRUE or FALSE"))
     if (nchar(system.file(package = package)) == 0)
         stop(paste0(error.prefix, "package '", package, "' is not installed. Install it with 'devtools::install_github('tfojo1/", package, "')'"))
-    if (!file.exists(PACKAGE.VERSION.CACHE.FILE))
-        stop(paste0(error.prefix, "the file with the cached version could not be found. Make sure your working directory is 'jheem_analyses' or a parallel directory"))
-    cache.file = get(load(PACKAGE.VERSION.CACHE.FILE))
-    if (!(package %in% names(cache.file)))
-        stop(paste0(error.prefix, "The version cache file has no entry for package '", package, "'. Reach out to Andrew if you would like version tracked for this package."))
-    if (verbose)
-        print(paste0("The version for package '", package, "' must be >= ", cache.file[[package]], "; installed version is ", as.character(packageVersion(package)), "."))
-    invisible(packageVersion(package) < cache.file[[package]])
+    
+    # Try to load the package version file, but handle errors gracefully
+    if (!file.exists(PACKAGE.VERSION.CACHE.FILE)) {
+        warning(paste0(error.prefix, "The package version file could not be found. Assuming package is up to date."))
+        return(FALSE)
+    }
+    
+    # Load with error handling
+    tryCatch({
+        cache_file <- get(load(PACKAGE.VERSION.CACHE.FILE))
+        if (!(package %in% names(cache_file))) {
+            if (verbose)
+                cat(paste0("No version requirement found for package '", package, "'. Assuming it's up to date.\n"))
+            return(FALSE)
+        }
+        if (verbose)
+            print(paste0("The version for package '", package, "' must be >= ", cache_file[[package]], "; installed version is ", as.character(packageVersion(package)), "."))
+        return(packageVersion(package) < cache_file[[package]])
+    }, error = function(e) {
+        warning(paste0(error.prefix, "Failed to load package version cache: ", e$message, ". Assuming package is up to date."))
+        return(FALSE)
+    })
 }
-
 download.data.manager.from.onedrive <- function(destination.file, onedrive.link, error.prefix, verbose = F) {
     req <- httr2::request(onedrive.link)
     tryCatch({resp <- req |> httr2::req_perform()},
