@@ -1,5 +1,14 @@
 # src/ui/config/pages/custom.yaml - Ryan White funding impact settings
 
+# Section configurations
+sections:
+  funding_timing:
+    title: "Funding Change Timeline"
+    description: "Specify when Ryan White funding ends and (if applicable) when it returns"
+  impacts:
+    title: "Client Impacts"
+    description: "Define how the loss of Ryan White services would affect client viral suppression"
+
 # Subgroups configuration - fixed for Ryan White
 subgroups:
   fixed: true
@@ -25,6 +34,8 @@ interventions:
       input_style: "choices"
       multiple: false
       label: "Funding Ends (July 1st):"
+      description: "Select the year when Ryan White funding would end"
+      show_label: true
       placeholder: "Select start year..."
       min: 2025
       max: 2030
@@ -53,6 +64,8 @@ interventions:
       input_style: "choices"
       multiple: false
       label: "Funding Returns (July 1st):"
+      description: "Select when (or if) funding would be restored"
+      show_label: true
       placeholder: "Select return year (if applicable)..."
       min: 2025
       max: 2035

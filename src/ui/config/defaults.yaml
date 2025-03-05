@@ -31,17 +31,28 @@ display:
     message: "Generating plot..."
     class: "loading-indicator"
 
+# Section configurations
+sections:
+  location:
+    title: "Location"
+    description: "Select the geographic area for the model"
+  scenario:
+    title: "Funding Scenario"
+    description: "Choose whether Ryan White funding is permanently discontinued or temporarily suspended"
+
 # Panel configurations
 panels:
   left:
     id: "intervention-panel"
-    header: "Specify Intervention"
+    header: "Ryan White Funding Impact"
+    description: "Explore the impact of changes to Ryan White program funding on HIV transmission and viral suppression."
     width: 300
     collapsible: true
     defaultVisible: true
   right:
     id: "settings-panel"
     header: "Figure Settings"
+    description: "Customize how the results are displayed."
     width: 300
     collapsible: true
     defaultVisible: true
@@ -66,6 +77,8 @@ selectors:
   location:
     type: "select"
     label: "Location"
+    description: "Select the geographic area for the model"
+    show_label: true
     placeholder: "Select a location..."
     value: "C.33100"  # Default to Miami
     options:
