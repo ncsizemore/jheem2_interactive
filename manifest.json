@@ -129,6 +129,29 @@
         "Built": "R 4.4.2; aarch64-apple-darwin20; 2024-11-01 00:59:25 UTC; unix"
       }
     },
+    "PKI": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "PKI",
+        "Version": "0.1-14",
+        "Title": "Public Key Infrastucture for R Based on the X.509 Standard",
+        "Author": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+        "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+        "Depends": "R (>= 2.9.0), base64enc",
+        "Enhances": "gmp",
+        "Description": "Public Key Infrastucture functions such as verifying certificates, RSA encription and signing which can be used to build PKI infrastructure and perform cryptographic tasks.",
+        "License": "GPL-2 | GPL-3 | file LICENSE",
+        "URL": "http://www.rforge.net/PKI",
+        "SystemRequirements": "OpenSSL library and headers (openssl-dev or\nsimilar)",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-06-15 19:22:05 UTC; rforge",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-06-15 19:40:02 UTC",
+        "Built": "R 4.4.0; aarch64-apple-darwin20; 2024-06-15 20:38:05 UTC; unix",
+        "Archs": "PKI.so.dSYM"
+      }
+    },
     "R6": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -738,7 +761,7 @@
         "Package": "curl",
         "Type": "Package",
         "Title": "A Modern and Flexible Web Client for R",
-        "Version": "6.2.0",
+        "Version": "6.2.1",
         "Authors@R": "c(\n    person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroenooms@gmail.com\",\n      comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Hadley\", \"Wickham\", role = \"ctb\"),\n    person(\"Posit Software, PBC\", role = \"cph\"))",
         "Description": "Bindings to 'libcurl' <https://curl.se/libcurl/> for performing fully\n    configurable HTTP/FTP requests where responses can be processed in memory, on\n    disk, or streaming via the callback or connection interfaces. Some knowledge\n    of 'libcurl' is recommended; for a more-user-friendly web client see the \n    'httr2' package which builds on this package with http specific tools and logic.",
         "License": "MIT + file LICENSE",
@@ -752,12 +775,12 @@
         "Encoding": "UTF-8",
         "Language": "en-US",
         "NeedsCompilation": "yes",
-        "Packaged": "2025-01-23 12:31:51 UTC; jeroen",
+        "Packaged": "2025-02-18 18:23:19 UTC; jeroen",
         "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Hadley Wickham [ctb],\n  Posit Software, PBC [cph]",
         "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
         "Repository": "CRAN",
-        "Date/Publication": "2025-01-23 18:40:02 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-26 07:38:55 UTC; unix",
+        "Date/Publication": "2025-02-19 06:00:02 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-19 06:21:34 UTC; unix",
         "Archs": "curl.so.dSYM"
       }
     },
@@ -930,6 +953,37 @@
         "Date/Publication": "2024-08-19 14:10:07 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:44:44 UTC; unix",
         "Archs": "digest.so.dSYM"
+      }
+    },
+    "distributions": {
+      "Source": "github",
+      "Repository": null,
+      "description": {
+        "Package": "distributions",
+        "Type": "Package",
+        "Title": "What the Package Does (Title Case)",
+        "Version": "1.0.0",
+        "Author": "Who wrote it",
+        "Maintainer": "The package maintainer <yourself@somewhere.net>",
+        "Description": "More about what it does (maybe more than one line)\n    Use four spaces when indenting paragraphs within the Description.",
+        "License": "What license is it under?",
+        "Encoding": "UTF-8",
+        "Collate": "generics_definition.R support.R transformations.R\nmaster_class.R helpers.R empiric_distribution.R\nsmoothed_empiric_distribution.R\njoint_independent_distributions.R\nunivariate_canonical_distribution.R\nunivariate_canonical_constructors.R\ncanonical_mixture_distribution.R\ncanonical_mixture_constructors.R\nmultivariate_normal_distribution.R multivariate_constructors.R\ndiscrete_set_distributions.R",
+        "Imports": "mvtnorm, tmvtnorm, matrixcalc",
+        "RoxygenNote": "7.1.1",
+        "RemoteType": "github",
+        "RemoteHost": "api.github.com",
+        "RemoteRepo": "distributions",
+        "RemoteUsername": "tfojo1",
+        "RemoteRef": "HEAD",
+        "RemoteSha": "808b78e8b6ecb83c9e0c8ee37ad4e258fee5361d",
+        "GithubRepo": "distributions",
+        "GithubUsername": "tfojo1",
+        "GithubRef": "HEAD",
+        "GithubSHA1": "808b78e8b6ecb83c9e0c8ee37ad4e258fee5361d",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-02-04 18:00:36 UTC; nicholas",
+        "Built": "R 4.4.2; ; 2025-02-04 18:00:36 UTC; unix"
       }
     },
     "downlit": {
@@ -1476,6 +1530,33 @@
         "Archs": "glue.so.dSYM"
       }
     },
+    "gmm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "gmm",
+        "Version": "1.8",
+        "Date": "2023-06-04",
+        "Title": "Generalized Method of Moments and Generalized Empirical\nLikelihood",
+        "Author": "Pierre Chausse <pchausse@uwaterloo.ca>",
+        "Maintainer": "Pierre Chausse <pchausse@uwaterloo.ca>",
+        "Description": "It is a complete suite to estimate models based on moment conditions. It includes the two step Generalized method of moments (Hansen 1982; <doi:10.2307/1912775>), the iterated GMM and continuous updated estimator (Hansen, Eaton and Yaron 1996; <doi:10.2307/1392442>) and several methods that belong to the Generalized Empirical Likelihood family of estimators (Smith 1997; <doi:10.1111/j.0013-0133.1997.174.x>, Kitamura 1997; <doi:10.1214/aos/1069362388>, Newey and Smith 2004; <doi:10.1111/j.1468-0262.2004.00482.x>, and Anatolyev 2005 <doi:10.1111/j.1468-0262.2005.00601.x>).\t",
+        "Depends": "R (>= 2.10.0), sandwich",
+        "NeedsCompilation": "yes",
+        "Suggests": "knitr, mvtnorm, car, stabledist, MASS, timeDate, timeSeries",
+        "Imports": "stats, methods, grDevices, graphics",
+        "License": "GPL (>= 2)",
+        "VignetteBuilder": "knitr",
+        "Repository": "CRAN",
+        "Repository/R-Forge/Project": "gmm",
+        "Repository/R-Forge/Revision": "212",
+        "Repository/R-Forge/DateTimeStamp": "2023-06-06 14:44:35",
+        "Date/Publication": "2023-06-06 15:50:02 UTC",
+        "Packaged": "2023-06-06 15:04:25 UTC; rforge",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-24 21:06:54 UTC; unix",
+        "Archs": "gmm.so.dSYM"
+      }
+    },
     "gtable": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1793,14 +1874,14 @@
         "RemoteRepo": "jheem2",
         "RemoteUsername": "tfojo1",
         "RemoteRef": "test_deploy",
-        "RemoteSha": "dc856748bc2d477998cff67e25a105a516e9e097",
+        "RemoteSha": "c388e283e6e825e9d9d4f8f2709d94c91e0e1175",
         "GithubRepo": "jheem2",
         "GithubUsername": "tfojo1",
         "GithubRef": "test_deploy",
-        "GithubSHA1": "dc856748bc2d477998cff67e25a105a516e9e097",
+        "GithubSHA1": "c388e283e6e825e9d9d4f8f2709d94c91e0e1175",
         "NeedsCompilation": "yes",
-        "Packaged": "2025-02-27 15:13:33 UTC; nicholas",
-        "Built": "R 4.4.2; aarch64-apple-darwin20; 2025-02-27 15:13:35 UTC; unix"
+        "Packaged": "2025-03-04 18:25:19 UTC; nicholas",
+        "Built": "R 4.4.2; aarch64-apple-darwin20; 2025-03-04 18:25:21 UTC; unix"
       }
     },
     "jpeg": {
@@ -1855,7 +1936,7 @@
       "Repository": "https://cran.rstudio.com",
       "description": {
         "Package": "jsonlite",
-        "Version": "1.8.9",
+        "Version": "1.9.0",
         "Title": "A Simple and Robust JSON Parser and Generator for R",
         "License": "MIT + file LICENSE",
         "Depends": "methods",
@@ -1869,11 +1950,11 @@
         "RoxygenNote": "7.2.3",
         "Encoding": "UTF-8",
         "NeedsCompilation": "yes",
-        "Packaged": "2024-09-19 15:41:06 UTC; jeroen",
+        "Packaged": "2025-02-19 13:02:13 UTC; jeroen",
         "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Duncan Temple Lang [ctb],\n  Lloyd Hilaiel [cph] (author of bundled libyajl)",
         "Repository": "CRAN",
-        "Date/Publication": "2024-09-20 08:40:14 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:44:49 UTC; unix",
+        "Date/Publication": "2025-02-19 15:50:06 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-19 16:15:20 UTC; unix",
         "Archs": "jsonlite.so.dSYM"
       }
     },
@@ -2054,7 +2135,7 @@
         "Description": "Manages the locations used in the Jheem2 US HIV model\n    Includes geospacial information (latitude, longitude, polygon information) and plotting functionality.",
         "License": "What license is it under?",
         "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.1",
+        "RoxygenNote": "7.3.2",
         "Depends": "R (>= 3.5)",
         "Imports": "ggmap, ggplot2, R6, sf",
         "RemoteType": "github",
@@ -2062,14 +2143,14 @@
         "RemoteRepo": "locations",
         "RemoteUsername": "tfojo1",
         "RemoteRef": "HEAD",
-        "RemoteSha": "914af72ef9418216a0b2a2e2bc99386be5cdb9d1",
+        "RemoteSha": "2e0229f6ae3720c60f4c36976352dac09b6b5ef6",
         "GithubRepo": "locations",
         "GithubUsername": "tfojo1",
         "GithubRef": "HEAD",
-        "GithubSHA1": "914af72ef9418216a0b2a2e2bc99386be5cdb9d1",
+        "GithubSHA1": "2e0229f6ae3720c60f4c36976352dac09b6b5ef6",
         "NeedsCompilation": "no",
-        "Packaged": "2025-02-04 18:00:11 UTC; nicholas",
-        "Built": "R 4.4.2; ; 2025-02-04 18:00:12 UTC; unix"
+        "Packaged": "2025-03-03 17:08:21 UTC; nicholas",
+        "Built": "R 4.4.2; ; 2025-03-03 17:08:23 UTC; unix"
       }
     },
     "magrittr": {
@@ -2100,6 +2181,28 @@
         "Date/Publication": "2022-03-30 07:30:09 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-25 22:02:35 UTC; unix",
         "Archs": "magrittr.so.dSYM"
+      }
+    },
+    "matrixcalc": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "matrixcalc",
+        "Version": "1.0-6",
+        "Date": "2022-09-10",
+        "Title": "Collection of Functions for Matrix Calculations",
+        "Author": "Frederick Novomestky <fnovomes@poly.edu>",
+        "Maintainer": "S. Thomas Kelly <tomkellygenetics@gmail.com>",
+        "Depends": "R (>= 2.0.1)",
+        "Description": "A collection of functions to support matrix calculations\n        for probability, econometric and numerical analysis. There are\n        additional functions that are comparable to APL functions which\n        are useful for actuarial models such as pension mathematics.\n        This package is used for teaching and research purposes at the\n        Department of Finance and Risk Engineering, New York\n        University, Polytechnic Institute, Brooklyn, NY 11201.\n        Horn, R.A. (1990) Matrix Analysis. ISBN 978-0521386326.\n        Lancaster, P. (1969) Theory of Matrices. ISBN 978-0124355507.\n        Lay, D.C. (1995) Linear Algebra: And Its Applications. ISBN 978-0201845563.",
+        "License": "GPL (>= 2)",
+        "BugReports": "https://github.com/TomKellyGenetics/matrixcalc/issues",
+        "Packaged": "2022-09-14 20:41:38 UTC; tom",
+        "Repository": "CRAN",
+        "Date/Publication": "2022-09-14 21:20:02 UTC",
+        "RoxygenNote": "7.1.2",
+        "NeedsCompilation": "no",
+        "Built": "R 4.4.1; ; 2025-01-24 20:27:23 UTC; unix"
       }
     },
     "memoise": {
@@ -2225,6 +2328,31 @@
         "Built": "R 4.4.1; ; 2025-02-01 04:52:57 UTC; unix"
       }
     },
+    "mvtnorm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "mvtnorm",
+        "Title": "Multivariate Normal and t Distributions",
+        "Version": "1.3-3",
+        "Date": "2025-01-09",
+        "Authors@R": "c(person(\"Alan\", \"Genz\", role = \"aut\"),\n             person(\"Frank\", \"Bretz\", role = \"aut\"),\n             person(\"Tetsuhisa\", \"Miwa\", role = \"aut\"),\n             person(\"Xuefei\", \"Mi\", role = \"aut\"),\n             person(\"Friedrich\", \"Leisch\", role = \"ctb\"),\n             person(\"Fabian\", \"Scheipl\", role = \"ctb\"),\n             person(\"Bjoern\", \"Bornkamp\", role = \"ctb\", comment = c(ORCID = \"0000-0002-6294-8185\")),\n             person(\"Martin\", \"Maechler\", role = \"ctb\", comment = c(ORCID = \"0000-0002-8685-9910\")),\n             person(\"Torsten\", \"Hothorn\", role = c(\"aut\", \"cre\"),\n                    email = \"Torsten.Hothorn@R-project.org\", comment = c(ORCID = \"0000-0001-8301-0471\")))",
+        "Description": "Computes multivariate normal and t probabilities, quantiles, random deviates, \n  and densities. Log-likelihoods for multivariate Gaussian models and Gaussian copulae \n  parameterised by Cholesky factors of covariance or precision matrices are implemented \n  for interval-censored and exact data, or a mix thereof. Score functions for these \n  log-likelihoods are available. A class representing multiple lower triangular matrices \n  and corresponding methods are part of this package.",
+        "Imports": "stats",
+        "Depends": "R(>= 3.5.0)",
+        "Suggests": "qrng, numDeriv",
+        "License": "GPL-2",
+        "URL": "http://mvtnorm.R-forge.R-project.org",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-01-09 13:02:57 UTC; hothorn",
+        "Author": "Alan Genz [aut],\n  Frank Bretz [aut],\n  Tetsuhisa Miwa [aut],\n  Xuefei Mi [aut],\n  Friedrich Leisch [ctb],\n  Fabian Scheipl [ctb],\n  Bjoern Bornkamp [ctb] (<https://orcid.org/0000-0002-6294-8185>),\n  Martin Maechler [ctb] (<https://orcid.org/0000-0002-8685-9910>),\n  Torsten Hothorn [aut, cre] (<https://orcid.org/0000-0001-8301-0471>)",
+        "Maintainer": "Torsten Hothorn <Torsten.Hothorn@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-01-10 16:20:10 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:50:46 UTC; unix",
+        "Archs": "mvtnorm.so.dSYM"
+      }
+    },
     "nlme": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2282,6 +2410,34 @@
         "Date/Publication": "2025-02-03 14:20:02 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-03 14:46:49 UTC; unix",
         "Archs": "openssl.so.dSYM"
+      }
+    },
+    "packrat": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Type": "Package",
+        "Package": "packrat",
+        "Title": "A Dependency Management System for Projects and their R Package\nDependencies",
+        "Version": "0.9.2",
+        "Authors@R": "c(\n    person(\"Aron\", \"Atkins\", , \"aron@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Toph\", \"Allen\", role = \"aut\"),\n    person(\"Kevin\", \"Ushey\", role = \"aut\"),\n    person(\"Jonathan\", \"McPherson\", role = \"aut\"),\n    person(\"Joe\", \"Cheng\", role = \"aut\"),\n    person(\"JJ\", \"Allaire\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Manage the R packages your project depends on in an isolated,\n    portable, and reproducible way.",
+        "License": "GPL-2",
+        "URL": "https://github.com/rstudio/packrat",
+        "BugReports": "https://github.com/rstudio/packrat/issues",
+        "Depends": "R (>= 3.0.0)",
+        "Imports": "tools, utils",
+        "Suggests": "devtools, httr, knitr, mockery, rmarkdown, testthat (>=\n3.0.0)",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.2.3",
+        "NeedsCompilation": "no",
+        "Packaged": "2023-09-05 11:45:33 UTC; aron",
+        "Author": "Aron Atkins [aut, cre],\n  Toph Allen [aut],\n  Kevin Ushey [aut],\n  Jonathan McPherson [aut],\n  Joe Cheng [aut],\n  JJ Allaire [aut],\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Aron Atkins <aron@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-09-05 13:00:02 UTC",
+        "Built": "R 4.4.1; ; 2025-01-24 22:36:58 UTC; unix"
       }
     },
     "pillar": {
@@ -2708,29 +2864,31 @@
       "description": {
         "Package": "purrr",
         "Title": "Functional Programming Tools",
-        "Version": "1.0.2",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@rstudio.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Lionel\", \"Henry\", , \"lionel@rstudio.com\", role = \"aut\"),\n    person(\"RStudio\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Version": "1.0.4",
+        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
         "Description": "A complete and consistent functional programming toolkit for\n    R.",
         "License": "MIT + file LICENSE",
         "URL": "https://purrr.tidyverse.org/, https://github.com/tidyverse/purrr",
         "BugReports": "https://github.com/tidyverse/purrr/issues",
-        "Depends": "R (>= 3.5.0)",
+        "Depends": "R (>= 4.0)",
         "Imports": "cli (>= 3.6.1), lifecycle (>= 1.0.3), magrittr (>= 1.5.0),\nrlang (>= 1.1.1), vctrs (>= 0.6.3)",
         "Suggests": "covr, dplyr (>= 0.7.8), httr, knitr, lubridate, rmarkdown,\ntestthat (>= 3.0.0), tibble, tidyselect",
         "LinkingTo": "cli",
         "VignetteBuilder": "knitr",
         "Biarch": "true",
+        "Config/build/compilation-database": "true",
         "Config/Needs/website": "tidyverse/tidytemplate, tidyr",
         "Config/testthat/edition": "3",
+        "Config/testthat/parallel": "TRUE",
         "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
+        "RoxygenNote": "7.3.2",
         "NeedsCompilation": "yes",
-        "Packaged": "2023-08-08 16:13:31 UTC; hadleywickham",
-        "Author": "Hadley Wickham [aut, cre] (<https://orcid.org/0000-0003-4757-117X>),\n  Lionel Henry [aut],\n  RStudio [cph, fnd]",
-        "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
+        "Packaged": "2025-01-29 21:33:56 UTC; hadleywickham",
+        "Author": "Hadley Wickham [aut, cre] (<https://orcid.org/0000-0003-4757-117X>),\n  Lionel Henry [aut],\n  Posit Software, PBC [cph, fnd] (03wc8by49)",
+        "Maintainer": "Hadley Wickham <hadley@posit.co>",
         "Repository": "CRAN",
-        "Date/Publication": "2023-08-10 08:20:07 UTC",
-        "Built": "R 4.4.0; aarch64-apple-darwin20; 2024-04-06 06:42:18 UTC; unix",
+        "Date/Publication": "2025-02-05 18:00:01 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-05 18:50:51 UTC; unix",
         "Archs": "purrr.so.dSYM"
       }
     },
@@ -2848,6 +3006,37 @@
         "Repository": "CRAN",
         "Date/Publication": "2024-03-17 13:20:02 UTC",
         "Built": "R 4.4.1; ; 2025-01-24 20:23:10 UTC; unix"
+      }
+    },
+    "renv": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "renv",
+        "Type": "Package",
+        "Title": "Project Environments",
+        "Version": "1.1.1",
+        "Authors@R": "c(\n    person(\"Kevin\", \"Ushey\", role = c(\"aut\", \"cre\"), email = \"kevin@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-2880-7407\")),\n    person(\"Hadley\", \"Wickham\", role = c(\"aut\"), email = \"hadley@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n    )",
+        "Description": "A dependency management toolkit for R. Using 'renv', you can create\n    and manage project-local R libraries, save the state of these libraries to\n    a 'lockfile', and later restore your library as required. Together, these\n    tools can help make your projects more isolated, portable, and reproducible.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://rstudio.github.io/renv/, https://github.com/rstudio/renv",
+        "BugReports": "https://github.com/rstudio/renv/issues",
+        "Imports": "utils",
+        "Suggests": "BiocManager, cli, compiler, covr, cpp11, devtools, gitcreds,\njsonlite, jsonvalidate, knitr, miniUI, modules, packrat, pak,\nR6, remotes, reticulate, rmarkdown, rstudioapi, shiny,\ntestthat, uuid, waldo, yaml, webfakes",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Config/testthat/parallel": "true",
+        "Config/testthat/start-first": "bioconductor,python,install,restore,snapshot,retrieve,remotes",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-02-07 19:17:42 UTC; kevin",
+        "Author": "Kevin Ushey [aut, cre] (<https://orcid.org/0000-0003-2880-7407>),\n  Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>),\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-02-07 20:00:02 UTC",
+        "Built": "R 4.4.1; ; 2025-02-07 21:20:58 UTC; unix"
       }
     },
     "reshape2": {
@@ -3002,6 +3191,37 @@
         "Built": "R 4.4.1; ; 2025-01-25 18:39:46 UTC; unix"
       }
     },
+    "rsconnect": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Type": "Package",
+        "Package": "rsconnect",
+        "Title": "Deploy Docs, Apps, and APIs to 'Posit Connect', 'shinyapps.io',\nand 'RPubs'",
+        "Version": "1.3.4",
+        "Authors@R": "c(\n    person(\"Aron\", \"Atkins\", , \"aron@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Toph\", \"Allen\", role = \"aut\"),\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(\"Jonathan\", \"McPherson\", role = \"aut\"),\n    person(\"JJ\", \"Allaire\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Programmatic deployment interface for 'RPubs',\n    'shinyapps.io', and 'Posit Connect'. Supported content types include R\n    Markdown documents, Shiny applications, Plumber APIs, plots, and\n    static web content.",
+        "License": "GPL-2",
+        "URL": "https://rstudio.github.io/rsconnect/,\nhttps://github.com/rstudio/rsconnect",
+        "BugReports": "https://github.com/rstudio/rsconnect/issues",
+        "Depends": "R (>= 3.5.0)",
+        "Imports": "cli, curl, digest, jsonlite, lifecycle, openssl (>= 2.0.0),\nPKI, packrat (>= 0.6), renv (>= 1.0.0), rlang (>= 1.0.0),\nrstudioapi (>= 0.5), tools, yaml (>= 2.1.5)",
+        "Suggests": "Biobase, BiocManager, foreign, knitr, MASS, plumber (>=\n0.3.2), quarto, RCurl, reticulate, rmarkdown (>= 1.1), shiny,\ntestthat (>= 3.1.9), webfakes, withr",
+        "VignetteBuilder": "knitr, rmarkdown",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Config/testthat/parallel": "true",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-01-22 14:01:14 UTC; aron",
+        "Author": "Aron Atkins [aut, cre],\n  Toph Allen [aut],\n  Hadley Wickham [aut],\n  Jonathan McPherson [aut],\n  JJ Allaire [aut],\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Aron Atkins <aron@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-01-22 14:30:02 UTC",
+        "Built": "R 4.4.1; ; 2025-01-25 22:38:00 UTC; unix"
+      }
+    },
     "rstudioapi": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -3081,6 +3301,31 @@
         "Date/Publication": "2024-07-17 13:50:02 UTC",
         "Built": "R 4.4.0; aarch64-apple-darwin20; 2024-07-17 15:05:28 UTC; unix",
         "Archs": "s2.so.dSYM"
+      }
+    },
+    "sandwich": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "sandwich",
+        "Version": "3.1-1",
+        "Date": "2024-09-16",
+        "Title": "Robust Covariance Matrix Estimators",
+        "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\", comment = c(ORCID = \"0000-0003-0918-3766\")),\n             person(given = \"Thomas\", family = \"Lumley\", role = \"aut\", email = \"t.lumley@auckland.ac.nz\", comment = c(ORCID = \"0000-0003-4255-5437\")),\n\t     person(given = \"Nathaniel\", family = \"Graham\", role = \"ctb\", email = \"npgraham1@gmail.com\", comment = c(ORCID = \"0009-0002-1215-5256\")),\n\t     person(given = \"Susanne\", family = \"Koell\", role = \"ctb\"))",
+        "Description": "Object-oriented software for model-robust covariance matrix estimators. Starting out from the basic \n             robust Eicker-Huber-White sandwich covariance methods include: heteroscedasticity-consistent (HC)\n\t     covariances for cross-section data; heteroscedasticity- and autocorrelation-consistent (HAC)\n\t     covariances for time series data (such as Andrews' kernel HAC, Newey-West, and WEAVE estimators);\n\t     clustered covariances (one-way and multi-way); panel and panel-corrected covariances;\n\t     outer-product-of-gradients covariances; and (clustered) bootstrap covariances. All methods are\n\t     applicable to (generalized) linear model objects fitted by lm() and glm() but can also be adapted\n\t     to other classes through S3 methods. Details can be found in Zeileis et al. (2020) <doi:10.18637/jss.v095.i01>,\n\t     Zeileis (2004) <doi:10.18637/jss.v011.i10> and Zeileis (2006) <doi:10.18637/jss.v016.i09>.",
+        "Depends": "R (>= 3.0.0)",
+        "Imports": "stats, utils, zoo",
+        "Suggests": "AER, car, geepack, lattice, lme4, lmtest, MASS, multiwayvcov,\nparallel, pcse, plm, pscl, scatterplot3d, stats4, strucchange,\nsurvival",
+        "License": "GPL-2 | GPL-3",
+        "URL": "https://sandwich.R-Forge.R-project.org/",
+        "BugReports": "https://sandwich.R-Forge.R-project.org/contact.html",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-09-15 20:36:02 UTC; zeileis",
+        "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>),\n  Thomas Lumley [aut] (<https://orcid.org/0000-0003-4255-5437>),\n  Nathaniel Graham [ctb] (<https://orcid.org/0009-0002-1215-5256>),\n  Susanne Koell [ctb]",
+        "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-09-15 21:50:01 UTC",
+        "Built": "R 4.4.1; ; 2025-01-24 20:39:24 UTC; unix"
       }
     },
     "sass": {
@@ -3642,6 +3887,32 @@
         "Built": "R 4.4.1; ; 2025-02-01 04:51:57 UTC; unix"
       }
     },
+    "tmvtnorm": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "tmvtnorm",
+        "Version": "1.6",
+        "Date": "2023-12-05",
+        "Title": "Truncated Multivariate Normal and Student t Distribution",
+        "Authors@R": "c(\n  person(\"Stefan\", \"Wilhelm\", email = \"wilhelm@financial.com\", role = c(\"aut\", \"cre\")),\n  person(\"Manjunath\", \"B G\", email = \"bgmanjunath@gmail.com\", role = \"aut\")\n  )",
+        "Imports": "stats, methods",
+        "Depends": "R (>= 1.9.0), mvtnorm, utils, Matrix, stats4, gmm",
+        "Encoding": "UTF-8",
+        "Suggests": "lattice",
+        "Description": "Random number generation for the truncated multivariate normal and Student t distribution. \n  Computes probabilities, quantiles and densities, \n  including one-dimensional and bivariate marginal densities. Computes first and second moments (i.e. mean and covariance matrix) for the double-truncated multinormal case.",
+        "License": "GPL (>= 2)",
+        "URL": "https://www.r-project.org",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-12-05 08:47:20 UTC; stefan",
+        "Author": "Stefan Wilhelm [aut, cre],\n  Manjunath B G [aut]",
+        "Maintainer": "Stefan Wilhelm <wilhelm@financial.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-12-05 16:10:02 UTC",
+        "Built": "R 4.4.0; aarch64-apple-darwin20; 2024-04-05 23:02:21 UTC; unix",
+        "Archs": "tmvtnorm.so.dSYM"
+      }
+    },
     "units": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -4110,6 +4381,31 @@
         "Repository": "CRAN",
         "Date/Publication": "2025-02-01 23:00:02 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 23:37:09 UTC; unix"
+      }
+    },
+    "zoo": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "zoo",
+        "Version": "1.8-12",
+        "Date": "2023-04-11",
+        "Title": "S3 Infrastructure for Regular and Irregular Time Series (Z's\nOrdered Observations)",
+        "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\",\n                    comment = c(ORCID = \"0000-0003-0918-3766\")),\n             person(given = \"Gabor\", family = \"Grothendieck\", role = \"aut\", email = \"ggrothendieck@gmail.com\"),\n             person(given = c(\"Jeffrey\", \"A.\"), family = \"Ryan\", role = \"aut\", email = \"jeff.a.ryan@gmail.com\"),\n             person(given = c(\"Joshua\", \"M.\"), family = \"Ulrich\", role = \"ctb\", email = \"josh.m.ulrich@gmail.com\"),\n             person(given = \"Felix\", family = \"Andrews\", role = \"ctb\", email = \"felix@nfrac.org\"))",
+        "Description": "An S3 class with methods for totally ordered indexed\n             observations. It is particularly aimed at irregular time series\n             of numeric vectors/matrices and factors. zoo's key design goals\n             are independence of a particular index/date/time class and\n             consistency with ts and base R by providing methods to extend\n             standard generics.",
+        "Depends": "R (>= 3.1.0), stats",
+        "Suggests": "AER, coda, chron, ggplot2 (>= 3.0.0), mondate, scales,\nstinepack, strucchange, timeDate, timeSeries, tis, tseries, xts",
+        "Imports": "utils, graphics, grDevices, lattice (>= 0.20-27)",
+        "License": "GPL-2 | GPL-3",
+        "URL": "https://zoo.R-Forge.R-project.org/",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-04-11 21:24:32 UTC; zeileis",
+        "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>),\n  Gabor Grothendieck [aut],\n  Jeffrey A. Ryan [aut],\n  Joshua M. Ulrich [ctb],\n  Felix Andrews [ctb]",
+        "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-04-13 12:13:20 UTC",
+        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:51:26 UTC; unix",
+        "Archs": "zoo.so.dSYM"
       }
     }
   },
@@ -4699,38 +4995,98 @@
     ".Renviron": {
       "checksum": "1be10a5a41a997d1ea2158051645b191"
     },
-    ".Rprofile": {
-      "checksum": "29e5d75deb1ba5c11e040d604bcf671a"
-    },
-    ".rsconnect/deploy-config.json": {
-      "checksum": "f7674b09fbe0db7c9531688597d9a845"
-    },
     "app.R": {
-      "checksum": "03784a2a8aa9b9e78a5e19093be8c2c1"
+      "checksum": "18a255c55ab896b4028c3110d90eb9c7"
     },
-    "binary_packages/jheem2_1.5.8.9000.tgz": {
-      "checksum": "7d7a027fb00810cfb8cb09d5bd14d2c1"
-    },
-    "build_binary.R": {
-      "checksum": "11008f27aeeed9c131a349cbcc7484e8"
+    "deploy.R": {
+      "checksum": "a93ed908aed7d84758e83cc23ac1abf8"
     },
     "dev/apps/state_store_test.R": {
       "checksum": "50c825fcf45fa9c32563a6c904f54ab5"
     },
-    "find_binary.R": {
-      "checksum": "5ed9fc02aa072e75144b2abfe9327d88"
+    "external/jheem_analyses/applications/EHE/ehe_base_parameters.R": {
+      "checksum": "c7ac4752c8e50dad1b8df19019882119"
     },
-    "install_binary.R": {
-      "checksum": "86dfd8d0cef5bd1236a28ff7ed6f57d6"
+    "external/jheem_analyses/applications/EHE/ehe_ontology_mappings.R": {
+      "checksum": "aa0e43dae11576a651737fcf925371fb"
     },
-    "server_setup_loader.R": {
-      "checksum": "814deeb0d2a5e7c5960a79e0515cd6a0"
+    "external/jheem_analyses/applications/EHE/ehe_sampled_parameters.R": {
+      "checksum": "8b03660cd30f26e4c6b5cb19427878a5"
     },
-    "server_setup/Makevars": {
-      "checksum": "0746e5f9c6175040c27a2af98bcf919d"
+    "external/jheem_analyses/applications/EHE/ehe_specification_helpers.R": {
+      "checksum": "477ab6bcfbbe9c77ec10dc8a87266dc1"
     },
-    "server_setup/setup.R": {
-      "checksum": "ac5b94c9acffc0d117c6d9a6c0ec57e3"
+    "external/jheem_analyses/applications/EHE/ehe_specification.R": {
+      "checksum": "c949d18cf97d25b9399e79f94a168144"
+    },
+    "external/jheem_analyses/cached/brfss.subset.9.30.24.RData": {
+      "checksum": "0c0b6068e0287cf0e2f81321391186eb"
+    },
+    "external/jheem_analyses/cached/census.manager.rdata": {
+      "checksum": "45198b3d5676c8f5aac36631fe07527a"
+    },
+    "external/jheem_analyses/cached/google_mobility_data.Rdata": {
+      "checksum": "448b05e939eb6deb57bdbef7f9623db0"
+    },
+    "external/jheem_analyses/cached/surveillance.manager.rdata": {
+      "checksum": "cbf4da74ee103f742079660bdcf5bf9f"
+    },
+    "external/jheem_analyses/cached/syphilis.manager.rdata": {
+      "checksum": "3eefafa88b8952de6da4fb1b9ecaccf6"
+    },
+    "external/jheem_analyses/commoncode/age_mappings.R": {
+      "checksum": "985ef28a814bd45dd03f85115b720aca"
+    },
+    "external/jheem_analyses/commoncode/cache_manager.R": {
+      "checksum": "6273595d7f02576cfafc4429c0420539"
+    },
+    "external/jheem_analyses/commoncode/cache_object_for_version_functions.R": {
+      "checksum": "b74f95b577b6378be03983868124d131"
+    },
+    "external/jheem_analyses/commoncode/data_manager_cache_metadata.Rdata": {
+      "checksum": "a0e6e144193e83e7bfc3bc30a8ca49fd"
+    },
+    "external/jheem_analyses/commoncode/file_paths.R": {
+      "checksum": "4ab2ead3e1f55798486d60c78ff90ee1"
+    },
+    "external/jheem_analyses/commoncode/logitnorm_helpers.R": {
+      "checksum": "8d988642db03dd0069b904825bd1a911"
+    },
+    "external/jheem_analyses/commoncode/package_version_cache.Rdata": {
+      "checksum": "cc0c7ff8fe6445dea9801523ab8d4b95"
+    },
+    "external/jheem_analyses/commoncode/target_populations.R": {
+      "checksum": "fb5d1d030860e443b743d20a83505350"
+    },
+    "external/jheem_analyses/input_managers/continuum_input_manager.R": {
+      "checksum": "960b60431841229d49360db11e3a78e2"
+    },
+    "external/jheem_analyses/input_managers/covid_input_manager.R": {
+      "checksum": "c53172f108a8ccbbdde2e18bb7f0f0cc"
+    },
+    "external/jheem_analyses/input_managers/covid_mobility_manager.R": {
+      "checksum": "1223720d349d0234da2d2a688a76ca17"
+    },
+    "external/jheem_analyses/input_managers/idu_input_manager.R": {
+      "checksum": "0e962f331574d1871fc3a2c227274c79"
+    },
+    "external/jheem_analyses/input_managers/idu_sexual_oes.R": {
+      "checksum": "815d3d14e2b685a2ce8212894c51e809"
+    },
+    "external/jheem_analyses/input_managers/input_helpers.R": {
+      "checksum": "103ae0c355d2c5fede9da5d4950cf0cd"
+    },
+    "external/jheem_analyses/input_managers/pairing_input_manager.R": {
+      "checksum": "6e49c48180763fdf7ca0c224ed4c011f"
+    },
+    "external/jheem_analyses/input_managers/prep_input_manager.R": {
+      "checksum": "fbf057c8196a9e2b1d41117c33aa3f38"
+    },
+    "external/jheem_analyses/source_code.R": {
+      "checksum": "20d907eccfdb4c6377b4f1b1bd1360b2"
+    },
+    "external/jheem_analyses/use_jheem2_package_setting.R": {
+      "checksum": "c951ddb68b0223e1f67eb61c39319214"
     },
     "simulations/base/C.12580_base.Rdata": {
       "checksum": "16a6f1d280bda0b98e68f0ed5bd14b0d"
@@ -4769,7 +5125,7 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e"
     },
     "src/adapters/simulation_adapter.R": {
-      "checksum": "981e6723037bef9bd1c099b2626855d2"
+      "checksum": "82009d7bb7b065c80d6f093ded08d6e4"
     },
     "src/core/interventions/transform.R": {
       "checksum": "d41d8cd98f00b204e9800998ecf8427e"
@@ -4817,7 +5173,7 @@
       "checksum": "82e66e42ec42139874bfef614c18f5f8"
     },
     "src/ui/components/common/display/plot_panel.R": {
-      "checksum": "188cb2a008ac99e48b3aa93bafaf0233"
+      "checksum": "efa7cfcbdd5856710ac6b95515175294"
     },
     "src/ui/components/common/display/README.md": {
       "checksum": "10a4f7bd2f4ebd5e0a3c8b14f0008dfe"
@@ -4871,7 +5227,7 @@
       "checksum": "8d1e5fe9aeb53a5e95e40dce2147ded7"
     },
     "src/ui/components/pages/custom/handlers/initialize.R": {
-      "checksum": "ff7d477ef841efb0a16d6d134eb013cc"
+      "checksum": "f65425bcf1f1f1d36f3eca10d719dad3"
     },
     "src/ui/components/pages/custom/handlers/interventions.R": {
       "checksum": "a32563b52ab23c001fb7abb3bb07b22e"
@@ -4995,12 +5351,6 @@
     },
     "src/ui/handlers/README.md": {
       "checksum": "3160f3d9a8632d91d039e54a99fe6108"
-    },
-    "src/ui/plotly_adapters/plotly_plot_adapter.R": {
-      "checksum": "853bc1f0ef4a3dbe9cdc657ad747a13f"
-    },
-    "src/ui/plotly_adapters/README.md": {
-      "checksum": "6396113541e879794928a992533b7f52"
     },
     "src/ui/state/controls.R": {
       "checksum": "f2932c57d37fc86d859577808ba13d62"

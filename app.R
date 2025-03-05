@@ -5,6 +5,7 @@ library(shinyjs)
 library(shinycssloaders)
 library(cachem)
 library(magrittr)
+library(plotly)
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -64,9 +65,28 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-source("../jheem_analyses/applications/EHE/ehe_specification.R")
 
+# Function to source the EHE specification file from appropriate location
+source_ehe_spec <- function() {
+  # First try development path (outside the app directory)
+  external_path <- "../jheem_analyses/applications/EHE/ehe_specification.R"
+  
+  # Then try deployment path (inside the app directory)
+  internal_path <- "external/jheem_analyses/applications/EHE/ehe_specification.R"
+  
+  if (file.exists(external_path)) {
+    message("Sourcing EHE specification from development path")
+    source(external_path)
+  } else if (file.exists(internal_path)) {
+    message("Sourcing EHE specification from deployment path")
+    source(internal_path)
+  } else {
+    stop("EHE specification file not found in either location")
+  }
+}
 
+# We'll load the EHE specification when it's needed, not at startup
+ehe_spec_loaded <- FALSE
 
 # UI Creation
 ui <- function() {
@@ -203,6 +223,35 @@ ui <- function() {
 
 # Server function
 server <- function(input, output, session) {
+  # Create a simple function to load the EHE specification if not already loaded
+  load_ehe_spec <- function() {
+    if (!ehe_spec_loaded) {
+      # Show loading message
+      showNotification("Loading simulation environment...", id = "ehe_loading", duration = NULL)
+      
+      # Source the EHE specification
+      tryCatch({
+        source_ehe_spec()
+        ehe_spec_loaded <<- TRUE
+        removeNotification(id = "ehe_loading")
+        showNotification("Simulation environment loaded successfully", type = "message", duration = 3)
+      }, error = function(e) {
+        removeNotification(id = "ehe_loading")
+        showNotification(
+          paste("Error loading simulation environment:", e$message),
+          type = "error",
+          duration = NULL
+        )
+      })
+    }
+    
+    return(ehe_spec_loaded)
+  }
+  
+  # Make the loading function available
+  session$userData$load_ehe_spec <- load_ehe_spec
+  session$userData$is_ehe_spec_loaded <- function() { ehe_spec_loaded }
+  
   # Create reactive value at server level
   plot_state <- reactiveVal(
     lapply(c("prerun", "custom"), function(x) NULL) %>%

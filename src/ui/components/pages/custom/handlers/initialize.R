@@ -334,6 +334,52 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     observeEvent(input$generate_custom, {
         print("Generate button pressed (custom)")
 
+        # Check if EHE specification is loaded
+        if (!is.null(session$userData$is_ehe_spec_loaded) && 
+            !session$userData$is_ehe_spec_loaded()) {
+            
+            # Show loading notification
+            showNotification(
+                "Loading simulation environment before running...",
+                id = "loading_for_generate",
+                duration = NULL,
+                type = "message"
+            )
+            
+            # Trigger loading the EHE specification
+            if (!is.null(session$userData$load_ehe_spec)) {
+                # Load the EHE specification
+                if (session$userData$load_ehe_spec()) {
+                    # Successfully loaded, remove notification and proceed
+                    removeNotification(id = "loading_for_generate")
+                    generate_custom_simulation()
+                } else {
+                    # Loading failed
+                    removeNotification(id = "loading_for_generate")
+                    showNotification(
+                        "Failed to load simulation environment. Please try again later.",
+                        type = "error",
+                        duration = NULL
+                    )
+                }
+            } else {
+                # Can't load the EHE specification
+                removeNotification(id = "loading_for_generate")
+                showNotification(
+                    "Cannot load simulation environment.",
+                    type = "error",
+                    duration = NULL
+                )
+            }
+        } else {
+            # EHE specification is already loaded, proceed directly
+            generate_custom_simulation()
+        }
+    })
+    
+    # Function to handle the actual generate logic
+    generate_custom_simulation <- function() {
+
         if (validation_manager$is_valid()) {
             # Collect settings based on configuration
             settings <- list(
@@ -478,7 +524,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 type = "error"
             )
         }
-    })
+    }
 
     # Initialize display handlers
     initialize_display_handlers(session, input, output, vis_manager, "custom")
