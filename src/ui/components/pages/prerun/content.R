@@ -1,24 +1,40 @@
+# First, source the section header component
+source("src/ui/components/common/display/section_header.R")
+
 #' Creates the intervention panel content
 #' @param config Page configuration
 create_intervention_content <- function(config) {
-    # Create all possible selectors
-    selectors <- list(
-        create_location_selector("prerun"),
-        create_intervention_selector("prerun"),
-        create_population_selector("prerun"),
-        create_timeframe_selector("prerun"),
-        create_intensity_selector("prerun")
+    # Create sections with grouped selectors
+    sections <- list()
+    
+    # Location section
+    location_section_config <- config$sections$location %||% list(title = "Location", description = NULL)
+    sections$location <- tagList(
+        create_section_header(location_section_config$title, location_section_config$description),
+        create_location_selector("prerun")
     )
     
-    # Filter out NULL selectors (those not configured)
-    selectors <- Filter(Negate(is.null), selectors)
+    # Intervention section - only include if configured
+    if (!is.null(config$intervention_aspects)) {
+        intervention_section_config <- config$sections$intervention %||% list(title = "Intervention", description = NULL)
+        sections$intervention <- tagList(
+            create_section_header(intervention_section_config$title, intervention_section_config$description),
+            create_intervention_selector("prerun"),
+            create_population_selector("prerun"),
+            create_timeframe_selector("prerun"),
+            create_intensity_selector("prerun")
+        )
+    }
+    
+    # Only include sections that are configured
+    sections <- Filter(Negate(is.null), sections)
     
     tagList(
         # Selectors container
         tags$div(
             class = "intervention-options",
-            # Spread the selectors
-            selectors,
+            # Spread the sections
+            sections,
 
             # Generate button using config settings
             tags$div(

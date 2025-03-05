@@ -53,17 +53,34 @@ display:
     message: "Generating plot..."
     class: "loading-indicator"
 
+# Section configurations
+sections:
+  location:
+    title: "Location"
+    description: "Select the geographic area for the model"
+  intervention:
+    title: "Intervention"
+    description: "Choose intervention parameters"
+  subgroups:
+    title: "Subgroups"
+    description: "Define the number of intervention target groups"
+  timing:
+    title: "Intervention Timing"
+    description: "Define when the intervention starts and is fully implemented"
+
 # Panel configurations
 panels:
   left:
     id: "intervention-panel"
     header: "Specify Intervention"
+    description: "Select options below to configure the intervention settings."
     width: 300
     collapsible: true
     defaultVisible: true
   right:
     id: "settings-panel"
     header: "Figure Settings"
+    description: "Customize how the results are displayed."
     width: 300
     collapsible: true
     defaultVisible: true
@@ -88,6 +105,8 @@ selectors:
   location:
     type: "select"
     label: "Location"
+    description: "Select the geographic area for the model"
+    show_label: true
     placeholder: "Select a location..."
     value: "C.33100"  # Default to Miami
     options:

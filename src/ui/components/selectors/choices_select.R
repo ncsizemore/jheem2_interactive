@@ -5,12 +5,16 @@
 #' @param selected Initially selected value(s)
 #' @param multiple Allow multiple selections
 #' @param placeholder Placeholder text
+#' @param show_label Whether to display the label (default: TRUE)
+#' @param description Optional descriptive text to display below label
 choicesSelectInput <- function(inputId,
                                label,
                                choices,
                                selected = NULL,
                                multiple = FALSE,
-                               placeholder = NULL) {
+                               placeholder = NULL,
+                               show_label = TRUE,
+                               description = NULL) {
     # Print debug info
     print("\n=== Creating Choices Select ===")
     print(paste("Input ID:", inputId))
@@ -69,7 +73,18 @@ choicesSelectInput <- function(inputId,
     # Create container
     container <- div(
         class = "choices-container",
-        if (!is.null(label)) tags$label(class = "choices-label", label),
+        # Only show label if show_label is TRUE and label is not NULL
+        if (show_label && !is.null(label)) tags$label(class = "choices-label", label),
+        
+        # Add description if provided
+        if (!is.null(description)) {
+            tags$div(
+                class = "selector-description",
+                style = "font-size: 0.875rem; color: #6c757d; margin-bottom: 0.5rem;",
+                description
+            )
+        },
+        
         select_tag,
         tags$script(HTML(init_script))
     )

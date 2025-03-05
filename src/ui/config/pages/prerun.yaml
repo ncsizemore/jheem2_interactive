@@ -4,6 +4,8 @@
 intervention_aspects:
   type: "radio"
   label: "Which Aspects to Intervene On:"
+  description: "Select the HIV prevention or treatment service to model"
+  show_label: true
   popover:
     title: "What Should the Intervention Affect?"
     content: "You can choose interventions that affect HIV testing, PrEP among those at risk for HIV acquisition, viral suppression among PWH, participation in needle-exchange programs, MOUDs, or combinations of these"
@@ -31,6 +33,8 @@ intervention_aspects:
 population_groups:
   type: "radio"
   label: "Target Population:"
+  description: "Select which demographic groups to focus the intervention on"
+  show_label: true
   popover:
     title: "Which Groups to Target?"
     content: "Select whether to apply interventions across all populations or target specific demographic or risk groups."
@@ -49,6 +53,8 @@ population_groups:
 timeframes:
   type: "radio"
   label: "Intervention Roll-Out Period:"
+  description: "Select how quickly the intervention will be implemented"
+  show_label: true
   popover:
     title: "When to Roll Out the Intervention?"
     content: "Select the time period over which the intervention will be implemented. Longer periods allow for more gradual implementation."
@@ -70,6 +76,8 @@ timeframes:
 intensities:
   type: "radio"
   label: "Intervention Intensity:"
+  description: "Select how aggressive the intervention will be"
+  show_label: true
   popover:
     title: "How Intensive Should the Intervention Be?"
     content: "Select the level of coverage increase to model. More aggressive increases require more resources but may have larger impacts."

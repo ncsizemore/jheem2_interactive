@@ -104,6 +104,9 @@ create_input_by_type <- function(type, id, config) {
     str(choices)
     print(paste("Default value:", config$value))
 
+    # Get show_label setting with default = TRUE for backward compatibility
+    show_label <- config$show_label %||% TRUE
+    
     # Create the base input element
     input_element <- switch(type,
         "select" = if (input_style == "choices") {
@@ -111,11 +114,13 @@ create_input_by_type <- function(type, id, config) {
             print(paste("Selected:", config$value))
             choicesSelectInput(
                 inputId = id,
-                label = NULL,
+                label = config$label,
                 choices = choices,
                 selected = config$value, # Pass through the default value
                 multiple = multiple,
-                placeholder = config$placeholder %||% config$label
+                placeholder = config$placeholder %||% config$label,
+                show_label = show_label,
+                description = config$description
             )
         } else {
             selectInput(

@@ -12,6 +12,7 @@
 @import 'components/common/scrollbars.css';
 @import 'components/common/loading.css';
 @import 'components/common/page-section.css';
+@import 'components/common/section_headers.css';
 
 @import 'components/panels/base.css';
 @import 'components/panels/plot.css';

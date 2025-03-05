@@ -163,6 +163,14 @@
     font-weight: 500;
 }
 
+/* Description styling */
+.selector-description {
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.4;
+}
+
 /* Create a proper stacking context hierarchy */
 .custom-container {
     position: relative;

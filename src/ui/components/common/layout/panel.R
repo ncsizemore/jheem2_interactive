@@ -37,6 +37,15 @@ create_panel <- function(id, type, config, content) {
             style = build_header_styles(theme_config),
             panel_config$header
         ),
+        
+        # Add panel description if provided
+        if (!is.null(panel_config$description)) {
+            tags$div(
+                class = "panel-description",
+                style = "padding: var(--spacing-sm); border-bottom: 1px solid var(--color-gray-200); background-color: var(--color-gray-50); font-size: var(--font-size-sm);",
+                panel_config$description
+            )
+        },
 
         # Content wrapper with configured styles
         tags$div(

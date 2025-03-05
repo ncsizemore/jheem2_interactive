@@ -1,3 +1,6 @@
+# First, source the section header component (if not already sourced)
+source("src/ui/components/common/display/section_header.R")
+
 #' Creates the custom intervention content
 #' @param config Page configuration
 create_custom_intervention_content <- function(config) {
@@ -5,12 +8,21 @@ create_custom_intervention_content <- function(config) {
     print("Config structure:")
     str(config)
 
-    tagList(
-        # Location selector
-        create_location_selector("custom"),
-
-        # Subgroups count selector (only for non-fixed subgroups)
-        if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector)) {
+    # Create sections for grouped content
+    sections <- list()
+    
+    # Location section
+    location_section_config <- config$sections$location %||% list(title = "Location", description = NULL)
+    sections$location <- tagList(
+        create_section_header(location_section_config$title, location_section_config$description),
+        create_location_selector("custom")
+    )
+    
+    # Subgroups section - only include if configured
+    if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector)) {
+        subgroups_section_config <- config$sections$subgroups %||% list(title = "Subgroups", description = NULL)
+        sections$subgroups <- tagList(
+            create_section_header(subgroups_section_config$title, subgroups_section_config$description),
             tags$div(
                 class = "form-group subgroups-count",
                 tags$label(
@@ -25,40 +37,50 @@ create_custom_intervention_content <- function(config) {
                     max = config$subgroups$selector$max
                 )
             )
-        },
+        )
+    }
+    
+    tagList(
+        # Spread all sections
+        sections$location,
+        sections$subgroups %||% NULL,
 
         # Intervention configuration section
         tags$div(
             class = "intervention-config",
             
-            # Date range selector
+            # Intervention timing section
             if (!is.null(config$interventions$dates)) {
-                tags$div(
-                    class = "form-group date-range",
-                    # Start date
+                timing_section_config <- config$sections$timing %||% list(title = "Intervention Timing", description = NULL)
+                tagList(
+                    create_section_header(timing_section_config$title, timing_section_config$description),
                     tags$div(
-                        class = "date-start",
-                        selectInput(
-                            "int_dates_start_custom",
-                            label = config$interventions$dates$start$label,
-                            choices = setNames(
-                                sapply(config$interventions$dates$start$options, `[[`, "id"),
-                                sapply(config$interventions$dates$start$options, `[[`, "label")
-                            ),
-                            selected = config$interventions$dates$start$value
-                        )
-                    ),
-                    # End date
-                    tags$div(
-                        class = "date-end",
-                        selectInput(
-                            "int_dates_end_custom",
-                            label = config$interventions$dates$end$label,
-                            choices = setNames(
-                                sapply(config$interventions$dates$end$options, `[[`, "id"),
-                                sapply(config$interventions$dates$end$options, `[[`, "label")
-                            ),
-                            selected = config$interventions$dates$end$value
+                        class = "form-group date-range",
+                        # Start date
+                        tags$div(
+                            class = "date-start",
+                            selectInput(
+                                "int_dates_start_custom",
+                                label = config$interventions$dates$start$label,
+                                choices = setNames(
+                                    sapply(config$interventions$dates$start$options, `[[`, "id"),
+                                    sapply(config$interventions$dates$start$options, `[[`, "label")
+                                ),
+                                selected = config$interventions$dates$start$value
+                            )
+                        ),
+                        # End date
+                        tags$div(
+                            class = "date-end",
+                            selectInput(
+                                "int_dates_end_custom",
+                                label = config$interventions$dates$end$label,
+                                choices = setNames(
+                                    sapply(config$interventions$dates$end$options, `[[`, "id"),
+                                    sapply(config$interventions$dates$end$options, `[[`, "label")
+                                ),
+                                selected = config$interventions$dates$end$value
+                            )
                         )
                     )
                 )
