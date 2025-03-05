@@ -65,8 +65,10 @@ MODEL_EFFECTS <- list(
         quantity_name = function(group_id) {
             if (group_id == "adap") {
                 "adap.suppression.effect"
-            } else if (group_id == "non_adap") {
-                "rw.without.adap.suppression.effect"
+            } else if (group_id == "oahs") {
+                "oahs.suppression.effect" 
+            } else if (group_id == "other") {
+                "rw.support.suppression.effect"
             } else {
                 stop(paste("Unknown group ID for suppression_loss:", group_id))
             }
@@ -87,46 +89,6 @@ MODEL_EFFECTS <- list(
                 value = value,
                 transform = MODEL_EFFECTS[["suppression_loss"]]$transform,
                 group_id = group_id
-            )
-        }
-    ),
-    
-    # Keep the specific effects for backward compatibility
-    adap_suppression_loss = list(
-        quantity_name = "adap.suppression.effect",
-        scale = "proportion",
-        transform = function(value) {
-            # Convert percentage loss to multiplier
-            1 - (value / 100)
-        },
-        value_field = "adap_suppression_loss",
-        create = function(start_time, end_time, value, group_id = NULL) {
-            create_standard_effect(
-                quantity_name = MODEL_EFFECTS[["adap_suppression_loss"]]$quantity_name,
-                scale = MODEL_EFFECTS[["adap_suppression_loss"]]$scale,
-                start_time = start_time,
-                end_time = end_time,
-                value = value,
-                transform = MODEL_EFFECTS[["adap_suppression_loss"]]$transform
-            )
-        }
-    ),
-    non_adap_suppression_loss = list(
-        quantity_name = "rw.without.adap.suppression.effect",
-        scale = "proportion",
-        transform = function(value) {
-            # Convert percentage loss to multiplier
-            1 - (value / 100)
-        },
-        value_field = "non_adap_suppression_loss",
-        create = function(start_time, end_time, value, group_id = NULL) {
-            create_standard_effect(
-                quantity_name = MODEL_EFFECTS[["non_adap_suppression_loss"]]$quantity_name,
-                scale = MODEL_EFFECTS[["non_adap_suppression_loss"]]$scale,
-                start_time = start_time,
-                end_time = end_time,
-                value = value,
-                transform = MODEL_EFFECTS[["non_adap_suppression_loss"]]$transform
             )
         }
     )

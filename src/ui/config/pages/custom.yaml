@@ -3,14 +3,17 @@
 # Subgroups configuration - fixed for Ryan White
 subgroups:
   fixed: true
-  count: 2
+  count: 3
   groups:
     - id: "adap"
       label: "ADAP Recipients"
-      description: "Patients receiving any ADAP benefits (full-pay medications, premium assistance, and/or copay support)"
-    - id: "non_adap"
-      label: "Non-ADAP Recipients"
-      description: "Patients receiving Ryan White services but NO ADAP benefits"
+      description: "Clients receiving any AIDS Drug Assistance Program benefits (medications, premium assistance, copay support)"
+    - id: "oahs"
+      label: "OAHS Recipients (without ADAP)"
+      description: "Clients receiving Outpatient Ambulatory Health Services but not ADAP"
+    - id: "other"
+      label: "Other Services Recipients"
+      description: "Clients receiving any other Ryan White services but not ADAP or OAHS"
 
 # Intervention configuration
 interventions:
@@ -21,7 +24,7 @@ interventions:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Program Changes Begin (July 1st):"
+      label: "Funding Ends (July 1st):"
       placeholder: "Select start year..."
       min: 2025
       max: 2030
@@ -49,37 +52,52 @@ interventions:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Fully Implemented by (October 1st):"
-      placeholder: "Select end year..."
+      label: "Funding Returns (July 1st):"
+      placeholder: "Select return year (if applicable)..."
       min: 2025
-      max: 2030
+      max: 2035
       value: 2025
       options:
-        2025:
-          id: "2025.8"
-          label: "2025"
+        never:
+          id: "never"
+          label: "Never Returns"
         2026:
-          id: "2026.8"
+          id: "2026.5"
           label: "2026"
         2027:
-          id: "2027.8"
+          id: "2027.5"
           label: "2027"
         2028:
-          id: "2028.8"
+          id: "2028.5"
           label: "2028"
         2029:
-          id: "2029.8"
+          id: "2029.5"
           label: "2029"
         2030:
-          id: "2030.8"
+          id: "2030.5"
           label: "2030"
+        2031:
+          id: "2031.5"
+          label: "2031"
+        2032:
+          id: "2032.5"
+          label: "2032"
+        2033:
+          id: "2033.5"
+          label: "2033"
+        2034:
+          id: "2034.5"
+          label: "2034"
+        2035:
+          id: "2035.5"
+          label: "2035"
 
-  # Intervention components
+  # Intervention components - each group will use this same component
   components:
     suppression_loss:
       type: "numeric"
       label: "Suppression Loss"
-      description: "What percentage would lose suppression if all Ryan White services stopped?"
+      description: "Percentage of virally suppressed clients who would stop taking ART consistently"
       placeholder: "Enter percentage..."
       min: 0
       max: 100
@@ -90,4 +108,3 @@ interventions:
 # Simulation file configuration
 custom_simulations:
   file_pattern: "base/{location}_base.Rdata"
-

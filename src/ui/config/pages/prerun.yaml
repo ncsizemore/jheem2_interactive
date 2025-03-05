@@ -1,26 +1,24 @@
 # config/pages/prerun.yaml - Pre-run page specific settings
-# Simplified version for ryan-white branch
+# Updated for Ryan White branch
 
 # Selector configurations
 selectors:
   scenario:
     type: "select"
     input_style: "choices"
-    label: "Scenario"
+    label: "Funding Scenario"
     placeholder: "Select a scenario..."
-    value: "neutral"  # Default to neutral scenario
+    value: "permanent_loss"  # Default to permanent loss scenario
     options:
-      optimistic:
-        id: "optimistic"
-        label: "Optimistic Scenario"
-      neutral:
-        id: "neutral"
-        label: "Neutral Scenario"
-      pessimistic:
-        id: "pessimistic"
-        label: "Pessimistic Scenario"
+      permanent_loss:
+        id: "permanent_loss"
+        label: "Permanent Funding Loss"
+        description: "Ryan White funding is discontinued permanently"
+      temporary_loss:
+        id: "temporary_loss"
+        label: "Temporary Funding Loss"
+        description: "Ryan White funding is discontinued but returns in 2029"
 
 # Simulation file configuration
 prerun_simulations:
-  file_pattern: "prerun/{location}/{aspect}_{population}_{timeframe}_{intensity}.Rdata"
-
+  file_pattern: "prerun/{location}/{scenario}.Rdata"
