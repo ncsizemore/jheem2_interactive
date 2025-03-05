@@ -1,35 +1,30 @@
-# First, source the section header component
-source("src/ui/components/common/display/section_header.R")
+# First, source the section builder
+source("src/ui/components/common/layout/section_builder.R")
 
 #' Creates the intervention panel content
 #' @param config Page configuration
 create_intervention_content <- function(config) {
-    # Create sections with grouped selectors
-    sections <- list()
+    # Get current session and output
+    session <- getDefaultReactiveDomain()
+    output <- if (!is.null(session)) session$output else NULL
     
-    # Location section
-    location_section_config <- config$sections$location %||% list(title = "Location", description = NULL)
-    sections$location <- tagList(
-        create_section_header(location_section_config$title, location_section_config$description),
-        create_location_selector("prerun")
+    # Create sections based on configuration with error handling
+    section_result <- create_sections_from_config(
+        config = config, 
+        page_type = "prerun",
+        session = session,
+        output = output
     )
     
-    # Intervention section - only include if configured
-    if (!is.null(config$intervention_aspects)) {
-        intervention_section_config <- config$sections$intervention %||% list(title = "Intervention", description = NULL)
-        sections$intervention <- tagList(
-            create_section_header(intervention_section_config$title, intervention_section_config$description),
-            create_intervention_selector("prerun"),
-            create_population_selector("prerun"),
-            create_timeframe_selector("prerun"),
-            create_intensity_selector("prerun")
-        )
-    }
-    
-    # Only include sections that are configured
-    sections <- Filter(Negate(is.null), sections)
+    # Extract sections and error displays
+    sections <- section_result
+    error_displays <- section_result$error_displays
+    sections$error_displays <- NULL
     
     tagList(
+        # Include error displays if present
+        if (!is.null(error_displays)) error_displays,
+        
         # Selectors container
         tags$div(
             class = "intervention-options",
@@ -52,7 +47,8 @@ create_intervention_content <- function(config) {
                 tags$div(
                     class = "generate-feedback",
                     tags$small(config$defaults$feedback$generate$message),
-                    if (config$defaults$feedback$generate$show_chime) {
+                    if (!is.null(config$defaults$feedback$generate$show_chime) && 
+                        config$defaults$feedback$generate$show_chime) {
                         tags$div(
                             class = "chime-option",
                             checkboxInput(

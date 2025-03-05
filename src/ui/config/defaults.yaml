@@ -58,9 +58,11 @@ sections:
   location:
     title: "Location"
     description: "Select the geographic area for the model"
+    selectors: ["location"]
   intervention:
     title: "Intervention"
     description: "Choose intervention parameters"
+    selectors: ["intervention_aspects", "population_groups", "timeframes", "intensities"]
   subgroups:
     title: "Subgroups"
     description: "Define the number of intervention target groups"
@@ -184,5 +186,3 @@ testing:
       file: "test/prerun/C.12580_test_all_2024_2025_moderate.Rdata"
     custom:
       file: "test/custom/C.12580_base_test.Rdata"
-
-
