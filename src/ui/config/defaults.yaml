@@ -41,6 +41,16 @@ sections:
     title: "Funding Scenario"
     description: "Choose whether Ryan White funding is permanently discontinued or temporarily suspended"
     selectors: ["scenario"]
+  intervention:
+    title: "Intervention"
+    description: "Choose intervention parameters"
+    selectors: ["intervention_aspects", "population_groups", "timeframes", "intensities"]
+  subgroups:
+    title: "Subgroups"
+    description: "Define the number of intervention target groups"
+  timing:
+    title: "Intervention Timing"
+    description: "Define when the intervention starts and is fully implemented"
 
 # Panel configurations
 panels:

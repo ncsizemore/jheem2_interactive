@@ -13,6 +13,7 @@
 @import 'components/common/loading.css';
 @import 'components/common/page-section.css';
 @import 'components/common/section_headers.css';
+@import 'components/common/section_errors.css';
 
 @import 'components/panels/base.css';
 @import 'components/panels/plot.css';

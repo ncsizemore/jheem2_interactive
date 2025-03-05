@@ -1,10 +1,5 @@
-# First, source the section header component (if not already sourced)
-source("src/ui/components/common/display/section_header.R")
-
-# Source the sections config function if not in the same file
-if (!exists("create_sections_from_config")) {
-  source("src/ui/components/pages/prerun/content.R")
-}
+# First, source the section builder
+source("src/ui/components/common/layout/section_builder.R")
 
 #' Creates the custom intervention content
 #' @param config Page configuration
@@ -13,14 +8,31 @@ create_custom_intervention_content <- function(config) {
     print("Config structure:")
     str(config)
 
-    # Create sections based on configuration
-    sections <- create_sections_from_config(config, "custom")
+    # Get current session and output
+    session <- getDefaultReactiveDomain()
+    output <- if (!is.null(session)) session$output else NULL
+    
+    # Create sections based on configuration with error handling
+    section_result <- create_sections_from_config(
+        config = config, 
+        page_type = "custom",
+        session = session,
+        output = output
+    )
+    
+    # Extract sections and error displays
+    sections <- section_result
+    error_displays <- section_result$error_displays
+    sections$error_displays <- NULL
     
     # Special handling for subgroups if not already handled
     if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector) &&
         !any(grepl("subgroups_count_custom", capture.output(print(sections))))) {
         # Create subgroups section
-        subgroups_section_config <- config$sections$subgroups %||% list(title = "Subgroups", description = "Define the number of intervention target groups")
+        subgroups_section_config <- config$sections$subgroups %||% list(
+            title = "Subgroups", 
+            description = "Define the number of intervention target groups"
+        )
         sections$subgroups <- tagList(
             create_section_header(subgroups_section_config$title, subgroups_section_config$description),
             tags$div(
@@ -43,7 +55,10 @@ create_custom_intervention_content <- function(config) {
     # Special handling for dates if needed
     dates_section <- NULL
     if (!is.null(config$interventions$dates)) {
-        timing_section_config <- config$sections$timing %||% list(title = "Intervention Timing", description = "Define when the intervention starts and is fully implemented")
+        timing_section_config <- config$sections$timing %||% list(
+            title = "Intervention Timing", 
+            description = "Define when the intervention starts and is fully implemented"
+        )
         dates_section <- tagList(
             create_section_header(timing_section_config$title, timing_section_config$description),
             tags$div(
@@ -79,14 +94,17 @@ create_custom_intervention_content <- function(config) {
     }
     
     tagList(
+        # Include error displays if present
+        if (!is.null(error_displays)) error_displays,
+        
         # Main content container
         tags$div(
             class = "custom-container",
             
-            # Location and subgroups sections
+            # Location and other section content
             lapply(sections, function(section) section),
             
-            # Intervention configuration section
+            # Intervention configuration section (for special components)
             tags$div(
                 class = "intervention-config",
                 
