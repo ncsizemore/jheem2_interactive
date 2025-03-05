@@ -1,6 +1,11 @@
 # First, source the section header component (if not already sourced)
 source("src/ui/components/common/display/section_header.R")
 
+# Source the sections config function if not in the same file
+if (!exists("create_sections_from_config")) {
+  source("src/ui/components/pages/prerun/content.R")
+}
+
 #' Creates the custom intervention content
 #' @param config Page configuration
 create_custom_intervention_content <- function(config) {
@@ -8,19 +13,14 @@ create_custom_intervention_content <- function(config) {
     print("Config structure:")
     str(config)
 
-    # Create sections for grouped content
-    sections <- list()
+    # Create sections based on configuration
+    sections <- create_sections_from_config(config, "custom")
     
-    # Location section
-    location_section_config <- config$sections$location %||% list(title = "Location", description = NULL)
-    sections$location <- tagList(
-        create_section_header(location_section_config$title, location_section_config$description),
-        create_location_selector("custom")
-    )
-    
-    # Subgroups section - only include if configured
-    if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector)) {
-        subgroups_section_config <- config$sections$subgroups %||% list(title = "Subgroups", description = NULL)
+    # Special handling for subgroups if not already handled
+    if (!is.null(config$subgroups) && !config$subgroups$fixed && !is.null(config$subgroups$selector) &&
+        !any(grepl("subgroups_count_custom", capture.output(print(sections))))) {
+        # Create subgroups section
+        subgroups_section_config <- config$sections$subgroups %||% list(title = "Subgroups", description = "Define the number of intervention target groups")
         sections$subgroups <- tagList(
             create_section_header(subgroups_section_config$title, subgroups_section_config$description),
             tags$div(
@@ -40,85 +40,93 @@ create_custom_intervention_content <- function(config) {
         )
     }
     
-    tagList(
-        # Spread all sections
-        sections$location,
-        sections$subgroups %||% NULL,
-
-        # Intervention configuration section
-        tags$div(
-            class = "intervention-config",
-            
-            # Intervention timing section
-            if (!is.null(config$interventions$dates)) {
-                timing_section_config <- config$sections$timing %||% list(title = "Intervention Timing", description = NULL)
-                tagList(
-                    create_section_header(timing_section_config$title, timing_section_config$description),
-                    tags$div(
-                        class = "form-group date-range",
-                        # Start date
-                        tags$div(
-                            class = "date-start",
-                            selectInput(
-                                "int_dates_start_custom",
-                                label = config$interventions$dates$start$label,
-                                choices = setNames(
-                                    sapply(config$interventions$dates$start$options, `[[`, "id"),
-                                    sapply(config$interventions$dates$start$options, `[[`, "label")
-                                ),
-                                selected = config$interventions$dates$start$value
-                            )
+    # Special handling for dates if needed
+    dates_section <- NULL
+    if (!is.null(config$interventions$dates)) {
+        timing_section_config <- config$sections$timing %||% list(title = "Intervention Timing", description = "Define when the intervention starts and is fully implemented")
+        dates_section <- tagList(
+            create_section_header(timing_section_config$title, timing_section_config$description),
+            tags$div(
+                class = "form-group date-range",
+                # Start date
+                tags$div(
+                    class = "date-start",
+                    selectInput(
+                        "int_dates_start_custom",
+                        label = config$interventions$dates$start$label,
+                        choices = setNames(
+                            sapply(config$interventions$dates$start$options, `[[`, "id"),
+                            sapply(config$interventions$dates$start$options, `[[`, "label")
                         ),
-                        # End date
-                        tags$div(
-                            class = "date-end",
-                            selectInput(
-                                "int_dates_end_custom",
-                                label = config$interventions$dates$end$label,
-                                choices = setNames(
-                                    sapply(config$interventions$dates$end$options, `[[`, "id"),
-                                    sapply(config$interventions$dates$end$options, `[[`, "label")
-                                ),
-                                selected = config$interventions$dates$end$value
-                            )
-                        )
+                        selected = config$interventions$dates$start$value
+                    )
+                ),
+                # End date
+                tags$div(
+                    class = "date-end",
+                    selectInput(
+                        "int_dates_end_custom",
+                        label = config$interventions$dates$end$label,
+                        choices = setNames(
+                            sapply(config$interventions$dates$end$options, `[[`, "id"),
+                            sapply(config$interventions$dates$end$options, `[[`, "label")
+                        ),
+                        selected = config$interventions$dates$end$value
                     )
                 )
-            },
-
-            # Subgroup panels placeholder
-            if (!is.null(config$subgroups)) {
-                uiOutput("subgroup_panels_custom")
-            }
-        ),
-
-        # Generate button using config settings
+            )
+        )
+    }
+    
+    tagList(
+        # Main content container
         tags$div(
-            class = "generate-controls",
-            actionButton(
-                inputId = "generate_custom",
-                label = config$defaults$buttons$generate$label,
-                class = paste(
-                    "btn",
-                    config$theme$buttons$primary_class
-                )
+            class = "custom-container",
+            
+            # Location and subgroups sections
+            lapply(sections, function(section) section),
+            
+            # Intervention configuration section
+            tags$div(
+                class = "intervention-config",
+                
+                # Include dates section if created
+                dates_section,
+
+                # Subgroup panels placeholder
+                if (!is.null(config$subgroups)) {
+                    uiOutput("subgroup_panels_custom")
+                }
             ),
 
-            # Feedback area using config
+            # Generate button using config settings
             tags$div(
-                class = "generate-feedback",
-                tags$small(config$defaults$feedback$generate$message),
-                if (!is.null(config$defaults$feedback$generate$show_chime) && 
-                    config$defaults$feedback$generate$show_chime) {
-                    tags$div(
-                        class = "chime-option",
-                        checkboxInput(
-                            "chime_custom",
-                            config$defaults$feedback$generate$chime_label,
-                            value = FALSE
-                        )
+                class = "generate-controls",
+                actionButton(
+                    inputId = "generate_custom",
+                    label = config$defaults$buttons$generate$label,
+                    class = paste(
+                        "btn",
+                        config$theme$buttons$primary_class
                     )
-                }
+                ),
+
+                # Feedback area using config
+                tags$div(
+                    class = "generate-feedback",
+                    tags$small(config$defaults$feedback$generate$message),
+                    if (!is.null(config$defaults$feedback$generate$show_chime) && 
+                        config$defaults$feedback$generate$show_chime) {
+                        tags$div(
+                            class = "chime-option",
+                            checkboxInput(
+                                "chime_custom",
+                                config$defaults$feedback$generate$chime_label,
+                                value = FALSE
+                            )
+                        )
+                    }
+                )
             )
         )
     )

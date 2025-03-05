@@ -36,9 +36,11 @@ sections:
   location:
     title: "Location"
     description: "Select the geographic area for the model"
+    selectors: ["location"]
   scenario:
     title: "Funding Scenario"
     description: "Choose whether Ryan White funding is permanently discontinued or temporarily suspended"
+    selectors: ["scenario"]
 
 # Panel configurations
 panels:
