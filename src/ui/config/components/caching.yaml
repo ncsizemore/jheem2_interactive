@@ -1,4 +1,39 @@
 # Caching configuration
+
+# Simulation-specific cache for preventing re-runs
+simulation_cache:
+  provider: "disk"  # Options: "disk", "onedrive", "aws" (Phase 6)
+  enable_disk_cache: true  # Whether to cache simulations to disk
+  max_size: 2000000000  # 2GB
+  evict_strategy: "lru"
+  path: "cache/simulations"
+  ttl: 604800  # One week in seconds (7 days)
+  simulation_version: "ehe"  # JHEEM version string ('ehe' matches actual JHEEM)
+  check_version: false  # Whether to enforce version compatibility (false is more permissive)
+  
+  # OneDrive specific settings (used when provider is "onedrive")
+  onedrive:
+    folder: "jheem-simulations"  # OneDrive folder name
+    credentials_file: "config/onedrive_credentials.json"  # Path to credentials file
+  
+  # AWS S3 specific settings (used when provider is "aws" in Phase 6)
+  aws:
+    bucket: "jheem-simulations"  # S3 bucket name
+    region: "us-east-1"         # AWS region
+    prefix: "cache/"            # S3 key prefix
+    sse: true                   # Server-side encryption
+
+# Pre-run simulation library settings
+prerun_library:
+  provider: "disk"  # Options: "disk", "aws" (Phase 6)
+  path: "simulations"  # Local path for prerun simulations
+  # AWS settings for prerun libraries
+  aws:
+    bucket: "jheem-prerun"  # Different bucket for prerun simulations
+    region: "us-east-1"
+    prefix: "prerun/"
+
+# General-purpose cache (for backward compatibility)
 cache1:
   max_size: 1000000000  # 1GB
   evict_strategy: "lru"

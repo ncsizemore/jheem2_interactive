@@ -266,6 +266,20 @@ SimulationAdapter <- R6::R6Class(
                     )
                 )
                 
+                # Explicitly try to cache the completed simulation
+                tryCatch({
+                    # Only cache custom simulations, not prerun ones
+                    if (mode == "custom") {
+                        print("[SIMULATION_ADAPTER] Explicitly caching completed simulation")
+                        sim_state <- private$store$get_simulation(sim_id)
+                        cache_simulation(settings, mode, sim_state)
+                    } else {
+                        print("[SIMULATION_ADAPTER] Skipping cache for prerun simulation (already saved as simset)")
+                    }
+                }, error = function(e) {
+                    print(sprintf("[SIMULATION_ADAPTER] Error caching simulation: %s", e$message))
+                })
+                
                 # Clear any errors that might have been set
                 if (!is.null(private$error_boundaries[[mode]])) {
                     private$error_boundaries[[mode]]$clear()

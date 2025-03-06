@@ -8,7 +8,7 @@
 .Renviron
 
 # Project-specific
-shiny/sim_cache
+cache/
 env.R
 
 R_scripts/master_scripts
@@ -16,10 +16,8 @@ R_scripts/setup_scripts
 R_scripts/run_scripts
 
 # User-specific
-## joeflack4
 _dev
 _archive
-
 dev_notes/
 .cursorrules
 .cursorignore
