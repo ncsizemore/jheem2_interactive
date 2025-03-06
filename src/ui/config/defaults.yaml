@@ -232,7 +232,7 @@ testing:
   enabled: false  # Set to true for test mode
   simulations:
     prerun:
-      file: "test/ryan-white/prerun/C.12580/permanent_loss.Rdata"
+      file: "test/prerun/C.12580/permanent_loss.Rdata"
     custom:
-      file: "test/ryan_white/custom/base/C.12580_base.Rdata"
+      file: "test/custom/base/C.12580_base.Rdata"
 

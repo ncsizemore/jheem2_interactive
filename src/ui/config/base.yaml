@@ -6,6 +6,9 @@ application:
   defaults:
     selected_tab: 'custom_interventions'
 
+# Simulation directory configuration
+simulation_root: "simulations/ryan-white"  # Root directory for simulation files
+
 # Model specification settings
 model_specification:
   name: "ryan_white"

@@ -8,6 +8,14 @@ source("src/data/cache.R")
 #' Initialize the data provider
 #' @param provider_type Type of provider to use ("local" or "aws")
 #' @param ... Additional arguments passed to provider initialization
+#' 
+#' The root directory for simulations is determined by the following priority:
+#' 1. Explicitly provided as parameter (root_dir = ...)
+#' 2. From base.yaml configuration (simulation_root)
+#' 3. Default "simulations" if neither of the above is available
+#' 
+#' This allows for branch-specific simulation directories when working with multiple
+#' model versions on the same machine.
 initialize_provider <- function(provider_type = "local", ...) {
     .provider <<- if (provider_type == "local") {
         LocalProvider$new(...)

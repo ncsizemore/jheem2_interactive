@@ -8,10 +8,23 @@ LocalProvider <- R6::R6Class(
         config = NULL,
         mode = NULL,
 
-        initialize = function(root_dir = "simulations", config = NULL, mode = "prerun") {
+        initialize = function(root_dir = NULL, config = NULL, mode = "prerun") {
+            # If root_dir is not provided, try to get it from base config
+            if (is.null(root_dir)) {
+                base_config <- tryCatch({
+                    get_base_config()
+                }, error = function(e) {
+                    list(simulation_root = "simulations")
+                })
+                
+                root_dir <- base_config$simulation_root %||% "simulations"
+                print(sprintf("Using simulation root directory from config: %s", root_dir))
+            }
+            
             self$root_dir <- root_dir
             self$config <- config
             self$mode <- mode
+            
             if (!dir.exists(root_dir)) {
                 dir.create(root_dir, recursive = TRUE)
             }
