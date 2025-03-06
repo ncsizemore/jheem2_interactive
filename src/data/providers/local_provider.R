@@ -73,6 +73,16 @@ LocalProvider <- R6::R6Class(
                 print("In test mode - getting test file")
                 test_file <- defaults_config$testing$simulations[[self$mode]]$file
                 print(sprintf("Test file: %s", test_file))
+                
+                # Extract location from test file path to ensure consistent settings
+                test_location <- private$extract_location_from_path(test_file)
+                if (!is.null(test_location)) {
+                    print(sprintf("Extracted test location: %s (original: %s)", 
+                                 test_location, settings$location))
+                    # Update settings with test location for consistent cache keys
+                    settings$location <- test_location
+                }
+                
                 return(file.path(self$root_dir, test_file))
             }
             
@@ -159,6 +169,17 @@ LocalProvider <- R6::R6Class(
 
         #' Load a simulation file
         #' @param file_path Path to .Rdata file
+        # Helper to extract location from path
+        extract_location_from_path = function(path) {
+            # For paths like "test/custom/C.12580_base_test.Rdata"
+            # Extract C.12580
+            matches <- regmatches(path, regexpr("C\\.[0-9]+", path))
+            if (length(matches) > 0) {
+                return(matches[1])
+            }
+            return(NULL)
+        },
+        
         load_file = function(file_path) {
             print("\n=== load_file ===")
             print(sprintf("Loading file: %s", file_path))

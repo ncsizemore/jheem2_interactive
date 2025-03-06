@@ -21,6 +21,7 @@ source("src/ui/state/controls.R")
 source("src/ui/state/validation.R")
 
 # Source data layer components
+source("src/data/cache.R")
 source("src/adapters/simulation_adapter.R")
 source("src/adapters/intervention_adapter.R")
 
@@ -258,16 +259,9 @@ server <- function(input, output, session) {
       setNames(c("prerun", "custom"))
   )
 
-  # Initialize caches from config
+  # Initialize caches using the cache module
   cache_config <- get_component_config("caching")
-  DISK.CACHE.1 <- cachem::cache_disk(
-    max_size = cache_config$cache1$max_size,
-    evict = cache_config$cache1$evict_strategy
-  )
-  DISK.CACHE.2 <- cachem::cache_disk(
-    max_size = cache_config$cache2$max_size,
-    evict = cache_config$cache2$evict_strategy
-  )
+  initialize_caches(cache_config)
 
   # Initialize panel servers with reactive settings
   plot_panel_server(

@@ -8,7 +8,8 @@ ERROR_TYPES <- list(
     DATA = "data",
     SYSTEM = "system",
     STATE = "state",
-    SIMULATION = "simulation"    # Simulation errors
+    SIMULATION = "simulation",    # Simulation errors
+    SIMULATION_CACHE = "sim_cache"  # Simulation cache errors
 )
 
 #' Error severity levels
@@ -362,7 +363,58 @@ create_simulation_boundary <- function(session, output, page_id, id, state_manag
             )
         },
         
+        # Handle cache errors
+        handle_cache = function(expr, severity = SEVERITY_LEVELS$WARNING) {
+            error_boundary$handle(
+                expr,
+                type = ERROR_TYPES$SIMULATION_CACHE,
+                message = "Error with simulation cache",
+                severity = severity
+            )
+        },
+        
         # Inherit base error boundary methods
+        clear = error_boundary$clear_error,
+        set_error = error_boundary$set_error,
+        ui = error_boundary$ui,
+        get_state = error_boundary$get_error,
+        propagate_error = error_boundary$propagate_error
+    )
+}
+
+#' Create simulation cache error boundary
+#' Specialized for cache operations
+#' @param session Shiny session object
+#' @param output Shiny output object
+#' @param page_id Character: page identifier
+#' @param id Character: component identifier
+#' @param state_manager Optional visualization manager for integration
+#' @return Cache error handler
+create_simulation_cache_boundary <- function(session, output, page_id, id, state_manager = NULL) {
+    print(sprintf("Creating simulation cache boundary for %s on page %s", id, page_id))
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
+    
+    list(
+        # Cache-specific handlers
+        handle_cache_read = function(expr, severity = SEVERITY_LEVELS$WARNING) {
+            error_boundary$handle(
+                expr,
+                type = ERROR_TYPES$SIMULATION_CACHE,
+                message = "Error reading from simulation cache",
+                severity = severity
+            )
+        },
+        
+        handle_cache_write = function(expr, severity = SEVERITY_LEVELS$WARNING) {
+            error_boundary$handle(
+                expr,
+                type = ERROR_TYPES$SIMULATION_CACHE,
+                message = "Error writing to simulation cache",
+                severity = severity
+            )
+        },
+        
+        # Include base error boundary methods
         clear = error_boundary$clear_error,
         set_error = error_boundary$set_error,
         ui = error_boundary$ui,

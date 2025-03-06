@@ -1,171 +1,296 @@
-# JHEEM2 Configuration Files
+# JHEEM2 UI Configuration System
 
-This directory contains YAML configuration files that define the behavior and structure of the JHEEM2 web application.
+This guide explains the configuration system for JHEEM2, focusing on how to use YAML files to customize the UI and application behavior.
 
-## Core Configuration Files
+## Overview
 
-### base.yaml
-- Application-wide settings including name, version, theme configuration
-- CSS and JavaScript file references
-- Global application settings
+The JHEEM2 configuration system is built around YAML files that define everything from UI elements to application behavior. This approach allows for customization without code changes, making it ideal for branch-specific deployments.
 
-### defaults.yaml
-- Default configurations used across the application
-- Model dimension mappings (must align with model's expected values)
-- Input type defaults
-- Selector configurations
-- Abbreviation configurations for ID generation
-  ```yaml
-  abbreviations:
-    dimensions:
-      default_length: 2  # Default abbreviation length
-      values:
-        heterosexual_male: "hm"
-        never_IDU: "nidu"
-        # etc.
-  ```
+The configuration system is implemented in `src/ui/config/load_config.R`, which provides functions for loading and merging configuration files.
+
+## Configuration Structure
+
+The configuration system is organized in a hierarchical structure:
+
+```
+src/ui/config/
+├── base.yaml              # Core application settings
+├── defaults.yaml          # Default values and shared configurations
+├── components/            # Component-specific configurations
+│   ├── caching.yaml       # Cache settings
+│   ├── controls.yaml      # Plot and table controls
+│   └── state_management.yaml  # State management parameters
+└── pages/                 # Page-specific configurations
+    ├── prerun.yaml        # Pre-run interventions page
+    ├── custom.yaml        # Custom interventions page
+    └── ...                # Other pages
+```
+
+## Key Configuration Files
+
+- **base.yaml**: Core application settings
+- **defaults.yaml**: Default configurations that apply across the application
+- **pages/prerun.yaml**: Configuration specific to the Pre-run Interventions page
+- **pages/custom.yaml**: Configuration specific to the Custom Interventions page
+
+## Loading Configuration
+
+The configuration system uses these key functions:
+
+- `get_base_config()`: Loads the base application configuration
+- `get_defaults_config()`: Loads default values and settings
+- `get_component_config(component)`: Loads configuration for a specific component
+- `get_page_config(page)`: Loads configuration for a specific page
+- `get_page_complete_config(page)`: Loads complete configuration for a page by merging several configuration files
+
+Example usage in code:
+```r
+# Load configuration for plots component
+plot_config <- get_component_config("plots")
+
+# Load complete configuration for prerun page
+prerun_config <- get_page_complete_config("prerun")
+```
+
+## Configuring UI Sections
+
+Sections allow you to group related selectors with visual headers and descriptions. They're defined in the `sections` block of your YAML file:
+
+```yaml
+# Section configurations
+sections:
+  location:
+    title: "Location"
+    description: "Select the geographic area for the model"
+    selectors: ["location"]
+  intervention:
+    title: "Intervention"
+    description: "Choose intervention parameters"
+    selectors: ["intervention_aspects", "population_groups", "timeframes", "intensities"]
+```
+
+The section building is handled by the `create_sections_from_config()` function in `src/ui/components/common/layout/section_builder.R`.
+
+### Section Properties
+
+| Property | Description | Required | Code Reference |
+|----------|-------------|----------|----------------|
+| `title` | Header text displayed at the top of the section | Yes | Used in `create_section_header()` |
+| `description` | Explanatory text displayed below the header | No | Used in `create_section_header()` |
+| `selectors` | Array of selector IDs to include in this section | No | Used in `build_sections_internal()` |
+
+## Configuring Selectors
+
+Selectors are the interactive UI elements like dropdowns, radio buttons, etc. They're defined in the `selectors` block:
+
+```yaml
+selectors:
+  location:
+    type: "select"
+    label: "Location"
+    description: "Select the geographic area for the model"
+    show_label: true
+    placeholder: "Select a location..."
+    value: "C.33100"  # Default value
+    options:
+      atlanta:
+        id: "C.12580"
+        label: "Atlanta-Sandy Springs-Roswell, GA"
+      miami:
+        id: "C.33100"
+        label: "Miami-Fort Lauderdale-Pompano Beach, FL"
+```
+
+Selectors are created by the `create_selector()` function in `src/ui/components/selectors/base.R`.
+
+### Selector Properties
+
+| Property | Description | Required | Code Reference |
+|----------|-------------|----------|----------------|
+| `type` | Type of selector ("select", "radio", "checkbox", "numeric") | Yes | Used in `create_input_by_type()` |
+| `label` | Text label for the selector | Yes | Passed to the appropriate input function |
+| `description` | Explanatory text displayed below the label | No | Used in `choicesSelectInput()` |
+| `show_label` | Whether to show the label (default: true) | No | Used in `choicesSelectInput()` |
+| `placeholder` | Placeholder text for empty selectors | No | Passed to input function |
+| `value` | Default selected value | No | Sets the initial selection |
+| `options` | Available options for the selector | Yes (for select/radio) | Used to build choices |
+| `input_style` | UI style to use (e.g., "choices" for Choices.js) | No | Determines which input function to use |
+| `multiple` | Whether multiple selections are allowed | No | Configures selection mode |
 
 ## Component Configurations
 
-Located in `components/`:
+Component-specific configurations are stored in the `components/` directory:
 
-### controls.yaml
-- Plot and table control settings
-- Outcome selection options
-- Stratification settings
-- Display type configurations
-- Table structure and formatting
+### Caching (caching.yaml)
+Configure disk caching for application data:
+```yaml
+cache1:
+  max_size: 500MB
+  evict_strategy: "lru"
+```
 
-### selectors.yaml (if applicable)
-- Common selector configurations
-- Reusable input settings
-- Shared validation rules
+### Controls (controls.yaml)
+Configure plot and table control options:
+```yaml
+plot_controls:
+  outcomes:
+    type: "checkbox"
+    label: "Outcomes"
+    options:
+      ...
+```
 
-## Page-Specific Configurations
+### State Management (state_management.yaml)
+Configure simulation state management:
+```yaml
+cleanup:
+  default_max_age: 1800  # 30 minutes
+  cleanup_interval: 600000  # 10 minutes
+  high_count_threshold: 20
+```
 
-Located in `pages/`:
+## Example: Adding a New Selector
 
-### prerun.yaml
-- Pre-run interventions page settings
-- Intervention aspect selection
-- Population group selection
-- Timeframe and intensity settings
+To add a new selector and place it in a section:
 
-### custom.yaml
-- Custom interventions page settings
-- Demographics configuration (specifies available demographic fields)
-- Subgroup configuration (fixed or user-defined)
-- Intervention dates and components
-- Component configurations (compound or simple)
-- Branch-specific settings
+1. Add the selector definition:
 
-## Branch Compatibility
+```yaml
+selectors:
+  my_new_selector:
+    type: "select"
+    label: "My New Selector"
+    description: "Description of what this selector does"
+    options:
+      option1:
+        id: "option1"
+        label: "Option 1"
+      option2:
+        id: "option2"
+        label: "Option 2"
+```
 
-The configuration system supports different branches (e.g., main vs ryan-white) through:
+2. Add it to a section (or create a new section):
 
-### Demographic Fields
-- Demographics defined in configuration, not hardcoded
-- Fields and values can vary between branches
-- Common input generation code works with any defined fields
+```yaml
+sections:
+  my_section:
+    title: "My Section"
+    description: "Section containing my new selector"
+    selectors: ["my_new_selector"]
+```
 
-### Group ID Generation
-- Common abbreviation system for all demographic values
-- Fixed groups use predefined IDs from config
-- User-defined groups use abbreviated concatenated IDs
-- Length limits enforced through abbreviations
+## Panel Configuration
 
-### Component Types
-- Supports both simple and compound components
-- Component types and inputs defined in config
-- Common handling code for all component types
+Panels are the larger containers that hold sections and selectors. You can configure their headers and descriptions:
 
-## Configuration Loading
+```yaml
+panels:
+  left:
+    id: "intervention-panel"
+    header: "Specify Intervention"
+    description: "Select options below to configure the intervention settings."
+    width: 300
+    collapsible: true
+    defaultVisible: true
+```
 
-Configurations are loaded and merged in this order:
+Panel creation is handled by the `create_panel()` function in `src/ui/components/common/layout/panel.R`.
+
+## Configuration Merging
+
+Configurations are merged hierarchically:
 1. Base configuration (`base.yaml`)
-2. Default settings (`defaults.yaml`)
-3. Component configurations (`components/*.yaml`)
-4. Page-specific configurations (`pages/*.yaml`)
+2. Default configuration (`defaults.yaml`)
+3. Component configurations (from `components/`)
+4. Page-specific configuration (from `pages/`)
 
-See `src/ui/config/load_config.R` for implementation details.
+This allows for overriding settings at different levels of specificity.
 
-## Configuration-Based Validation & Flexible Selectors
+The merging is handled by the `merge_configs()` function in `load_config.R`.
 
-The configuration system supports flexible page requirements and optional selectors through several key features:
+## Tips for Configuration
+
+- **Backward Compatibility**: If you don't specify `selectors` for a section, all selectors will still appear but without organization
+- **Selector Assignment**: A selector can only be assigned to one section
+- **Unassigned Selectors**: Any selectors not explicitly assigned to a section will appear in an "Additional Settings" section
+- **Visibility**: Selectors that aren't configured won't appear at all
+- **Branch-Specific Config**: For branch-specific deployments, create branch-specific YAML files
+- **Error Handling**: The section builder includes error handling to ensure a working UI even if configuration has errors
+
+## Validation and Error Handling
+
+The configuration system includes validation to ensure that required settings are present:
+- `validate_config()` in `load_config.R` checks for required sections
+- `validate_page_config()` checks page-specific requirements
+- `validate_section_config()` in `section_builder.R` validates section configurations
+
+If errors occur during section building, a fallback UI is displayed with error messages.
+
+## Testing Your Configuration
+
+After making changes to the YAML files:
+
+1. Restart the application
+2. Check that all selectors appear in the expected sections
+3. Verify that labels and descriptions are displayed correctly
+4. Test that default values are selected
+
+If you encounter issues:
+- Check the application logs for error messages
+- Look for error messages in the UI (from the error handling system)
+- Verify YAML syntax with a YAML validator
+
+## Advanced Configuration
+
+### Custom Input Types
+
+You can configure default settings for different input types:
+
+```yaml
+input_types:
+  select:
+    default_style: "choices"
+    multiple: false
+  radio:
+    default_style: "native"
+    multiple: false
+```
+
+### Model Dimension Mappings
+
+Configure mappings between UI values and model values:
+
+```yaml
+model_dimensions:
+  age:
+    ui_field: "age_groups"
+    mappings:
+      "13-24": "13-24 years"
+      "25-34": "25-34 years"
+```
 
 ### Page Requirements
-- Page-specific requirements are defined in `defaults.yaml` under `page_requirements`
-- Each page type can specify its required configuration sections
-- Requirements are validated during config loading
-- Example:
-  ```yaml
-  page_requirements:
-    prerun:
-      required_sections:
-        - intervention_aspects
-        - population_groups
-        # etc.
-  ```
 
-### Optional Selectors
-- Selectors are created only if configured
-- Base selector implementation (`base.R`) checks for configuration before creating
-- Helper functions (e.g., `create_intervention_selector`) respect config presence
-- Allows different deployments to have different UI elements without code changes
+Define which settings are required for each page type:
 
-### Benefits
-- Different branches/deployments can specify their own requirements
-- UI elements can be added/removed via configuration
-- Core functionality remains the same across deployments
-- Validation is consistent but flexible
+```yaml
+page_requirements:
+  prerun:
+    required_sections:
+      - intervention_aspects
+      - population_groups
+```
 
-## Best Practices
+## Related Code Files
 
-1. **Configuration Structure**
-   - Keep related settings grouped together
-   - Use consistent naming conventions
-   - Document any non-obvious settings
+The configuration system interacts with these key files:
 
-2. **Validation**
-   - All configurations are validated on load
-   - Required fields are checked
-   - Type checking is performed where necessary
-
-3. **Maintenance**
-   - Keep configurations DRY (Don't Repeat Yourself)
-   - Document changes in git commits
-   - Update this README when adding new configuration types
-
-## Known Issues & Future Work
-
-1. **Selector "All" Functionality**
-   - Currently "all" options are removed from selectors
-   - Future work needed to implement proper handling of "all" selections
-   - Implementation considerations:
-     * UI/UX Behavior:
-       - How to handle when user selects "all" + individual options
-       - Consider auto-deselecting individual options when "all" is selected
-       - Consider auto-deselecting "all" when individual options are selected
-       - Potentially make "all" mutually exclusive with other options
-     * Model Translation:
-       - Need mechanism to expand "all" into complete set of valid values
-       - Consider adding expansion mappings in defaults.yaml
-       - Ensure expansion respects any model-specific constraints
-     * Configuration Structure:
-       - May need to add metadata to identify which selectors support "all"
-       - Consider adding validation rules specific to "all" handling
-       - Potential for selector-specific "all" behavior
-     * Performance:
-       - Consider caching expanded "all" values
-       - Evaluate impact on model runs with full selection sets
-
-2. **Model Value Alignment**
-   - Configuration values must align with model expectations
-   - Maintain mappings in `defaults.yaml` when model values change
-   - Consider adding validation to ensure config values match model requirements
-
-## Related Files
-
-- `src/ui/config/load_config.R`: Configuration loading and validation
-- `src/ui/components/common/display/plot_controls.R`: Plot control implementation
-- `app.R`: Main application file that uses these configurations
+- `src/ui/config/load_config.R`: Core configuration loading functions
+- `src/ui/components/common/layout/section_builder.R`: Creates UI sections from config
+- `src/ui/components/common/display/section_header.R`: Creates section headers
+- `src/ui/components/selectors/base.R`: Creates selectors based on configuration
+- `src/ui/components/selectors/choices_select.R`: Creates Choices.js select inputs
+- `src/ui/components/common/layout/panel.R`: Creates panels based on configuration
+- `src/ui/components/pages/prerun/content.R`: Uses section builder for prerun page
+- `src/ui/components/pages/custom/content.R`: Uses section builder for custom page
