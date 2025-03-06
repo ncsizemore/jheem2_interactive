@@ -122,25 +122,19 @@ LocalProvider <- R6::R6Class(
                     stop("Custom mode file pattern should only contain {location}")
                 }
             } else {
-                # For prerun, validate against top-level config sections
+                # For prerun, validate against selectors in the config
                 config <- get_page_complete_config("prerun")
                 
-                # Map our pattern fields to config sections
-                field_to_section <- list(
-                    location = "location",
-                    aspect = "intervention_aspects",
-                    population = "population_groups",
-                    timeframe = "timeframes",
-                    intensity = "intensities"
-                )
+                # Get all valid selector IDs from the config (plus 'location' which is always valid)
+                valid_selectors <- c("location", names(config$selectors))
                 
                 # Check that all our selectors correspond to config sections
-                invalid_selectors <- setdiff(selector_names, names(field_to_section))
+                invalid_selectors <- setdiff(selector_names, valid_selectors)
                 if (length(invalid_selectors) > 0) {
                     stop(sprintf(
                         "Invalid selectors in file pattern: %s. Valid selectors are: %s",
                         paste(invalid_selectors, collapse=", "),
-                        paste(names(field_to_section), collapse=", ")
+                        paste(valid_selectors, collapse=", ")
                     ))
                 }
             }
