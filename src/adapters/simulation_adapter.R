@@ -145,8 +145,12 @@ SimulationAdapter <- R6::R6Class(
             sim_config <- page_config[[paste0(mode, "_simulations")]]
             
             # Initialize provider with config and mode
+            # Get the simulation_root from base config
+            base_config <- get_base_config()
+            root_dir <- base_config$simulation_root %||% "simulations"  
+            
             provider <- LocalProvider$new(
-                "simulations",
+                root_dir,  # Use the configured root directory
                 config = sim_config,
                 mode = mode
             )
