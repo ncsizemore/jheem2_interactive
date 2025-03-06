@@ -59,5 +59,5 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-source("../jheem_analyses/applications/ryan_white/ryan_white_specification.R")
+# The model specification will be loaded dynamically via config
 

@@ -292,3 +292,39 @@ get_model_dimension_value <- function(dimension, ui_value) {
 
     mappings[[ui_value]]
 }
+
+#' Source the model specification file from appropriate location
+#' @return NULL invisibly
+source_model_specification <- function() {
+  # Get model specification config from base config
+  base_config <- get_base_config()
+  model_config <- base_config$model_specification
+  
+  if (is.null(model_config)) {
+    stop("Model specification configuration not found in base.yaml")
+  }
+  
+  # Get file paths from config
+  main_file <- model_config$main_file
+  dev_path <- model_config$development_path
+  deploy_path <- model_config$deployment_path
+  model_name <- model_config$name
+  
+  # Construct full paths
+  external_path <- file.path(dev_path, main_file)
+  internal_path <- file.path(deploy_path, main_file)
+  
+  # Try to source the file
+  if (file.exists(external_path)) {
+    message(paste0("Sourcing ", model_name, " specification from development path"))
+    source(external_path)
+  } else if (file.exists(internal_path)) {
+    message(paste0("Sourcing ", model_name, " specification from deployment path"))
+    source(internal_path)
+  } else {
+    stop(paste0(model_name, " specification file not found in either location: ", 
+               external_path, " or ", internal_path))
+  }
+  
+  invisible(NULL)
+}

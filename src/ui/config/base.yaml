@@ -2,9 +2,16 @@
 application:
   name: "JHEEM2"
   version: "2.0.0"
-  title: "JHEEM 2 - Ending HIV"
+  title: "JHEEM 2 - Ryan White Program"
   defaults:
     selected_tab: 'custom_interventions'
+
+# Model specification settings
+model_specification:
+  name: "ryan_white"
+  main_file: "ryan_white_specification.R"
+  development_path: "../jheem_analyses/applications/ryan_white/"
+  deployment_path: "external/jheem_analyses/applications/ryan_white/"
 
 # Theme configuration
 theme:

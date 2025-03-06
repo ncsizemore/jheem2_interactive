@@ -334,9 +334,9 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     observeEvent(input$generate_custom, {
         print("Generate button pressed (custom)")
 
-        # Check if EHE specification is loaded
-        if (!is.null(session$userData$is_ehe_spec_loaded) && 
-            !session$userData$is_ehe_spec_loaded()) {
+        # Check if model specification is loaded
+        if (!is.null(session$userData$is_model_spec_loaded) && 
+            !session$userData$is_model_spec_loaded()) {
             
             # Show loading notification
             showNotification(
@@ -346,10 +346,10 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 type = "message"
             )
             
-            # Trigger loading the EHE specification
-            if (!is.null(session$userData$load_ehe_spec)) {
-                # Load the EHE specification
-                if (session$userData$load_ehe_spec()) {
+            # Trigger loading the model specification
+            if (!is.null(session$userData$load_model_spec)) {
+                # Load the model specification
+                if (session$userData$load_model_spec()) {
                     # Successfully loaded, remove notification and proceed
                     removeNotification(id = "loading_for_generate")
                     generate_custom_simulation()
@@ -363,7 +363,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                     )
                 }
             } else {
-                # Can't load the EHE specification
+                # Can't load the model specification
                 removeNotification(id = "loading_for_generate")
                 showNotification(
                     "Cannot load simulation environment.",
@@ -372,7 +372,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 )
             }
         } else {
-            # EHE specification is already loaded, proceed directly
+            # Model specification is already loaded, proceed directly
             generate_custom_simulation()
         }
     })
