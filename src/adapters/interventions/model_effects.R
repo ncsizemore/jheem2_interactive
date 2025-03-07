@@ -4,9 +4,9 @@
 #' @param throw.error.if.missing Whether to throw error if intervention not found
 #' @return Intervention object or NULL if not found
 get.intervention.from.code.from.code <- function(code, throw.error.if.missing = TRUE) {
-    # WORKAROUND: This function is misspelled in the JHEEM2 package
-    # Redirect to the correct function
-    get.intervention.from.code(code, throw.error.if.missing)
+# WORKAROUND: This function is misspelled in the JHEEM2 package
+# Redirect to the correct function
+get.intervention.from.code(code, throw.error.if.missing)
 }
 
 #' Model-specific intervention effect configurations
@@ -18,93 +18,46 @@ get.intervention.from.code.from.code <- function(code, throw.error.if.missing = 
 #' @param start_time Start year
 #' @param end_time End year
 #' @param value Effect value
-#' @param is_temporary Boolean indicating if the effect is temporary
 #' @param transform Function to transform value (optional)
 #' @param group_id Group identifier (optional)
 #' @return jheem intervention effect
-create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, is_temporary = FALSE, transform = NULL, group_id = NULL) {
+create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL) {
     # Handle transform if provided
-    effect_value <- if (!is.null(transform)) {
-        transform(value)
-    } else {
-        # For suppression_loss, convert percentage to proportion and apply formula
-        if (group_id %in% c("adap", "oahs", "other")) {
-            # Calculate 1 - value/100 directly
-            1 - (value / 100)
-        } else {
-            value
-        }
-    }
-    
-    # Handle case where quantity_name is a function that requires group_id
-    actual_quantity_name <- if (is.function(quantity_name) && !is.null(group_id)) {
-        quantity_name(group_id)
-    } else {
-        quantity_name
-    }
-    
-    # Convert to numeric
-    start_time_num <- suppressWarnings(as.numeric(start_time))
-    
-    # Handle the "never" case explicitly
-    if (identical(end_time, "never")) {
-        end_time_num <- Inf
-    } else {
-        end_time_num <- suppressWarnings(as.numeric(end_time))
-    }
-    
-    # Create the effect based on temporary/permanent flag
-    if (is_temporary && !is.na(end_time_num) && is.finite(end_time_num)) {
-        # For temporary effects, use array of values with end time
-        print(paste("Creating TEMPORARY effect for", actual_quantity_name))
-        print(paste("start_time_num =", start_time_num, "end_time_num =", end_time_num))
-        print(paste("effect_value =", effect_value))
-        
-        # Make sure times and effects have the same length and are valid
-        times_vector <- c(start_time_num + 0.25, end_time_num)
-        effects_vector <- rep(effect_value, length(times_vector))
-        
-        print(paste("times_vector length:", length(times_vector)))
-        print(paste("effects_vector length:", length(effects_vector)))
-        
-        create.intervention.effect(
-            quantity.name = actual_quantity_name,
-            start.time = start_time_num,
-            end.time = end_time_num + 0.25,  # Extra buffer after restart
-            effect.values = effects_vector,  # Same value repeated
-            apply.effects.as = "value",
-            scale = scale,
-            times = times_vector,  
-            allow.values.less.than.otherwise = TRUE,
-            allow.values.greater.than.otherwise = FALSE
-        )
-    } else {
-        # For permanent effects or when end_time is NA/infinite, use single value
-        print(paste("Creating PERMANENT effect for", actual_quantity_name))
-        print(paste("start_time_num =", start_time_num))
-        print(paste("effect_value =", effect_value))
-        
-        # Ensure we have a valid start time
-        if (is.na(start_time_num)) {
-            print("WARNING: start_time_num is NA, using default of 2025")
-            start_time_num <- 2025
-        }
-        
-        # Make sure we have a valid time point
-        time_point <- start_time_num + 0.25
-        print(paste("time_point =", time_point))
-        
-        create.intervention.effect(
-            quantity.name = actual_quantity_name,
-            start.time = start_time_num,
-            effect.values = effect_value,  # Direct value
-            apply.effects.as = "value",
-            scale = scale,
-            times = time_point,  # Full effect shortly after start
-            allow.values.less.than.otherwise = TRUE,
-            allow.values.greater.than.otherwise = FALSE
-        )
-    }
+effect_value <- if (!is.null(transform)) {
+    transform(value)
+} else {
+    # For suppression_loss, convert percentage to proportion and apply formula
+if (group_id %in% c("adap", "oahs", "other")) {
+    # Calculate 1 - value/100 directly
+1 - (value / 100)
+} else {
+    value
+}
+}
+
+# Handle case where quantity_name is a function that requires group_id
+actual_quantity_name <- if (is.function(quantity_name) && !is.null(group_id)) {
+    quantity_name(group_id)
+} else {
+    quantity_name
+}
+
+# Convert to numeric
+start_time_num <- suppressWarnings(as.numeric(start_time))
+
+# Simplified approach: use a single time point instead of vectors
+# This ensures proper foreground creation
+create.intervention.effect(
+quantity.name = actual_quantity_name,
+    start.time = start_time_num,
+effect.values = effect_value,
+    apply.effects.as = "value",
+    scale = scale,
+    times = start_time_num + 0.25,  # Just use a single time point
+    allow.values.less.than.otherwise = TRUE,
+allow.values.greater.than.otherwise = FALSE
+)
+}
 }
 
 #' Get effect configuration for an intervention type

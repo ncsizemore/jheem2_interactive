@@ -147,12 +147,19 @@ create_custom_intervention <- function(settings, session_id = NULL) {
                 actual_value <- get_component_value(component)
                 print(paste("Using actual value for effect:", actual_value))
                 
-                effect_config$create(
+                created_effect <- effect_config$create(
                     start_time = as.numeric(settings$dates$start),
                     end_time = as.numeric(settings$dates$end),
                     value = actual_value,
                     group_id = group_id
                 )
+                
+                # Verify effect was created correctly
+                print("DEBUG: Verify effect created")
+                print(sprintf("Effect class: %s", paste(class(created_effect), collapse=", ")))
+                print(sprintf("Is jheem.intervention.effect: %s", is(created_effect, "jheem.intervention.effect")))
+                
+                created_effect
             }, error = function(e) {
                 warning(paste("Error creating effect:", e$message))
                 NULL
@@ -168,20 +175,48 @@ create_custom_intervention <- function(settings, session_id = NULL) {
             intervention_code <- paste0(intervention_code_base, ".", length(group_interventions))
             group_interventions[[length(group_interventions) + 1]] <- create.intervention(
                 target_pop, 
-                list(effect),
+                effect,  # Pass effect directly, not in a list
                 code = intervention_code,
                 overwrite.existing.intervention = TRUE
             )
+            
+            # Debug created intervention
+            print("DEBUG: Created intervention details")
+            print(sprintf("Intervention class: %s", paste(class(group_interventions[[length(group_interventions)]]), collapse=", ")))
+            print(sprintf("Has run method: %s", "run" %in% names(group_interventions[[length(group_interventions)]])))
+            print(sprintf("Has effects: %s (length: %d)", 
+                         !is.null(group_interventions[[length(group_interventions)]]$effects), 
+                         ifelse(!is.null(group_interventions[[length(group_interventions)]]$effects), 
+                                length(group_interventions[[length(group_interventions)]]$effects), 0)))
+            # Try to inspect the effects
+            if (!is.null(group_interventions[[length(group_interventions)]]$effects)) {
+                effects <- group_interventions[[length(group_interventions)]]$effects
+                for (i in seq_along(effects)) {
+                    print(sprintf("Effect %d, quantity: %s, scale: %s", 
+                                i, effects[[i]]$quantity.name, effects[[i]]$scale))
+                    print(sprintf("Has times: %s, times length: %d", 
+                                !is.null(effects[[i]]$times), 
+                                ifelse(!is.null(effects[[i]]$times), length(effects[[i]]$times), 0)))
+                    print(sprintf("Effect values: %s", deparse(effects[[i]]$effect.values)))
+                }
+            }
         }
     }
     
     # Return combined intervention or null intervention
     if (length(group_interventions) > 0) {
         print(paste("Created", length(group_interventions), "interventions"))
-        print("SIMPLIFIED: Using only the first intervention (adap) for testing")
-        # Just return the first intervention for testing
-        if (length(group_interventions) >= 1) {
-            return(group_interventions[[1]])
+        # Return combined intervention
+        if (length(group_interventions) > 0) {
+            # Join all interventions
+            if (length(group_interventions) > 1) {
+                print("Joining multiple interventions")
+                joined_intervention <- join.interventions(group_interventions, overwrite.existing.intervention = TRUE)
+                return(joined_intervention)
+            } else {
+                print("Returning single intervention")
+                return(group_interventions[[1]])
+            }
         } else {
             print("No valid interventions created, returning null intervention")
             return(jheem2:::get.null.intervention())
