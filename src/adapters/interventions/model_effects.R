@@ -1,3 +1,14 @@
+#' TEMPORARY FIX for JHEEM2 package bug
+#' Redirects calls to the misspelled function to the correct one
+#' @param code Intervention code
+#' @param throw.error.if.missing Whether to throw error if intervention not found
+#' @return Intervention object or NULL if not found
+get.intervention.from.code.from.code <- function(code, throw.error.if.missing = TRUE) {
+    # WORKAROUND: This function is misspelled in the JHEEM2 package
+    # Redirect to the correct function
+    get.intervention.from.code(code, throw.error.if.missing)
+}
+
 #' Model-specific intervention effect configurations
 #' @description Defines how UI intervention settings map to model effects
 
@@ -7,11 +18,23 @@
 #' @param start_time Start year
 #' @param end_time End year
 #' @param value Effect value
+#' @param is_temporary Boolean indicating if the effect is temporary
 #' @param transform Function to transform value (optional)
 #' @param group_id Group identifier (optional)
 #' @return jheem intervention effect
-create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL) {
-    effect_value <- if (!is.null(transform)) transform(value) else value
+create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, is_temporary = FALSE, transform = NULL, group_id = NULL) {
+    # Handle transform if provided
+    effect_value <- if (!is.null(transform)) {
+        transform(value)
+    } else {
+        # For suppression_loss, convert percentage to proportion and apply formula
+        if (group_id %in% c("adap", "oahs", "other")) {
+            # Calculate 1 - value/100 directly
+            1 - (value / 100)
+        } else {
+            value
+        }
+    }
     
     # Handle case where quantity_name is a function that requires group_id
     actual_quantity_name <- if (is.function(quantity_name) && !is.null(group_id)) {
@@ -20,18 +43,68 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
         quantity_name
     }
     
-    print(paste("Creating effect for quantity:", actual_quantity_name, "with value:", effect_value))
-
-    create.intervention.effect(
-        quantity.name = actual_quantity_name,
-        start.time = start_time,
-        effect.values = effect_value,
-        apply.effects.as = "multiplier",
-        scale = scale,
-        times = end_time,
-        allow.values.less.than.otherwise = TRUE,
-        allow.values.greater.than.otherwise = FALSE
-    )
+    # Convert to numeric
+    start_time_num <- suppressWarnings(as.numeric(start_time))
+    
+    # Handle the "never" case explicitly
+    if (identical(end_time, "never")) {
+        end_time_num <- Inf
+    } else {
+        end_time_num <- suppressWarnings(as.numeric(end_time))
+    }
+    
+    # Create the effect based on temporary/permanent flag
+    if (is_temporary && !is.na(end_time_num) && is.finite(end_time_num)) {
+        # For temporary effects, use array of values with end time
+        print(paste("Creating TEMPORARY effect for", actual_quantity_name))
+        print(paste("start_time_num =", start_time_num, "end_time_num =", end_time_num))
+        print(paste("effect_value =", effect_value))
+        
+        # Make sure times and effects have the same length and are valid
+        times_vector <- c(start_time_num + 0.25, end_time_num)
+        effects_vector <- rep(effect_value, length(times_vector))
+        
+        print(paste("times_vector length:", length(times_vector)))
+        print(paste("effects_vector length:", length(effects_vector)))
+        
+        create.intervention.effect(
+            quantity.name = actual_quantity_name,
+            start.time = start_time_num,
+            end.time = end_time_num + 0.25,  # Extra buffer after restart
+            effect.values = effects_vector,  # Same value repeated
+            apply.effects.as = "value",
+            scale = scale,
+            times = times_vector,  
+            allow.values.less.than.otherwise = TRUE,
+            allow.values.greater.than.otherwise = FALSE
+        )
+    } else {
+        # For permanent effects or when end_time is NA/infinite, use single value
+        print(paste("Creating PERMANENT effect for", actual_quantity_name))
+        print(paste("start_time_num =", start_time_num))
+        print(paste("effect_value =", effect_value))
+        
+        # Ensure we have a valid start time
+        if (is.na(start_time_num)) {
+            print("WARNING: start_time_num is NA, using default of 2025")
+            start_time_num <- 2025
+        }
+        
+        # Make sure we have a valid time point
+        time_point <- start_time_num + 0.25
+        print(paste("time_point =", time_point))
+        
+        create.intervention.effect(
+            quantity.name = actual_quantity_name,
+            start.time = start_time_num,
+            effect.values = effect_value,  # Direct value
+            apply.effects.as = "value",
+            scale = scale,
+            times = time_point,  # Full effect shortly after start
+            allow.values.less.than.otherwise = TRUE,
+            allow.values.greater.than.otherwise = FALSE
+        )
+    }
 }
 
 #' Get effect configuration for an intervention type
@@ -58,6 +131,38 @@ get_effect_config <- function(intervention_type, group_id = NULL) {
                if(is.null(group_id)) "any" else group_id))
 }
 
+#' Determine if an effect is temporary based on date settings
+#' @param start_time Start year of the effect
+#' @param end_time End year of the effect
+#' @return TRUE if temporary, FALSE if permanent
+is_temporary_effect <- function(start_time, end_time) {
+    # Silence warnings for this function
+    old <- options(warn = -1)
+    on.exit(options(old))
+    
+    # Handle the "never" case explicitly
+    if (is.null(end_time) || identical(end_time, "never")) {
+        return(FALSE)
+    }
+    
+    # Convert both values to numeric, with warning suppressed globally
+    start_time_num <- as.numeric(start_time)
+    end_time_num <- as.numeric(end_time)
+    
+    # If either value couldn't be converted, default to permanent
+    if (is.na(start_time_num) || is.na(end_time_num)) {
+        return(FALSE)
+    }
+    
+    # If end_time is a numeric year and greater than start_time, it's temporary
+    if (end_time_num > start_time_num) {
+        return(TRUE)
+    }
+    
+    # Default to permanent
+    return(FALSE)
+}
+
 #' Model effect configurations
 MODEL_EFFECTS <- list(
     # Generic suppression_loss effect that works for any group
@@ -74,20 +179,18 @@ MODEL_EFFECTS <- list(
             }
         },
         scale = "proportion",
-        transform = function(value) {
-            # Convert percentage loss to multiplier
-            # e.g., 25% loss becomes 0.75 multiplier
-            1 - (value / 100)
-        },
         value_field = "value",
         create = function(start_time, end_time, value, group_id) {
+            # Check if this is a temporary or permanent effect based on dates
+            is_temp <- is_temporary_effect(start_time, end_time)
+            
             create_standard_effect(
                 quantity_name = MODEL_EFFECTS[["suppression_loss"]]$quantity_name,
                 scale = MODEL_EFFECTS[["suppression_loss"]]$scale,
                 start_time = start_time,
                 end_time = end_time,
                 value = value,
-                transform = MODEL_EFFECTS[["suppression_loss"]]$transform,
+                is_temporary = is_temp,
                 group_id = group_id
             )
         }

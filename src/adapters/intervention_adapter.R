@@ -178,15 +178,13 @@ create_custom_intervention <- function(settings, session_id = NULL) {
     # Return combined intervention or null intervention
     if (length(group_interventions) > 0) {
         print(paste("Created", length(group_interventions), "interventions"))
-        if (length(group_interventions) == 1) {
-            group_interventions[[1]]
+        print("SIMPLIFIED: Using only the first intervention (adap) for testing")
+        # Just return the first intervention for testing
+        if (length(group_interventions) >= 1) {
+            return(group_interventions[[1]])
         } else {
-            # Join all group interventions with unique code
-            join.interventions(
-                group_interventions,
-                code = intervention_code_base,
-                overwrite.existing.intervention = TRUE
-            )
+            print("No valid interventions created, returning null intervention")
+            return(jheem2:::get.null.intervention())
         }
     } else {
         print("No valid interventions created, returning null intervention")
