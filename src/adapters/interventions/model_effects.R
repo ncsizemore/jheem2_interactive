@@ -58,7 +58,6 @@ effect.values = effect_value,
 allow.values.greater.than.otherwise = FALSE
 )
 }
-}
 
 #' Get effect configuration for an intervention type
 #' @param intervention_type The type of intervention
