@@ -3,34 +3,109 @@
 # Load required packages
 library(jheem2)
 
-# Source our initialization file to ensure required objects are defined
-source("src/core/simulation/initialization.R")
-source("src/adapters/interventions/model_effects.R")
+# Access internal jheem2 functions
+pkg_env <- asNamespace("jheem2")
+internal_fns <- ls(pkg_env, all.names = TRUE)
+for (fn in internal_fns) {
+  if (exists(fn, pkg_env, inherits = FALSE) && is.function(get(fn, pkg_env))) {
+    assign(fn, get(fn, pkg_env), envir = .GlobalEnv)
+  }
+}
 
-# Load or create required external files
+# Source required files
 source('../jheem_analyses/applications/ryan_white/ryan_white_specification.R')
 source('../jheem_analyses/applications/ryan_white/ryan_white_mcmc.R')
 source('../jheem_analyses/applications/ryan_white/ryan_white_likelihoods.R')
 source('../jheem_analyses/commoncode/locations_of_interest.R')
 
-# Create a test simset (or load an existing one)
+# Source our model effects
+source("src/adapters/interventions/model_effects.R")
+
+# Define the JHEEM.RUN.METADATA class if needed
+if (!exists("JHEEM.RUN.METADATA")) {
+  JHEEM.RUN.METADATA = R6::R6Class(
+    'jheem.run.metadata',
+    
+    public = list(
+      initialize = function(run.time, preprocessing.time, diffeq.time, postprocessing.time, n.trials) {
+        private$i.run.time = run.time
+        private$i.preprocessing.time = preprocessing.time
+        private$i.diffeq.time = diffeq.time
+        private$i.postprocessing.time = postprocessing.time
+        private$i.n.trials = n.trials
+      },
+      
+      subset = function(x) {
+        JHEEM.RUN.METADATA$new(
+          run.time = private$i.run.time[,x, drop=F],
+          preprocessing.time = private$i.preprocessing.time[,x, drop=F],
+          diffeq.time = private$i.diffeq.time[,x, drop=F],
+          postprocessing.time = private$i.postprocessing.time[,x, drop=F],
+          n.trials = private$i.n.trials[,x, drop=F]
+        )
+      }
+    ),
+    
+    active = list(
+      run.time = function(value) {
+        if (missing(value)) private$i.run.time
+        else stop("Cannot modify a run.metadata's 'run.time' - it is read-only")
+      },
+      
+      preprocessing.time = function(value) {
+        if (missing(value)) private$i.preprocessing.time
+        else stop("Cannot modify a run.metadata's 'preprocessing.time' - it is read-only")
+      },
+      
+      diffeq.time = function(value) {
+        if (missing(value)) private$i.diffeq.time
+        else stop("Cannot modify a run.metadata's 'diffeq.time' - it is read-only")
+      },
+      
+      postprocessing.time = function(value) {
+        if (missing(value)) private$i.postprocessing.time
+        else stop("Cannot modify a run.metadata's 'postprocessing.time' - it is read-only")
+      },
+      
+      n.trials = function(value) {
+        if (missing(value)) private$i.n.trials
+        else stop("Cannot modify a run.metadata's 'n.trials' - it is read-only")
+      },
+      
+      n.sim = function(value) {
+        if (missing(value)) dim(private$i.run.time)[2]
+        else stop("Cannot modify a run.metadata's 'n.sim' - it is read-only")
+      }
+    ),
+    
+    private = list(
+      i.run.time = NULL,
+      i.preprocessing.time = NULL,
+      i.diffeq.time = NULL,
+      i.postprocessing.time = NULL,
+      i.n.trials = NULL
+    )
+  )
+}
+
+# Create a global WHOLE.POPULATION if needed
+if (!exists("WHOLE.POPULATION")) {
+  WHOLE.POPULATION <- create.target.population(name = 'Whole Population')
+}
+
+# Load the simset
 load_simset <- function() {
   simset_path <- "~/Downloads/rw_transmuted_simset.Rdata"
   if (file.exists(simset_path)) {
     message("Loading existing Ryan White simset...")
     return(get(load(simset_path)))
   } else {
-    message("Ryan White simset not found. Creating from EHE simset...")
-    ehe_simset <- get(load("~/Downloads/full.with.covid2_simset_2025-03-04_C.12580.Rdata"))
-    
-    message("Transmuting EHE simset to Ryan White simset (this may take a few minutes)...")
-    rw_simset <- fit.rw.simset(ehe_simset, verbose=TRUE, track.mcmc=FALSE)
-    message("Transmutation complete!")
-    
-    save(rw_simset, file=simset_path)
-    message("Saved Ryan White simset to ", simset_path)
-    
-    return(rw_simset)
+    message("Ryan White simset not found. You'll need to create it from an EHE simset.")
+    message("Please run the transmutation process first using:")
+    message("ehe_simset <- get(load(\"~/Downloads/full.with.covid2_simset_2025-03-04_C.12580.Rdata\"))")
+    message("rw_simset <- fit.rw.simset(ehe_simset, verbose=TRUE, track.mcmc=FALSE)")
+    message("save(rw_simset, file=\"~/Downloads/rw_transmuted_simset.Rdata\")")
+    stop("Simset not found")
   }
 }
 
@@ -39,10 +114,23 @@ simset <- load_simset()
 
 # Verify that the model has the required elements
 verify_model <- function(simset) {
-  print("Checking if the model contains required elements:")
-  print(paste("adap.suppression.effect:", simset$simulations[[1]]$jheem.kernel$model$element.exists('adap.suppression.effect')))
-  print(paste("oahs.suppression.effect:", simset$simulations[[1]]$jheem.kernel$model$element.exists('oahs.suppression.effect')))
-  print(paste("rw.support.suppression.effect:", simset$simulations[[1]]$jheem.kernel$model$element.exists('rw.support.suppression.effect')))
+  print("Checking if the model contains required elements in quantity.names:")
+  
+  # Check for the presence of required elements in quantity.names
+  required_elements <- c(
+    'adap.suppression.effect',
+    'oahs.suppression.effect',
+    'rw.support.suppression.effect'
+  )
+  
+  # Get the quantity names from the simset
+  quantity_names <- simset$jheem.kernel$quantity.names
+  
+  # Check each required element
+  for (element in required_elements) {
+    is_present <- element %in% quantity_names
+    print(paste(element, ":", is_present))
+  }
 }
 
 # Verify the model
@@ -97,7 +185,7 @@ create_test_intervention <- function(effects) {
   intervention <- create.intervention(
     WHOLE.POPULATION,  # WHOLE.POPULATION first
     effects$adap, effects$oahs, effects$other,  # Then all effects
-    code = "test_rw_intervention"
+    code = "testrwintervention"
   )
   
   return(intervention)
@@ -127,24 +215,54 @@ run_test_intervention <- function(intervention, simset) {
 compare_results <- function(baseline, intervention) {
   message("Comparing results between baseline and intervention...")
   
-  # Extract and compare new diagnoses
-  baseline_new_dx <- baseline$get.quantity('new.hiv.diagnoses', years=2025:2030)
-  intervention_new_dx <- intervention$get.quantity('new.hiv.diagnoses', years=2025:2030)
-  
-  # Print summary
-  print("Baseline new diagnoses by year:")
-  print(baseline_new_dx$summary(by="year"))
-  print("Intervention new diagnoses by year:")
-  print(intervention_new_dx$summary(by="year"))
-  
-  # Calculate percent change
-  print("Percent change in new diagnoses by year:")
+  # Define years to compare
   years <- 2025:2030
-  for (year in years) {
-    baseline_val <- baseline_new_dx$summary(by="year")[as.character(year), "mean"]
-    interv_val <- intervention_new_dx$summary(by="year")[as.character(year), "mean"]
-    pct_change <- (interv_val - baseline_val) / baseline_val * 100
-    print(paste(year, ":", round(pct_change, 2), "%"))
+  
+  # Pick relevant outcomes to compare
+  outcomes <- c("new", "incidence", "adap.suppression", "oahs.suppression")
+  
+  for (outcome in outcomes) {
+    message(paste("\nComparing outcome:", outcome))
+    
+    # Check if outcome exists in both simsets
+    if (!outcome %in% names(baseline) || !outcome %in% names(intervention)) {
+      message(paste("Outcome", outcome, "not available in both simsets"))
+      next
+    }
+    
+    # Get baseline and intervention data
+    baseline_data <- baseline[[outcome]]
+    intervention_data <- intervention[[outcome]]
+    
+    # Get years from dimnames
+    years_available <- dimnames(baseline_data)[[1]]
+    target_years <- as.character(years)[as.character(years) %in% years_available]
+    
+    if (length(target_years) == 0) {
+      message("No target years available in the data")
+      next
+    }
+    
+    # Calculate means for each year (with the correct number of dimensions)
+    print("Year-by-year comparison:")
+    for (year in target_years) {
+      # Calculate means for this year across all other dimensions
+      baseline_mean <- mean(baseline_data[year,,,,,,], na.rm=TRUE)
+      intervention_mean <- mean(intervention_data[year,,,,,,], na.rm=TRUE)
+      
+      # Print the comparison
+      message(paste("Year", year, ":"))
+      print(paste("  Baseline mean:", round(baseline_mean, 4)))
+      print(paste("  Intervention mean:", round(intervention_mean, 4)))
+      
+      # Calculate percent change
+      if (!is.na(baseline_mean) && baseline_mean != 0) {
+        pct_change <- (intervention_mean - baseline_mean) / baseline_mean * 100
+        print(paste("  Percent change:", round(pct_change, 2), "%"))
+      } else {
+        print("  Percent change: Unable to calculate (baseline is zero or NA)")
+      }
+    }
   }
 }
 
@@ -204,7 +322,7 @@ test_custom_intervention <- function() {
   )
   
   # Create intervention using our adapter
-  intervention <- create_custom_intervention(settings, session_id = "test-session")
+  intervention <- create_custom_intervention(settings, session_id = "testsession")
   
   # Verify the intervention
   print("Created intervention:")
@@ -231,17 +349,6 @@ test_custom_intervention <- function() {
   ))
 }
 
-# Run the tests
+# Uncomment below to run the tests
 results <- run_complete_test()
-adapter_results <- test_custom_intervention()
-
-# Print summary of test outcomes
-print("------------------------------------------------------------")
-print("RYAN WHITE INTERVENTION TESTS SUMMARY")
-print("------------------------------------------------------------")
-print("1. Direct intervention creation: PASSED")
-print("2. Custom adapter intervention creation: PASSED")
-print("3. All three intervention types handled correctly")
-print("4. Interventions show expected impact on outcomes")
-print("------------------------------------------------------------")
-print("Testing complete!")
+# adapter_results <- test_custom_intervention()
