@@ -15,9 +15,40 @@ StateStore <- R6Class("StateStore",
         #' @description Initialize the store
         #' @param page_ids Character vector of page identifiers
         initialize = function(page_ids = c("prerun", "custom")) {
+            # Initialize base state
+            private$state <- list()
+            
+            # Add model state
+            private$state$model <- create_model_state()
+            
+            # Setup other components
             private$setup_panel_states(page_ids)
             private$setup_simulation_storage()
             private$setup_page_error_states(page_ids)
+        },
+        
+        #' @description Get the current model state
+        #' @return List containing model state
+        get_model_state = function() {
+            private$state$model
+        },
+        
+        #' @description Update model state
+        #' @param status Character: new status
+        #' @param error_message Character: new error message
+        #' @return Invisible self (for chaining)
+        update_model_state = function(status = NULL, error_message = NULL) {
+            current <- private$state$model
+            
+            if (!is.null(status)) {
+                current$status <- status
+            }
+            if (!is.null(error_message)) {
+                current$error_message <- error_message
+            }
+            
+            private$state$model <- validate_model_state(current)
+            invisible(self)
         },
 
         # Panel State Methods ------------------------------------------------
@@ -743,7 +774,10 @@ StateStore <- R6Class("StateStore",
         simulations = NULL,
         
         #' @field page_error_states Internal storage for page error states
-        page_error_states = NULL
+        page_error_states = NULL,
+        
+        #' @field state Main state storage
+        state = NULL
     )
 )
 

@@ -38,6 +38,7 @@ source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")
 source("src/ui/components/selectors/choices_select.R")
+source("src/ui/components/common/status/model_status.R")
 
 source("src/ui/components/pages/prerun/layout.R")
 source("src/ui/components/pages/custom/layout.R")
@@ -66,9 +67,6 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-
-# We'll load the model specification when it's needed, not at startup
-model_spec_loaded <- FALSE
 
 # UI Creation
 ui <- function() {
@@ -118,6 +116,10 @@ ui <- function() {
     ),
     tags$body(
       style = "height:100%;",
+      # Add model status indicator
+      create_model_status_ui(),
+      # Add hidden input for status tracking
+      tags$input(type="text", id="model_status", style="display:none;"),
       navbarPage(
         id = "main_nav",
         title = app_title,
@@ -205,42 +207,31 @@ ui <- function() {
 
 # Server function
 server <- function(input, output, session) {
-  # Create a simple function to load the model specification if not already loaded
-  load_model_spec <- function() {
-    if (!model_spec_loaded) {
-      # Show loading message
-      showNotification("Loading simulation environment...", id = "model_loading", duration = NULL)
-      
-      # Source the model specification
-      tryCatch({
-        message("=== Starting model specification loading ===")
-        source_model_specification()
-        model_spec_loaded <<- TRUE
-        removeNotification(id = "model_loading")
-        showNotification("Simulation environment loaded successfully", type = "message", duration = 3)
-        message("=== Completed model specification loading ===")
-      }, error = function(e) {
-        removeNotification(id = "model_loading")
-        error_msg <- paste("Error loading simulation environment:", e$message)
-        message(paste("ERROR:", error_msg))
-        showNotification(
-          error_msg,
-          type = "error",
-          duration = NULL
-        )
-      })
-    }
-    
-    return(model_spec_loaded)
-  }
+  # Create error boundary for model loading
+  model_boundary <- create_error_boundary(
+    session, 
+    output, 
+    "global", 
+    "model_spec",
+    state_manager = get_store()
+  )
   
-  # Make the loading function available
-  session$userData$load_model_spec <- load_model_spec
-  session$userData$is_model_spec_loaded <- function() { model_spec_loaded }
+  # Create model status manager
+  model_status <- create_model_status_manager(session, model_boundary)
+  
+  # Make the model status functions available to other components
+  session$userData$load_model_spec <- model_status$load_model_spec
+  session$userData$is_model_spec_loaded <- model_status$is_loaded
   
   # Backward compatibility for code that might still use the old function names
-  session$userData$load_ehe_spec <- load_model_spec
-  session$userData$is_ehe_spec_loaded <- function() { model_spec_loaded }
+  session$userData$load_ehe_spec <- model_status$load_model_spec
+  session$userData$is_ehe_spec_loaded <- model_status$is_loaded
+  
+  # Auto-load the model specification after UI is rendered
+  session$onFlushed(function() {
+    message("UI rendered, auto-loading model specification...")
+    model_status$load_model_spec()
+  })
   
   # Create reactive value at server level
   plot_state <- reactiveVal(

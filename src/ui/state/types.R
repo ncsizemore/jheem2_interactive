@@ -158,6 +158,48 @@ create_validation_state <- function(
     ))
 }
 
+#' Create a model state object
+#' @param status Character: "loading", "loaded", or "error"
+#' @param error_message Character: Error message if any
+#' @return List with model state properties
+create_model_state <- function(
+    status = "loading",
+    error_message = NULL) {
+    validate_model_state(list(
+        status = status,
+        error_message = error_message
+    ))
+}
+
+#' Validate model state object
+#' @param state List containing model state properties
+#' @return The state object if valid, otherwise throws error
+validate_model_state <- function(state) {
+    if (!is.list(state)) stop("Model state must be a list")
+
+    # Required fields
+    required <- c("status", "error_message")
+    missing <- setdiff(required, names(state))
+    if (length(missing) > 0) {
+        stop(sprintf(
+            "Missing required model state fields: %s",
+            paste(missing, collapse = ", ")
+        ))
+    }
+
+    # Validate status
+    if (!state$status %in% c("loading", "loaded", "error")) {
+        stop("Invalid status value. Must be 'loading', 'loaded', or 'error'")
+    }
+
+    # Validate error_message
+    if (!is.null(state$error_message) && !is.character(state$error_message)) {
+        stop("error_message must be NULL or a character string")
+    }
+
+    state
+}
+
 # Validation functions
 
 #' Validate visualization state object

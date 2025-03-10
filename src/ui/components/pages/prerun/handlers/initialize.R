@@ -91,7 +91,31 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
     observeEvent(input$generate_projections_prerun, {
         print("[PRERUN] === Generate Button Event ===")
 
-        # Check all validations
+        # Get the current model status from the store
+        store <- get_store()
+        model_state <- store$get_model_state()
+        model_status <- model_state$status
+        
+        # Check model status first
+        if (model_status == "loading") {
+            # Model is still loading - show notification
+            showNotification(
+                "Model environment is still loading. Please wait...",
+                type = "message",
+                duration = 5
+            )
+            return()
+        } else if (model_status == "error") {
+            # Model failed to load - show error
+            showNotification(
+                paste("Cannot run simulation: ", model_state$error_message),
+                type = "error",
+                duration = 8
+            )
+            return()
+        }
+        
+        # Model is loaded, now check validations
         print("[PRERUN] 1. Checking validations...")
         validation_results <- validation_manager$is_valid()
 
