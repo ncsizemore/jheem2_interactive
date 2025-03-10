@@ -34,7 +34,7 @@ supports_subgroup_targeting <- function() {
 #' @param quantity_name Name of the quantity to affect or function to dynamically determine quantity
 #' @param scale Type of scale (proportion or rate)
 #' @param start_time Start year
-#' @param end_time End year
+#' @param end_time End year or NULL/NA/"never" for permanent effect
 #' @param value Effect value
 #' @param transform Function to transform value (optional)
 #' @param group_id Group identifier for dynamic quantity determination (optional)
@@ -58,17 +58,53 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
   # Convert to numeric
   start_time_num <- suppressWarnings(as.numeric(start_time))
   
-  # Ryan White specific timing pattern
-  create.intervention.effect(
-    quantity.name = quantity_name,
-    start.time = start_time_num,
-    effect.values = effect_value,
-    apply.effects.as = "value",
-    scale = scale,
-    times = start_time_num + 0.3,  # Ryan White uses +0.3 from start time
-    allow.values.less.than.otherwise = TRUE,  # RW specific
-    allow.values.greater.than.otherwise = FALSE  # RW specific
-  )
+  # Check if this is a temporary or permanent effect
+  is_temporary <- !is.null(end_time) && 
+                  !is.na(end_time) && 
+                  end_time != "" && 
+                  end_time != "never"
+  
+  # Print debug info
+  print(paste("Creating", ifelse(is_temporary, "TEMPORARY", "PERMANENT"), "effect:"))
+  print(paste("  Quantity:", quantity_name))
+  print(paste("  Start time:", start_time_num))
+  print(paste("  End time:", ifelse(is_temporary, as.numeric(end_time), "N/A")))
+  print(paste("  Effect value:", effect_value))
+  
+  # Create appropriate effect based on type
+  if (is_temporary) {
+    # For temporary effects, use the Ryan White pattern with start/end times
+    end_time_num <- suppressWarnings(as.numeric(end_time))
+    
+    print(paste("  Creating temporary effect ending at", end_time_num))
+    
+    # Create effect with array of values and times
+    create.intervention.effect(
+      quantity.name = quantity_name,
+      start.time = start_time_num,
+      end.time = end_time_num + 0.25,  # Add 3 months for full return
+      effect.values = c(effect_value, effect_value),  # Same value at both time points
+      apply.effects.as = "value",
+      scale = scale,
+      times = c(start_time_num + 0.3, end_time_num),  # Implementation time and return start time
+      allow.values.less.than.otherwise = TRUE,
+      allow.values.greater.than.otherwise = FALSE
+    )
+  } else {
+    # For permanent effects, use the simpler pattern
+    print("  Creating permanent effect (never returns)")
+    
+    create.intervention.effect(
+      quantity.name = quantity_name,
+      start.time = start_time_num,
+      effect.values = effect_value,
+      apply.effects.as = "value",
+      scale = scale,
+      times = start_time_num + 0.3,  # Ryan White uses +0.3 from start time
+      allow.values.less.than.otherwise = TRUE,  # RW specific
+      allow.values.greater.than.otherwise = FALSE  # RW specific
+    )
+  }
 }
 
 #' Get effect configuration for an intervention type

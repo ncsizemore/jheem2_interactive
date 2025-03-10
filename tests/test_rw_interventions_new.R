@@ -351,4 +351,4 @@ test_custom_intervention <- function() {
 
 # Uncomment below to run the tests
 results <- run_complete_test()
-# adapter_results <- test_custom_intervention()
+adapter_results <- test_custom_intervention()
