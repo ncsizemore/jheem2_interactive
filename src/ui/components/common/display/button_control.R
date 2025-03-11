@@ -29,6 +29,12 @@ set_share_button_enabled <- function(input, suffix, enable) {
 }
 
 #' Sync button states with plot state
+#' 
+#' This function ensures that toggle buttons are enabled when data is available
+#' for their respective pages. It ONLY enables buttons and never disables them,
+#' which prevents a situation where generating plots on one page would inadvertently
+#' disable toggle buttons on other pages.
+#'
 #' @param input Shiny input object
 #' @param plot_and_table_list List containing plot and table data
 sync_buttons_to_plot <- function(input, plot_and_table_list) {
@@ -40,13 +46,17 @@ sync_buttons_to_plot <- function(input, plot_and_table_list) {
 
     for (suffix in names(plot_and_table_list)) {
         print(paste("Processing suffix:", suffix))
-        enable <- !is.null(plot_and_table_list[[suffix]])
-        print(paste("Enable buttons:", enable))
-
-        print(paste("Setting redraw button for", suffix))
-        set_redraw_button_enabled(input, suffix, enable)
-        print(paste("Setting share button for", suffix))
-        set_share_button_enabled(input, suffix, enable)
+        # Only process pages where data exists - NEVER disable other pages
+        if (!is.null(plot_and_table_list[[suffix]])) {
+            print(paste("Enabling buttons for", suffix))
+            print(paste("Setting redraw button for", suffix))
+            set_redraw_button_enabled(input, suffix, TRUE)
+            print(paste("Setting share button for", suffix))
+            set_share_button_enabled(input, suffix, TRUE)
+        } else {
+            # Skip disabling buttons for pages that don't have data
+            print(paste("Skipping button updates for inactive page:", suffix))
+        }
     }
     print("=== sync_buttons_to_plot completed ===")
 }

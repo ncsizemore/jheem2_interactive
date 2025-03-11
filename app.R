@@ -20,6 +20,9 @@ source("src/ui/state/visualization.R")
 source("src/ui/state/controls.R")
 source("src/ui/state/validation.R")
 
+# Source state synchronization system
+source("src/ui/components/common/display/state_sync.R")
+
 # Source data layer components
 source("src/data/cache.R")
 source("src/adapters/simulation_adapter.R")
@@ -110,6 +113,8 @@ ui <- function() {
       lapply(config$theme$scripts, function(script) {
         tags$script(src = script)
       }),
+      # Load our state synchronization script
+      tags$script(src = "js/state/visualization-sync.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
@@ -119,7 +124,7 @@ ui <- function() {
       # Add model status indicator
       create_model_status_ui(),
       # Add hidden input for status tracking
-      tags$input(type="text", id="model_status", style="display:none;"),
+      tags$input(type = "text", id = "model_status", style = "display:none;"),
       navbarPage(
         id = "main_nav",
         title = app_title,
@@ -209,30 +214,30 @@ ui <- function() {
 server <- function(input, output, session) {
   # Create error boundary for model loading
   model_boundary <- create_error_boundary(
-    session, 
-    output, 
-    "global", 
+    session,
+    output,
+    "global",
     "model_spec",
     state_manager = get_store()
   )
-  
+
   # Create model status manager
   model_status <- create_model_status_manager(session, model_boundary)
-  
+
   # Make the model status functions available to other components
   session$userData$load_model_spec <- model_status$load_model_spec
   session$userData$is_model_spec_loaded <- model_status$is_loaded
-  
+
   # Backward compatibility for code that might still use the old function names
-  session$userData$load_ehe_spec <- model_status$load_model_spec
-  session$userData$is_ehe_spec_loaded <- model_status$is_loaded
-  
+  # session$userData$load_ehe_spec <- model_status$load_model_spec
+  # session$userData$is_ehe_spec_loaded <- model_status$is_loaded
+
   # Auto-load the model specification after UI is rendered
   session$onFlushed(function() {
     message("UI rendered, auto-loading model specification...")
     model_status$load_model_spec()
   })
-  
+
   # Create reactive value at server level
   plot_state <- reactiveVal(
     lapply(c("prerun", "custom"), function(x) NULL) %>%
@@ -279,26 +284,36 @@ server <- function(input, output, session) {
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
 
+  # Initialize state synchronization for both pages
+  create_visualization_sync("prerun", session)
+  create_visualization_sync("custom", session)
+
+  # Log that sync is initialized
+  message("=== Visualization state sync initialized for all pages ===")
+
   # Initialize contact handlers using new framework-agnostic handler
   initialize_contact_handler(input, output, session)
-  
+
   # Periodic cleanup of old simulations
   observe({
     # Get cleanup interval from config with fallback
-    cleanup_interval <- 600000  # Default: 10 minutes
-    
-    tryCatch({
-      cleanup_config <- get_component_config("state_management")$cleanup
-      if (!is.null(cleanup_config$cleanup_interval)) {
-        cleanup_interval <- cleanup_config$cleanup_interval
+    cleanup_interval <- 600000 # Default: 10 minutes
+
+    tryCatch(
+      {
+        cleanup_config <- get_component_config("state_management")$cleanup
+        if (!is.null(cleanup_config$cleanup_interval)) {
+          cleanup_interval <- cleanup_config$cleanup_interval
+        }
+      },
+      error = function(e) {
+        print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
       }
-    }, error = function(e) {
-      print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
-    })
-    
+    )
+
     invalidateLater(cleanup_interval)
     print("[APP] Running scheduled simulation cleanup")
-    
+
     # Run cleanup using default max age from config
     get_store()$cleanup_old_simulations(force = FALSE)
   })
