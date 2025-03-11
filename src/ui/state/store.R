@@ -5,6 +5,9 @@ library(R6)
 # Source utilities for normalization functions
 source("src/data/utils.R")
 
+# Source comparison function
+source("src/ui/state/compare_components.R")
+
 #' State Store Class
 #' @description Central state management for the application
 StateStore <- R6Class("StateStore",
@@ -736,39 +739,48 @@ StateStore <- R6Class("StateStore",
                 print(sprintf("[STATE_STORE DEBUG] Normalized location 2: %s", settings2_norm$location))
             }
             
-            # Compare normalized settings
-            result <- identical(settings1_norm, settings2_norm)
-            print(sprintf("[STATE_STORE DEBUG] Settings match: %s", result))
+            # Step 1: Check if location and dates match
+            location_match <- identical(settings1_norm$location, settings2_norm$location)
+            print(sprintf("[STATE_STORE DEBUG] Location match: %s", location_match))
             
-            # If identical comparison fails, try looking at key fields for custom mode
-            if (!result && !is.null(settings1_norm$location) && !is.null(settings2_norm$location)) {
-                # For custom mode, we focus on the location
-                location_match <- identical(settings1_norm$location, settings2_norm$location)
-                print(sprintf("[STATE_STORE DEBUG] Location match: %s", location_match))
+            # If locations don't match, return FALSE immediately
+            if (!location_match) {
+                print("[STATE_STORE DEBUG] Locations don't match, settings not equal")
+                return(FALSE)
+            }
+            
+            # Check dates if they exist
+            dates_match <- TRUE
+            if (!is.null(settings1_norm$dates) && !is.null(settings2_norm$dates)) {
+                dates_match <- compare_components(settings1_norm$dates, settings2_norm$dates)
+                print(sprintf("[STATE_STORE DEBUG] Dates match: %s", dates_match))
                 
-                # If locations match, this might be a false match - check more fields
-                if (location_match) {
-                    print("[STATE_STORE DEBUG] Location matches but full comparison doesn't. Checking other key fields...")
-                    
-                    # Try checking other key fields that might differ
-                    # This is where we could add additional checks for specific fields that matter
-                    
-                    # For example, for custom mode with location, check dates if they exist
-                    if (!is.null(settings1_norm$dates) && !is.null(settings2_norm$dates)) {
-                        dates_match <- identical(settings1_norm$dates, settings2_norm$dates)
-                        print(sprintf("[STATE_STORE DEBUG] Dates match: %s", dates_match))
-                        
-                        # If location and dates match, that's probably enough to consider them the same
-                        if (dates_match) {
-                            print("[STATE_STORE DEBUG] Location and dates match, considering settings equal")
-                            return(TRUE)
-                        }
-                    }
+                # If dates don't match, return FALSE
+                if (!dates_match) {
+                    print("[STATE_STORE DEBUG] Dates don't match, settings not equal")
+                    return(FALSE)
                 }
             }
             
-            result
+            # Step 2: Check if components match
+            components_match <- TRUE
+            if (!is.null(settings1_norm$components) && !is.null(settings2_norm$components)) {
+                components_match <- compare_components(settings1_norm$components, settings2_norm$components)
+                print(sprintf("[STATE_STORE DEBUG] Components match: %s", components_match))
+                
+                # If components don't match, return FALSE
+                if (!components_match) {
+                    print("[STATE_STORE DEBUG] Components don't match, settings not equal")
+                    return(FALSE)
+                }
+            }
+            
+            # If we've reached this point, all checks have passed
+            print("[STATE_STORE DEBUG] All checks passed, settings are equal")
+            return(TRUE)
         },
+        
+
 
         #' @field simulations Internal storage for simulation ReactiveVals
         simulations = NULL,
