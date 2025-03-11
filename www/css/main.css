@@ -9,6 +9,7 @@
 @import 'components/common/navigation.css';
 @import 'components/common/page.css';
 @import 'components/common/panels.css';
+@import 'components/common/panel_toggle.css';
 @import 'components/common/scrollbars.css';
 @import 'components/common/loading.css';
 @import 'components/common/page-section.css';
@@ -19,13 +20,13 @@
 @import 'components/panels/plot.css';
 @import 'components/panels/table.css';
 
-@import 'components/controls/base.css';
 @import 'components/controls/plot.css';
 @import 'components/controls/toggle.css';
+@import 'components/controls/custom_inputs.css';
 
 @import 'components/feedback/errors.css';
 @import 'components/feedback/notifications.css';
-@import 'components/status/model_status.css';
+@import 'components/status/model_loading.css';
 
 @import 'components/choices/choices.css';
 

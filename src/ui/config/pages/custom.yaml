@@ -33,7 +33,7 @@ interventions:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Funding Ends (July 1st):"
+      label: "Funding Ends:"
       description: "Select the year when Ryan White funding would end"
       show_label: true
       placeholder: "Select start year..."
@@ -63,7 +63,7 @@ interventions:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Funding Returns (July 1st):"
+      label: "Funding Returns:"
       description: "Select when (or if) funding would be restored"
       show_label: true
       placeholder: "Select return year (if applicable)..."

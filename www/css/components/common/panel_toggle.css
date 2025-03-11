@@ -1,0 +1,77 @@
+/* Panel toggle button styling */
+.panel-title {
+  flex: 1;
+}
+
+.panel-toggle-button {
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  color: var(--theme-panel-header-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: var(--spacing-sm);
+}
+
+.panel-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.panel-toggle-button:active {
+  transform: scale(0.95);
+}
+
+/* Icon transition */
+.panel-toggle-button i {
+  transition: transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/* Rotate icon when panel is collapsed */
+.side-panel.collapsed .panel-toggle-button i.glyphicon-minus,
+.side-panel.collapsed .panel-toggle-button i.fa-minus {
+  transform: rotate(90deg);
+}
+
+/* Adjust header in collapsed state */
+.side-panel.collapsed .panel-header {
+  min-width: 50px;
+  padding: var(--spacing-md) !important;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  height: auto;
+  min-height: 200px;
+  justify-content: flex-start;
+  border-radius: var(--radius-lg) !important;
+}
+
+.side-panel.collapsed .panel-toggle-button {
+  margin-top: var(--spacing-md);
+  margin-left: 0;
+}
+
+.side-panel.collapsed .panel-title {
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+/* Adjust width for collapsed panel */
+.side-panel.collapsed {
+  width: 50px !important;
+  min-width: 50px !important;
+  overflow: hidden;
+  transition: width 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), min-width 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.side-panel {
+  transition: width 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), min-width 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/* Hide all content except header when collapsed */
+.side-panel.collapsed > *:not(.panel-header) {
+  display: none;
+}

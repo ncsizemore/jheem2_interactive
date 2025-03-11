@@ -90,7 +90,8 @@ selectors:
     type: "select"
     label: "Location"
     description: "Select the geographic area for the model"
-    show_label: true
+    show_label: false
+    show_description: false
     placeholder: "Select a location..."
     value: "C.12580"  # Default to Baltimore-Columbia-Towson, MD
     options:

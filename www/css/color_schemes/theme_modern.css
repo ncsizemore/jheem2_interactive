@@ -17,8 +17,8 @@
   --theme-panel-bg: var(--color-white);
   --theme-panel-border: var(--color-gray-200);
   --theme-panel-shadow: var(--shadow-sm);
-  --theme-panel-header-bg: var(--color-gray-50);
-  --theme-panel-header-text: var(--color-gray-800);
+  --theme-panel-header-bg: var(--theme-nav-bg); /* Match navbar background */
+  --theme-panel-header-text: var(--theme-nav-text); /* Match navbar text */
 
   /* Controls */
   --theme-control-bg: var(--color-white);

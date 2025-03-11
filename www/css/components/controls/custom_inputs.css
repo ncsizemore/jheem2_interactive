@@ -1,0 +1,44 @@
+/* Custom styling for form inputs */
+
+/* Numeric inputs */
+.numeric-input-container .form-control {
+  height: 46px; 
+  padding: 0.625rem 1rem;
+  font-size: 1.125rem;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.numeric-input-container .form-control:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+/* Labels for all inputs */
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-xl);
+  color: var(--color-gray-800);
+  font-weight: 600;
+}
+
+/* Error messages */
+.input-error-message {
+  color: var(--color-error);
+  font-size: var(--font-size-md);
+  margin-top: 6px;
+  display: none;
+}
+
+.is-invalid {
+  border-color: var(--color-error) !important;
+}
+
+.form-control.is-invalid {
+  background-image: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}

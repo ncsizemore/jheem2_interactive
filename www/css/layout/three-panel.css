@@ -27,43 +27,11 @@
 
 /* Panel States */
 .side-panel.collapsed {
-  width: 0 !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none;
+  max-width: 50px;
   overflow: hidden;
 }
 
-.side-panel.collapsed>*:not(.toggle-button) {
-  display: none;
-}
 
-/* Toggle Button Base Styles */
-.toggle-button {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: all var(--transition-speed) ease;
-}
-
-/* Left Panel Toggle Button */
-.left-panel .toggle-button {
-  left: 320px;
-}
-
-.left-panel .toggle-button.collapsed {
-  left: 20px;
-}
-
-/* Right Panel */
-.right-panel .toggle-button {
-  right: 320px;
-}
-
-.right-panel .toggle-button.collapsed {
-  right: 20px;
-}
 
 /* Responsive Layout */
 @media (max-width: 768px) {

@@ -13,14 +13,14 @@
 
 .selector-section-header .section-title {
   margin: 0;
-  font-weight: 600;
-  font-size: var(--font-size-md);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
   color: var(--color-gray-800);
 }
 
 .selector-section-header .section-description {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
   color: var(--color-gray-600);
   margin-top: var(--spacing-xs);
-  line-height: 1.4;
+  line-height: 1.5;
 }

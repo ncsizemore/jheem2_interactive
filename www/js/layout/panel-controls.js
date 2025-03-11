@@ -22,7 +22,7 @@ const PanelStateManager = {
     render() {
         Object.entries(this.state.panels).forEach(([position, data]) => {
             const panel = $(`.${position}-panel`);
-            const button = panel.find('.toggle-button');
+            const button = panel.find('.panel-toggle-button');
 
             // Update panel classes
             panel.toggleClass('collapsed', !data.visible);
@@ -33,14 +33,14 @@ const PanelStateManager = {
             button.toggleClass('collapsed', !data.visible);
 
             // Update button icon
-            const iconClass = position === 'left' ?
-                (data.visible ? 'fa-chevron-left' : 'fa-chevron-right') :
-                (data.visible ? 'fa-chevron-right' : 'fa-chevron-left');
-
-            button
-                .find('i')
-                .removeClass('fa-chevron-left fa-chevron-right')
-                .addClass(iconClass);
+            const icon = button.find('i');
+            if (data.visible) {
+                icon.attr('class', '');
+                icon.addClass('glyphicon glyphicon-minus');
+            } else {
+                icon.attr('class', '');
+                icon.addClass('glyphicon glyphicon-plus');
+            }
         });
 
         // Trigger resize after transition
@@ -53,7 +53,7 @@ const PanelStateManager = {
 // Initialize on document ready
 $(document).ready(function () {
     // Use a single handler for all toggle buttons
-    $('.toggle-button').on('click', function (e) {
+    $('.panel-toggle-button').on('click', function (e) {
         e.preventDefault();
 
         // Determine which panel we're toggling

@@ -3,24 +3,15 @@
 #' Create model status UI component
 #' @return Shiny UI component
 create_model_status_ui <- function() {
+  # Create a full page overlay for loading
   div(
-    id = "model-status-indicator",
-    class = "model-status-indicator hidden",
-    conditionalPanel(
-      condition = "input.model_status === 'loading'",
-      div(
-        class = "loading-indicator",
-        span(class = "spinner"),
-        "Loading JHEEM simulation environment..."
-      )
-    ),
-    conditionalPanel(
-      condition = "input.model_status === 'error'",
-      div(
-        class = "error-indicator",
-        icon("exclamation-triangle"),
-        textOutput("model_error_message")
-      )
+    id = "model-loading-overlay",
+    class = "model-loading-overlay hidden",
+    div(
+      class = "model-loading-content",
+      div(class = "model-spinner"),
+      h3("Loading JHEEM"),
+      p("Preparing simulation environment...")
     )
   )
 }
@@ -55,11 +46,13 @@ create_model_status_manager <- function(session, error_boundary = NULL) {
         
         # Update UI visibility based on status
         if (status == "loading") {
-            runjs("$('#model-status-indicator').removeClass('hidden').addClass('loading');")
+            runjs("$('#model-loading-overlay').removeClass('hidden');")
         } else if (status == "error") {
-            runjs("$('#model-status-indicator').removeClass('hidden loading').addClass('error');")
+            # For errors, we could add an error message or toast notification instead
+            runjs("$('#model-loading-overlay').addClass('hidden');")
+            # Show error toast or another UI element for errors
         } else if (status == "loaded") {
-            runjs("$('#model-status-indicator').addClass('hidden').removeClass('loading error');")
+            runjs("$('#model-loading-overlay').addClass('hidden');")
         }
     })
     

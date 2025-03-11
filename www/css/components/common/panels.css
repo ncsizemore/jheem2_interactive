@@ -2,25 +2,34 @@
 
 .panel-section {
   background: var(--color-white);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border: none;
   transition: all var(--transition-speed) ease;
+}
+
+.panel-section:hover {
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md);
-  background: var(--color-gray-50);
-  border-bottom: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  font-weight: 600;
-  color: var(--color-gray-800);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--theme-panel-header-bg);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+  color: var(--theme-panel-header-text);
+  letter-spacing: 0.01em;
+  transition: all var(--transition-speed) ease;
 }
 
 .panel-content {
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   background: var(--color-white);
   height: 100%;
   overflow-y: auto;
@@ -31,10 +40,10 @@
 }
 
 .panel-description {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--color-gray-200);
   background-color: var(--color-gray-50);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
   color: var(--color-gray-600);
-  line-height: 1.5;
+  line-height: 1.6;
 }

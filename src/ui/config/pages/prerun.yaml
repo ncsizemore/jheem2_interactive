@@ -8,7 +8,8 @@ selectors:
     input_style: "choices"
     label: "Funding Scenario"
     description: "Select whether Ryan White funding is permanently discontinued or temporarily suspended"
-    show_label: true
+    show_label: false
+    show_description: false
     placeholder: "Select a scenario..."
     value: "permanent_loss"  # Default to permanent loss scenario
     options:

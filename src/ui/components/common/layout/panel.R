@@ -31,18 +31,33 @@ create_panel <- function(id, type, config, content) {
         class = classes,
         style = build_panel_styles(panel_config, theme_config),
 
-        # Header with configured styles
+        # Header with configured styles and integrated toggle button
         tags$div(
             class = "panel-header",
             style = build_header_styles(theme_config),
-            panel_config$header
+            
+            # Left side - panel title
+            tags$div(
+                class = "panel-title",
+                panel_config$header
+            ),
+            
+            # Right side - toggle button (if collapsible)
+            if (panel_config$collapsible) {
+                tags$button(
+                    id = ns(sprintf("toggle-%s", type)),
+                    class = sprintf("panel-toggle-button toggle-%s", type),
+                    title = sprintf("Minimize %s panel", type),
+                    icon("minus")
+                )
+            }
         ),
         
         # Add panel description if provided
         if (!is.null(panel_config$description)) {
             tags$div(
                 class = "panel-description",
-                style = "padding: var(--spacing-sm); border-bottom: 1px solid var(--color-gray-200); background-color: var(--color-gray-50); font-size: var(--font-size-sm);",
+                style = "padding: var(--spacing-md) var(--spacing-lg); border-bottom: 1px solid var(--color-gray-200); background-color: var(--color-gray-50); font-size: var(--font-size-lg);",
                 panel_config$description
             )
         },
@@ -54,10 +69,7 @@ create_panel <- function(id, type, config, content) {
             content
         ),
 
-        # Configurable toggle button
-        if (panel_config$collapsible) {
-            create_panel_toggle(ns, type, theme_config)
-        }
+
     )
 }
 
