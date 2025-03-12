@@ -10,10 +10,11 @@ PACKAGE.VERSION.CACHE.FILE <- "external/jheem_analyses/commoncode/package_versio
 
 ## PUBLIC INTERFACES
 
-## A lot of people have done the "first time setup" already, so they need to install this new dependency
-if (nchar(system.file(package = "httr2")) == 0) {
-    install.packages("httr2")
-}
+## DEPLOYMENT MODIFICATION: Comment out automatic installation of httr2
+## This would fail on shinyapps.io due to no CRAN mirror being set
+# if (nchar(system.file(package = "httr2")) == 0) {
+#     install.packages("httr2")
+# }
 
 ## This function will get the latest version of jheem2.
 ## If "refresh.cache" is TRUE, and there's a new version, it will be installed
@@ -190,4 +191,51 @@ refresh.cache.folder <- function(verbose=T) {
     }
     
     invisible(JHEEM.CACHE.DIR)
+}
+
+# DEPLOYMENT MODIFICATION: Added load.data.manager.from.cache function
+# This is a simplified version that works with local files only for deployment
+load.data.manager.from.cache <- function(file, set.as.default = FALSE, offline = TRUE) {
+  error.prefix <- "Cannot load.data.manager.from.cache(): "
+  
+  # Get metadata with error handling
+  cache.metadata <- get.data.manager.cache.metadata(pretty.print = FALSE)
+  
+  # Check if file is in metadata (but only warn, don't stop)
+  if (!(file %in% names(cache.metadata))) {
+    warning(paste0(error.prefix, "'", file, "' is not one of our cached files."))
+  }
+  
+  # Try to load the file if it exists
+  file_path <- file.path(JHEEM.CACHE.DIR, file)
+  if (!file.exists(file_path)) {
+    warning(paste0(error.prefix, "File not found in deployment cache: ", file_path))
+    return(NULL)
+  }
+  
+  # Load the data manager with error handling
+  tryCatch({
+    # Assuming load.data.manager is from the jheem2 package
+    loaded.data.manager <- load.data.manager(file_path, set.as.default = set.as.default)
+    return(loaded.data.manager)
+  }, error = function(e) {
+    warning(paste0(error.prefix, "Error loading data manager: ", e$message))
+    return(NULL)
+  })
+}
+
+# DEPLOYMENT MODIFICATION: Added is.cached.data.manager.out.of.date function
+# This is a simplified version for deployment that always returns FALSE
+is.cached.data.manager.out.of.date <- function(file, data.manager, error.prefix = "") {
+  # In deployment environment, we'll assume files are up-to-date
+  # This avoids triggering OneDrive download attempts
+  return(FALSE)
+}
+
+# DEPLOYMENT MODIFICATION: Added download.data.manager.from.onedrive function
+# This is a stub function for deployment that logs a warning and does nothing
+download.data.manager.from.onedrive <- function(destination.file, onedrive.link, error.prefix = "", verbose = FALSE) {
+  warning(paste0(error.prefix, "OneDrive downloads are not supported in the deployment environment."))
+  # Return FALSE to indicate download was not performed
+  return(FALSE)
 }
