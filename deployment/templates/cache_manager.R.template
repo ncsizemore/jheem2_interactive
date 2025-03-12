@@ -10,10 +10,11 @@ PACKAGE.VERSION.CACHE.FILE <- "external/jheem_analyses/commoncode/package_versio
 
 ## PUBLIC INTERFACES
 
-## A lot of people have done the "first time setup" already, so they need to install this new dependency
-if (nchar(system.file(package = "httr2")) == 0) {
-    install.packages("httr2")
-}
+## DEPLOYMENT MODIFICATION: Comment out automatic installation of httr2
+## This would fail on shinyapps.io due to no CRAN mirror being set
+# if (nchar(system.file(package = "httr2")) == 0) {
+#     install.packages("httr2")
+# }
 
 ## This function will get the latest version of jheem2.
 ## If "refresh.cache" is TRUE, and there's a new version, it will be installed

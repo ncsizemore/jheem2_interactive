@@ -110,27 +110,9 @@ send_contact_email <- function(name, email, message,
         )
       )
     } else {
-      # Fallback to base R email if blastula is not available
-      # This is less reliable but better than nothing
-      mail_result <- try(
-        sendmail::sendmail(
-          from = from_email,
-          to = to_email,
-          subject = subject,
-          msg = email_body,
-          control = list(
-            smtpServer = "smtp.gmail.com",
-            port = 465,
-            user = from_email,
-            pass = Sys.getenv("EMAIL_PASSWORD"),
-            ssl = TRUE
-          )
-        )
-      )
-      
-      if (inherits(mail_result, "try-error")) {
-        stop("Email sending failed: ", mail_result)
-      }
+      # Fallback when blastula is not available
+      warning("Email sending requires the blastula package. Please install it with install.packages('blastula')")
+      return(list(success = FALSE, message = "Email sending failed: blastula package is required"))
     }
     
     # Return success

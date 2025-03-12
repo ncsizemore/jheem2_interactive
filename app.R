@@ -6,6 +6,7 @@ library(shinycssloaders)
 library(cachem)
 library(magrittr)
 library(plotly)
+library(httr2)  # Required for API calls
 
 # Source configuration system
 source("src/ui/config/load_config.R")
