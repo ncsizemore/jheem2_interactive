@@ -11,7 +11,7 @@ source("deployment/prepare_cache_manager.R")
 
 # Application configuration
 APP_NAME <- "ryan-white"  # The name of the app for deployment
-ACCOUNT_NAME <- "jheem-test"  # The shinyapps.io account name
+ACCOUNT_NAME <- "jheem"  # The shinyapps.io account name
 SOURCE_BRANCH <- "dev"  # The source branch for jheem2
 DEPLOYMENT_BRANCH <- "ryan-white-deployment"  # The deployment branch name
 
