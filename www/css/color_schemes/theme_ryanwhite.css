@@ -1,0 +1,224 @@
+/* Modern Dashboard Theme */
+
+body {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Reimagined Navigation */
+.navbar {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 2rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1100;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+    height: 64px;
+}
+
+.nav.navbar-nav.shiny-tab-input {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav.navbar-nav.shiny-tab-input a {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.nav.navbar-nav.shiny-tab-input a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.nav.navbar-nav.shiny-tab-input>.active a {
+    background: var(--rw-primary);
+    color: white;
+}
+
+/* Auto-hide navbar on scroll */
+.navbar-hidden {
+    transform: translateY(-100%) !important;
+}
+
+/* Modern Layout Structure */
+.prerun-container {
+    padding-top: 80px;
+    gap: 1rem;
+    background: #0f172a;
+    transition: padding-top 0.3s ease;
+}
+
+.navbar-hidden+.prerun-container {
+    padding-top: 16px;
+}
+
+/* Reimagined Panels as Cards */
+.panel-section {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    color: #e2e8f0;
+}
+
+.panel-header {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Form Controls */
+.form-control,
+.selectize-input {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #e2e8f0 !important;
+}
+
+.selectize-input.focus {
+    border-color: var(--rw-primary) !important;
+    box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.25) !important;
+}
+
+/* Buttons */
+.action-button,
+.btn-primary {
+    background: var(--rw-primary);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.action-button:hover,
+.btn-primary:hover {
+    background: var(--rw-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+}
+
+/* Plot/Table Toggle */
+.nav-pills {
+    position: relative;
+    z-index: 1050;
+    margin-top: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.nav-pills>li>a {
+    color: #94a3b8;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.nav-pills>li.active>a {
+    background: var(--rw-primary);
+    color: white;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Additional Modern Touches */
+.form-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Input Groups */
+.input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.input-group-addon {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Outcome Tags */
+.selectize-input .item {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 13px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.selectize-input .item a.remove {
+    color: #64748b !important;
+    font-size: 14px;
+    padding-left: 6px;
+}
+
+/* Radio Buttons */
+.radio label {
+    color: #1e293b;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+/* Checkbox */
+.checkbox label {
+    color: #1e293b;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Help Text */
+.help-block,
+.text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Loading State */
+.loading::after {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+}

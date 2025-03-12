@@ -6,6 +6,7 @@ library(shinycssloaders)
 library(cachem)
 library(magrittr)
 library(plotly)
+library(httr2)  # Required for API calls
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -19,6 +20,9 @@ source("src/ui/state/store.R")
 source("src/ui/state/visualization.R")
 source("src/ui/state/controls.R")
 source("src/ui/state/validation.R")
+
+# Source state synchronization system
+source("src/ui/components/common/display/state_sync.R")
 
 # Source data layer components
 source("src/data/cache.R")
@@ -38,6 +42,7 @@ source("src/ui/components/common/layout/panel.R")
 source("src/ui/components/selectors/base.R")
 source("src/ui/components/selectors/custom_components.R")
 source("src/ui/components/selectors/choices_select.R")
+source("src/ui/components/common/status/model_status.R")
 
 source("src/ui/components/pages/prerun/layout.R")
 source("src/ui/components/pages/custom/layout.R")
@@ -66,28 +71,6 @@ source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
 library(jheem2)
-
-# Function to source the EHE specification file from appropriate location
-source_ehe_spec <- function() {
-  # First try development path (outside the app directory)
-  external_path <- "../jheem_analyses/applications/EHE/ehe_specification.R"
-  
-  # Then try deployment path (inside the app directory)
-  internal_path <- "external/jheem_analyses/applications/EHE/ehe_specification.R"
-  
-  if (file.exists(external_path)) {
-    message("Sourcing EHE specification from development path")
-    source(external_path)
-  } else if (file.exists(internal_path)) {
-    message("Sourcing EHE specification from deployment path")
-    source(internal_path)
-  } else {
-    stop("EHE specification file not found in either location")
-  }
-}
-
-# We'll load the EHE specification when it's needed, not at startup
-ehe_spec_loaded <- FALSE
 
 # UI Creation
 ui <- function() {
@@ -131,12 +114,18 @@ ui <- function() {
       lapply(config$theme$scripts, function(script) {
         tags$script(src = script)
       }),
+      # Load our state synchronization script
+      tags$script(src = "js/state/visualization-sync.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
     ),
     tags$body(
       style = "height:100%;",
+      # Add model status indicator
+      create_model_status_ui(),
+      # Add hidden input for status tracking
+      tags$input(type = "text", id = "model_status", style = "display:none;"),
       navbarPage(
         id = "main_nav",
         title = app_title,
@@ -224,35 +213,32 @@ ui <- function() {
 
 # Server function
 server <- function(input, output, session) {
-  # Create a simple function to load the EHE specification if not already loaded
-  load_ehe_spec <- function() {
-    if (!ehe_spec_loaded) {
-      # Show loading message
-      showNotification("Loading simulation environment...", id = "ehe_loading", duration = NULL)
-      
-      # Source the EHE specification
-      tryCatch({
-        source_ehe_spec()
-        ehe_spec_loaded <<- TRUE
-        removeNotification(id = "ehe_loading")
-        showNotification("Simulation environment loaded successfully", type = "message", duration = 3)
-      }, error = function(e) {
-        removeNotification(id = "ehe_loading")
-        showNotification(
-          paste("Error loading simulation environment:", e$message),
-          type = "error",
-          duration = NULL
-        )
-      })
-    }
-    
-    return(ehe_spec_loaded)
-  }
-  
-  # Make the loading function available
-  session$userData$load_ehe_spec <- load_ehe_spec
-  session$userData$is_ehe_spec_loaded <- function() { ehe_spec_loaded }
-  
+  # Create error boundary for model loading
+  model_boundary <- create_error_boundary(
+    session,
+    output,
+    "global",
+    "model_spec",
+    state_manager = get_store()
+  )
+
+  # Create model status manager
+  model_status <- create_model_status_manager(session, model_boundary)
+
+  # Make the model status functions available to other components
+  session$userData$load_model_spec <- model_status$load_model_spec
+  session$userData$is_model_spec_loaded <- model_status$is_loaded
+
+  # Backward compatibility for code that might still use the old function names
+  # session$userData$load_ehe_spec <- model_status$load_model_spec
+  # session$userData$is_ehe_spec_loaded <- model_status$is_loaded
+
+  # Auto-load the model specification after UI is rendered
+  session$onFlushed(function() {
+    message("UI rendered, auto-loading model specification...")
+    model_status$load_model_spec()
+  })
+
   # Create reactive value at server level
   plot_state <- reactiveVal(
     lapply(c("prerun", "custom"), function(x) NULL) %>%
@@ -299,26 +285,36 @@ server <- function(input, output, session) {
   initialize_prerun_handlers(input, output, session, plot_state)
   initialize_custom_handlers(input, output, session, plot_state)
 
+  # Initialize state synchronization for both pages
+  create_visualization_sync("prerun", session)
+  create_visualization_sync("custom", session)
+
+  # Log that sync is initialized
+  message("=== Visualization state sync initialized for all pages ===")
+
   # Initialize contact handlers using new framework-agnostic handler
   initialize_contact_handler(input, output, session)
-  
+
   # Periodic cleanup of old simulations
   observe({
     # Get cleanup interval from config with fallback
-    cleanup_interval <- 600000  # Default: 10 minutes
-    
-    tryCatch({
-      cleanup_config <- get_component_config("state_management")$cleanup
-      if (!is.null(cleanup_config$cleanup_interval)) {
-        cleanup_interval <- cleanup_config$cleanup_interval
+    cleanup_interval <- 600000 # Default: 10 minutes
+
+    tryCatch(
+      {
+        cleanup_config <- get_component_config("state_management")$cleanup
+        if (!is.null(cleanup_config$cleanup_interval)) {
+          cleanup_interval <- cleanup_config$cleanup_interval
+        }
+      },
+      error = function(e) {
+        print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
       }
-    }, error = function(e) {
-      print(paste0("[APP] Error loading cleanup config: ", e$message, ". Using default interval."))
-    })
-    
+    )
+
     invalidateLater(cleanup_interval)
     print("[APP] Running scheduled simulation cleanup")
-    
+
     # Run cleanup using default max age from config
     get_store()$cleanup_old_simulations(force = FALSE)
   })

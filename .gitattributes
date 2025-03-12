@@ -1,0 +1,5 @@
+# Config files specific to ryan-white branch
+src/ui/config/defaults.yaml merge=ours
+src/ui/config/pages/custom.yaml merge=ours
+src/ui/config/pages/prerun.yaml merge=ours
+src/adapters/interventions/model_effects.R merge=ours 

@@ -8,36 +8,10 @@
   transition: grid-template-columns 0.3s ease;
 }
 
-/* Common panel styles */
-.panel-section {
-  background: white;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
 /* Left panel */
 .intervention-panel {
   width: 300px;
-  border-right: 1px solid #ddd;
   transition: all 0.3s ease;
-}
-
-/* Panel headers */
-.panel-header {
-  padding: 12px 15px;
-  background: #f8f9fa;
-  font-weight: 500;
-  border-bottom: 1px solid #ddd;
-  font-size: 16px;
-}
-
-/* Panel content */
-.panel-content {
-  padding: 15px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 /* Main visualization panel */

@@ -45,11 +45,12 @@ SimulationAdapter <- R6::R6Class(
             # Get Shiny session
             shiny_session <- getDefaultReactiveDomain()
             
-            # Check if EHE specification is loaded
-            if (!is.null(shiny_session$userData$is_ehe_spec_loaded) && 
-                !shiny_session$userData$is_ehe_spec_loaded()) {
-                
-                print("EHE specification not loaded. Creating pending simulation...")
+            # Get current model state
+            store_model_state <- private$store$get_model_state()
+            model_status <- store_model_state$status
+            
+            if (model_status != "loaded") {
+                print(paste("Model not ready. Current status:", model_status))
                 
                 # Create initial simulation state
                 sim_id <- private$store$add_simulation(
@@ -58,50 +59,39 @@ SimulationAdapter <- R6::R6Class(
                     results = list(simset = NULL, transformed = NULL)
                 )
                 
-                # Update to pending status
-                private$store$update_simulation(sim_id, list(status = "pending"))
+                # Update to proper status based on model status
+                if (model_status == "loading") {
+                    # Still loading - mark as pending
+                    private$store$update_simulation(sim_id, list(status = "pending"))
+                    
+                    # Show notification
+                    shiny::showNotification(
+                        "Model environment is still loading. Simulation will be queued to run after loading completes.",
+                        id = "model_loading_wait",
+                        duration = 5,
+                        type = "message"
+                    )
+                } else if (model_status == "error") {
+                    # Error loading model - mark simulation as error
+                    private$store$update_simulation(sim_id, list(
+                        status = "error",
+                        error_message = paste("Cannot run simulation: Model failed to load.", 
+                                              store_model_state$error_message)
+                    ))
+                    
+                    # Show notification
+                    shiny::showNotification(
+                        paste("Cannot run simulation: Model loading failed.", 
+                              store_model_state$error_message),
+                        type = "error",
+                        duration = 8
+                    )
+                }
                 
                 # Set as current simulation for the page
                 private$store$set_current_simulation(mode, sim_id)
                 
-                # Show loading notification
-                shiny::showNotification(
-                    "Loading simulation environment before running...",
-                    id = "loading_sim_env",
-                    duration = NULL
-                )
-                
-                # Trigger loading the EHE specification
-                if (!is.null(shiny_session$userData$load_ehe_spec)) {
-                    # Load the EHE specification
-                    if (shiny_session$userData$load_ehe_spec()) {
-                        # Successfully loaded, remove notification
-                        shiny::removeNotification(id = "loading_sim_env")
-                        
-                        # Now we can continue with the simulation
-                        return(self$get_simulation_data(settings, mode))
-                    } else {
-                        # Loading failed
-                        shiny::removeNotification(id = "loading_sim_env")
-                        shiny::showNotification(
-                            "Failed to load simulation environment. Please try again later.",
-                            type = "error",
-                            duration = NULL
-                        )
-                        
-                        return(sim_id)
-                    }
-                } else {
-                    # Can't load the EHE specification
-                    shiny::removeNotification(id = "loading_sim_env")
-                    shiny::showNotification(
-                        "Cannot load simulation environment.",
-                        type = "error",
-                        duration = NULL
-                    )
-                    
-                    return(sim_id)
-                }
+                return(sim_id)
             }
             
             # First check if we have a matching simulation
@@ -145,8 +135,12 @@ SimulationAdapter <- R6::R6Class(
             sim_config <- page_config[[paste0(mode, "_simulations")]]
             
             # Initialize provider with config and mode
+            # Get the simulation_root from base config
+            base_config <- get_base_config()
+            root_dir <- base_config$simulation_root %||% "simulations"  
+            
             provider <- LocalProvider$new(
-                "simulations",
+                root_dir,  # Use the configured root directory
                 config = sim_config,
                 mode = mode
             )

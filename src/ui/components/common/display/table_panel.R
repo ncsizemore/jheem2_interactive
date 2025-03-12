@@ -7,7 +7,7 @@ create_table_panel <- function(id) {
   ns <- NS(id)
 
   tags$div(
-    class = "main-panel main-panel-table",
+    class = paste0("main-panel main-panel-table ", id, "-table-panel"),
     conditionalPanel(
       condition = sprintf(
         "input['%s'] === 'visible' && input['%s'] === 'table'",

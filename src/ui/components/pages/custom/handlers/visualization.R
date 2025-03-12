@@ -28,15 +28,13 @@ initialize_custom_visualization_handlers <- function(input, output, session, vis
                 }
             )
 
-            # Update both store and UI state
+            # Update only the central state - the sync system will handle UI
             vis_manager$set_display_type("plot")
             vis_manager$set_visibility("visible")
-            updateTextInput(session, "custom-display_type", value = "plot")
-            updateTextInput(session, "custom-visualization_state", value = "visible")
-
-            # Update button states - use exact IDs
-            removeClass(id = "custom-toggle_table", class = "active", asis = TRUE)
-            addClass(id = "custom-toggle_plot", class = "active", asis = TRUE)
+            
+            # Debug log
+            print("[CUSTOM] Plot toggle - updated store state only")
+            print("[CUSTOM] Sync system should handle UI updates")
 
             tryCatch(
                 {
@@ -70,15 +68,13 @@ initialize_custom_visualization_handlers <- function(input, output, session, vis
                 }
             )
 
-            # Update both store and UI state
+            # Update only the central state - the sync system will handle UI
             vis_manager$set_display_type("table")
             vis_manager$set_visibility("visible")
-            updateTextInput(session, "custom-display_type", value = "table")
-            updateTextInput(session, "custom-visualization_state", value = "visible")
-
-            # Update button states - use exact IDs
-            removeClass(id = "custom-toggle_plot", class = "active", asis = TRUE)
-            addClass(id = "custom-toggle_table", class = "active", asis = TRUE)
+            
+            # Debug log
+            print("[CUSTOM] Table toggle - updated store state only")
+            print("[CUSTOM] Sync system should handle UI updates")
 
             tryCatch(
                 {

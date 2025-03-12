@@ -107,6 +107,9 @@ create_input_by_type <- function(type, id, config) {
     # Get show_label setting with default = TRUE for backward compatibility
     show_label <- config$show_label %||% TRUE
     
+    # Get show_description setting with default = TRUE for backward compatibility
+    show_description <- config$show_description %||% TRUE
+    
     # Create the base input element
     input_element <- switch(type,
         "select" = if (input_style == "choices") {
@@ -120,6 +123,7 @@ create_input_by_type <- function(type, id, config) {
                 multiple = multiple,
                 placeholder = config$placeholder %||% config$label,
                 show_label = show_label,
+                show_description = show_description,
                 description = config$description
             )
         } else {

@@ -38,32 +38,84 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
         validation_manager = validation_manager
     )
 
-    # Reset downstream selections when location changes
-    observeEvent(input$int_location_prerun, {
-        print(paste("Location selected:", input$int_location_prerun))
-
-        validation_boundary$validate(
-            input$int_location_prerun,
-            list(
-                validation_boundary$rules$required("Please select a location"),
-                validation_boundary$rules$custom(
-                    test_fn = function(value) !is.null(value) && value != "none",
-                    message = "Please select a location"
+    # Setup validation observers for each selector in the config
+    config <- get_page_complete_config("prerun")
+    selector_ids <- c("location", names(config$selectors))
+    
+    # Deduplicate in case location is also in the selectors
+    selector_ids <- unique(selector_ids)
+    
+    # Create observer for each selector
+    for (selector_id in selector_ids) {
+        local({
+            local_selector_id <- selector_id  # Create local copy for closure
+            input_id <- paste0("int_", local_selector_id, "_prerun")
+            
+            # Human-readable name for validation messages
+            selector_name <- if (local_selector_id == "location") {
+                "location"
+            } else if (!is.null(config$selectors[[local_selector_id]]$label)) {
+                # Use label from config if available
+                tolower(config$selectors[[local_selector_id]]$label)
+            } else {
+                # Fallback to selector ID with spaces
+                gsub("_", " ", local_selector_id)
+            }
+            
+            # Create the observer - the input existence check happens inside the reactive context
+            observeEvent(input[[input_id]], {
+                print(paste(selector_name, "selected:", input[[input_id]]))
+                
+                validation_boundary$validate(
+                    input[[input_id]],
+                    list(
+                        validation_boundary$rules$required(paste("Please select a", selector_name)),
+                        validation_boundary$rules$custom(
+                            test_fn = function(value) !is.null(value) && value != "none",
+                            message = paste("Please select a", selector_name)
+                        )
+                    ),
+                    field_id = input_id
                 )
-            ),
-            field_id = "int_location_prerun"
-        )
-
-        if (input$int_location_prerun == "none") {
-            updateRadioButtons(session, "int_aspect_prerun", selected = "none")
-        }
-    })
+                
+                # Special handling for location selection
+                if (local_selector_id == "location" && input[[input_id]] == "none") {
+                    # Reset downstream selections if needed
+                    # This would need to be configured based on dependencies
+                }
+            }, ignoreNULL = FALSE, ignoreInit = FALSE)
+        })
+    }
 
     # Handle generate button
     observeEvent(input$generate_projections_prerun, {
         print("[PRERUN] === Generate Button Event ===")
 
-        # Check all validations
+        # Get the current model status from the store
+        store <- get_store()
+        model_state <- store$get_model_state()
+        model_status <- model_state$status
+        
+        # Check model status first
+        if (model_status == "loading") {
+            # Model is still loading - show notification
+            showNotification(
+                "Model environment is still loading. Please wait...",
+                type = "message",
+                duration = 5
+            )
+            return()
+        } else if (model_status == "error") {
+            # Model failed to load - show error
+            showNotification(
+                paste("Cannot run simulation: ", model_state$error_message),
+                type = "error",
+                duration = 8
+            )
+            return()
+        }
+        
+        # Model is loaded, now check validations
         print("[PRERUN] 1. Checking validations...")
         validation_results <- validation_manager$is_valid()
 
@@ -92,13 +144,28 @@ initialize_prerun_handlers <- function(input, output, session, plot_state) {
 #' @return List of settings
 collect_prerun_settings <- function(input) {
     print("Collecting prerun settings:")
-    settings <- list(
-        location = isolate(input$int_location_prerun),
-        aspect = isolate(input$int_intervention_aspects_prerun),
-        population = isolate(input$int_population_groups_prerun),
-        timeframe = isolate(input$int_timeframes_prerun),
-        intensity = isolate(input$int_intensities_prerun)
-    )
+    
+    # Get page config to determine which fields to collect
+    config <- get_page_complete_config("prerun")
+    
+    # Build settings based on selectors in config
+    settings <- list()
+    
+    # Always include location as it's a core requirement
+    settings$location <- isolate(input$int_location_prerun)
+    
+    # Add all selectors defined in the config
+    for (selector_id in names(config$selectors)) {
+        input_id <- paste0("int_", selector_id, "_prerun")
+        # Use tryCatch to handle non-existent inputs gracefully
+        tryCatch({
+            settings[[selector_id]] <- isolate(input[[input_id]])
+        }, error = function(e) {
+            # Print warning but continue
+            print(paste("Warning: Could not collect setting for", selector_id, ":", e$message))
+        })
+    }
+    
     print("Settings collected:")
     print(settings)
     settings

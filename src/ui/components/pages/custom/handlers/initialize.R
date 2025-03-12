@@ -334,45 +334,30 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     observeEvent(input$generate_custom, {
         print("Generate button pressed (custom)")
 
-        # Check if EHE specification is loaded
-        if (!is.null(session$userData$is_ehe_spec_loaded) && 
-            !session$userData$is_ehe_spec_loaded()) {
-            
-            # Show loading notification
+        # Get the current model status from the store
+        store <- get_store()
+        model_state <- store$get_model_state()
+        model_status <- model_state$status
+        
+        # Check model status and respond accordingly
+        if (model_status == "loading") {
+            # Model is still loading - show notification
             showNotification(
-                "Loading simulation environment before running...",
-                id = "loading_for_generate",
-                duration = NULL,
-                type = "message"
+                "Model environment is still loading. Please wait...",
+                type = "message",
+                duration = 5
             )
-            
-            # Trigger loading the EHE specification
-            if (!is.null(session$userData$load_ehe_spec)) {
-                # Load the EHE specification
-                if (session$userData$load_ehe_spec()) {
-                    # Successfully loaded, remove notification and proceed
-                    removeNotification(id = "loading_for_generate")
-                    generate_custom_simulation()
-                } else {
-                    # Loading failed
-                    removeNotification(id = "loading_for_generate")
-                    showNotification(
-                        "Failed to load simulation environment. Please try again later.",
-                        type = "error",
-                        duration = NULL
-                    )
-                }
-            } else {
-                # Can't load the EHE specification
-                removeNotification(id = "loading_for_generate")
-                showNotification(
-                    "Cannot load simulation environment.",
-                    type = "error",
-                    duration = NULL
-                )
-            }
+            return()
+        } else if (model_status == "error") {
+            # Model failed to load - show error
+            showNotification(
+                paste("Cannot run simulation: ", model_state$error_message),
+                type = "error",
+                duration = 8
+            )
+            return()
         } else {
-            # EHE specification is already loaded, proceed directly
+            # Model is loaded, proceed with simulation
             generate_custom_simulation()
         }
     })

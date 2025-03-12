@@ -28,15 +28,13 @@ initialize_prerun_visualization_handlers <- function(input, output, session, vis
                 }
             )
 
-            # Update both store and UI state
+            # Update only the central state - the sync system will handle UI
             vis_manager$set_display_type("plot")
             vis_manager$set_visibility("visible")
-            updateTextInput(session, "prerun-display_type", value = "plot")
-            updateTextInput(session, "prerun-visualization_state", value = "visible")
-
-            # Update button states - use exact IDs
-            removeClass(id = "prerun-toggle_table", class = "active", asis = TRUE)
-            addClass(id = "prerun-toggle_plot", class = "active", asis = TRUE)
+            
+            # Debug log
+            print("[PRERUN] Plot toggle - updated store state only")
+            print("[PRERUN] Sync system should handle UI updates")
 
             tryCatch(
                 {
@@ -70,15 +68,13 @@ initialize_prerun_visualization_handlers <- function(input, output, session, vis
                 }
             )
 
-            # Update both store and UI state
+            # Update only the central state - the sync system will handle UI
             vis_manager$set_display_type("table")
             vis_manager$set_visibility("visible")
-            updateTextInput(session, "prerun-display_type", value = "table")
-            updateTextInput(session, "prerun-visualization_state", value = "visible")
-
-            # Update button states - use exact IDs
-            removeClass(id = "prerun-toggle_plot", class = "active", asis = TRUE)
-            addClass(id = "prerun-toggle_table", class = "active", asis = TRUE)
+            
+            # Debug log
+            print("[PRERUN] Table toggle - updated store state only")
+            print("[PRERUN] Sync system should handle UI updates")
 
             tryCatch(
                 {

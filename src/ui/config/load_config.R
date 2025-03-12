@@ -192,44 +192,10 @@ validate_config <- function(config) {
 #' @param page Page type
 #' @return TRUE if valid, throws error if invalid
 validate_page_config <- function(config, page) {
-    # Get defaults configuration
-    defaults_config <- get_defaults_config()
-    # Get required sections from page requirements
-    required_sections <- defaults_config$page_requirements[[page]]$required_sections
-
-
-    if (is.null(required_sections)) {
-        warning(sprintf("No requirements defined for page: %s", page))
-        return(TRUE)
+    # Basic validation of config structure
+    if (!is.list(config)) {
+        stop("Configuration must be a list")
     }
-
-    # For each required section
-    for (section in required_sections) {
-        print(paste("Checking section:", section))
-        # First check if section exists in page-specific config
-        if (section %in% names(config)) {
-            print(paste("Found", section, "in page config"))
-            next
-        }
-
-        # If not in page config, check if it's in selectors
-        print(paste("Looking for", section, "in selectors"))
-        print("Available selectors:")
-        str(config$selectors)
-
-        if (section %in% names(config$selectors)) {
-            print(paste("Found", section, "in selectors"))
-            next
-        }
-
-        # If not found in either place, it's missing
-        stop(sprintf(
-            "Missing required configuration section '%s' for %s. Section must be defined either in page config or in common selectors.",
-            section,
-            page
-        ))
-    }
-
     TRUE
 }
 
@@ -269,8 +235,8 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
         } else if (selector_id == "intervention_dates") {
             # Date selector
             config$interventions$dates
-        } else if (selector_id %in% c("testing", "prep", "suppression", "needle_exchange", "moud")) {
-            # Intervention component selectors
+        } else if (selector_id %in% names(config$interventions$components)) {
+            # Any intervention component from the config
             config$interventions$components[[selector_id]]
         } else {
             # Standard selectors
@@ -325,4 +291,40 @@ get_model_dimension_value <- function(dimension, ui_value) {
     }
 
     mappings[[ui_value]]
+}
+
+#' Source the model specification file from appropriate location
+#' @return NULL invisibly
+source_model_specification <- function() {
+  # Get model specification config from base config
+  base_config <- get_base_config()
+  model_config <- base_config$model_specification
+  
+  if (is.null(model_config)) {
+    stop("Model specification configuration not found in base.yaml")
+  }
+  
+  # Get file paths from config
+  main_file <- model_config$main_file
+  dev_path <- model_config$development_path
+  deploy_path <- model_config$deployment_path
+  model_name <- model_config$name
+  
+  # Construct full paths
+  external_path <- file.path(dev_path, main_file)
+  internal_path <- file.path(deploy_path, main_file)
+  
+  # Try to source the file
+  if (file.exists(external_path)) {
+    message(paste0("Sourcing ", model_name, " specification from development path"))
+    source(external_path)
+  } else if (file.exists(internal_path)) {
+    message(paste0("Sourcing ", model_name, " specification from deployment path"))
+    source(internal_path)
+  } else {
+    stop(paste0(model_name, " specification file not found in either location: ", 
+               external_path, " or ", internal_path))
+  }
+  
+  invisible(NULL)
 }

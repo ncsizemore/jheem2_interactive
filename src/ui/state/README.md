@@ -199,3 +199,31 @@ simulation_state = list(
   - `high_count_threshold`: When to use aggressive cleanup
   - `aggressive_max_age`: Maximum age during aggressive cleanup
 - Prevents memory issues during extended usage
+
+## Important Design Decisions
+
+### Cross-Page Button State Management
+
+The toggle buttons for plot/table views are managed with special care to prevent unintended disabling between pages.
+
+In particular, the `sync_buttons_to_plot` function in `button_control.R` was modified to:
+- Only enable buttons when data is available for a page
+- Never disable buttons for other pages that don't currently have data
+- This prevents a situation where generating a plot on one page would inadvertently disable toggle buttons on other pages
+
+Before this fix, generating projections on one page would cause toggle buttons on other pages to become disabled, creating a confusing user experience.
+
+The fix is implemented in `button_control.R`:
+
+```r
+for (suffix in names(plot_and_table_list)) {
+    # Only process pages where data exists - NEVER disable other pages
+    if (!is.null(plot_and_table_list[[suffix]])) {
+        set_redraw_button_enabled(input, suffix, TRUE)
+        set_share_button_enabled(input, suffix, TRUE)
+    } else {
+        # Skip disabling buttons for pages that don't have data
+        print(paste("Skipping button updates for inactive page:", suffix))
+    }
+}
+```

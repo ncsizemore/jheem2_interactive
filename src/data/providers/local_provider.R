@@ -8,10 +8,23 @@ LocalProvider <- R6::R6Class(
         config = NULL,
         mode = NULL,
 
-        initialize = function(root_dir = "simulations", config = NULL, mode = "prerun") {
+        initialize = function(root_dir = NULL, config = NULL, mode = "prerun") {
+            # If root_dir is not provided, try to get it from base config
+            if (is.null(root_dir)) {
+                base_config <- tryCatch({
+                    get_base_config()
+                }, error = function(e) {
+                    list(simulation_root = "simulations")
+                })
+                
+                root_dir <- base_config$simulation_root %||% "simulations"
+                print(sprintf("Using simulation root directory from config: %s", root_dir))
+            }
+            
             self$root_dir <- root_dir
             self$config <- config
             self$mode <- mode
+            
             if (!dir.exists(root_dir)) {
                 dir.create(root_dir, recursive = TRUE)
             }
@@ -122,25 +135,19 @@ LocalProvider <- R6::R6Class(
                     stop("Custom mode file pattern should only contain {location}")
                 }
             } else {
-                # For prerun, validate against top-level config sections
+                # For prerun, validate against selectors in the config
                 config <- get_page_complete_config("prerun")
                 
-                # Map our pattern fields to config sections
-                field_to_section <- list(
-                    location = "location",
-                    aspect = "intervention_aspects",
-                    population = "population_groups",
-                    timeframe = "timeframes",
-                    intensity = "intensities"
-                )
+                # Get all valid selector IDs from the config (plus 'location' which is always valid)
+                valid_selectors <- c("location", names(config$selectors))
                 
                 # Check that all our selectors correspond to config sections
-                invalid_selectors <- setdiff(selector_names, names(field_to_section))
+                invalid_selectors <- setdiff(selector_names, valid_selectors)
                 if (length(invalid_selectors) > 0) {
                     stop(sprintf(
                         "Invalid selectors in file pattern: %s. Valid selectors are: %s",
                         paste(invalid_selectors, collapse=", "),
-                        paste(names(field_to_section), collapse=", ")
+                        paste(valid_selectors, collapse=", ")
                     ))
                 }
             }

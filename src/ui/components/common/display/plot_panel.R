@@ -9,7 +9,7 @@ create_plot_panel <- function(id, type = "static") {
   ns <- NS(id)
 
   tags$div(
-    class = "main-panel main-panel-plot",
+    class = paste0("main-panel main-panel-plot ", id, "-plot-panel"),
     conditionalPanel(
       condition = sprintf(
         "input['%s'] === 'visible' && input['%s'] === 'plot'",

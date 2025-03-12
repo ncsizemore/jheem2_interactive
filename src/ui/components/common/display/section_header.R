@@ -3,6 +3,13 @@
 #' @param description Optional description text
 #' @return Div element with formatted header
 create_section_header <- function(title, description = NULL) {
+    # Check if description is effectively the same as the title or a common pattern
+    # like "Select {title}" to avoid duplication
+    show_description <- !is.null(description) && 
+                       !identical(description, title) && 
+                       !identical(description, paste("Select", tolower(title))) && 
+                       !identical(description, paste("Select the", tolower(title)))
+    
     tagList(
         tags$div(
             class = "selector-section-header",
@@ -10,7 +17,7 @@ create_section_header <- function(title, description = NULL) {
                 class = "section-title",
                 title
             ),
-            if (!is.null(description)) {
+            if (show_description) {
                 tags$div(
                     class = "section-description",
                     description

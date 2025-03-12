@@ -1,0 +1,57 @@
+/* Full page loading overlay */
+.model-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(33, 37, 41, 0.4); /* Even lighter background */
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.model-loading-overlay.hidden {
+  display: none;
+}
+
+.model-loading-content {
+  background-color: rgba(33, 37, 41, 1); /* Solid navbar color */
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  width: 100%;
+}
+
+.model-loading-content h3 {
+  color: white;
+  margin: 1rem 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.model-loading-content p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Spinner */
+.model-spinner {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: model-spin 1s ease-in-out infinite;
+  margin: 0 auto;
+}
+
+@keyframes model-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
