@@ -160,84 +160,6 @@ if (!startsWith(model_spec_file, "/") && !startsWith(model_spec_file, "../")) {
 
 cat("Using model specification file:", model_spec_file, "\n")
 
-# Create function to discover dependencies recursively
-discover_dependencies <- function(file_path, base_dir = "../jheem_analyses/") {
-  if (!file.exists(file_path)) {
-    warning(paste("File not found:", file_path))
-    return(character(0))
-  }
-  
-  content <- readLines(file_path, warn = FALSE)
-  
-  # Filter out commented lines (lines that have '#' before the source() call)
-  # This keeps only uncommented source() calls
-  content_filtered <- content[!grepl("^\\s*#.*source\\(", content)]
-  
-  # Look for source() calls with paths
-  source_regex <- "source\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]\\)"
-  matches <- regmatches(content_filtered, gregexpr(source_regex, content_filtered, perl = TRUE))
-  matches <- unlist(matches)
-  
-  # Extract the paths
-  paths <- gsub(source_regex, "\\1", matches, perl = TRUE)
-  full_paths <- file.path(dirname(base_dir), paths)
-  
-  # Add this file to the list
-  all_deps <- c(file_path)
-  
-  # Recursively find dependencies of dependencies
-  for (dep in full_paths) {
-    all_deps <- c(all_deps, discover_dependencies(dep, base_dir))
-  }
-  
-  return(unique(all_deps))
-}
-
-# Discover all dependencies
-all_dependencies <- discover_dependencies(model_spec_file)
-cat("Discovered", length(all_dependencies), "dependency files\n")
-
-# Ensure external directory exists
-if (!dir.exists("external/jheem_analyses")) {
-  dir.create("external/jheem_analyses", recursive = TRUE)
-}
-
-# Copy and modify each dependency
-for (source_path in all_dependencies) {
-  rel_path <- sub("^\\.\\./(jheem_analyses/.*?)$", "\\1", source_path)
-  target_path <- file.path("external", rel_path)
-  
-  # Create parent directory if needed
-  target_dir <- dirname(target_path)
-  if (!dir.exists(target_dir)) {
-    dir.create(target_dir, recursive = TRUE)
-  }
-  
-  # Read content and adjust paths
-  content <- readLines(source_path, warn = FALSE)
-  modified_content <- gsub(
-    "source\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]\\)",
-    "source('external/\\1')",
-    content
-  )
-  
-  # Write modified content
-  writeLines(modified_content, target_path)
-  cat("Copied and adjusted:", target_path, "\n")
-}
-
-# ---------- STEP 4: Prepare cache_manager.R using template-based approach ----------
-# Use our new modular function to prepare the cache manager
-prepare_cache_manager(
-  target_dir = "external/jheem_analyses/commoncode",
-  template_path = "deployment/templates/cache_manager.R.template",
-  verbose = TRUE
-)
-
-# ---------- STEP 5: Copy cached directory ----------
-
-cat("\n=== Copying cached directory ===\n")
-
 # Function to copy a directory and all its contents
 copy_directory_recursive <- function(source_dir, target_dir) {
   if (!dir.exists(source_dir)) {
@@ -268,6 +190,228 @@ copy_directory_recursive <- function(source_dir, target_dir) {
     }
   }
 }
+
+# Create enhanced function to discover dependencies recursively
+# This version detects both source() calls and data file references (read.csv, etc.)
+discover_dependencies <- function(file_path, base_dir = "../jheem_analyses/") {
+  if (!file.exists(file_path)) {
+    warning(paste("File not found:", file_path))
+    return(character(0))
+  }
+  
+  content <- readLines(file_path, warn = FALSE)
+  
+  # Filter out commented lines (lines that have '#' before the function calls)
+  # This keeps only uncommented calls
+  content_filtered <- content[!grepl("^\\s*#", content)]
+  
+  # Get all dependencies
+  all_deps <- c(file_path)
+  
+  # ----- First, find source() calls (as before) -----
+  source_regex <- "source\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]\\)"
+  source_matches <- regmatches(content_filtered, gregexpr(source_regex, content_filtered, perl = TRUE))
+  source_matches <- unlist(source_matches)
+  
+  # Extract the paths from source calls
+  source_paths <- gsub(source_regex, "\\1", source_matches, perl = TRUE)
+  source_full_paths <- file.path(dirname(base_dir), source_paths)
+  
+  # ----- Now, find read.csv and similar calls -----
+  # Define patterns for common file reading functions
+  data_file_patterns <- c(
+    # read.csv patterns
+    "read\\.csv\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "read\\.csv\\(file\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # read.table patterns
+    "read\\.table\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "read\\.table\\(file\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # fread patterns
+    "fread\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "fread\\(input\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # readRDS patterns
+    "readRDS\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "readRDS\\(file\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # load patterns
+    "load\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "load\\(file\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # read_excel patterns
+    "read_excel\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    "read_excel\\(path\\s*=\\s*['\"]\\.\\./(jheem_analyses/.*?)['\"]",
+    
+    # file.path patterns (often used to construct file paths)
+    "file\\.path\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]"
+  )
+  
+  # Get all data file paths
+  data_file_paths <- character(0)
+  
+  for (pattern in data_file_patterns) {
+    matches <- regmatches(content_filtered, gregexpr(pattern, content_filtered, perl = TRUE))
+    matches <- unlist(matches)
+    
+    if (length(matches) > 0) {
+      paths <- gsub(pattern, "\\1", matches, perl = TRUE)
+      data_file_paths <- c(data_file_paths, paths)
+    }
+  }
+  
+  # Convert to full paths
+  data_file_full_paths <- file.path(dirname(base_dir), unique(data_file_paths))
+  
+  # Combine all dependencies
+  all_file_paths <- c(source_full_paths, data_file_full_paths)
+  
+  # Recursively find dependencies of source files
+  # (We don't recursively process data files since they don't contain code)
+  for (dep in source_full_paths) {
+    all_deps <- c(all_deps, discover_dependencies(dep, base_dir))
+  }
+  
+  # Add data files to dependencies
+  all_deps <- c(all_deps, data_file_full_paths)
+  
+  # Also look for file path construction in variables
+  file_path_vars <- grep("\\s*<-\\s*file\\.path\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]", content_filtered, value = TRUE)
+  if (length(file_path_vars) > 0) {
+    cat("Found potential file path variables. You may need to manually add these data files.\n")
+    cat("Variable assignments:\n")
+    for (var in file_path_vars) {
+      cat("  ", var, "\n")
+    }
+  }
+  
+  # Return unique paths
+  return(unique(all_deps))
+}
+
+# Function to copy data files identified by discover_dependencies
+copy_data_files <- function(data_file_paths, base_dir = "../jheem_analyses/") {
+  cat("\n=== Copying data files ===\n")
+  
+  # Process each data file
+  for (file_path in data_file_paths) {
+    # Skip non-data files (which should be handled by the source file copy process)
+    if (!grepl("\\.(csv|txt|rds|rdata|xlsx|xls)$", tolower(file_path), ignore.case = TRUE)) {
+      next
+    }
+    
+    # Get relative path
+    if (startsWith(file_path, base_dir) || startsWith(file_path, file.path("..", "jheem_analyses"))) {
+      rel_path <- sub("^\\.\\./(jheem_analyses/.*?)$", "\\1", file_path)
+    } else {
+      # For files that don't match the expected pattern, skip with a warning
+      cat("WARNING: Skipping file with unexpected path format:", file_path, "\n")
+      next
+    }
+    
+    # Set target path
+    target_path <- file.path("external", rel_path)
+    
+    # Create parent directory if needed
+    target_dir <- dirname(target_path)
+    if (!dir.exists(target_dir)) {
+      dir.create(target_dir, recursive = TRUE)
+    }
+    
+    # Copy the file if it exists
+    if (file.exists(file_path)) {
+      # Direct copy for data files (no content modification needed)
+      file.copy(file_path, target_path, overwrite = TRUE)
+      cat("Copied data file:", target_path, "\n")
+    } else {
+      cat("WARNING: Data file not found:", file_path, "\n")
+    }
+  }
+  
+  # Also copy the entire data_files directory to be safe
+  source_data_dir <- file.path(dirname(base_dir), "jheem_analyses/data_files")
+  target_data_dir <- "external/jheem_analyses/data_files"
+  
+  if (dir.exists(source_data_dir)) {
+    cat("Copying entire data_files directory to ensure all data dependencies are included...\n")
+    copy_directory_recursive(source_data_dir, target_data_dir)
+  } else {
+    cat("WARNING: data_files directory not found at", source_data_dir, "\n")
+  }
+}
+
+# Discover all dependencies
+all_dependencies <- discover_dependencies(model_spec_file)
+cat("Discovered", length(all_dependencies), "dependency files\n")
+
+# Ensure external directory exists
+if (!dir.exists("external/jheem_analyses")) {
+  dir.create("external/jheem_analyses", recursive = TRUE)
+}
+
+# Copy and modify each dependency
+for (source_path in all_dependencies) {
+  # Skip data files - they'll be handled separately
+  if (grepl("\\.(csv|txt|rds|rdata|xlsx|xls)$", tolower(source_path), ignore.case = TRUE)) {
+    next
+  }
+  
+  rel_path <- sub("^\\.\\./(jheem_analyses/.*?)$", "\\1", source_path)
+  target_path <- file.path("external", rel_path)
+  
+  # Create parent directory if needed
+  target_dir <- dirname(target_path)
+  if (!dir.exists(target_dir)) {
+    dir.create(target_dir, recursive = TRUE)
+  }
+  
+  # Read content and adjust paths
+  content <- readLines(source_path, warn = FALSE)
+  modified_content <- gsub(
+    "source\\(['\"]\\.\\./(jheem_analyses/.*?)['\"]\\)",
+    "source('external/\\1')",
+    content
+  )
+  
+  # Also modify data file paths
+  modified_content <- gsub(
+    "([^a-zA-Z0-9_])([\"'])\\.\\./(jheem_analyses/.*?)(\\2)",
+    "\\1\\2external/\\3\\4",
+    modified_content
+  )
+  
+  # Write modified content
+  writeLines(modified_content, target_path)
+  cat("Copied and adjusted:", target_path, "\n")
+}
+
+# Copy data files
+copy_data_files(all_dependencies)
+
+# Copy object_for_version_cache directory (needed for cached model objects)
+source_cache_obj_dir <- "../jheem_analyses/commoncode/object_for_version_cache"
+target_cache_obj_dir <- "external/jheem_analyses/commoncode/object_for_version_cache"
+
+if (dir.exists(source_cache_obj_dir)) {
+  cat("\n=== Copying cached model objects directory ===\n")
+  copy_directory_recursive(source_cache_obj_dir, target_cache_obj_dir)
+} else {
+  cat("WARNING: cached objects directory not found at", source_cache_obj_dir, "\n")
+  dir.create(target_cache_obj_dir, recursive = TRUE)
+}
+
+# ---------- STEP 4: Prepare cache_manager.R using template-based approach ----------
+# Use our new modular function to prepare the cache manager
+prepare_cache_manager(
+  target_dir = "external/jheem_analyses/commoncode",
+  template_path = "deployment/templates/cache_manager.R.template",
+  verbose = TRUE
+)
+
+# ---------- STEP 5: Copy cached directory ----------
+
+cat("\n=== Copying cached directory ===\n")
 
 # Copy the entire cached directory
 source_cache_dir <- "../jheem_analyses/cached"
@@ -304,6 +448,7 @@ cat("  account = \"", ACCOUNT_NAME, "\",\n", sep="")
 cat("  appFiles = c(\n")
 cat("    \"app.R\",\n")
 cat("    \".Renviron\",\n")
+cat("    \"deployment/deployment_dependencies.R\",\n")
 cat("    list.files(\"src\", recursive = TRUE, full.names = TRUE),\n")
 cat("    list.files(\"www\", recursive = TRUE, full.names = TRUE),\n")
 cat("    list.files(\"external/jheem_analyses\", recursive = TRUE, full.names = TRUE),\n")

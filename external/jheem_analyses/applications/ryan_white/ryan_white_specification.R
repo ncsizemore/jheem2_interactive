@@ -7,7 +7,7 @@ source('external/jheem_analyses/applications/ryan_white/process_rw_data_for_prio
 source('external/jheem_analyses/applications/ryan_white/build_rw_priors.R')
 
 
-RW.DATA.MANAGER = load.data.manager('../jheem_analyses/cached/ryan.white.data.manager.rdata', set.as.default = F)
+RW.DATA.MANAGER = load.data.manager('external/jheem_analyses/cached/ryan.white.data.manager.rdata', set.as.default = F)
 
 RW.SPECIFICATION = create.jheem.specification(version='rw',
                                               iteration = '1',

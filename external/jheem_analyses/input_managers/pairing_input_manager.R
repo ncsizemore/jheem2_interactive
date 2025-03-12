@@ -3,7 +3,7 @@
 ##-- SET-UP WITH ACTUAL DATA --##
 ##-----------------------------##
 
-create.pairing.manager <- function(dir='../jheem_analyses/data_files/pairing')
+create.pairing.manager <- function(dir='external/jheem_analyses/data_files/pairing')
 {
   
     rv = list()

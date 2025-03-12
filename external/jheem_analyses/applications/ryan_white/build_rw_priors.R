@@ -69,7 +69,7 @@ FRAC.ADAP.WITHOUT.NON.ADAP = 0.22
 
 get.p.non.adap.functional.form <- function(specification.metadata, verbose=F)
 {
-    numerator.data = read.non.adap.data('../jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
+    numerator.data = read.non.adap.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
     denominator.data = SURVEILLANCE.MANAGER$data$diagnosed.prevalence$estimate$cdc.hiv$cdc.national$year__location__age__race__sex__risk
     
     df = build.rw.proportion.outcome.data.frame(numerator.data = numerator.data,
@@ -84,8 +84,8 @@ get.p.non.adap.functional.form <- function(specification.metadata, verbose=F)
 
 get.p.oahs.functional.form <- function(specification.metadata, verbose=F)
 {
-    oahs.data = read.oahs.and.suppression.data('../jheem_analyses/applications/ryan_white/ryan_white_data/oahs_suppression/')
-    non.adap.data = read.non.adap.data('../jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
+    oahs.data = read.oahs.and.suppression.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/oahs_suppression/')
+    non.adap.data = read.non.adap.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
     
     oahs.years = sapply(oahs.data$oahs, function(x){dimnames(x)$year})
     non.adap.years = sapply(non.adap.data, function(x){dimnames(x)$year})
@@ -145,7 +145,7 @@ get.p.oahs.functional.form <- function(specification.metadata, verbose=F)
 
 get.p.suppression.oahs.functional.form <- function(specification.metadata, verbose=F)
 {
-    oahs.data = read.oahs.and.suppression.data('../jheem_analyses/applications/ryan_white/ryan_white_data/oahs_suppression/')
+    oahs.data = read.oahs.and.suppression.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/oahs_suppression/')
     
     df = build.rw.proportion.outcome.data.frame(numerator.data = oahs.data$suppression,
                                                 denominator.data = oahs.data$oahs,
@@ -160,8 +160,8 @@ get.p.suppression.oahs.functional.form <- function(specification.metadata, verbo
 
 get.p.adap.functional.form <- function(specification.metadata, verbose=F)
 {
-    adap.data = read.adap.data('../jheem_analyses/applications/ryan_white/ryan_white_data/adap_clients/')
-    non.adap.data = read.non.adap.data('../jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
+    adap.data = read.adap.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/adap_clients/')
+    non.adap.data = read.non.adap.data('external/jheem_analyses/applications/ryan_white/ryan_white_data/non_adap_clients')
     
     denom.indices = get.rw.denominator.data.indices(adap.data, non.adap.data)
     
