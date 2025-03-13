@@ -11,7 +11,7 @@ if (1==2)
                                to.year = 2022,
                                census.manager = NULL)
     
-    load('../jheem_analyses/cached/google_mobility_data.Rdata')
+    load('external/jheem_analyses/cached/google_mobility_data.Rdata')
     
     x = get.covid.effect.expression(location = 'c.12580',
                                     effect.magnitude.parameter.names = c('black.suppression.effect','young.effect'),

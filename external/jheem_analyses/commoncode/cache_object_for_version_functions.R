@@ -1,7 +1,7 @@
 cache.object.for.version <- function(object, name, version, overwrite=F)
 {
     error.prefix = "Error caching object for version: "
-    BASE.FILE.PATH = '../jheem_analyses/commoncode/object_for_version_cache'
+    BASE.FILE.PATH = 'external/jheem_analyses/commoncode/object_for_version_cache'
     FILE.PATH = paste0(BASE.FILE.PATH, "/", version, "_", name, ".Rdata")
     
     if (!overwrite) {
@@ -13,7 +13,7 @@ cache.object.for.version <- function(object, name, version, overwrite=F)
 
 get.cached.object.for.version <- function(name, version)
 {
-    BASE.FILE.PATH = '../jheem_analyses/commoncode/object_for_version_cache'
+    BASE.FILE.PATH = 'external/jheem_analyses/commoncode/object_for_version_cache'
     
     error.prefix = "Error getting cached object for version: "
     FILE.PATH = paste0(BASE.FILE.PATH, "/", version, "_", name, ".Rdata")

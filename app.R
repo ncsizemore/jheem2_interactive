@@ -1,5 +1,7 @@
 # app.R
 
+
+# Core UI packages
 library(shiny)
 library(shinyjs)
 library(shinycssloaders)
