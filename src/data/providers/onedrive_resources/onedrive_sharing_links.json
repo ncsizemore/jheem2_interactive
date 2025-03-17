@@ -1,0 +1,25 @@
+{
+  "format_version": "1.0",
+  "generated_at": "2025-03-15 15:30:00",
+  "model_version": "ehe",
+  "simulations": {
+    "C.12580_permanent_loss": {
+      "location": "C.12580",
+      "scenario": "permanent_loss",
+      "filename": "prerun/C.12580/permanent_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
+    },
+    "C.12580_temporary_loss": {
+      "location": "C.12580",
+      "scenario": "temporary_loss",
+      "filename": "prerun/C.12580/temporary_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
+    },
+    "C.12580_base": {
+      "location": "C.12580",
+      "scenario": "base",
+      "filename": "base/C.12580_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
+    }
+  }
+}

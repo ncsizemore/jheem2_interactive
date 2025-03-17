@@ -6,6 +6,16 @@ application:
   defaults:
     selected_tab: 'custom_interventions'
 
+# Simulation directory configuration
+simulation_root: "simulations/ehe"  # Root directory for simulation files
+
+# Model specification settings
+model_specification:
+  name: "ehe"
+  main_file: "ehe_specification.R"
+  development_path: "../jheem_analyses/applications/EHE/"
+  deployment_path: "external/jheem_analyses/applications/EHE/"
+
 # Theme configuration
 theme:
   spacing:
