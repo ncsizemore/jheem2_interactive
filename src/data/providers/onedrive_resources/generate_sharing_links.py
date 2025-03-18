@@ -187,8 +187,70 @@ def upload_file(client, local_file_path, onedrive_folder_id, file_name):
                 return None
         else:
             # For larger files, use upload session (chunked upload)
-            # This code would handle large files but is omitted for brevity
-            print("File too large for simple upload. Implement chunked upload.")
+            print(f"Large file detected ({file_size} bytes). Using chunked upload session.")
+            
+            # Step 1: Create an upload session
+            session_url = f"/me/drive/items/{onedrive_folder_id}:/{file_name}:/createUploadSession"
+            session_response = client.post(session_url)
+            
+            if session_response.status_code != 200:
+                print(f"Error creating upload session: {session_response.status_code}")
+                print(session_response.text)
+                return None
+            
+            upload_url = session_response.json().get('uploadUrl')
+            if not upload_url:
+                print("No upload URL in session response")
+                return None
+            
+            # Step 2: Upload the file in chunks
+            CHUNK_SIZE = 3276800  # 3.125 MB, which is recommended by Microsoft
+            total_chunks = (file_size + CHUNK_SIZE - 1) // CHUNK_SIZE  # Ceiling division
+            
+            print(f"Uploading in {total_chunks} chunks of {CHUNK_SIZE/1024/1024:.2f} MB each")
+            
+            # Re-open the file for chunked reading
+            with open(local_file_path, "rb") as file:
+                for chunk_num in range(total_chunks):
+                    # Calculate chunk range
+                    start_byte = chunk_num * CHUNK_SIZE
+                    end_byte = min(start_byte + CHUNK_SIZE - 1, file_size - 1)
+                    content_length = end_byte - start_byte + 1
+                    
+                    # Read chunk
+                    file.seek(start_byte)
+                    chunk_content = file.read(content_length)
+                    
+                    # Upload chunk
+                    headers = {
+                        "Content-Length": str(content_length),
+                        "Content-Range": f"bytes {start_byte}-{end_byte}/{file_size}"
+                    }
+                    
+                    print(f"Uploading chunk {chunk_num+1}/{total_chunks}: bytes {start_byte}-{end_byte}/{file_size}")
+                    
+                    # For the upload URL, we need to use the full URL, not just the endpoint
+                    # So we make a direct request instead of using our client helper
+                    response = requests.put(upload_url, headers=headers, data=chunk_content)
+                    
+                    # Check response
+                    if response.status_code in (200, 201, 202):
+                        if response.status_code == 202:
+                            # More chunks to upload
+                            print(f"Chunk {chunk_num+1} uploaded successfully")
+                        else:
+                            # Final chunk, upload complete
+                            print(f"Upload complete! Response status: {response.status_code}")
+                            file_data = response.json()
+                            print(f"Uploaded file: {file_name} (ID: {file_data.get('id')})")
+                            return file_data
+                    else:
+                        print(f"Error uploading chunk {chunk_num+1}: {response.status_code}")
+                        print(response.text)
+                        return None
+            
+            # If we get here, something went wrong
+            print("Error: Upload process did not complete properly")
             return None
             
     except Exception as e:
@@ -283,29 +345,99 @@ def discover_simulation_files(base_dir, locations=None, scenarios=None):
         print(f"Base directory does not exist: {base_dir}")
         return simulation_files
     
-    # Get all location directories
-    location_dirs = []
-    for item in os.listdir(base_dir):
-        item_path = os.path.join(base_dir, item)
-        if os.path.isdir(item_path) and (locations is None or item in locations):
-            location_dirs.append(item)
-    
-    # Process each location directory
-    for location in location_dirs:
-        location_path = os.path.join(base_dir, location)
-        
-        # Get all Rdata files in the location directory
-        for item in os.listdir(location_path):
-            if item.endswith(".Rdata") and (scenarios is None or os.path.splitext(item)[0] in scenarios):
-                file_path = os.path.join(location_path, item)
-                scenario = os.path.splitext(item)[0]
+    # Process the base directory for files like "base/C.12580_base.Rdata"
+    base_dir_path = os.path.join(base_dir, "base")
+    if os.path.exists(base_dir_path):
+        for item in os.listdir(base_dir_path):
+            if item.endswith(".Rdata"):
+                file_path = os.path.join(base_dir_path, item)
+                # Extract location from filename (e.g., "C.12580_base.Rdata" -> "C.12580")
+                location = item.split("_")[0]
+                scenario = "base"
                 
                 simulation_files.append({
                     "location": location,
                     "scenario": scenario,
                     "local_path": file_path,
-                    "relative_path": f"{location}/{item}"
+                    "relative_path": f"base/{item}",
+                    "onedrive_path": f"base"
                 })
+    
+    # Process the prerun directory structure
+    prerun_dir_path = os.path.join(base_dir, "prerun")
+    if os.path.exists(prerun_dir_path):
+        # Get all location directories
+        for location in os.listdir(prerun_dir_path):
+            location_path = os.path.join(prerun_dir_path, location)
+            if os.path.isdir(location_path) and (locations is None or location in locations):
+                # Check each file in the location directory
+                for item in os.listdir(location_path):
+                    if item.endswith(".Rdata") and (scenarios is None or os.path.splitext(item)[0] in scenarios):
+                        file_path = os.path.join(location_path, item)
+                        scenario = os.path.splitext(item)[0]
+                        
+                        simulation_files.append({
+                            "location": location,
+                            "scenario": scenario,
+                            "local_path": file_path,
+                            "relative_path": f"prerun/{location}/{item}",
+                            "onedrive_path": f"prerun/{location}"
+                        })
+    
+    # Process the test directory structure (similar to prerun)
+    test_dir_path = os.path.join(base_dir, "test")
+    if os.path.exists(test_dir_path):
+        # First check if there's a base directory in test
+        test_base_path = os.path.join(test_dir_path, "base")
+        if os.path.exists(test_base_path):
+            for item in os.listdir(test_base_path):
+                if item.endswith(".Rdata"):
+                    file_path = os.path.join(test_base_path, item)
+                    location = item.split("_")[0]
+                    scenario = "base_test"  # Marking as a test file
+                    
+                    simulation_files.append({
+                        "location": location,
+                        "scenario": scenario,
+                        "local_path": file_path,
+                        "relative_path": f"test/base/{item}",
+                        "onedrive_path": f"test/base"
+                    })
+        
+        # Then check for prerun tests - direct in prerun dir or in location subdirs
+        test_prerun_path = os.path.join(test_dir_path, "prerun")
+        if os.path.exists(test_prerun_path):
+            # First check if there are direct files in the prerun directory
+            for item in os.listdir(test_prerun_path):
+                item_path = os.path.join(test_prerun_path, item)
+                if os.path.isfile(item_path) and item.endswith(".Rdata"):
+                    file_path = item_path
+                    # Try to extract location from filename (e.g., "C.12580_test_all.Rdata")
+                    location = item.split("_")[0]
+                    scenario = os.path.splitext(item)[0]  # Use the full filename as scenario
+                    
+                    simulation_files.append({
+                        "location": location,
+                        "scenario": scenario,
+                        "local_path": file_path,
+                        "relative_path": f"test/prerun/{item}",
+                        "onedrive_path": f"test/prerun"
+                    })
+                # Also check subdirectories
+                elif os.path.isdir(item_path) and (locations is None or item in locations):
+                    location = item
+                    for subitem in os.listdir(item_path):
+                        if subitem.endswith(".Rdata"):
+                            file_path = os.path.join(item_path, subitem)
+                            scenario = os.path.splitext(subitem)[0] + "_test"
+                            
+                            simulation_files.append({
+                                "location": location,
+                                "scenario": scenario,
+                                "local_path": file_path,
+                                "relative_path": f"test/prerun/{location}/{subitem}",
+                                "onedrive_path": f"test/prerun/{location}"
+                            })
     
     print(f"Found {len(simulation_files)} simulation files")
     return simulation_files
@@ -348,44 +480,41 @@ def main():
         client = get_graph_client(access_token)
         
         # Process each location
-        for location in set(sim["location"] for sim in simulation_files):
-            # Create folder structure for this location
-            folder_path = f"{args.onedrive_dir}/{location}"
+        for sim in simulation_files:
+            # Create folder structure for this simulation
+            folder_path = f"{args.onedrive_dir}/{sim['onedrive_path']}"
             folder_id = ensure_folder_path(client, folder_path)
             
             if not folder_id:
-                print(f"Failed to create folder for location: {location}")
+                print(f"Failed to create folder for path: {folder_path}")
                 continue
             
-            # Process files for this location
-            location_files = [sim for sim in simulation_files if sim["location"] == location]
+            # Upload the file
+            file_name = os.path.basename(sim['local_path'])
+            file_data = upload_file(client, sim["local_path"], folder_id, file_name)
             
-            for sim in location_files:
-                # Upload the file
-                file_name = f"{sim['scenario']}.Rdata"
-                file_data = upload_file(client, sim["local_path"], folder_id, file_name)
+            if not file_data:
+                print(f"Failed to upload file: {sim['relative_path']}")
+                continue
+            
+            # Create sharing link
+            sharing_link = create_sharing_link(client, file_data["id"])
                 
-                if not file_data:
-                    print(f"Failed to upload file: {sim['relative_path']}")
-                    continue
-                
-                # Create sharing link
-                sharing_link = create_sharing_link(client, file_data["id"])
-                
-                if not sharing_link:
-                    print(f"Failed to create sharing link for: {sim['relative_path']}")
-                    continue
-                
-                # Add to results
-                key = f"{sim['location']}_{sim['scenario']}"
-                results["simulations"][key] = {
-                    "location": sim["location"],
-                    "scenario": sim["scenario"],
-                    "filename": f"prerun/{sim['relative_path']}",
-                    "sharing_link": sharing_link
-                }
-                
-                print(f"Successfully processed: {sim['relative_path']}")
+            if not sharing_link:
+                print(f"Failed to create sharing link for: {sim['relative_path']}")
+                continue
+            
+            # Add to results
+            key = f"{sim['location']}_{sim['scenario']}"
+            
+            results["simulations"][key] = {
+                "location": sim["location"],
+                "scenario": sim["scenario"],
+                "filename": sim["relative_path"],  # Use the full relative path
+                "sharing_link": sharing_link
+            }
+            
+            print(f"Successfully processed: {sim['relative_path']}")
         
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(args.output), exist_ok=True)

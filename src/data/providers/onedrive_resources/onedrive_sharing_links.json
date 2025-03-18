@@ -1,25 +1,31 @@
 {
   "format_version": "1.0",
-  "generated_at": "2025-03-15 15:30:00",
+  "generated_at": "2025-03-18 11:07:41",
   "model_version": "ehe",
   "simulations": {
-    "C.12580_permanent_loss": {
-      "location": "C.12580",
-      "scenario": "permanent_loss",
-      "filename": "prerun/C.12580/permanent_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
-    },
-    "C.12580_temporary_loss": {
-      "location": "C.12580",
-      "scenario": "temporary_loss",
-      "filename": "prerun/C.12580/temporary_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
-    },
     "C.12580_base": {
       "location": "C.12580",
       "scenario": "base",
       "filename": "base/C.12580_base.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A?download=1"
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYuFUsEpLZhNtqAKHPPeGyUBC06UxroaQdLcK3XwC0kL2w?download=1"
+    },
+    "C.12580_hivtesting_all_2024_2025_moderate": {
+      "location": "C.12580",
+      "scenario": "hivtesting_all_2024_2025_moderate",
+      "filename": "prerun/C.12580/hivtesting_all_2024_2025_moderate.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETZiYJe3G2pHnU6LvzP6f_gB7r08jUAe37wAmpAjWKT6aQ?download=1"
+    },
+    "C.12580_base_test": {
+      "location": "C.12580",
+      "scenario": "base_test",
+      "filename": "test/base/C.12580_base_test.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYGHk08BYQ9BjqsQEDBRr8EBHsbxRWWF88MKG8kWeS1yuA?download=1"
+    },
+    "C.12580_C.12580_test_all_2024_2025_moderate": {
+      "location": "C.12580",
+      "scenario": "C.12580_test_all_2024_2025_moderate",
+      "filename": "test/prerun/C.12580_test_all_2024_2025_moderate.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQvLY_2GitZFnv2QWJN_jSsB6HR8rlC-0aPKAnMfljqHWw?download=1"
     }
   }
 }

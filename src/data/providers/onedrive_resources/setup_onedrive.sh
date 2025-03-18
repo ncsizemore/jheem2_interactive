@@ -4,6 +4,51 @@
 # This script guides the user through the process of generating sharing links
 # for simulation files and configuring the OneDriveProvider.
 
+# Usage: Run this script from any location with:
+#   /path/to/setup_onedrive.sh
+#   OR
+#   cd /path/to/project/root && ./src/data/providers/onedrive_resources/setup_onedrive.sh
+
+# Determine script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+# Find project root by searching upward
+find_project_root() {
+  local dir="$1"
+  # Keep going up until we find the project root
+  while [ "$dir" != "/" ]; do
+    # Check for key directories that would indicate this is the project root
+    if [ -d "$dir/src" ] && [ -d "$dir/src/data" ] && [ -d "$dir/src/data/providers" ]; then
+      echo "$dir"
+      return 0
+    fi
+    # Go up one directory
+    dir="$(dirname "$dir")"
+  done
+  # If we get here, we didn't find it
+  return 1
+}
+
+# Try to find project root from various starting points
+PROJECT_ROOT=""
+# Try starting from the script directory
+PROJECT_ROOT=$(find_project_root "$SCRIPT_DIR")
+# If not found, try the current directory
+if [ -z "$PROJECT_ROOT" ]; then
+  PROJECT_ROOT=$(find_project_root "$(pwd)")
+fi
+
+# Check if we found the project root
+if [ -z "$PROJECT_ROOT" ]; then
+  echo "Error: Could not locate project root."
+  echo "Please run this script from the project root, or a directory within the project."
+  exit 1
+fi
+
+# Change to project root directory
+cd "$PROJECT_ROOT"
+echo "Working from project root: $PROJECT_ROOT"
+
 # Function to display a colorful header
 print_header() {
   echo -e "\033[1;36m===== $1 =====\033[0m"
@@ -17,7 +62,12 @@ get_input_with_default() {
   
   echo -n -e "$prompt [\033[1;33m$default\033[0m]: "
   read input
-  echo "${input:-$default}"
+  
+  if [ -z "$input" ]; then
+    echo "$default"
+  else
+    echo "$input"
+  fi
 }
 
 # Function to verify a directory exists
@@ -71,18 +121,24 @@ echo ""
 # Get model version
 print_header "Model Version"
 echo "Examples: ehe, ryan-white"
-MODEL_VERSION=$(get_input_with_default "Enter the model version" "ehe")
+echo -n "Enter the model version [ehe]: "
+read MODEL_VERSION
+MODEL_VERSION=${MODEL_VERSION:-ehe}
 echo ""
 
 # Guess the base directory based on model version
-DEFAULT_BASE_DIR="simulations/$MODEL_VERSION"
-BASE_DIR=$(get_input_with_default "Local simulation directory" "$DEFAULT_BASE_DIR")
+DEFAULT_BASE_DIR="$PROJECT_ROOT/simulations/$MODEL_VERSION"
+echo -n "Local simulation directory [$DEFAULT_BASE_DIR]: "
+read BASE_DIR
+BASE_DIR=${BASE_DIR:-$DEFAULT_BASE_DIR}
 
 # Verify the base directory exists
 verify_directory "$BASE_DIR" false
 if [ $? -ne 0 ]; then
   echo "The specified simulation directory does not exist."
-  BASE_DIR=$(get_input_with_default "Please enter a valid simulation directory" "simulations")
+  echo -n "Please enter a valid simulation directory [$PROJECT_ROOT/simulations]: "
+  read BASE_DIR
+  BASE_DIR=${BASE_DIR:-"$PROJECT_ROOT/simulations"}
   verify_directory "$BASE_DIR" false
   if [ $? -ne 0 ]; then
     echo "Directory still not found. Exiting."
@@ -93,12 +149,16 @@ echo ""
 
 # Get OneDrive directory path
 DEFAULT_ONEDRIVE_DIR="jheem/$MODEL_VERSION"
-ONEDRIVE_DIR=$(get_input_with_default "OneDrive destination directory" "$DEFAULT_ONEDRIVE_DIR")
+echo -n "OneDrive destination directory [$DEFAULT_ONEDRIVE_DIR]: "
+read ONEDRIVE_DIR
+ONEDRIVE_DIR=${ONEDRIVE_DIR:-$DEFAULT_ONEDRIVE_DIR}
 echo ""
 
 # Get output file path
-DEFAULT_OUTPUT="src/data/providers/onedrive_resources/onedrive_sharing_links.json"
-OUTPUT=$(get_input_with_default "Output JSON file path" "$DEFAULT_OUTPUT")
+DEFAULT_OUTPUT="$SCRIPT_DIR/onedrive_sharing_links.json"
+echo -n "Output JSON file path [$DEFAULT_OUTPUT]: "
+read OUTPUT
+OUTPUT=${OUTPUT:-$DEFAULT_OUTPUT}
 
 # Verify the output directory exists or create it
 OUTPUT_DIR=$(dirname "$OUTPUT")
@@ -106,7 +166,8 @@ verify_directory "$OUTPUT_DIR" true
 echo ""
 
 # Ask about locations and scenarios
-PROCESS_SPECIFIC_LOCATIONS=$(get_input_with_default "Process specific locations only? (y/n)" "n")
+echo -n "Process specific locations only? (y/n) [n]: "
+read PROCESS_SPECIFIC_LOCATIONS
 LOCATIONS_ARG=""
 if [[ "$PROCESS_SPECIFIC_LOCATIONS" == "y"* || "$PROCESS_SPECIFIC_LOCATIONS" == "Y"* ]]; then
   echo "Enter space-separated location codes (e.g., C.12580 C.37840):"
@@ -117,7 +178,8 @@ if [[ "$PROCESS_SPECIFIC_LOCATIONS" == "y"* || "$PROCESS_SPECIFIC_LOCATIONS" == 
 fi
 echo ""
 
-PROCESS_SPECIFIC_SCENARIOS=$(get_input_with_default "Process specific scenarios only? (y/n)" "n")
+echo -n "Process specific scenarios only? (y/n) [n]: "
+read PROCESS_SPECIFIC_SCENARIOS
 SCENARIOS_ARG=""
 if [[ "$PROCESS_SPECIFIC_SCENARIOS" == "y"* || "$PROCESS_SPECIFIC_SCENARIOS" == "Y"* ]]; then
   echo "Enter space-separated scenario names (e.g., permanent_loss temporary_loss):"
@@ -129,7 +191,9 @@ fi
 echo ""
 
 # Ask about dry run
-DRY_RUN=$(get_input_with_default "Perform a dry run first (no actual uploads)? (y/n)" "y")
+echo -n "Perform a dry run first (no actual uploads)? (y/n) [y]: "
+read DRY_RUN
+DRY_RUN=${DRY_RUN:-y}
 DRY_RUN_ARG=""
 if [[ "$DRY_RUN" == "y"* || "$DRY_RUN" == "Y"* ]]; then
   DRY_RUN_ARG="--dry-run"
@@ -159,7 +223,9 @@ fi
 echo ""
 
 # Confirm before proceeding
-CONFIRM=$(get_input_with_default "Proceed with these settings? (y/n)" "y")
+echo -n "Proceed with these settings? (y/n) [y]: "
+read CONFIRM
+CONFIRM=${CONFIRM:-y}
 if [[ "$CONFIRM" != "y"* && "$CONFIRM" != "Y"* ]]; then
   echo "Setup cancelled. No changes made."
   exit 0
@@ -169,7 +235,7 @@ echo ""
 # Run the Python script with dry run if requested
 if [ -n "$DRY_RUN_ARG" ]; then
   print_header "Dry Run"
-  python3 $(dirname "$0")/generate_sharing_links.py \
+  python3 "$SCRIPT_DIR/generate_sharing_links.py" \
     --base-dir "$BASE_DIR" \
     --onedrive-dir "$ONEDRIVE_DIR" \
     --model-version "$MODEL_VERSION" \
@@ -178,7 +244,9 @@ if [ -n "$DRY_RUN_ARG" ]; then
     --dry-run
   
   echo ""
-  PROCEED_AFTER_DRY=$(get_input_with_default "Proceed with actual upload? (y/n)" "y")
+  echo -n "Proceed with actual upload? (y/n) [y]: "
+  read PROCEED_AFTER_DRY
+  PROCEED_AFTER_DRY=${PROCEED_AFTER_DRY:-y}
   if [[ "$PROCEED_AFTER_DRY" != "y"* && "$PROCEED_AFTER_DRY" != "Y"* ]]; then
     echo "Upload cancelled. No changes made."
     exit 0
@@ -188,7 +256,7 @@ fi
 
 # Run the actual upload
 print_header "Generating Sharing Links"
-python3 $(dirname "$0")/generate_sharing_links.py \
+python3 "$SCRIPT_DIR/generate_sharing_links.py" \
   --base-dir "$BASE_DIR" \
   --onedrive-dir "$ONEDRIVE_DIR" \
   --model-version "$MODEL_VERSION" \
