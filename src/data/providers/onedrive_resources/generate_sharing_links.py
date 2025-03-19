@@ -154,21 +154,43 @@ def ensure_folder_path(client, folder_path):
     # Return the ID of the final folder
     return current_id
 
+def check_file_exists(client, folder_id, file_name):
+    """Check if a file already exists in the specified folder"""
+    # Query for the file
+    check_url = f"/me/drive/items/{folder_id}:/{file_name}"
+    response = client.get(check_url)
+    
+    if response.status_code == 200:
+        # File exists
+        file_data = response.json()
+        print(f"File already exists: {file_name} (ID: {file_data.get('id')})")
+        return file_data
+    
+    # File doesn't exist
+    return None
+
 def upload_file(client, local_file_path, onedrive_folder_id, file_name):
-    """Upload a file to the specified OneDrive folder"""
-    print(f"Uploading file: {local_file_path} -> {file_name}")
+    """Upload a file to the specified OneDrive folder with progress reporting and resume support"""
+    print(f"Processing file: {local_file_path} -> {file_name}")
     
     try:
-        # Read the local file
-        with open(local_file_path, "rb") as file:
-            file_content = file.read()
-        
-        file_size = len(file_content)
-        print(f"File size: {file_size} bytes")
+        # Check if file already exists
+        existing_file = check_file_exists(client, onedrive_folder_id, file_name)
+        if existing_file:
+            print(f"Skipping upload for existing file: {file_name}")
+            return existing_file
+            
+        # Get file size without loading the whole file
+        file_size = os.path.getsize(local_file_path)
+        print(f"File size: {file_size} bytes ({file_size/1024/1024:.2f} MB)")
         
         # For small files (< 4MB), use simple upload
         if file_size < 4 * 1024 * 1024:
+            print("Using simple upload...")
             upload_url = f"/me/drive/items/{onedrive_folder_id}:/{file_name}:/content"
+            
+            with open(local_file_path, "rb") as file:
+                file_content = file.read()
             
             # Upload the file
             upload_response = client.put(
@@ -187,7 +209,7 @@ def upload_file(client, local_file_path, onedrive_folder_id, file_name):
                 return None
         else:
             # For larger files, use upload session (chunked upload)
-            print(f"Large file detected ({file_size} bytes). Using chunked upload session.")
+            print(f"Large file detected. Using chunked upload session.")
             
             # Step 1: Create an upload session
             session_url = f"/me/drive/items/{onedrive_folder_id}:/{file_name}:/createUploadSession"
@@ -203,22 +225,42 @@ def upload_file(client, local_file_path, onedrive_folder_id, file_name):
                 print("No upload URL in session response")
                 return None
             
-            # Step 2: Upload the file in chunks
+            # Step 2: Check for existing upload session (resumable uploads)
+            session_status_response = requests.get(upload_url)
+            
+            # Start from beginning by default
+            next_byte = 0
+            
+            if session_status_response.status_code == 200:
+                # Check if we can resume an existing upload
+                session_status = session_status_response.json()
+                if "nextExpectedRanges" in session_status and session_status["nextExpectedRanges"]:
+                    # Extract the next byte to upload from the range
+                    range_start = session_status["nextExpectedRanges"][0].split('-')[0]
+                    next_byte = int(range_start)
+                    print(f"Resuming upload from byte {next_byte}")
+            
+            # Step 3: Upload the file in chunks
             CHUNK_SIZE = 3276800  # 3.125 MB, which is recommended by Microsoft
-            total_chunks = (file_size + CHUNK_SIZE - 1) // CHUNK_SIZE  # Ceiling division
+            total_chunks = (file_size - next_byte + CHUNK_SIZE - 1) // CHUNK_SIZE  # Ceiling division
             
             print(f"Uploading in {total_chunks} chunks of {CHUNK_SIZE/1024/1024:.2f} MB each")
             
             # Re-open the file for chunked reading
             with open(local_file_path, "rb") as file:
-                for chunk_num in range(total_chunks):
+                # Skip to the position if resuming
+                if next_byte > 0:
+                    file.seek(next_byte)
+                
+                chunk_num = next_byte // CHUNK_SIZE
+                
+                while next_byte < file_size:
                     # Calculate chunk range
-                    start_byte = chunk_num * CHUNK_SIZE
+                    start_byte = next_byte
                     end_byte = min(start_byte + CHUNK_SIZE - 1, file_size - 1)
                     content_length = end_byte - start_byte + 1
                     
                     # Read chunk
-                    file.seek(start_byte)
                     chunk_content = file.read(content_length)
                     
                     # Upload chunk
@@ -227,34 +269,46 @@ def upload_file(client, local_file_path, onedrive_folder_id, file_name):
                         "Content-Range": f"bytes {start_byte}-{end_byte}/{file_size}"
                     }
                     
-                    print(f"Uploading chunk {chunk_num+1}/{total_chunks}: bytes {start_byte}-{end_byte}/{file_size}")
+                    # Calculate progress percentage
+                    progress_pct = (end_byte + 1) / file_size * 100
+                    progress_bar = "[" + "#" * int(progress_pct // 5) + " " * (20 - int(progress_pct // 5)) + "]"
                     
-                    # For the upload URL, we need to use the full URL, not just the endpoint
-                    # So we make a direct request instead of using our client helper
+                    # Print progress on the same line
+                    print(f"\rUploading: {progress_bar} {progress_pct:.1f}% (Chunk {chunk_num+1}/{total_chunks})", end="")
+                    
+                    # Upload the chunk
                     response = requests.put(upload_url, headers=headers, data=chunk_content)
                     
                     # Check response
                     if response.status_code in (200, 201, 202):
                         if response.status_code == 202:
                             # More chunks to upload
-                            print(f"Chunk {chunk_num+1} uploaded successfully")
+                            # Update next_byte based on response
+                            resp_data = response.json()
+                            if "nextExpectedRanges" in resp_data and resp_data["nextExpectedRanges"]:
+                                next_range = resp_data["nextExpectedRanges"][0]
+                                next_byte = int(next_range.split('-')[0])
+                            else:
+                                next_byte = end_byte + 1
                         else:
                             # Final chunk, upload complete
-                            print(f"Upload complete! Response status: {response.status_code}")
+                            print("\nUpload complete!")
                             file_data = response.json()
                             print(f"Uploaded file: {file_name} (ID: {file_data.get('id')})")
                             return file_data
                     else:
-                        print(f"Error uploading chunk {chunk_num+1}: {response.status_code}")
+                        print(f"\nError uploading chunk {chunk_num+1}: {response.status_code}")
                         print(response.text)
                         return None
+                    
+                    chunk_num += 1
             
             # If we get here, something went wrong
-            print("Error: Upload process did not complete properly")
+            print("\nError: Upload process did not complete properly")
             return None
             
     except Exception as e:
-        print(f"Error uploading file: {str(e)}")
+        print(f"\nError uploading file: {str(e)}")
         return None
 
 def create_sharing_link(client, item_id):
