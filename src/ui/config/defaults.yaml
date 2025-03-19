@@ -185,4 +185,4 @@ testing:
     prerun:
       file: "test/prerun/C.12580_test_all_2024_2025_moderate.Rdata"
     custom:
-      file: "test/custom/C.12580_base_test.Rdata"
+      file: "test/base/C.12580_base_test.Rdata"

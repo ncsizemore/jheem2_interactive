@@ -139,11 +139,19 @@ SimulationAdapter <- R6::R6Class(
             base_config <- get_base_config()
             root_dir <- base_config$simulation_root %||% "simulations"  
             
-            provider <- LocalProvider$new(
-                root_dir,  # Use the configured root directory
+            # Use the provider type from configuration
+            provider_type <- sim_config$provider %||% "local"
+            print(sprintf("[SIMULATION_ADAPTER] Using provider type: %s for mode: %s", provider_type, mode))
+            
+            # Initialize the provider using loader.R's initialize_provider function
+            initialize_provider(provider_type,
+                root_dir = root_dir,
                 config = sim_config,
                 mode = mode
             )
+            
+            # Get the initialized provider
+            provider <- .provider
 
             # Create initial simulation state
             sim_id <- private$store$add_simulation(
