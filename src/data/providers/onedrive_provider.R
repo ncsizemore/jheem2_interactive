@@ -9,6 +9,7 @@ OneDriveProvider <- R6::R6Class(
         mode = NULL,
         sharing_links = NULL,
         temp_dir = NULL,
+        cache_manager = NULL,
 
         #' Initialize the provider
         #' @param root_dir Root directory (model version) for simulation files on OneDrive
@@ -35,12 +36,25 @@ OneDriveProvider <- R6::R6Class(
             print("[ONEDRIVE] Config:")
             print(str(config))
             
-            # Create temp directory if it doesn't exist
-            self$temp_dir <- file.path(tempdir(), "onedrive_cache")
-            if (!dir.exists(self$temp_dir)) {
-                dir.create(self$temp_dir, recursive = TRUE)
+            # Get unified cache manager (if available)
+            tryCatch({
+                self$cache_manager <- get_cache_manager()
+                print("[ONEDRIVE] Using UnifiedCacheManager for caching")
+                
+                # Use unified cache path for temp directory
+                self$temp_dir <- self$cache_manager$get_onedrive_cache_path()
+                print(sprintf("[ONEDRIVE] Using unified cache path: %s", self$temp_dir))
+            }, error = function(e) {
+                print(sprintf("[ONEDRIVE] UnifiedCacheManager not available: %s", e$message))
+                print("[ONEDRIVE] Falling back to temporary directory for caching")
+                
+                # Fallback to temp directory
+                self$temp_dir <- file.path(tempdir(), "onedrive_cache")
+                if (!dir.exists(self$temp_dir)) {
+                    dir.create(self$temp_dir, recursive = TRUE)
+                }
                 print(sprintf("[ONEDRIVE] Created temp directory: %s", self$temp_dir))
-            }
+            })
             
             # Load sharing links configuration
             self$load_sharing_links()
@@ -147,6 +161,13 @@ OneDriveProvider <- R6::R6Class(
         #' Clean up temporary files
         #' @param older_than Age in seconds to keep files (default: 1 day)
         cleanup_temp_files = function(older_than = 86400) {
+            # If using UnifiedCacheManager, cleanup is handled there
+            if (!is.null(self$cache_manager)) {
+                print("[ONEDRIVE] Cleanup handled by UnifiedCacheManager")
+                return(invisible(NULL))
+            }
+            
+            # Otherwise, use original cleanup logic
             if (!dir.exists(self$temp_dir)) {
                 return(invisible(NULL))
             }
@@ -219,13 +240,22 @@ OneDriveProvider <- R6::R6Class(
                 for (key in names(self$sharing_links$simulations)) {
                     sim_info <- self$sharing_links$simulations[[key]]
                     
+                    # Debug sharing links
+                    print(sprintf("[ONEDRIVE] Checking sim_info for key: %s", key))
+                    print(str(sim_info))
+                    
                     # Check if the filename matches
                     if (!is.null(sim_info$filename) && endsWith(sim_info$filename, test_filename)) {
-                        return(list(
+                        # Debug match
+                        print(sprintf("[ONEDRIVE] Found match: %s -> %s", sim_info$filename, test_filename))
+                        print("[ONEDRIVE] Returning info:")
+                        result <- list(
                             key = key,
                             filename = test_filename,
                             sharing_link = sim_info$sharing_link
-                        ))
+                        )
+                        print(str(result))
+                        return(result)
                     }
                 }
                 
@@ -392,6 +422,33 @@ OneDriveProvider <- R6::R6Class(
         #' @param filename Filename to use for the downloaded file
         #' @return Path to downloaded file or NULL on failure
         download_file = function(sharing_link, filename) {
+            # Debug the arguments
+            print(sprintf("[ONEDRIVE] download_file called with sharing_link type: %s, class: %s", 
+                         typeof(sharing_link), paste(class(sharing_link), collapse=",")))
+            print(sprintf("[ONEDRIVE] sharing_link value: %s", 
+                         if(is.list(sharing_link)) "LIST STRUCTURE" else as.character(sharing_link)))
+            if (is.list(sharing_link)) {
+                print("[ONEDRIVE] sharing_link contents:")
+                print(str(sharing_link))
+            }
+            print(sprintf("[ONEDRIVE] filename type: %s, class: %s", 
+                         typeof(filename), paste(class(filename), collapse=",")))
+            print(sprintf("[ONEDRIVE] filename value: %s", filename))
+
+            # Use UnifiedCacheManager if available
+            if (!is.null(self$cache_manager)) {
+                print(sprintf("[ONEDRIVE] Using UnifiedCacheManager to download: %s", filename))
+                
+                # Handle case where sharing_link is a list
+                if (is.list(sharing_link) && !is.null(sharing_link$sharing_link)) {
+                    print("[ONEDRIVE] Extracting sharing_link from list")
+                    sharing_link <- sharing_link$sharing_link
+                }
+                
+                return(self$cache_manager$download_file(sharing_link, filename))
+            }
+            
+            # Fallback to original implementation
             print(sprintf("[ONEDRIVE] Downloading file: %s", filename))
             
             # Create temporary file path

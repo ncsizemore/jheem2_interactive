@@ -1,5 +1,19 @@
 # Caching configuration
 
+# Unified caching system (coordinates all caching operations)
+unified_cache:
+  base_path: "cache"                # Base directory for all caches
+  max_disk_usage_mb: 1500           # Maximum disk usage (1.5GB)
+  memory_threshold_mb: 6000         # Memory threshold (6GB) 
+  cleanup_interval_ms: 600000       # Cleanup every 10 minutes
+  emergency_threshold_mb: 100       # Emergency cleanup when <100MB left
+  retain_referenced: true           # Keep referenced files during normal cleanup
+  retention_policy:                 # Retention times by priority
+    critical: 86400                 # Critical files: 1 day
+    high: 43200                     # High priority: 12 hours
+    normal: 7200                    # Normal: 2 hours
+    low: 1800                       # Low priority: 30 minutes
+
 # Simulation-specific cache for preventing re-runs
 simulation_cache:
   provider: "disk"  # Options: "disk", "onedrive", "aws" (Phase 6)

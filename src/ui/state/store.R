@@ -232,30 +232,52 @@ StateStore <- R6Class("StateStore",
             
             # Cache to disk if enabled with comprehensive error handling
             tryCatch({
-                cache_config <- get_component_config("caching")$simulation_cache
-                print("[STATE_STORE DEBUG] Checking cache configuration for disk storage:")
-                print(sprintf("  - Cache config exists: %s", !is.null(cache_config)))
+                # First try to use unified cache manager
+                cache_manager <- tryCatch({
+                    get_cache_manager()
+                }, error = function(e) {
+                    print(sprintf("[STATE_STORE] UnifiedCacheManager not available: %s", e$message))
+                    return(NULL)
+                })
                 
-                if (!is.null(cache_config)) {
-                    print(sprintf("  - Disk cache enabled: %s", 
-                                 !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache))
-                    print(sprintf("  - Provider: %s", cache_config$provider %||% "<not specified>"))
-                    print(sprintf("  - Path: %s", cache_config$path %||% "<not specified>"))
-                }
-                
-                if (!is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache) {
-                    print("[STATE_STORE] Caching simulation to disk")
-                    # Use the cache module to store the simulation
+                # If we have a cache manager, use it
+                if (!is.null(cache_manager)) {
+                    print("[STATE_STORE] Using UnifiedCacheManager for caching")
                     
                     # Check if we have completed simulation results to cache
                     if (!is.null(sim_state$results) && !is.null(sim_state$results$simset)) {
                         print("[STATE_STORE] Simulation has results, proceeding with caching")
-                        cache_simulation(settings, mode, sim_state)
+                        cache_manager$cache_simulation(settings, mode, sim_state)
                     } else {
                         print("[STATE_STORE] Simulation has no results yet, skipping cache")
                     }
                 } else {
-                    print("[STATE_STORE] Disk caching disabled in configuration")
+                    # Fall back to old caching system
+                    cache_config <- get_component_config("caching")$simulation_cache
+                    print("[STATE_STORE DEBUG] Checking cache configuration for disk storage:")
+                    print(sprintf("  - Cache config exists: %s", !is.null(cache_config)))
+                    
+                    if (!is.null(cache_config)) {
+                        print(sprintf("  - Disk cache enabled: %s", 
+                                    !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache))
+                        print(sprintf("  - Provider: %s", cache_config$provider %||% "<not specified>"))
+                        print(sprintf("  - Path: %s", cache_config$path %||% "<not specified>"))
+                    }
+                    
+                    if (!is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache) {
+                        print("[STATE_STORE] Caching simulation to disk")
+                        # Use the cache module to store the simulation
+                        
+                        # Check if we have completed simulation results to cache
+                        if (!is.null(sim_state$results) && !is.null(sim_state$results$simset)) {
+                            print("[STATE_STORE] Simulation has results, proceeding with caching")
+                            cache_simulation(settings, mode, sim_state)
+                        } else {
+                            print("[STATE_STORE] Simulation has no results yet, skipping cache")
+                        }
+                    } else {
+                        print("[STATE_STORE] Disk caching disabled in configuration")
+                    }
                 }
             }, error = function(e) {
                 print(sprintf("[STATE_STORE] Error caching to disk: %s", e$message))
@@ -334,107 +356,140 @@ StateStore <- R6Class("StateStore",
             
             # Step 2: Check disk cache if enabled
             print("[STATE_STORE DEBUG] Step 2: Checking disk cache")
-            tryCatch({
-                cache_config <- get_component_config("caching")$simulation_cache
-                print(sprintf("[STATE_STORE DEBUG] Cache enabled: %s", 
-                              !is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && 
-                                  cache_config$enable_disk_cache))
+            
+            # First try to use unified cache manager
+            cache_manager <- tryCatch({
+                get_cache_manager()
+            }, error = function(e) {
+                print(sprintf("[STATE_STORE] UnifiedCacheManager not available: %s", e$message))
+                return(NULL)
+            })
+            
+            if (!is.null(cache_manager)) {
+                # Try to find a matching simulation using UnifiedCacheManager
+                print("[STATE_STORE DEBUG] Using UnifiedCacheManager to check cache")
                 
-                if (!is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache) {
-                    # Try to find a matching simulation in the disk cache
-                    print("[STATE_STORE DEBUG] Calling is_simulation_cached()")
+                if (cache_manager$is_simulation_cached(settings, mode)) {
+                    print("[STATE_STORE] Found matching simulation in unified cache")
                     
-                    # Add debug info
-                    debug_result <- debug_cache_key(settings, mode)
-                    print("[STATE_STORE DEBUG] Debug cache key result:")
-                    print(debug_result)
+                    # Load from unified cache
+                    cached_sim <- cache_manager$get_cached_simulation(settings, mode)
                     
-                    # Use the config path directly as fallback
-                    cache_path <- cache_config$path
-                    print(sprintf("[STATE_STORE DEBUG] Using cache path from config: '%s'", cache_path))
-                    
-                    if (is_simulation_cached(settings, mode, explicit_cache_dir = cache_path)) {
-                        print("[STATE_STORE] Found matching simulation in disk cache")
+                    if (!is.null(cached_sim)) {
+                        # Create new simulation ID
+                        id <- private$generate_simulation_id()
                         
-                        # Load from disk cache
-                        print("[STATE_STORE DEBUG] Calling get_simulation_from_cache()")
-                        cached_sim <- get_simulation_from_cache(settings, mode, explicit_cache_dir = cache_path)
-                        print(sprintf("[STATE_STORE DEBUG] get_simulation_from_cache result: %s", !is.null(cached_sim)))
+                        # Store in memory
+                        private$simulations[[id]] <- reactiveVal(cached_sim)
                         
-                        if (!is.null(cached_sim)) {
-                            # Create a new simulation ID for the loaded simulation
-                            id <- private$generate_simulation_id()
-                            print(sprintf("[STATE_STORE DEBUG] Generated new ID for cached sim: %s", id))
+                        print(paste0("[STATE_STORE] Loaded from unified cache as simulation ID: ", id))
+                        return(id)
+                    }
+                }
+            } else {
+                # Fall back to original cache system
+                tryCatch({
+                    cache_config <- get_component_config("caching")$simulation_cache
+                    print(sprintf("[STATE_STORE DEBUG] Cache enabled: %s", 
+                                !is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && 
+                                    cache_config$enable_disk_cache))
+                    
+                    if (!is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache) {
+                        # Try to find a matching simulation in the disk cache
+                        print("[STATE_STORE DEBUG] Calling is_simulation_cached()")
+                        
+                        # Add debug info
+                        debug_result <- debug_cache_key(settings, mode)
+                        print("[STATE_STORE DEBUG] Debug cache key result:")
+                        print(debug_result)
+                        
+                        # Use the config path directly as fallback
+                        cache_path <- cache_config$path
+                        print(sprintf("[STATE_STORE DEBUG] Using cache path from config: '%s'", cache_path))
+                        
+                        if (is_simulation_cached(settings, mode, explicit_cache_dir = cache_path)) {
+                            print("[STATE_STORE] Found matching simulation in disk cache")
                             
-                            # Handle both full simulation state or just JHEEM simulation object
-                            if (inherits(cached_sim, "jheem.simulation.set")) {
-                                # Got a direct JHEEM simulation object, wrap it in a simulation state
-                                print("[STATE_STORE DEBUG] Received direct JHEEM object, creating wrapper")
+                            # Load from disk cache
+                            print("[STATE_STORE DEBUG] Calling get_simulation_from_cache()")
+                            cached_sim <- get_simulation_from_cache(settings, mode, explicit_cache_dir = cache_path)
+                            print(sprintf("[STATE_STORE DEBUG] get_simulation_from_cache result: %s", !is.null(cached_sim)))
+                            
+                            if (!is.null(cached_sim)) {
+                                # Create a new simulation ID for the loaded simulation
+                                id <- private$generate_simulation_id()
+                                print(sprintf("[STATE_STORE DEBUG] Generated new ID for cached sim: %s", id))
                                 
-                                # Try to load metadata
-                                meta_path <- file.path(
-                                    cache_config$path, 
-                                    paste0(generate_simulation_cache_key(settings, mode), ".RData.meta")
-                                )
-                                metadata <- NULL
-                                if (file.exists(meta_path)) {
-                                    print(sprintf("[STATE_STORE DEBUG] Loading metadata from %s", meta_path))
-                                    metadata <- readRDS(meta_path)
-                                } else {
-                                    print("[STATE_STORE DEBUG] No metadata file found, creating default metadata")
-                                }
-                                
-                                # Create a wrapper with either loaded or default metadata
-                                cache_metadata <- if (!is.null(metadata)) {
-                                    # Make sure it has the required fields
-                                    metadata$loaded_from_cache <- TRUE
-                                    metadata$load_time <- Sys.time()
-                                    metadata
-                                } else {
-                                    list(
-                                        loaded_from_cache = TRUE,
-                                        load_time = Sys.time(),
-                                        version = cached_sim$version
+                                # Handle both full simulation state or just JHEEM simulation object
+                                if (inherits(cached_sim, "jheem.simulation.set")) {
+                                    # Got a direct JHEEM simulation object, wrap it in a simulation state
+                                    print("[STATE_STORE DEBUG] Received direct JHEEM object, creating wrapper")
+                                    
+                                    # Try to load metadata
+                                    meta_path <- file.path(
+                                        cache_config$path, 
+                                        paste0(generate_simulation_cache_key(settings, mode), ".RData.meta")
                                     )
+                                    metadata <- NULL
+                                    if (file.exists(meta_path)) {
+                                        print(sprintf("[STATE_STORE DEBUG] Loading metadata from %s", meta_path))
+                                        metadata <- readRDS(meta_path)
+                                    } else {
+                                        print("[STATE_STORE DEBUG] No metadata file found, creating default metadata")
+                                    }
+                                    
+                                    # Create a wrapper with either loaded or default metadata
+                                    cache_metadata <- if (!is.null(metadata)) {
+                                        # Make sure it has the required fields
+                                        metadata$loaded_from_cache <- TRUE
+                                        metadata$load_time <- Sys.time()
+                                        metadata
+                                    } else {
+                                        list(
+                                            loaded_from_cache = TRUE,
+                                            load_time = Sys.time(),
+                                            version = cached_sim$version
+                                        )
+                                    }
+                                    
+                                    cached_sim <- list(
+                                        id = id,
+                                        mode = mode,
+                                        settings = settings,
+                                        results = list(simset = cached_sim),
+                                        timestamp = Sys.time(),
+                                        status = "complete",
+                                        loaded_from_cache = TRUE,
+                                        cache_metadata = cache_metadata
+                                    )
+                                } else {
+                                    # Update ID and timestamp to reflect current state
+                                    cached_sim$id <- id
+                                    cached_sim$timestamp <- Sys.time()
+                                    cached_sim$loaded_from_cache <- TRUE
                                 }
                                 
-                                cached_sim <- list(
-                                    id = id,
-                                    mode = mode,
-                                    settings = settings,
-                                    results = list(simset = cached_sim),
-                                    timestamp = Sys.time(),
-                                    status = "complete",
-                                    loaded_from_cache = TRUE,
-                                    cache_metadata = cache_metadata
-                                )
+                                # Store in memory
+                                private$simulations[[id]] <- reactiveVal(cached_sim)
+                                
+                                print(paste0("[STATE_STORE] Loaded from disk cache as simulation ID: ", id))
+                                return(id)
                             } else {
-                                # Update ID and timestamp to reflect current state
-                                cached_sim$id <- id
-                                cached_sim$timestamp <- Sys.time()
-                                cached_sim$loaded_from_cache <- TRUE
+                                print("[STATE_STORE DEBUG] Failed to load simulation from cache")
                             }
-                            
-                            # Store in memory
-                            private$simulations[[id]] <- reactiveVal(cached_sim)
-                            
-                            print(paste0("[STATE_STORE] Loaded from disk cache as simulation ID: ", id))
-                            return(id)
                         } else {
-                            print("[STATE_STORE DEBUG] Failed to load simulation from cache")
+                            print("[STATE_STORE DEBUG] No matching simulation found in cache")
                         }
                     } else {
-                        print("[STATE_STORE DEBUG] No matching simulation found in cache")
+                        print("[STATE_STORE DEBUG] Disk cache is disabled")
                     }
-                } else {
-                    print("[STATE_STORE DEBUG] Disk cache is disabled")
-                }
-            }, error = function(e) {
-                print(sprintf("[STATE_STORE] Error checking disk cache: %s", e$message))
-                print("[STATE_STORE DEBUG] Stack trace:")
-                print(traceback())
-                # Continue without cache
-            })
+                }, error = function(e) {
+                    print(sprintf("[STATE_STORE] Error checking disk cache: %s", e$message))
+                    print("[STATE_STORE DEBUG] Stack trace:")
+                    print(traceback())
+                    # Continue without cache
+                })
+            }
             
             # No match found
             print("[STATE_STORE] No matching simulation found")

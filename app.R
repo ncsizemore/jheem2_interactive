@@ -28,6 +28,7 @@ source("src/ui/components/common/display/state_sync.R")
 
 # Source data layer components
 source("src/data/cache.R")
+source("src/data/unified_cache/helpers.R")
 source("src/adapters/simulation_adapter.R")
 source("src/adapters/intervention_adapter.R")
 
@@ -249,6 +250,13 @@ server <- function(input, output, session) {
 
   # Initialize caches using the cache module
   cache_config <- get_component_config("caching")
+  # Initialize unified cache manager
+  cache_manager <- get_cache_manager()
+  # Schedule periodic cleanup
+  cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000
+  print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
+  
+  # For backward compatibility, also initialize old caches
   initialize_caches(cache_config)
 
   # Initialize panel servers with reactive settings
@@ -297,7 +305,7 @@ server <- function(input, output, session) {
   # Initialize contact handlers using new framework-agnostic handler
   initialize_contact_handler(input, output, session)
 
-  # Periodic cleanup of old simulations
+  # Periodic cleanup of old simulations and cache
   observe({
     # Get cleanup interval from config with fallback
     cleanup_interval <- 600000 # Default: 10 minutes
@@ -315,9 +323,18 @@ server <- function(input, output, session) {
     )
 
     invalidateLater(cleanup_interval)
-    print("[APP] Running scheduled simulation cleanup")
+    print("[APP] Running scheduled cleanup")
+    
+    # Run cleanup on unified cache manager
+    print("[APP] Running unified cache cleanup")
+    tryCatch({
+      cache_manager$cleanup(force = FALSE)
+    }, error = function(e) {
+      print(sprintf("[APP] Error in unified cache cleanup: %s", e$message))
+    })
 
-    # Run cleanup using default max age from config
+    # For backward compatibility, also run old cleanup
+    print("[APP] Running simulation cleanup")
     get_store()$cleanup_old_simulations(force = FALSE)
   })
 }
