@@ -441,11 +441,14 @@ OneDriveProvider <- R6::R6Class(
                 
                 # Handle case where sharing_link is a list
                 if (is.list(sharing_link) && !is.null(sharing_link$sharing_link)) {
-                    print("[ONEDRIVE] Extracting sharing_link from list")
                     sharing_link <- sharing_link$sharing_link
                 }
                 
-                return(self$cache_manager$download_file(sharing_link, filename))
+                # Call UnifiedCacheManager's download_file method (no progress callback needed)
+                print("[ONEDRIVE] Calling UnifiedCacheManager download_file method")
+                result <- self$cache_manager$download_file(sharing_link, filename)
+                print(sprintf("[ONEDRIVE] download_file result: %s", result))
+                return(result)
             }
             
             # Fallback to original implementation

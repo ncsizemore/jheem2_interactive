@@ -18,9 +18,15 @@ source("src/data/cache.R")
 #' This allows for branch-specific simulation directories when working with multiple
 #' model versions on the same machine.
 initialize_provider <- function(provider_type = "local", ...) {
+    # Get current Shiny session for progress updates
+    current_session <- getDefaultReactiveDomain()
+    print(sprintf("[LOADER] Initialize provider with session: %s", 
+                 if(is.null(current_session)) "NULL" else "valid session"))
+    
     .provider <<- if (provider_type == "local") {
         LocalProvider$new(...)
     } else if (provider_type == "onedrive") {
+        # Pass session parameter to OneDriveProvider
         OneDriveProvider$new(...)
     } else if (provider_type == "aws") {
         stop("AWS provider not yet implemented")

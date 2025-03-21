@@ -26,6 +26,7 @@
 
 @import 'components/feedback/errors.css';
 @import 'components/feedback/notifications.css';
+@import 'components/feedback/download_progress.css';
 @import 'components/status/model_loading.css';
 
 @import 'components/choices/choices.css';

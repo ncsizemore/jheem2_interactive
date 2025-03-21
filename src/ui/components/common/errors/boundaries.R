@@ -8,8 +8,9 @@ ERROR_TYPES <- list(
     DATA = "data",
     SYSTEM = "system",
     STATE = "state",
-    SIMULATION = "simulation",    # Simulation errors
-    SIMULATION_CACHE = "sim_cache"  # Simulation cache errors
+    SIMULATION = "simulation",     # Simulation errors
+    SIMULATION_CACHE = "sim_cache", # Simulation cache errors
+    DOWNLOAD = "download"         # Download errors
 )
 
 #' Error severity levels

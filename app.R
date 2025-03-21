@@ -73,6 +73,12 @@ source("src/ui/components/pages/contact/form.R")
 source("src/ui/components/pages/overview/overview.R")
 source("src/ui/components/pages/overview/content.R")
 
+# Source download manager
+source("src/ui/components/common/downloads/download_manager.R")
+
+# Create a global download manager object that we'll initialize in server
+DOWNLOAD_MANAGER <- NULL
+
 library(jheem2)
 
 # UI Creation
@@ -104,14 +110,25 @@ ui <- function() {
       script = "js/interactions/sounds.js",
       functions = c("chime", "chime_if_checked")
     ),
+    extendShinyjs(
+      script = "js/interactions/download_progress.js",
+      functions = c()
+    ),
 
     # Load CSS files based on config
     tags$head(
-      tags$link(
-        rel = "stylesheet",
-        type = "text/css",
-        href = "css/main.css"
-      ),
+    tags$link(
+    rel = "stylesheet",
+    type = "text/css",
+    href = "css/main.css"
+    ),
+
+        # Explicitly load download progress CSS
+        tags$link(
+          rel = "stylesheet",
+          type = "text/css",
+          href = "css/components/feedback/download_progress.css"
+        ),
 
       # Load JavaScript files
       lapply(config$theme$scripts, function(script) {
@@ -127,6 +144,8 @@ ui <- function() {
       style = "height:100%;",
       # Add model status indicator
       create_model_status_ui(),
+      # Download progress container is rendered by download_manager.R
+      uiOutput("download_progress_container"),
       # Add hidden input for status tracking
       tags$input(type = "text", id = "model_status", style = "display:none;"),
       navbarPage(
@@ -251,10 +270,38 @@ server <- function(input, output, session) {
   # Initialize caches using the cache module
   cache_config <- get_component_config("caching")
   # Initialize unified cache manager
-  cache_manager <- get_cache_manager()
-  # Schedule periodic cleanup
-  cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000
-  print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
+  cache_manager <- tryCatch({
+    get_cache_manager()
+  }, error = function(e) {
+    print(sprintf("[APP] Error initializing cache manager: %s", e$message))
+    NULL
+  })
+  
+  # Initialize download progress container UI
+  output$download_progress_container <- renderUI({
+    tags$div(
+      id = "download-progress-container",
+      class = "download-progress-container"
+    )
+  })
+  
+  # Initialize download manager immediately instead of waiting for onFlushed
+  # This ensures the reactive observers are established from the beginning
+  DOWNLOAD_MANAGER <<- create_download_manager(session, output)
+  print("[APP] Download manager initialized during server startup")
+  
+  # Initialize UI Messenger for direct messaging (bypassing reactive system)
+  source("src/ui/messaging/ui_messenger.R")
+  UI_MESSENGER <- create_ui_messenger(session)
+  session$userData$ui_messenger <- UI_MESSENGER
+  print("[APP] UI messenger initialized")
+  
+  
+  # Schedule periodic cleanup if cache manager was initialized
+  if (!is.null(cache_manager)) {
+    cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000
+    print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
+  }
   
   # For backward compatibility, also initialize old caches
   initialize_caches(cache_config)
@@ -327,11 +374,15 @@ server <- function(input, output, session) {
     
     # Run cleanup on unified cache manager
     print("[APP] Running unified cache cleanup")
-    tryCatch({
-      cache_manager$cleanup(force = FALSE)
-    }, error = function(e) {
-      print(sprintf("[APP] Error in unified cache cleanup: %s", e$message))
-    })
+    if (!is.null(cache_manager)) {
+      tryCatch({
+        cache_manager$cleanup(force = FALSE)
+      }, error = function(e) {
+        print(sprintf("[APP] Error in unified cache cleanup: %s", e$message))
+      })
+    } else {
+      print("[APP] Skipping unified cache cleanup (manager not initialized)")
+    }
 
     # For backward compatibility, also run old cleanup
     print("[APP] Running simulation cleanup")

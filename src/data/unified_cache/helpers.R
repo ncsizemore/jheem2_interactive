@@ -34,6 +34,12 @@ get_cache_manager <- function() {
     
     print("[UCACHE_HELPER] Creating UnifiedCacheManager instance")
     tryCatch({
+      # Inspect the config structure before passing to constructor
+      print("[UCACHE_HELPER] Config structure before passing to constructor:")
+      print(sprintf("[UCACHE_HELPER] Config type: %s, class: %s", typeof(config), paste(class(config), collapse=",")))
+      print("[UCACHE_HELPER] Config contents:")
+      print(str(config, max.level=3))
+      
       CACHE_MANAGER <<- UnifiedCacheManager$new(config)
       print("[UCACHE_HELPER] Successfully created cache manager")
     }, error = function(e) {
