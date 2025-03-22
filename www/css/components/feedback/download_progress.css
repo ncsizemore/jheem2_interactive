@@ -1,0 +1,102 @@
+/* Download progress container */
+.download-progress-container {
+  position: fixed;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 400px; /* Increased width */
+  z-index: var(--z-popover);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Download progress item */
+.download-progress-item {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg); /* Increased padding */
+  margin-bottom: var(--spacing-md); /* More space between items */
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all var(--transition-speed) var(--transition-timing);
+}
+
+/* Complete download */
+.download-progress-item.complete {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+}
+
+/* Error download */
+.download-progress-item.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+}
+
+/* Download title */
+.download-progress-item h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-lg); /* Larger font */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Download text */
+.download-progress-text {
+  font-size: var(--font-size-md); /* Increased size */
+  color: var(--color-gray-700);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500; /* Medium weight for better readability */
+}
+
+/* Progress bar track */
+.download-progress-bar {
+  height: 10px; /* Taller progress bar */
+  background-color: var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-xs);
+}
+
+/* Progress bar fill */
+.download-progress-bar-inner {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  width: 0%;
+  transition: width var(--transition-speed) var(--transition-timing);
+}
+
+/* Complete status */
+.download-progress-item.complete .download-progress-bar-inner {
+  background-color: var(--color-success);
+}
+
+/* Error status */
+.download-progress-item.error .download-progress-bar-inner {
+  background-color: var(--color-error);
+}
+
+/* Close button */
+.progress-close {
+  float: right;
+  cursor: pointer;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-lg); /* Larger close button */
+  line-height: 1;
+  margin-left: var(--spacing-sm);
+  margin-right: var(--spacing-xs);
+}
+
+.progress-close:hover {
+  color: var(--color-gray-800);
+}
+
+/* Fade out animation */
+.download-progress-item.fadeout {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+}

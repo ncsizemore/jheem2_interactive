@@ -120,4 +120,7 @@ interventions:
 
 # Simulation file configuration
 custom_simulations:
+  provider: "onedrive"  # Options: "local", "onedrive" - change to "onedrive" to use OneDrive
   file_pattern: "base/{location}_base.Rdata"
+  config_file: "src/data/providers/onedrive_resources/onedrive_sharing_links.json"  # Path to sharing links file
+

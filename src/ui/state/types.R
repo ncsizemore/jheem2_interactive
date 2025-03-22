@@ -34,7 +34,6 @@ create_simulation_state <- function(
     results = list(simset = NULL, transformed = NULL),
     timestamp = Sys.time(),
     status = "ready") {
-    
     validate_simulation_state(list(
         id = id,
         mode = mode,
@@ -99,6 +98,58 @@ validate_simulation_state <- function(state) {
     }
 
     state
+}
+
+#' Create download progress state structure
+#' @return List with default download progress state
+create_download_progress_state <- function() {
+  list(
+    active_downloads = list(),  # Currently downloading files
+    completed_downloads = list(), # Successfully completed downloads
+    failed_downloads = list(), # Failed downloads with error messages
+    last_updated = Sys.time()
+  )
+}
+
+#' Validate download progress state
+#' @param state Download progress state to validate
+#' @return Validated state with default values for missing fields
+validate_download_progress_state <- function(state) {
+  if (is.null(state)) {
+    return(create_download_progress_state())
+  }
+  
+  # Ensure all required fields exist
+  if (is.null(state$active_downloads)) {
+    state$active_downloads <- list()
+  }
+  if (is.null(state$completed_downloads)) {
+    state$completed_downloads <- list()
+  }
+  if (is.null(state$failed_downloads)) {
+    state$failed_downloads <- list()
+  }
+  if (is.null(state$last_updated)) {
+    state$last_updated <- Sys.time()
+  }
+  
+  state
+}
+
+#' Create download entry structure
+#' @param id Unique identifier for the download
+#' @param filename Name of the file being downloaded
+#' @param total_size Total size of the file in bytes (if known)
+#' @return List representing a download entry
+create_download_entry <- function(id, filename, total_size = NULL) {
+  list(
+    id = id,
+    filename = filename,
+    start_time = Sys.time(),
+    percent = 0,
+    total_size = total_size,
+    last_updated = Sys.time()
+  )
 }
 
 #' Create a new control state object
@@ -318,7 +369,7 @@ validate_panel_state <- function(state) {
     }
 
     # Validate current_simulation_id
-    if (!is.null(state$current_simulation_id) && 
+    if (!is.null(state$current_simulation_id) &&
         (!is.character(state$current_simulation_id) || length(state$current_simulation_id) != 1)) {
         stop("current_simulation_id must be NULL or a single character string")
     }
