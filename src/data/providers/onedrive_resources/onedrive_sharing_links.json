@@ -1,31 +1,43 @@
 {
   "format_version": "1.0",
-  "generated_at": "2025-03-18 11:07:41",
-  "model_version": "ehe",
+  "generated_at": "2025-03-22 11:29:30",
+  "model_version": "ryan-white",
   "simulations": {
     "C.12580_base": {
       "location": "C.12580",
       "scenario": "base",
       "filename": "base/C.12580_base.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYuFUsEpLZhNtqAKHPPeGyUBC06UxroaQdLcK3XwC0kL2w?download=1"
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUSB8lBFQF5Fqvd2ljILCSIB1huif7SLiSP4bo1dxCm5lA?download=1"
     },
-    "C.12580_hivtesting_all_2024_2025_moderate": {
+    "C.12580_permanent_loss": {
       "location": "C.12580",
-      "scenario": "hivtesting_all_2024_2025_moderate",
-      "filename": "prerun/C.12580/hivtesting_all_2024_2025_moderate.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETZiYJe3G2pHnU6LvzP6f_gB7r08jUAe37wAmpAjWKT6aQ?download=1"
+      "scenario": "permanent_loss",
+      "filename": "prerun/C.12580/permanent_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXMphz43r2JKj1mZWLAY3esBa9EdtJE3xb91lKGADpbWvw?download=1"
+    },
+    "C.12580_temporary_loss": {
+      "location": "C.12580",
+      "scenario": "temporary_loss",
+      "filename": "prerun/C.12580/temporary_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdGnxurssnNIqxLN36Vtl7wBSyM5ABb4uB8hc0MfwqN5yg?download=1"
     },
     "C.12580_base_test": {
       "location": "C.12580",
       "scenario": "base_test",
-      "filename": "test/base/C.12580_base_test.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYGHk08BYQ9BjqsQEDBRr8EBHsbxRWWF88MKG8kWeS1yuA?download=1"
+      "filename": "test/base/C.12580_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYgrejzB3GVMk-6Y0FEh_UkB3llTcYUvNkSYZAmZMiIDNg?download=1"
     },
-    "C.12580_C.12580_test_all_2024_2025_moderate": {
+    "C.12580_permanent_loss_test": {
       "location": "C.12580",
-      "scenario": "C.12580_test_all_2024_2025_moderate",
-      "filename": "test/prerun/C.12580_test_all_2024_2025_moderate.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQvLY_2GitZFnv2QWJN_jSsB6HR8rlC-0aPKAnMfljqHWw?download=1"
+      "scenario": "permanent_loss_test",
+      "filename": "test/prerun/C.12580/permanent_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUt1R2O6BzdLg3ThCqIcSv8BaC7xAjZBn1Plq_9y7Lw5_w?download=1"
+    },
+    "C.12580_temporary_loss_test": {
+      "location": "C.12580",
+      "scenario": "temporary_loss_test",
+      "filename": "test/prerun/C.12580/temporary_loss.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETLi6FXpcSdImA62ayqrhMsBhcKPlmyl_a4AKJiHxO6IJw?download=1"
     }
   }
 }
