@@ -1,0 +1,3 @@
+Working download format: Path-based format: /download
+Example URL: https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78A/download
+Base URL + parameter: https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYaY5e7MKDhJiHDeVu0lnn0Bwu61mLSra5KvK33JxZa78APath-based format: /download
