@@ -9,9 +9,9 @@ The download management system in JHEEM provides real-time progress indicators f
 ### Components
 
 1. **Download Manager (`download_manager.R`)**: 
-   - Observes the StateStore download state
    - Manages the UI representation of downloads
-   - Acts as a fallback mechanism in case direct UI messaging fails
+   - Updates the StateStore with download information
+   - Provides integration with the application architecture
 
 2. **UI Messenger (`src/ui/messaging/ui_messenger.R`)**:
    - Provides direct messaging to the UI, bypassing Shiny's reactive system
@@ -21,6 +21,36 @@ The download management system in JHEEM provides real-time progress indicators f
 3. **Frontend Components**:
    - JavaScript handlers (`www/js/interactions/download_progress.js`)
    - CSS styling (`www/css/components/feedback/download_progress.css`)
+
+### Current Architecture
+The download progress system employs a dual approach to address a fundamental limitation in Shiny:
+
+1. **StateStore Updates**:
+   - Maintains consistent application state
+   - Tracks active, completed, and failed downloads
+   - Updates through direct method calls: `add_download`, `update_progress`, etc.
+
+2. **Direct UI Messaging**:
+   - Bypasses Shiny's reactive system to provide real-time updates
+   - Uses `UIMessenger` to send direct messages to the browser via `session$sendCustomMessage`
+   - Critical for showing progress when the main R thread is blocked during downloads
+
+### Implementation Note (March 2025)
+The original implementation included a polling observer in `download_manager.R` that checked the StateStore every 2 seconds for download updates. This observer has been disabled for the following reasons:
+
+1. **Ineffectiveness During Active Downloads**:
+   - The observer cannot update the UI when the main R thread is blocked during downloads
+   - This is precisely when progress updates are most needed
+   - The direct UI Messenger approach already handles this use case more effectively
+
+2. **Unnecessary Overhead**:
+   - Created constant polling and debug messages
+   - Generated reactivity cycles that consumed resources
+   - Provided no actual benefit during critical download periods
+
+3. **State Consistency Maintained**:
+   - The StateStore is still updated through direct method calls
+   - No functionality is lost by disabling the polling observer
 
 ### How It Works
 
@@ -66,12 +96,31 @@ The system addresses a fundamental limitation in Shiny: the main R thread is blo
    - Visual indicators for download failures
    - Integration with the application's error boundary system
 
-## Potential Future Improvements
+## Future Improvements
+Several better approaches should be considered for a proper implementation:
 
-1. **Async Downloads**: Move to a true asynchronous download approach if/when available
-2. **Enhanced Progress Info**: Add download speed and estimated time remaining
-3. **Multiple Download Management**: Better handling of concurrent downloads
-4. **Framework Migration**: The StateStore pattern will facilitate future migration to other frameworks
+1. **Event-Based System**:
+   - Replace polling with an event-based approach
+   - StateStore notifies observers when download states change
+   - Eliminates unnecessary checks when nothing is happening
+
+2. **WebSocket Communication**:
+   - Implement WebSocket connections for real-time progress updates
+   - Provides direct communication channel that bypasses Shiny's limitations
+
+3. **Background Workers**:
+   - Move downloads to background workers that don't block the main thread
+   - Allows Shiny's reactive system to work normally during downloads
+
+4. **Modern Web Framework Migration**:
+   - Consider frameworks with better support for asynchronous operations
+   - React, Vue, or Angular would handle this scenario more elegantly
+
+5. **Conditional Activation**:
+   - Implement a system where polling only activates when downloads are detected
+   - Observer self-deactivates when no downloads are active
+
+These improvements will be considered in future refactoring phases as the application evolves.
 
 ## Usage
 
