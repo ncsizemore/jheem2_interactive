@@ -1,0 +1,138 @@
+/* Enhanced styling for the Generate Projections button */
+
+.generate-controls {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Primary action button with enhanced styling */
+.generate-controls .btn.btn-primary,
+.generate-controls .btn-default,
+.generate-controls button.shiny-bound-input,
+#generate_projections_prerun, 
+#generate_custom {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+  color: var(--color-white) !important;
+  font-weight: 600 !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: var(--radius-md) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25) !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  text-align: center !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  font-size: var(--font-size-md) !important;
+}
+
+/* Hover state with enhanced visual feedback */
+.generate-controls .btn.btn-primary:hover,
+.generate-controls .btn-default:hover,
+.generate-controls button.shiny-bound-input:hover,
+#generate_projections_prerun:hover, 
+#generate_custom:hover {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Active/pressed state */
+.generate-controls .btn.btn-primary:active,
+.generate-controls .btn-default:active,
+.generate-controls button.shiny-bound-input:active,
+#generate_projections_prerun:active, 
+#generate_custom:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Focus state */
+.generate-controls .btn.btn-primary:focus,
+.generate-controls .btn-default:focus,
+.generate-controls button.shiny-bound-input:focus,
+#generate_projections_prerun:focus, 
+#generate_custom:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 4px 6px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Loading state indicator */
+.generate-controls .btn.btn-primary.loading,
+.generate-controls .btn-default.loading,
+.generate-controls button.shiny-bound-input.loading {
+  opacity: 0.8;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+}
+
+/* Button with animation */
+.generate-controls .btn.btn-primary::after,
+.generate-controls .btn-default::after,
+.generate-controls button.shiny-bound-input::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: none;
+}
+
+.generate-controls .btn.btn-primary:hover::after,
+.generate-controls .btn-default:hover::after,
+.generate-controls button.shiny-bound-input:hover::after {
+  transform: translateX(100%);
+  transition: all 0.8s ease;
+}
+
+/* Feedback area styling */
+.generate-feedback {
+  margin-top: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Make the small text subtle */
+.generate-feedback small {
+  color: var(--color-gray-500);
+  font-style: italic;
+  margin-bottom: var(--spacing-xs);
+  text-align: center;
+}
+
+/* Style the chime option */
+.generate-feedback .chime-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-xs);
+}
+
+.generate-feedback .checkbox {
+  margin: 0;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .generate-controls .btn-primary {
+    padding: 0.6rem 1.2rem;
+    font-size: var(--font-size-sm);
+  }
+  
+  .generate-feedback {
+    align-items: center;
+  }
+}
