@@ -40,7 +40,8 @@ defaults:
   feedback:
     generate:
       message: "This will take 10-30 seconds"
-      show_chime: true
+      show_message: false  # New option to control message visibility
+      show_chime: false
       chime_label: "Play a chime when done"
 
 # Display settings
