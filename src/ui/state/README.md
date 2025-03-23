@@ -46,6 +46,7 @@ Validation state manager for:
 ### Store
 - Central state management via `get_store()`
 - Maintains panel states for different pages (e.g., "custom", "prerun")
+- Tracks download progress for file operations
 - Handles state updates through atomic operations
 
 ### Visualization State Manager
@@ -200,7 +201,104 @@ simulation_state = list(
   - `aggressive_max_age`: Maximum age during aggressive cleanup
 - Prevents memory issues during extended usage
 
+## Download Progress State Management
+
+### Download State
+Located in `store.R`, manages:
+- Active download tracking and progress updates
+- Completed download history
+- Failed download tracking with error information
+- Real-time progress display integration
+
+#### State Structure
+```r
+download_progress_state = list(
+    active_downloads = list(),    # Currently downloading files
+    completed_downloads = list(), # Successfully completed downloads
+    failed_downloads = list(),    # Failed downloads with error messages
+    last_updated = POSIXct()      # When the state was last updated
+)
+
+download_entry = list(
+    id = character(),             # Unique download identifier
+    filename = character(),       # Name of the file being downloaded
+    start_time = POSIXct(),       # When the download started
+    percent = numeric(),          # Progress percentage (0-100)
+    total_size = numeric(),       # Total size in bytes (if known)
+    last_updated = POSIXct()      # When the entry was last updated
+)
+```
+
+#### Download Progress Challenges
+- The main R thread is blocked during file downloads
+- This prevents reactive observers from updating the UI with progress
+- Solution uses a dual approach:
+  1. StateStore updates maintain architectural consistency
+  2. Direct UI messaging via UIMessenger provides real-time updates
+
+#### Download Progress API
+- `add_download`: Register a new download
+- `update_download_progress`: Update progress percentage
+- `complete_download`: Mark a download as complete
+- `fail_download`: Mark a download as failed with error info
+- `get_active_downloads`: Get all active downloads
+- `get_completed_downloads`: Get completed download history
+- `get_failed_downloads`: Get failed downloads with error info
+- `clear_completed_downloads`: Remove old completed downloads
+- `clear_failed_downloads`: Remove old failed downloads
+
+#### Usage Pattern
+```r
+# Adding a new download
+store$add_download(download_id, filename)
+
+# Updating progress
+store$update_download_progress(download_id, percent)
+
+# Completing a download
+store$complete_download(download_id)
+
+# Handling a failed download
+store$fail_download(download_id, message, ERROR_TYPES$DOWNLOAD, SEVERITY_LEVELS$ERROR)
+
+# Getting active downloads
+active_downloads <- store$get_active_downloads()
+```
+
+#### Integration with UI Messenger
+For real-time updates when the main thread is blocked:
+
+```r
+# Direct UI messaging (bypasses reactive system)
+ui_messenger <- session$userData$ui_messenger
+ui_messenger$send_download_progress(download_id, percent)
+```
+
+#### Auto-Cleanup
+- Periodically cleans up old completed and failed downloads
+- Configurable number of recent downloads to retain
+- Prevents UI clutter and memory usage growth
+
 ## Important Design Decisions
+
+### Real-Time Download Progress Updates
+
+The download progress display system employs a dual update approach to address a fundamental limitation in Shiny:
+
+1. **Challenge**: The main R thread is blocked during file downloads, preventing reactive observers from updating the UI with progress information
+2. **Solution**: 
+   - **StateStore Updates**: Maintain application architectural consistency
+   - **Direct UI Messaging**: Bypass the reactive system for real-time UI updates
+   
+This approach ensures users see real-time progress updates during downloads while maintaining the established state management patterns used throughout the application.
+
+The implemented pattern uses:
+- `UIMessenger` to send direct updates via `session$sendCustomMessage`
+- JavaScript handlers to process these messages and update the UI
+- StateStore to track download state for consistency with the rest of the application
+- HTTP Content-Length headers to accurately calculate download progress
+
+This dual approach solution will be replaced with a proper asynchronous download mechanism when available in future framework migrations.
 
 ### Cross-Page Button State Management
 
