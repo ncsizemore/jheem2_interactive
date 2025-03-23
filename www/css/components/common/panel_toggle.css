@@ -4,7 +4,7 @@
 }
 
 .panel-toggle-button {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: var(--theme-panel-header-text);
   width: 32px;
@@ -16,14 +16,18 @@
   cursor: pointer;
   transition: all 0.2s ease;
   margin-left: var(--spacing-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .panel-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .panel-toggle-button:active {
   transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Icon transition */
@@ -37,21 +41,37 @@
   transform: rotate(90deg);
 }
 
-/* Adjust header in collapsed state */
+/* Adjust header in collapsed state - modern approach */
 .side-panel.collapsed .panel-header {
   min-width: 50px;
-  padding: var(--spacing-md) !important;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  padding: var(--spacing-sm) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   height: auto;
-  min-height: 200px;
-  justify-content: flex-start;
+  min-height: 150px;
   border-radius: var(--radius-lg) !important;
+  text-align: center;
+}
+
+.side-panel.collapsed .panel-title {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  opacity: 0.9;
+  margin: var(--spacing-md) 0;
+  white-space: nowrap;
 }
 
 .side-panel.collapsed .panel-toggle-button {
-  margin-top: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
   margin-left: 0;
+  transform: rotate(90deg);
+  opacity: 0.9;
 }
 
 .side-panel.collapsed .panel-title {
@@ -73,5 +93,5 @@
 
 /* Hide all content except header when collapsed */
 .side-panel.collapsed > *:not(.panel-header) {
-  display: none;
+  display: none !important;
 }
