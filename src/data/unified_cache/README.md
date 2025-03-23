@@ -33,6 +33,7 @@ The `UnifiedCacheManager` class is an R6 class with the following structure:
 - `download_file(sharing_link, filename)` - Downloads a file from OneDrive to cache
   - **Args**: `sharing_link` (OneDrive URL), `filename` (target filename)
   - **Returns**: Path to cached file or NULL on failure
+  - **Note**: Provides real-time download progress through UI Messenger and StateStore
 
 #### Simulation Cache Operations
 - `cache_simulation(settings, mode, sim_state)` - Caches a simulation state
@@ -110,6 +111,15 @@ The cache manager maintains a registry of all cached files with metadata:
 }
 ```
 
+### Download Progress Tracking
+
+The cache manager incorporates a dual approach for download progress tracking:
+
+1. **StateStore Updates**: The download progress is tracked in the central StateStore, which maintains consistency with the application architecture
+2. **Direct UI Messaging**: Real-time progress updates are sent directly to the UI via UIMessenger, bypassing the reactive system when the main thread is blocked
+3. **Accurate Progress Calculation**: The system determines file size from HTTP Content-Length headers for precise progress tracking
+4. **Robust Error Handling**: Failed downloads are properly tracked and reported through both channels
+
 ### Directory Structure
 
 The cache manager creates and maintains these directories:
@@ -182,6 +192,7 @@ cache_manager$ensure_space_for(required_mb)
 - **OneDriveProvider**: Uses UnifiedCacheManager for downloading and caching files
 - **StateStore**: Uses UnifiedCacheManager for simulation caching
 - **app.R**: Initializes UnifiedCacheManager and schedules periodic cleanup
+- **UIMessenger**: Receives download progress updates from UnifiedCacheManager for real-time UI updates
 
 ## Configuration
 
