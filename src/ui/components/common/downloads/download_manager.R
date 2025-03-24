@@ -65,63 +65,73 @@ create_download_manager <- function(session, output, page_id = "downloads") {
   # Counter for observer executions
   observer_count <- 0
   
-  # Register download progress UI observer with enhanced debugging
-  observe({
-    # Increment observer counter
-    observer_count <<- observer_count + 1
-    
-    # Get the current time for precise logging
-    current_time <- format(Sys.time(), "%H:%M:%S.%OS3")
-    # Reduced logging - only show every 10th execution
-    if (observer_count %% 10 == 0) {
-      print(sprintf("[DOWNLOAD_MANAGER %s] State observer #%d running", current_time, observer_count))
-    }
-    
-    # Trigger the timer to force re-evaluation
-    download_timer()
-    
-    # Get active downloads safely with detailed logging
-    active_downloads <- NULL
-    tryCatch({
-      # Silenced this log to reduce noise
-      # print(sprintf("[DOWNLOAD_MANAGER %s] Accessing StateStore to get active downloads", current_time))
-      active_downloads <- access_store_safely(function(s) s$get_active_downloads())
-      # Only log if there are active downloads to reduce noise
-      if (!is.null(active_downloads) && length(active_downloads) > 0) {
-        print(sprintf("[DOWNLOAD_MANAGER %s] Got active downloads: %d downloads", 
-                      current_time, length(active_downloads)))
-      }
-    }, error = function(e) {
-      print(sprintf("[DOWNLOAD_MANAGER %s] ERROR accessing StateStore: %s", current_time, e$message))
-    })
-    
-    # Log current state vs new state
-    current_state <- download_state()
-    # Skip these logs to reduce noise
-    if (!is.null(active_downloads) && length(active_downloads) > 0) {
-      print(sprintf("[DOWNLOAD_MANAGER %s] Current state has %s downloads", 
-                 current_time,
-                 if(is.null(current_state)) "0" else length(current_state)))
-      print(sprintf("[DOWNLOAD_MANAGER %s] New state has %s downloads", 
-                 current_time,
-                 length(active_downloads)))
-    }
-    
-    # Check if states are identical
-    is_identical <- identical(active_downloads, current_state)
-    # Only log if there are active downloads
-    if (!is.null(active_downloads) && length(active_downloads) > 0) {
-      print(sprintf("[DOWNLOAD_MANAGER %s] States are identical: %s", current_time, is_identical))
-    }
-    
-    # FIX: ALWAYS update the reactive value, even if unchanged
-    # This ensures downstream observers will ALWAYS be triggered
-    # Only log updates when there are active downloads
-    if (!is.null(active_downloads) && length(active_downloads) > 0) {
-      print(sprintf("[DOWNLOAD_MANAGER %s] ALWAYS updating reactive value to maintain reactivity chain", current_time))
-    }
-    download_state(active_downloads)
-  })
+  # Disabling the download state polling observer
+  # 
+  # REASON FOR DISABLING: 
+  # This observer was creating unnecessary overhead without providing actual functionality.
+  # The polling mechanism can't update the UI during active downloads (when the main thread is blocked),
+  # which is precisely when updates are most needed. The UI Messenger component already
+  # handles real-time updates by bypassing Shiny's reactive system, making this polling redundant.
+  # The State Store is still updated through direct method calls (add_download, update_progress, etc.)
+  # 
+  # See README.md for more discussion on this topic.
+  #
+  # observe({
+  #   # Increment observer counter
+  #   observer_count <<- observer_count + 1
+  #   
+  #   # Get the current time for precise logging
+  #   current_time <- format(Sys.time(), "%H:%M:%S.%OS3")
+  #   # Reduced logging - only show every 10th execution
+  #   if (observer_count %% 10 == 0) {
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] State observer #%d running", current_time, observer_count))
+  #   }
+  #   
+  #   # Trigger the timer to force re-evaluation
+  #   download_timer()
+  #   
+  #   # Get active downloads safely with detailed logging
+  #   active_downloads <- NULL
+  #   tryCatch({
+  #     # Silenced this log to reduce noise
+  #     # print(sprintf("[DOWNLOAD_MANAGER %s] Accessing StateStore to get active downloads", current_time))
+  #     active_downloads <- access_store_safely(function(s) s$get_active_downloads())
+  #     # Only log if there are active downloads to reduce noise
+  #     if (!is.null(active_downloads) && length(active_downloads) > 0) {
+  #       print(sprintf("[DOWNLOAD_MANAGER %s] Got active downloads: %d downloads", 
+  #                     current_time, length(active_downloads)))
+  #     }
+  #   }, error = function(e) {
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] ERROR accessing StateStore: %s", current_time, e$message))
+  #   })
+  #   
+  #   # Log current state vs new state
+  #   current_state <- download_state()
+  #   # Skip these logs to reduce noise
+  #   if (!is.null(active_downloads) && length(active_downloads) > 0) {
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] Current state has %s downloads", 
+  #                current_time,
+  #                if(is.null(current_state)) "0" else length(current_state)))
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] New state has %s downloads", 
+  #                current_time,
+  #                length(active_downloads)))
+  #   }
+  #   
+  #   # Check if states are identical
+  #   is_identical <- identical(active_downloads, current_state)
+  #   # Only log if there are active downloads
+  #   if (!is.null(active_downloads) && length(active_downloads) > 0) {
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] States are identical: %s", current_time, is_identical))
+  #   }
+  #   
+  #   # FIX: ALWAYS update the reactive value, even if unchanged
+  #   # This ensures downstream observers will ALWAYS be triggered
+  #   # Only log updates when there are active downloads
+  #   if (!is.null(active_downloads) && length(active_downloads) > 0) {
+  #     print(sprintf("[DOWNLOAD_MANAGER %s] ALWAYS updating reactive value to maintain reactivity chain", current_time))
+  #   }
+  #   download_state(active_downloads)
+  # })
   
   # Register UI updates based on reactive download state with enhanced logging
   observe({

@@ -29,8 +29,12 @@
 .side-panel.collapsed {
   max-width: 50px;
   overflow: hidden;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 300px !important;
+  align-self: flex-start !important;
+  flex-grow: 0 !important;
 }
-
 
 
 /* Responsive Layout */

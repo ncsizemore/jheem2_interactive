@@ -46,7 +46,14 @@ create_intervention_content <- function(config) {
                 # Feedback area using config
                 tags$div(
                     class = "generate-feedback",
-                    tags$small(config$defaults$feedback$generate$message),
+                    
+                    # Only show message if configured to do so
+                    if (!is.null(config$defaults$feedback$generate$show_message) && 
+                        config$defaults$feedback$generate$show_message) {
+                        tags$small(config$defaults$feedback$generate$message)
+                    },
+                    
+                    # Only show chime option if configured to do so
                     if (!is.null(config$defaults$feedback$generate$show_chime) && 
                         config$defaults$feedback$generate$show_chime) {
                         tags$div(

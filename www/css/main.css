@@ -24,6 +24,8 @@
 @import 'components/controls/toggle.css';
 @import 'components/controls/custom_inputs.css';
 
+@import 'components/buttons/generate.css';
+
 @import 'components/feedback/errors.css';
 @import 'components/feedback/notifications.css';
 @import 'components/feedback/download_progress.css';
