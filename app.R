@@ -47,6 +47,12 @@ source("src/ui/components/selectors/custom_components.R")
 source("src/ui/components/selectors/choices_select.R")
 source("src/ui/components/common/status/model_status.R")
 
+# Source download manager
+source("src/ui/components/common/downloads/download_manager.R")
+
+# Source progress tracking
+source("src/ui/components/common/progress/init.R")
+
 source("src/ui/components/pages/prerun/layout.R")
 source("src/ui/components/pages/custom/layout.R")
 
@@ -129,6 +135,13 @@ ui <- function() {
           type = "text/css",
           href = "css/components/feedback/download_progress.css"
         ),
+        
+        # Explicitly load simulation progress CSS
+        tags$link(
+          rel = "stylesheet",
+          type = "text/css",
+          href = "css/components/feedback/simulation_progress.css"
+        ),
 
       # Load JavaScript files
       lapply(config$theme$scripts, function(script) {
@@ -136,6 +149,8 @@ ui <- function() {
       }),
       # Load our state synchronization script
       tags$script(src = "js/state/visualization-sync.js"),
+      # Load simulation progress script
+      tags$script(src = "js/interactions/simulation_progress.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
@@ -146,6 +161,8 @@ ui <- function() {
       create_model_status_ui(),
       # Download progress container is rendered by download_manager.R
       uiOutput("download_progress_container"),
+      # Simulation progress container
+      tags$div(id = "simulation-progress-container", class = "simulation-progress-container"),
       # Add hidden input for status tracking
       tags$input(type = "text", id = "model_status", style = "display:none;"),
       navbarPage(
@@ -295,6 +312,10 @@ server <- function(input, output, session) {
   UI_MESSENGER <- create_ui_messenger(session)
   session$userData$ui_messenger <- UI_MESSENGER
   print("[APP] UI messenger initialized")
+  
+  # Initialize progress components
+  progress_components <- init_progress_components(input, output, session)
+  print("[APP] Progress components initialized")
   
   
   # Schedule periodic cleanup if cache manager was initialized

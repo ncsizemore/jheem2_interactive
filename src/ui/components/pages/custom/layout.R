@@ -85,6 +85,9 @@ create_custom_layout <- function(config = get_page_complete_config("custom")) {
                 config = config,
                 content = create_custom_plot_controls(config)
             )
-        )
+        ),
+        
+        # Add simulation progress UI
+        simulation_progress_ui("custom-progress")
     )
 }

@@ -167,7 +167,14 @@ simulation_state = list(
         transformed = NULL     # Transformed data for display
     ),
     timestamp = POSIXct(),     # When created/updated
-    status = character()       # Status tracking
+    status = character(),      # Status tracking
+    progress = list(           # Progress tracking for running simulations
+        current = numeric(),   # Current simulation index
+        total = numeric(),     # Total number of simulations
+        percentage = numeric(), # Progress percentage (0-100)
+        done = logical(),      # Whether simulation is complete
+        last_updated = POSIXct() # Timestamp of last update
+    )
 )
 ```
 
@@ -200,6 +207,86 @@ simulation_state = list(
   - `high_count_threshold`: When to use aggressive cleanup
   - `aggressive_max_age`: Maximum age during aggressive cleanup
 - Prevents memory issues during extended usage
+
+## Simulation Progress State
+
+The simulation state structure includes a `progress` field that tracks the progress of running interventions:
+
+```r
+simulation_state = {
+  id: "sim_123",
+  mode: "custom",
+  settings: { ... },
+  results: { ... },
+  timestamp: "2023-01-01",
+  status: "running",
+  progress: {
+    current: 10,      // Current simulation index
+    total: 30,        // Total number of simulations
+    percentage: 33,   // Progress percentage (0-100)
+    done: false,      // Whether the current simulation is complete
+    last_updated: ... // Timestamp of last update
+  }
+}
+```
+
+### Simulation Progress Updates
+
+Due to Shiny's reactive limitations when the main R thread is blocked, progress updates use a dual approach:
+
+1. **State Store Updates**: All progress information is stored in the state store for architectural consistency. This allows components to use the standard state management pattern when the thread is not blocked.
+
+2. **Direct UI Messaging**: For real-time updates when the thread is blocked, progress messages are sent directly to the browser via the UI Messenger, bypassing Shiny's reactive system.
+
+This dual approach ensures both architectural consistency and responsive user experience. In future iterations with a more modern web framework, we may be able to consolidate to just the state store approach.
+
+#### Progress Update API
+
+```r
+# Update progress in state store
+private$store$update_simulation(sim_id, list(
+    progress = create_simulation_progress(
+        current = index,
+        total = total,
+        percentage = percent,
+        done = done
+    )
+))
+
+# Send direct UI update
+ui_messenger$send_simulation_progress(
+    id = sim_id,
+    current = index,
+    total = total,
+    percent = percent,
+    description = "Running Intervention"
+)
+```
+
+#### JavaScript Progress Handler Integration
+
+The dual approach relies on JavaScript handlers to process direct messaging updates:
+
+```javascript
+// Register custom message handler for simulation progress updates
+Shiny.addCustomMessageHandler("simulation_progress_update", function(data) {
+    // Process based on action type
+    switch(data.action) {
+        case "start":
+            createOrUpdateProgressItem(data);
+            break;
+        case "update":
+            updateProgressItem(data);
+            break;
+        case "complete":
+            completeProgressItem(data);
+            break;
+        case "error":
+            errorProgressItem(data);
+            break;
+    }
+});
+```
 
 ## Download Progress State Management
 
@@ -281,24 +368,23 @@ ui_messenger$send_download_progress(download_id, percent)
 
 ## Important Design Decisions
 
-### Real-Time Download Progress Updates
+### Real-Time Progress Updates for Downloads and Simulations
 
-The download progress display system employs a dual update approach to address a fundamental limitation in Shiny:
+Both download and simulation progress systems employ a dual update approach to address a fundamental limitation in Shiny:
 
-1. **Challenge**: The main R thread is blocked during file downloads, preventing reactive observers from updating the UI with progress information
+1. **Challenge**: The main R thread is blocked during intensive operations, preventing reactive observers from updating the UI with progress information
 2. **Solution**: 
    - **StateStore Updates**: Maintain application architectural consistency
    - **Direct UI Messaging**: Bypass the reactive system for real-time UI updates
    
-This approach ensures users see real-time progress updates during downloads while maintaining the established state management patterns used throughout the application.
+This approach ensures users see real-time progress updates during long-running operations while maintaining the established state management patterns used throughout the application.
 
 The implemented pattern uses:
 - `UIMessenger` to send direct updates via `session$sendCustomMessage`
 - JavaScript handlers to process these messages and update the UI
-- StateStore to track download state for consistency with the rest of the application
-- HTTP Content-Length headers to accurately calculate download progress
+- StateStore to track state for consistency with the rest of the application
 
-This dual approach solution will be replaced with a proper asynchronous download mechanism when available in future framework migrations.
+This dual approach solution will be replaced with a proper asynchronous mechanism when available in future framework migrations.
 
 ### Cross-Page Button State Management
 

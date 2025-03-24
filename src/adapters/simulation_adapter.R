@@ -2,9 +2,20 @@ source("src/data/loader.R")
 source("src/core/simulation/runner.R")
 source("src/core/simulation/results.R")
 source("src/ui/formatters/table_formatter.R")
+source("src/ui/state/types.R") # For create_simulation_progress
 
 #' Simulation Adapter Class
 #' @description Handles simulation operations with state management
+#' 
+#' This adapter implements a dual approach for progress tracking:
+#' 1. State Store Updates: Store progress in the central state store 
+#'    for architectural consistency and standard state management.
+#' 2. Direct UI Messaging: Send progress updates directly to the browser
+#'    via UI Messenger, bypassing Shiny's reactive system when the main
+#'    thread is blocked during long-running simulations.
+#'
+#' The dual approach is necessary because Shiny's reactive system cannot
+#' update the UI while the main R thread is blocked during simulation runs.
 SimulationAdapter <- R6::R6Class(
     "SimulationAdapter",
     public = list(
@@ -13,12 +24,17 @@ SimulationAdapter <- R6::R6Class(
         initialize = function(store) {
             private$store <- store
             private$error_boundaries <- list()
+            private$sessions <- list()  # Store sessions to access UI messenger for progress updates
         },
 
         #' @description Register error boundary for a page
         #' @param page_id Character: page identifier
-        #' @param session Shiny session object
+        #' @param session Shiny session object - Also used to access UI messenger for progress updates
         #' @param output Shiny output object
+        #' 
+        #' This method not only registers error boundaries but also stores the session object
+        #' which is crucial for the dual approach to progress tracking. The stored session
+        #' allows us to access the UI messenger even when the main thread is blocked.
         register_error_boundary = function(page_id, session, output) {
             if (!is.null(session) && !is.null(output)) {
                 # Create a simulation boundary for the adapter
@@ -26,6 +42,9 @@ SimulationAdapter <- R6::R6Class(
                     session, output, page_id, "simulation",
                     state_manager = private$store
                 )
+                
+                # Store the session for this page
+                private$sessions[[page_id]] <- session
 
                 print(sprintf("[SIMULATION_ADAPTER] Registered error boundary for page %s", page_id))
             }
@@ -257,20 +276,128 @@ SimulationAdapter <- R6::R6Class(
                         print("Created intervention:")
                         str(intervention)
                         runner <- SimulationRunner$new(provider)
-                        simset <- runner$run_intervention(intervention, simset)
+                        
+                        # Create progress callback
+                        progress_callback <- function(index, total, done) {
+                            # Calculate progress percentage
+                            percent <- 0
+                            if (total > 0) {
+                                percent <- round(min(100, (index / total) * 100))
+                            }
+                            
+                            # Create progress state for the store
+                            progress_state <- create_simulation_progress(
+                                current = index,
+                                total = total,
+                                percentage = percent,
+                                done = done
+                            )
+                            
+                            # DUAL APPROACH FOR PROGRESS TRACKING
+                            # 1. Update the state store for architectural consistency
+                            # This maintains the standard state management pattern but won't update the UI
+                            # when the main R thread is blocked during simulation
+                            private$store$update_simulation(sim_id, list(
+                                progress = progress_state
+                            ))
+                            
+                            # 2. Send direct UI updates via UI Messenger to bypass Shiny's reactive system
+                            # This ensures real-time updates even when the main thread is blocked
+                            if (!is.null(private$sessions[[mode]])) {
+                                ui_messenger <- private$sessions[[mode]]$userData$ui_messenger
+                                if (!is.null(ui_messenger)) {
+                                    ui_messenger$send_simulation_progress(
+                                        id = sim_id,
+                                        current = index,
+                                        total = total,
+                                        percent = percent,
+                                        description = "Running Intervention"
+                                    )
+                                }
+                            }
+                            
+                            # Log progress (only for significant steps to reduce console output)
+                            if (index %% 10 == 0 || index == 1 || index == total || done) {
+                                print(sprintf("[SIMULATION_ADAPTER] Progress: %d/%d (%d%%) - Done: %s", 
+                                              index, total, percent, done))
+                            }
+                        }
+                        
+                        # Initialize progress tracking
+                        
+                        # Create initial progress state with zeros 
+                        initial_progress <- create_simulation_progress(0, 0, 0, FALSE)
+                        
+                        # DUAL APPROACH (Part 1): Store initial progress in state store
+                        # This is for state consistency and will be used by components
+                        # that rely on the standard state management pattern
+                        private$store$update_simulation(sim_id, list(
+                            progress = initial_progress
+                        ))
+                        
+                        # DUAL APPROACH (Part 2): Send initial progress notification via UI messenger
+                        # This triggers the JavaScript handlers to show the progress UI
+                        # immediately, even if the main thread will be blocked
+                        if (!is.null(private$sessions[[mode]])) {
+                            ui_messenger <- private$sessions[[mode]]$userData$ui_messenger
+                            if (!is.null(ui_messenger)) {
+                                ui_messenger$send_simulation_start(
+                                    id = sim_id,
+                                    description = "Running Intervention"
+                                )
+                            }
+                        }
+                        
+                        # Run intervention with progress tracking
+                        simset <- runner$run_intervention(
+                            intervention = intervention, 
+                            simset = simset,
+                            progress_callback = progress_callback
+                        )
                     }
 
-                    # Update state with results
-                    private$store$update_simulation(
-                        sim_id,
-                        list(
-                            results = list(
-                                simset = simset,
-                                transformed = NULL
-                            ),
-                            status = "complete"
+                    # Handle simulation completion
+                    final_progress <- NULL
+                    if (mode == "custom") {
+                        # Create final progress state with 100% completion
+                        final_progress <- create_simulation_progress(
+                            current = 100,  # Arbitrary value
+                            total = 100,     # Same as current for 100%
+                            percentage = 100,
+                            done = TRUE
                         )
+                        
+                        # DUAL APPROACH FOR COMPLETION:
+                        # Send direct completion message via UI messenger to ensure
+                        # the UI shows the completed state immediately, even if Shiny's
+                        # reactive system is still blocked or processing the queue
+                        if (!is.null(private$sessions[[mode]])) {
+                            ui_messenger <- private$sessions[[mode]]$userData$ui_messenger
+                            if (!is.null(ui_messenger)) {
+                                ui_messenger$send_simulation_complete(
+                                    id = sim_id,
+                                    description = "Simulation Complete"
+                                )
+                            }
+                        }
+                        # The store update happens below, as part of the results update
+                    }
+                    
+                    # Update state with results and final progress
+                    update_data <- list(
+                        results = list(
+                            simset = simset,
+                            transformed = NULL
+                        ),
+                        status = "complete"
                     )
+                    
+                    # Add progress if we have it
+                    if (!is.null(final_progress)) {
+                        update_data$progress <- final_progress
+                    }
+                    
+                    private$store$update_simulation(sim_id, update_data)
 
                     # Explicitly try to cache the completed simulation
                     tryCatch(
@@ -299,15 +426,47 @@ SimulationAdapter <- R6::R6Class(
                 error = function(e) {
                     # Convert error message to string and ensure it is properly formatted
                     error_message <- as.character(conditionMessage(e))
+                    
+                    # Handle error state for simulation progress
+                    error_progress <- NULL
+                    if (mode == "custom") {
+                        # Create error progress state to mark the progress as complete but failed
+                        error_progress <- create_simulation_progress(
+                            current = 0,
+                            total = 0,
+                            percentage = 0,
+                            done = TRUE  # Mark as done to stop progress tracking
+                        )
+                        
+                        # DUAL APPROACH FOR ERROR HANDLING:
+                        # 1. The error state will be stored in the state store below
+                        # 2. Send direct error message via UI messenger to immediately update UI
+                        #    This ensures users see the error even if Shiny's reactive system is blocked
+                        if (!is.null(private$sessions[[mode]])) {
+                            ui_messenger <- private$sessions[[mode]]$userData$ui_messenger
+                            if (!is.null(ui_messenger)) {
+                                ui_messenger$send_simulation_error(
+                                    id = sim_id,
+                                    message = error_message,
+                                    error_type = ERROR_TYPES$SIMULATION,
+                                    severity = SEVERITY_LEVELS$ERROR
+                                )
+                            }
+                        }
+                    }
 
                     # 1. Update simulation state with error info
-                    private$store$update_simulation(
-                        sim_id,
-                        list(
-                            status = "error",
-                            error_message = error_message
-                        )
+                    update_data <- list(
+                        status = "error",
+                        error_message = error_message
                     )
+                    
+                    # Add progress if we have it
+                    if (!is.null(error_progress)) {
+                        update_data$progress <- error_progress
+                    }
+                    
+                    private$store$update_simulation(sim_id, update_data)
 
                     # 2. Use error boundary for structured error communication
                     if (!is.null(private$error_boundaries[[mode]])) {
@@ -328,7 +487,8 @@ SimulationAdapter <- R6::R6Class(
     ),
     private = list(
         store = NULL,
-        error_boundaries = NULL
+        error_boundaries = NULL,
+        sessions = NULL  # Store sessions by page_id
     )
 )
 

@@ -189,6 +189,171 @@ UIMessenger <- R6Class("UIMessenger",
         print(sprintf("[UI_MESSENGER] Error sending error message: %s", e$message))
         invisible(FALSE)
       })
+    },
+    
+    #' Send a simulation start message
+    #' @param id Simulation identifier
+    #' @param description Short description of the simulation
+    #' @param additional_data Optional list of additional data to include
+    #' @return Invisible TRUE on success, FALSE on failure
+    send_simulation_start = function(id, description = "Running Intervention", additional_data = NULL) {
+      if (is.null(self$session)) {
+        print("[UI_MESSENGER] Cannot send simulation start message - no valid session")
+        return(invisible(FALSE))
+      }
+      
+      tryCatch({
+        message_data <- list(
+          id = id,
+          description = description,
+          timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
+        )
+        
+        # Add any additional data
+        if (!is.null(additional_data) && is.list(additional_data)) {
+          for (name in names(additional_data)) {
+            message_data[[name]] <- additional_data[[name]]
+          }
+        }
+        
+        # Send message via both channels for compatibility
+        self$session$sendCustomMessage("simulation_progress_start", message_data)
+        
+        message_data$action <- "start"
+        self$session$sendCustomMessage("simulation_progress_update", message_data)
+        
+        print(sprintf("[UI_MESSENGER] Sent simulation start message for %s", id))
+        invisible(TRUE)
+      }, error = function(e) {
+        print(sprintf("[UI_MESSENGER] Error sending simulation start message: %s", e$message))
+        invisible(FALSE)
+      })
+    },
+    
+    #' Send a simulation progress update message
+    #' @param id Simulation identifier
+    #' @param current Current simulation index
+    #' @param total Total number of simulations
+    #' @param percent Progress percentage (0-100)
+    #' @param description Optional simulation description
+    #' @param additional_data Optional list of additional data to include
+    #' @return Invisible TRUE on success, FALSE on failure
+    send_simulation_progress = function(id, current, total, percent, description = NULL, additional_data = NULL) {
+      if (is.null(self$session)) {
+        return(invisible(FALSE))
+      }
+      
+      tryCatch({
+        message_data <- list(
+          action = "update",
+          id = id,
+          current = current,
+          total = total,
+          percent = percent,
+          timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
+        )
+        
+        if (!is.null(description)) {
+          message_data$description <- description
+        }
+        
+        # Add any additional data
+        if (!is.null(additional_data) && is.list(additional_data)) {
+          for (name in names(additional_data)) {
+            message_data[[name]] <- additional_data[[name]]
+          }
+        }
+        
+        self$session$sendCustomMessage("simulation_progress_update", message_data)
+        invisible(TRUE)
+      }, error = function(e) {
+        print(sprintf("[UI_MESSENGER] Error sending simulation progress message: %s", e$message))
+        invisible(FALSE)
+      })
+    },
+    
+    #' Send a simulation complete message
+    #' @param id Simulation identifier
+    #' @param description Optional simulation description
+    #' @param additional_data Optional list of additional data to include
+    #' @return Invisible TRUE on success, FALSE on failure
+    send_simulation_complete = function(id, description = NULL, additional_data = NULL) {
+      if (is.null(self$session)) {
+        return(invisible(FALSE))
+      }
+      
+      tryCatch({
+        message_data <- list(
+          id = id,
+          timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
+        )
+        
+        if (!is.null(description)) {
+          message_data$description <- description
+        }
+        
+        # Add any additional data
+        if (!is.null(additional_data) && is.list(additional_data)) {
+          for (name in names(additional_data)) {
+            message_data[[name]] <- additional_data[[name]]
+          }
+        }
+        
+        # Send message via both channels for compatibility
+        self$session$sendCustomMessage("simulation_progress_complete", message_data)
+        
+        message_data$action <- "complete"
+        self$session$sendCustomMessage("simulation_progress_update", message_data)
+        
+        print(sprintf("[UI_MESSENGER] Sent simulation complete message for %s", id))
+        invisible(TRUE)
+      }, error = function(e) {
+        print(sprintf("[UI_MESSENGER] Error sending simulation complete message: %s", e$message))
+        invisible(FALSE)
+      })
+    },
+    
+    #' Send a simulation error message
+    #' @param id Simulation identifier
+    #' @param message Error message
+    #' @param error_type Error type from ERROR_TYPES
+    #' @param severity Error severity from SEVERITY_LEVELS
+    #' @param additional_data Optional list of additional data to include
+    #' @return Invisible TRUE on success, FALSE on failure
+    send_simulation_error = function(id, message, error_type = ERROR_TYPES$SIMULATION, 
+                                     severity = SEVERITY_LEVELS$ERROR, additional_data = NULL) {
+      if (is.null(self$session)) {
+        return(invisible(FALSE))
+      }
+      
+      tryCatch({
+        message_data <- list(
+          id = id,
+          message = message,
+          error_type = error_type,
+          severity = severity,
+          timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
+        )
+        
+        # Add any additional data
+        if (!is.null(additional_data) && is.list(additional_data)) {
+          for (name in names(additional_data)) {
+            message_data[[name]] <- additional_data[[name]]
+          }
+        }
+        
+        # Send message via both channels for compatibility
+        self$session$sendCustomMessage("simulation_progress_error", message_data)
+        
+        message_data$action <- "error"
+        self$session$sendCustomMessage("simulation_progress_update", message_data)
+        
+        print(sprintf("[UI_MESSENGER] Sent simulation error message for %s", id))
+        invisible(TRUE)
+      }, error = function(e) {
+        print(sprintf("[UI_MESSENGER] Error sending simulation error message: %s", e$message))
+        invisible(FALSE)
+      })
     }
   )
 )

@@ -33,14 +33,16 @@ create_simulation_state <- function(
     settings = list(),
     results = list(simset = NULL, transformed = NULL),
     timestamp = Sys.time(),
-    status = "ready") {
+    status = "ready",
+    progress = NULL) {
     validate_simulation_state(list(
         id = id,
         mode = mode,
         settings = settings,
         results = results,
         timestamp = timestamp,
-        status = status
+        status = status,
+        progress = progress
     ))
 }
 
@@ -58,6 +60,11 @@ validate_simulation_state <- function(state) {
             "Missing required simulation state fields: %s",
             paste(missing, collapse = ", ")
         ))
+    }
+    
+    # Add progress field if missing
+    if (!"progress" %in% names(state)) {
+        state$progress <- NULL
     }
 
     # Validate id
@@ -95,6 +102,30 @@ validate_simulation_state <- function(state) {
             "Invalid status. Must be one of: %s",
             paste(valid_statuses, collapse = ", ")
         ))
+    }
+    
+    # Validate progress field if present
+    if (!is.null(state$progress)) {
+        if (!is.list(state$progress)) {
+            stop("progress must be a list or NULL")
+        }
+        
+        # Required fields for progress
+        progress_fields <- c("percentage", "current", "total")
+        missing_progress <- setdiff(progress_fields, names(state$progress))
+        if (length(missing_progress) > 0) {
+            # Create default values for missing fields
+            for (field in missing_progress) {
+                state$progress[[field]] <- switch(field,
+                    percentage = 0,
+                    current = 0,
+                    total = 0
+                )
+            }
+        }
+        
+        # Ensure percentage is within bounds
+        state$progress$percentage <- min(100, max(0, state$progress$percentage))
     }
 
     state
@@ -148,6 +179,34 @@ create_download_entry <- function(id, filename, total_size = NULL) {
     start_time = Sys.time(),
     percent = 0,
     total_size = total_size,
+    last_updated = Sys.time()
+  )
+}
+
+#' Create a simulation progress state structure
+#' @param current Current index of the simulation
+#' @param total Total number of simulations to run
+#' @param percentage Optional direct percentage value (0-100)
+#' @param done Whether the current simulation is complete
+#' @return List with progress state information
+create_simulation_progress <- function(current = 0, total = 0, percentage = NULL, done = FALSE) {
+  # Calculate percentage if not directly provided
+  if (is.null(percentage)) {
+    if (total > 0) {
+      percentage <- min(100, round((current / total) * 100))
+    } else {
+      percentage <- 0
+    }
+  }
+  
+  # Clamp percentage to valid range
+  percentage <- min(100, max(0, percentage))
+  
+  list(
+    current = current,
+    total = total,
+    percentage = percentage,
+    done = done,
     last_updated = Sys.time()
   )
 }

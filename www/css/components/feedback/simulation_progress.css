@@ -1,0 +1,102 @@
+/* Simulation progress container */
+.simulation-progress-container {
+  position: fixed;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 400px;
+  z-index: var(--z-popover);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Simulation progress item */
+.simulation-progress-item {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all var(--transition-speed) var(--transition-timing);
+}
+
+/* Complete simulation */
+.simulation-progress-item.complete {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+}
+
+/* Error simulation */
+.simulation-progress-item.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+}
+
+/* Simulation title */
+.simulation-progress-item h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-lg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Simulation text */
+.simulation-progress-text {
+  font-size: var(--font-size-md);
+  color: var(--color-gray-700);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+}
+
+/* Progress bar track */
+.simulation-progress-bar {
+  height: 10px;
+  background-color: var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-xs);
+}
+
+/* Progress bar fill */
+.simulation-progress-bar-inner {
+  height: 100%;
+  background-color: var(--color-info);
+  border-radius: var(--radius-sm);
+  width: 0%;
+  transition: width var(--transition-speed) var(--transition-timing);
+}
+
+/* Complete status */
+.simulation-progress-item.complete .simulation-progress-bar-inner {
+  background-color: var(--color-success);
+}
+
+/* Error status */
+.simulation-progress-item.error .simulation-progress-bar-inner {
+  background-color: var(--color-error);
+}
+
+/* Close button */
+.simulation-progress-item .progress-close {
+  float: right;
+  cursor: pointer;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  margin-left: var(--spacing-sm);
+  margin-right: var(--spacing-xs);
+}
+
+.simulation-progress-item .progress-close:hover {
+  color: var(--color-gray-800);
+}
+
+/* Fade out animation */
+.simulation-progress-item.fadeout {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+}

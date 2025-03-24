@@ -1,85 +1,83 @@
-# UI Messenger
+# UI Messaging System
 
 ## Overview
 
-The UI Messenger module provides a way to send direct messages to the UI, bypassing Shiny's reactive system. This is particularly useful for scenarios where the main R thread is blocked (such as during file downloads), preventing reactive observers from updating the UI.
+The UI Messaging system provides a direct communication channel between the server and client that bypasses Shiny's reactive system. This is essential for real-time updates when the main R thread is blocked, such as during downloads or simulation runs.
 
 ## Background
 
-### The Problem
+Shiny's reactive system operates on a single thread. When this thread is blocked by long-running operations (downloads, simulations, etc.), the UI cannot update until the operation completes. The UI Messenger works around this limitation by sending direct messages to the browser.
 
-Shiny's reactive system operates on a single-threaded model:
-- Reactive values are updated
-- Observers detect changes and run
-- UI is updated accordingly
+## Components
 
-However, this system breaks down when the main thread is blocked:
-- Long-running operations (like file downloads) block the main thread
-- Reactive observers cannot run until the operation completes
-- UI updates are delayed until the operation finishes
+1. **UIMessenger Class (`ui_messenger.R`)**:
+   - R6 class that encapsulates messaging functionality
+   - Provides methods for different types of messages
+   - Uses Shiny's `session$sendCustomMessage` API
 
-This creates a poor user experience for operations like file downloads, where users see no progress until the download is complete.
+2. **JavaScript Handlers**:
+   - Handle messages received from the server
+   - Update the UI in real-time
+   - Located in `www/js/interactions/`
 
-### The Solution
+## Supported Message Types
 
-The UI Messenger provides a direct communication channel to the UI:
-- Uses `session$sendCustomMessage` to send messages directly to JavaScript handlers
-- JavaScript handlers update the UI immediately, even when R is busy
-- Maintains the user experience during long-running operations
+The UI Messenger currently supports two categories of messages:
 
-## Implementation
+### Download Progress
+- `send_download_start`: Initiates a download progress indicator
+- `send_download_progress`: Updates download progress percentage
+- `send_download_complete`: Marks a download as complete
+- `send_download_error`: Indicates a download error
 
-The UIMessenger is an R6 class with methods for different message types:
+### Simulation Progress
+- `send_simulation_start`: Initiates a simulation progress indicator
+- `send_simulation_progress`: Updates simulation progress percentage
+- `send_simulation_complete`: Marks a simulation as complete
+- `send_simulation_error`: Indicates a simulation error
 
-### Methods
+## Usage
 
-- `send_download_start`: Signal the start of a download
-- `send_download_progress`: Update progress during a download
-- `send_download_complete`: Signal download completion
-- `send_download_error`: Report download errors
+### Initialization
 
-### Usage
+The UI Messenger is initialized during app startup and stored in the session:
 
 ```r
-# Initialize the messenger
-ui_messenger <- create_ui_messenger(session)
-
-# Make available to components
-session$userData$ui_messenger <- ui_messenger
-
-# Use in download operations
-ui_messenger$send_download_start("download-123", "example.csv")
-ui_messenger$send_download_progress("download-123", 50)
-ui_messenger$send_download_complete("download-123")
+UI_MESSENGER <- create_ui_messenger(session)
+session$userData$ui_messenger <- UI_MESSENGER
 ```
 
-## Integration
+### Sending Messages
 
-The UI Messenger is primarily used in the download process:
+```r
+# Get the UI messenger from the session
+ui_messenger <- session$userData$ui_messenger
 
-1. UnifiedCacheManager uses it during file downloads
-2. Messages are sent in parallel with StateStore updates
-3. JavaScript handlers in `download_progress.js` process these messages
+# Send a progress update
+ui_messenger$send_simulation_progress(
+  id = "sim_123",
+  current = 5,
+  total = 10,
+  percent = 50,
+  description = "Running Intervention"
+)
+```
 
-## Design Considerations
+## Integration with State Management
 
-### Separation of Concerns
+The UI Messenger is part of a dual approach to UI updates:
 
-The UI Messenger represents a temporary deviation from the standard Shiny patterns:
-- StateStore remains the source of truth for application state
-- UI Messenger provides a direct UI update channel when the reactive system is blocked
-- Long-term, this would be replaced by true asynchronous operations
+1. **State Store Updates**: Maintains the application's architectural consistency by keeping all data in the central state store
+2. **Direct UI Messaging**: Provides real-time updates when the main thread is blocked
 
-### Error Handling
+This dual approach ensures users get timely feedback while maintaining a clean architecture.
 
-The UI Messenger includes robust error handling:
-- All methods use tryCatch to prevent errors from propagating
-- All methods return success/failure status
-- Error details are logged for troubleshooting
+## Future Direction
 
-## Future Enhancements
+The UI Messenger is a temporary solution to address limitations in Shiny's single-threaded model. In the future, it could be replaced by:
 
-In future iterations or framework migrations:
-- Replace with true asynchronous download operations
-- Expand to handle other long-running operations
-- Consider WebSockets or Server-Sent Events for more robust messaging
+1. **Asynchronous Processing**: Moving long-running tasks to background workers
+2. **WebSocket Communication**: Using a more direct communication channel
+3. **Modern Web Framework**: Adopting a framework with better support for asynchronous operations
+
+For now, it serves as a critical component for providing real-time feedback during operations that block the main thread.
