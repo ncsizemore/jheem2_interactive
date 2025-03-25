@@ -1,0 +1,23 @@
+# src/ui/config/visualization.yaml - Visualization settings
+
+# Baseline simulations configuration
+baseline_simulations:
+  enabled: true
+  # Global settings that apply to both prerun and custom
+  default_file_pattern: "base/{location}_base.Rdata"
+  default_label: "Baseline (No Intervention)"
+  
+  # Page-specific settings
+  prerun:
+    enabled: true
+    # Use provider from page config
+    use_provider: true
+    # Specify the baseline file pattern (uses default if not specified)
+    # file_pattern: "alternate/path/{location}_baseline.Rdata"  # Uncomment to override
+    
+  custom:
+    enabled: true
+    # For custom, we can choose to reuse the base simulation
+    reuse_base_simset: true
+    # Or load a different one if reuse_base_simset is false
+    # file_pattern: "special/baseline/{location}.Rdata"  # Uncomment to override

@@ -139,14 +139,69 @@ StateStore <- R6Class("StateStore",
         #' @param page_id Character: panel identifier
         #' @return List containing simset and transformed data
         get_current_simulation_data = function(page_id) {
+        sim_id <- self$get_current_simulation_id(page_id)
+        if (is.null(sim_id)) {
+        stop("No current simulation set for page: ", page_id)
+        }
+        
+        # Add diagnostic logging
+            print("=== DEBUG: get_current_simulation_data ===")
+        print(paste("Page ID:", page_id))
+        print(paste("Simulation ID:", sim_id))
+        
+        # Get raw simulation state
+        sim_state <- self$get_simulation(sim_id)
+        print("Raw simulation state structure:")
+        print(paste("sim_state class:", paste(class(sim_state), collapse=", ")))
+        print(paste("Keys in sim_state:", paste(names(sim_state), collapse=", ")))
+        
+        # Check results structure
+        if (!is.null(sim_state$results)) {
+            print("Results structure:")
+            print(paste("Keys in results:", paste(names(sim_state$results), collapse=", ")))
+            
+            # Check if original_base_simset exists
+            print(paste("Results has original_base_simset:", 
+                        !is.null(sim_state$results$original_base_simset)))
+        }
+        
+        # Continue with regular function
+        sim_state$results
+    },
+
+        #' @description Get the original base simulation for a page (for baseline comparison)
+        #' @param page_id Character: panel identifier
+        #' @return The original base simulation or NULL if not found
+        get_original_base_simulation = function(page_id) {
+            # Get current simulation ID
             sim_id <- self$get_current_simulation_id(page_id)
             if (is.null(sim_id)) {
-                stop("No current simulation set for page: ", page_id)
+                return(NULL)
             }
+            
+            # Get the full simulation state
             sim_state <- self$get_simulation(sim_id)
-            sim_state$results
+            if (is.null(sim_state)) {
+                return(NULL)
+            }
+            
+            # Try to get the original base simulation from the top level (new method)
+            if (!is.null(sim_state$original_base_simset)) {
+                print("[STORE] Found original_base_simset at top level")
+                return(sim_state$original_base_simset)
+            }
+            
+            # Fallback: try to get from results (old method)
+            if (!is.null(sim_state$results) && !is.null(sim_state$results$original_base_simset)) {
+                print("[STORE] Found original_base_simset in results (legacy)")
+                return(sim_state$results$original_base_simset)
+            }
+            
+            # Not found
+            print("[STORE] No original_base_simset found for the current simulation")
+            return(NULL)
         },
-
+        
         #' @description Get transformed data for current simulation
         #' @param page_id Character: panel identifier
         #' @param settings List: display settings (optional)

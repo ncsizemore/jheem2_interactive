@@ -66,6 +66,9 @@ validate_simulation_state <- function(state) {
     if (!"progress" %in% names(state)) {
         state$progress <- NULL
     }
+    
+    # Preserve original_base_simset field if it exists
+    # This ensures it's not removed during validation
 
     # Validate id
     if (!is.character(state$id) || length(state$id) != 1) {
