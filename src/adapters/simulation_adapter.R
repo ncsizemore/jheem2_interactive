@@ -279,10 +279,7 @@ SimulationAdapter <- R6::R6Class(
                         
                         # Store a copy of the original base simulation for comparison
                         original_base_simset <- simset
-                        print("=== DEBUG: original_base_simset storage ===")
-                        print(paste("Original base simset class:", paste(class(original_base_simset), collapse=", ")))
-                        print(paste("Original base simset exists:", exists("original_base_simset")))
-                        print("Stored original base simulation for baseline comparison")
+                        print("[SIMULATION_ADAPTER] Stored original base simulation for baseline comparison")
                         
                         # Create progress callback
                         progress_callback <- function(index, total, done) {
@@ -399,22 +396,11 @@ SimulationAdapter <- R6::R6Class(
                         status = "complete"
                     )
                     
-                    # For custom mode, include the original base simulation at top level instead of in results
-                    if (mode == "custom") {
-                        print("=== DEBUG: Adding original_base_simset to top level ===")
-                        print(paste("Mode:", mode))
-                        print(paste("original_base_simset exists:", exists("original_base_simset")))
-                        if (exists("original_base_simset")) {
-                            print(paste("original_base_simset class:", paste(class(original_base_simset), collapse=", ")))
-                            # Store at top level of simulation state
-                            update_data$original_base_simset <- original_base_simset
-                            print("Added original base simulation at top level for baseline comparison")
-                            # Verify it was added
-                            print(paste("Verification - original_base_simset in update_data:", !is.null(update_data$original_base_simset)))
-                            print(paste("Keys in update_data after adding:", paste(names(update_data), collapse=", ")))
-                        } else {
-                            print("WARNING: original_base_simset doesn't exist, cannot add to update_data")
-                        }
+                    # For custom mode, include the original base simulation at top level
+                    if (mode == "custom" && exists("original_base_simset")) {
+                        # Store at top level of simulation state
+                        update_data$original_base_simset <- original_base_simset
+                        print("[SIMULATION_ADAPTER] Added original base simulation at top level for baseline comparison")
                     }
                     
                     # Add progress if we have it
@@ -422,20 +408,8 @@ SimulationAdapter <- R6::R6Class(
                         update_data$progress <- final_progress
                     }
                     
-                    # Before updating the store, check what we're sending
-                    print("=== DEBUG: Before updating simulation state ===")
-                    print(paste("Update contains original_base_simset:", !is.null(update_data$results$original_base_simset)))
-                    print(paste("Keys in update_data$results:", paste(names(update_data$results), collapse=", ")))
-                    
+                    # Before updating the store
                     private$store$update_simulation(sim_id, update_data)
-                    
-                    # After update, verify what's in the store
-                    print("=== DEBUG: After updating simulation state ===")
-                    sim_after_update <- private$store$get_simulation(sim_id)
-                    print(paste("Results has original_base_simset after update:", 
-                                !is.null(sim_after_update$results$original_base_simset)))
-                    print(paste("Keys in results after update:", 
-                                paste(names(sim_after_update$results), collapse=", ")))
 
                     # Explicitly try to cache the completed simulation
                     tryCatch(

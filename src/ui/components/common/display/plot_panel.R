@@ -1,7 +1,7 @@
 # src/ui/components/common/display/plot_panel.R
 
-# Source the baseline loader
-source("src/ui/components/common/simulation/baseline_loader.R")
+# Source the baseline loader from data layer
+source("src/data/loaders/baseline_loader.R")
 
 
 #' Create the plot panel UI component
@@ -152,49 +152,6 @@ plot_panel_server <- function(id, settings) {
           # Get current simulation data 
           sim_state <- store$get_current_simulation_data(id)
           
-          # DEBUG: Check simulation state structure
-          if (id == "custom") {
-            print("[DEBUG] Custom page simulation structure:")
-            print(paste("sim_state class:", paste(class(sim_state), collapse=", ")))
-            print(paste("Has original_base_simset:", !is.null(sim_state$original_base_simset)))
-            print(paste("Keys in sim_state:", paste(names(sim_state), collapse=", ")))
-            
-            # Direct access check from store
-            sim_id <- store$get_current_simulation_id(id)
-            if (!is.null(sim_id)) {
-              full_sim_state <- store$get_simulation(sim_id)
-              print("[DEBUG] Direct sim_state access:")
-              print(paste("Has results:", !is.null(full_sim_state$results)))
-              if (!is.null(full_sim_state$results)) {
-                print(paste("Results has original_base_simset:", 
-                              !is.null(full_sim_state$results$original_base_simset)))
-                print(paste("Keys in results:", paste(names(full_sim_state$results), collapse=", ")))
-              }
-            }
-          }
-          
-          # DIAGNOSTIC: Log the simulation state structure for debugging
-          if (id == "custom") {
-            print("=== DIAGNOSTIC: Custom Simulation Data Structure ===")
-            print("Keys in sim_state:")
-            print(names(sim_state))
-            print("Has original_base_simset?") 
-            print(!is.null(sim_state$original_base_simset))
-            
-            # Also check direct access to full simulation state
-            sim_id <- store$get_current_simulation_id(id)
-            if (!is.null(sim_id)) {
-              direct_sim_state <- store$get_simulation(sim_id)
-              print("\nDirect simulation state structure:")
-              print("Keys in direct_sim_state:")
-              print(names(direct_sim_state))
-              print("Keys in direct_sim_state$results:")
-              print(names(direct_sim_state$results))
-              print("Has original_base_simset in results?") 
-              print(!is.null(direct_sim_state$results$original_base_simset))
-            }
-          }
-
           # Get simulation settings from store
           sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
 
@@ -204,16 +161,13 @@ plot_panel_server <- function(id, settings) {
             # Use the dedicated method to get the original base simulation
             baseline_simset <- store$get_original_base_simulation(id)
             if (!is.null(baseline_simset)) {
-              print("[PLOT_PANEL] Using original base simulation from store for baseline comparison")
+              print("[PLOT_PANEL] Using original base simulation for baseline comparison")
             }
           }
           
           # If no baseline from original base simulation, try loading from provider
           if (is.null(baseline_simset)) {
             baseline_simset <- load_baseline_simulation(id, sim_settings)
-            if (!is.null(baseline_simset)) {
-              print("[PLOT_PANEL] Using baseline simulation loaded via provider")
-            }
           }
 
           # Create plot with both simsets if baseline is available
@@ -335,28 +289,6 @@ plot_panel_server <- function(id, settings) {
                 # Get current simulation data
                 sim_state <- store$get_current_simulation_data(id)
                 
-                # DIAGNOSTIC: Log the simulation state structure for debugging
-                if (id == "custom") {
-                  print("=== DIAGNOSTIC: Custom Simulation Data Structure (Control Update) ===")
-                  print("Keys in sim_state:")
-                  print(names(sim_state))
-                  print("Has original_base_simset?") 
-                  print(!is.null(sim_state$original_base_simset))
-                  
-                  # Also check direct access to full simulation state
-                  sim_id <- store$get_current_simulation_id(id)
-                  if (!is.null(sim_id)) {
-                    direct_sim_state <- store$get_simulation(sim_id)
-                    print("\nDirect simulation state structure:")
-                    print("Keys in direct_sim_state:")
-                    print(names(direct_sim_state))
-                    print("Keys in direct_sim_state$results:")
-                    print(names(direct_sim_state$results))
-                    print("Has original_base_simset in results?") 
-                    print(!is.null(direct_sim_state$results$original_base_simset))
-                  }
-                }
-
                 # Get simulation settings from store
                 sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
 
@@ -366,16 +298,13 @@ plot_panel_server <- function(id, settings) {
                   # Use the dedicated method to get the original base simulation
                   baseline_simset <- store$get_original_base_simulation(id)
                   if (!is.null(baseline_simset)) {
-                    print("[PLOT_PANEL] Using original base simulation from store for baseline comparison")
+                    print("[PLOT_PANEL] Using original base simulation for baseline comparison")
                   }
                 }
                 
                 # If no baseline from original base simulation, try loading from provider
                 if (is.null(baseline_simset)) {
                   baseline_simset <- load_baseline_simulation(id, sim_settings)
-                  if (!is.null(baseline_simset)) {
-                    print("[PLOT_PANEL] Using baseline simulation loaded via provider")
-                  }
                 }
 
                 # Create plot with both simsets if baseline is available

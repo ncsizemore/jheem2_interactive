@@ -10,6 +10,7 @@ Main plot display component that:
 - Manages plot visibility and rendering
 - Handles loading states and errors
 - Uses conditional panels for state-based display
+- Implements baseline comparison functionality
 - Key features:
   - Responsive plot sizing
   - Loading indicators
@@ -168,6 +169,84 @@ formatted <- format_table_data(transformed_data, config)
 - Use store methods for data access
 - Maintain view synchronization
 - Handle state transitions properly
+
+## Baseline Comparison Feature
+
+The plot panel includes functionality to display baseline (no intervention) simulations alongside intervention simulations for comparison.
+
+### Implementation
+
+```r
+# For custom interventions, use dedicated method to get original base simulation
+if (id == "custom") {
+  baseline_simset <- store$get_original_base_simulation(id)
+  if (!is.null(baseline_simset)) {
+    print("[PLOT_PANEL] Using original base simulation for baseline comparison")
+  }
+}
+
+# Fallback to loading from file if needed
+if (is.null(baseline_simset)) {
+  baseline_simset <- load_baseline_simulation(id, sim_settings)
+}
+
+# Create plot with both simulations if baseline is available
+if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
+  # Use both simulations in plot
+  plot <- simplot(
+    baseline_simset, sim_state$simset,
+    outcomes = current_settings$outcomes,
+    facet.by = current_settings$facet.by,
+    summary.type = current_settings$summary.type
+  )
+}
+```
+
+### Data Sources
+
+The baseline simulation can come from two sources:
+
+1. **For custom interventions:**
+   - The original base simulation is stored at top level in the simulation state
+   - It's retrieved via the store's `get_original_base_simulation` method
+   - This allows comparing the intervention against its original baseline
+
+2. **For prerun interventions or as fallback:**
+   - A baseline simulation is loaded from a file using the provider
+   - This is handled by the `load_baseline_simulation` function in the data layer
+   - The file path is determined by configuration settings
+
+### Configuration
+
+The baseline comparison feature is controlled through the visualization configuration:
+
+```yaml
+# Baseline simulations configuration
+baseline_simulations:
+  enabled: true
+  # Global settings that apply to both prerun and custom
+  default_file_pattern: "base/{location}_base.Rdata"
+  default_label: "Baseline (No Intervention)"
+  
+  # Page-specific settings
+  prerun:
+    enabled: true
+    # Use provider from page config
+    use_provider: true
+    
+  custom:
+    enabled: true
+    # For custom, we can choose to reuse the base simulation
+    reuse_base_simset: true
+```
+
+### Future Improvements
+Planned enhancements for the baseline comparison feature:
+
+1. **Improved Legend Labels**: Replace default variable names with descriptive labels
+2. **Baseline Toggle**: Add UI control to enable/disable baseline display
+3. **Multiple Baselines**: Support comparing interventions to multiple baseline types
+4. **Difference Analysis**: Add ability to show the difference between baseline and intervention
 
 ## Cross-Page Button State Management
 

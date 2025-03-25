@@ -156,7 +156,7 @@ Located in `store.R`, manages:
 - Simulation matching to prevent unnecessary runs
 - Automatic cleanup of old simulations
 
-#### State Structure
+### Simulation State Structure
 ```r
 simulation_state = list(
     id = character(),          # Unique simulation identifier
@@ -166,17 +166,46 @@ simulation_state = list(
         simset = NULL,         # Raw JHEEM2 simulation set
         transformed = NULL     # Transformed data for display
     ),
+    original_base_simset = NULL, # Original base simulation for baseline comparison
     timestamp = POSIXct(),     # When created/updated
     status = character(),      # Status tracking
-    progress = list(           # Progress tracking for running simulations
-        current = numeric(),   # Current simulation index
-        total = numeric(),     # Total number of simulations
-        percentage = numeric(), # Progress percentage (0-100)
-        done = logical(),      # Whether simulation is complete
-        last_updated = POSIXct() # Timestamp of last update
-    )
+    progress = list()          # Progress tracking for running simulations
 )
 ```
+
+### Baseline Comparison Support
+
+The state store includes a dedicated method for accessing original base simulations for baseline comparison:
+
+```r
+get_original_base_simulation = function(page_id) {
+    # Get current simulation ID
+    sim_id <- self$get_current_simulation_id(page_id)
+    if (is.null(sim_id)) {
+        return(NULL)
+    }
+    
+    # Get the full simulation state
+    sim_state <- self$get_simulation(sim_id)
+    if (is.null(sim_state)) {
+        return(NULL)
+    }
+    
+    # Get the original base simulation from the top level
+    if (!is.null(sim_state$original_base_simset)) {
+        return(sim_state$original_base_simset)
+    }
+    
+    # Not found
+    return(NULL)
+}
+```
+
+This method provides:
+- A clean API for retrieving baseline simulations
+- Proper error handling for missing simulations
+- Independence from the results transformation system
+- Integration with the plot panel for baseline comparison
 
 #### Page-Simulation Relationship
 - Each page tracks its current simulation

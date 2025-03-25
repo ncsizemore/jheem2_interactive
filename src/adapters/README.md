@@ -151,6 +151,25 @@ The simulation adapter layer manages simulation creation, execution, and state m
 - Handles both prerun and custom modes
 - Works with core simulation functionality
 
+### Original Base Simulation Storage
+For custom interventions, the adapter stores the original base simulation for baseline comparison:
+
+```r
+# Store the original base simulation before intervention
+if (mode == "custom") {
+    original_base_simset <- simset  # Save before modification
+    simset <- runner$run_intervention(intervention, simset)  # Apply intervention
+    
+    # Store at top level of simulation state (not in results)
+    update_data$original_base_simset <- original_base_simset
+}
+```
+
+This allows:
+- Side-by-side comparison of intervention vs. baseline
+- Consistent reference point for all comparisons
+- Better visualization of intervention effects
+
 ### Technical Details
 
 #### Simulation State Management
