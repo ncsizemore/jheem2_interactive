@@ -499,10 +499,6 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             vis_manager$set_visibility("visible")
             vis_manager$update_display(input, output, settings)
 
-            showNotification(
-                "Custom projections starting...",
-                type = "message"
-            )
         } else {
             showNotification(
                 "Please correct the highlighted errors before proceeding.",

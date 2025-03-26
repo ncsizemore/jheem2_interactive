@@ -1,3 +1,63 @@
+## Conditional Field Visibility
+
+The configuration system supports conditional field visibility, allowing fields to be shown or hidden based on the values of other fields. This is particularly useful for creating dynamic, responsive UI that only shows relevant options.
+
+### Configuring Conditional Visibility
+
+To make a field conditionally visible, add a `visibility` block to its configuration:
+
+```yaml
+my_field:
+  type: "select"
+  label: "My Field"
+  # Visibility configuration
+  visibility:
+    depends_on: "another_field"  # ID of the field this depends on
+    show_when: true              # Show when the dependency is true (or false)
+  # Rest of configuration...
+```
+
+### Example: Recovery Duration Based on End Date
+
+A real-world example is the recovery duration selector that only appears when programs will eventually return (i.e., when "Never Return" is not selected):
+
+```yaml
+recovery_duration:
+  type: "select"
+  input_style: "choices"
+  label: "Recovery Duration:"
+  description: "Select how long it takes for programs to return to normal"
+  visibility:
+    depends_on: "end_never"     # Depends on the "Never Return" checkbox
+    show_when: false            # Show when checkbox is NOT checked
+  options:
+    # Option definitions...
+```
+
+### Implementation Details
+
+Conditional visibility is implemented through these components:
+
+1. **create_conditional_component()**: A utility function that wraps components in Shiny's `conditionalPanel()`
+2. **Smart Field Processing**: Components like `create_date_range_month_year()` check for and process visibility rules
+3. **Automatic Detection**: Some special cases (like recovery duration) get default visibility rules if not specified
+
+Reference: The implementation is in `src/ui/components/selectors/custom_components.R`
+
+### Adding New Conditional Fields
+
+To add a new conditionally visible field:
+
+1. Add the field to your configuration with a `visibility` block
+2. Ensure the parent component supports conditional fields (currently supported in `create_date_range_month_year`)
+3. Test to verify the visibility behaves as expected
+
+### Limitations
+
+- Currently implemented for the date range month/year selector
+- Only supports simple dependency relationships (one field depends on another)
+- More complex conditions (AND, OR, etc.) require custom implementation
+
 # JHEEM2 UI Configuration System
 
 This guide explains the configuration system for JHEEM2, focusing on how to use YAML files to customize the UI and application behavior.
@@ -242,6 +302,66 @@ If you encounter issues:
 - Verify YAML syntax with a YAML validator
 
 ## Advanced Configuration
+
+### Conditional Field Visibility
+
+The configuration system supports conditional field visibility, allowing fields to be shown or hidden based on the values of other fields. This is particularly useful for creating dynamic, responsive UI that only shows relevant options.
+
+#### Configuring Conditional Visibility
+
+To make a field conditionally visible, add a `visibility` block to its configuration:
+
+```yaml
+my_field:
+  type: "select"
+  label: "My Field"
+  # Visibility configuration
+  visibility:
+    depends_on: "another_field"  # ID of the field this depends on
+    show_when: true              # Show when the dependency is true (or false)
+  # Rest of configuration...
+```
+
+#### Example: Recovery Duration Based on End Date
+
+A real-world example is the recovery duration selector that only appears when programs will eventually return (i.e., when "Never Return" is not selected):
+
+```yaml
+recovery_duration:
+  type: "select"
+  input_style: "choices"
+  label: "Recovery Duration:"
+  description: "Select how long it takes for programs to return to normal"
+  visibility:
+    depends_on: "end_never"     # Depends on the "Never Return" checkbox
+    show_when: false            # Show when checkbox is NOT checked
+  options:
+    # Option definitions...
+```
+
+#### Implementation Details
+
+Conditional visibility is implemented through these components:
+
+1. **create_conditional_component()**: A utility function that wraps components in Shiny's `conditionalPanel()`
+2. **Smart Field Processing**: Components like `create_date_range_month_year()` check for and process visibility rules
+3. **Automatic Detection**: Some special cases (like recovery duration) get default visibility rules if not specified
+
+Reference: The implementation is in `src/ui/components/selectors/custom_components.R`
+
+#### Adding New Conditional Fields
+
+To add a new conditionally visible field:
+
+1. Add the field to your configuration with a `visibility` block
+2. Ensure the parent component supports conditional fields (currently supported in `create_date_range_month_year`)
+3. Test to verify the visibility behaves as expected
+
+#### Limitations
+
+- Currently implemented for the date range month/year selector
+- Only supports simple dependency relationships (one field depends on another)
+- More complex conditions (AND, OR, etc.) require custom implementation
 
 ### Custom Input Types
 

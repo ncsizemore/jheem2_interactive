@@ -1,5 +1,7 @@
-# First, source the section builder
+# First, source the section builder and other dependencies
 source("src/ui/components/common/layout/section_builder.R")
+source("src/ui/components/selectors/choices_select.R")
+source("src/ui/components/selectors/custom_components.R")
 
 #' Creates the custom intervention content
 #' @param config Page configuration
@@ -52,44 +54,37 @@ create_custom_intervention_content <- function(config) {
         )
     }
     
-    # Special handling for dates if needed
+    # Special handling for dates with month/year selectors
     dates_section <- NULL
     if (!is.null(config$interventions$dates)) {
         timing_section_config <- config$sections$timing %||% list(
             title = "Intervention Timing", 
             description = "Define when the intervention starts and is fully implemented"
         )
+        
+        # Select date component based on configuration type
+        date_component <- if (config$interventions$dates$type == "date_range_month_year") {
+            create_date_range_month_year(
+                id = "int_dates_custom",
+                config = list(
+                    start = config$interventions$dates$start,
+                    end = config$interventions$dates$end,
+                    recovery_duration = config$interventions$recovery_duration
+                ),
+                container_class = "date-range-month-year"
+            )
+        } else {
+            # Use the updated create_date_range function
+            create_date_range(
+                id = "int_dates_custom",
+                config = config$interventions$dates,
+                container_class = "date-range"
+            )
+        }
+        
         dates_section <- tagList(
             create_section_header(timing_section_config$title, timing_section_config$description),
-            tags$div(
-                class = "form-group date-range",
-                # Start date
-                tags$div(
-                    class = "date-start",
-                    selectInput(
-                        "int_dates_start_custom",
-                        label = config$interventions$dates$start$label,
-                        choices = setNames(
-                            sapply(config$interventions$dates$start$options, `[[`, "id"),
-                            sapply(config$interventions$dates$start$options, `[[`, "label")
-                        ),
-                        selected = config$interventions$dates$start$value
-                    )
-                ),
-                # End date
-                tags$div(
-                    class = "date-end",
-                    selectInput(
-                        "int_dates_end_custom",
-                        label = config$interventions$dates$end$label,
-                        choices = setNames(
-                            sapply(config$interventions$dates$end$options, `[[`, "id"),
-                            sapply(config$interventions$dates$end$options, `[[`, "label")
-                        ),
-                        selected = config$interventions$dates$end$value
-                    )
-                )
-            )
+            date_component
         )
     }
     

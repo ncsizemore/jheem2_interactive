@@ -1,109 +1,200 @@
 # src/ui/config/pages/custom.yaml - Ryan White funding impact settings
 
-# Section configurations
-sections:
-  funding_timing:
-    title: "Funding Change Timeline"
-    description: "Specify when Ryan White funding ends and (if applicable) when it returns"
-  impacts:
-    title: "Client Impacts"
-    description: "Define how the loss of Ryan White services would affect client viral suppression"
-
 # Subgroups configuration - fixed for Ryan White
 subgroups:
   fixed: true
   count: 3
   groups:
     - id: "adap"
-      label: "ADAP Recipients"
-      description: "Clients receiving any AIDS Drug Assistance Program benefits (medications, premium assistance, copay support)"
+      label: "AIDS Drug Assistance Program Recipients"
+      description: "% of suppressed clients who will lose viral suppression"
     - id: "oahs"
-      label: "OAHS Recipients (without ADAP)"
-      description: "Clients receiving Outpatient Ambulatory Health Services but not ADAP"
+      label: "Outpatient Ambulatory Health Services Recipients (without ADAP)"
+      description: "% of suppressed clients who will lose viral suppression"
     - id: "other"
-      label: "Other Services Recipients"
-      description: "Clients receiving any other Ryan White services but not ADAP or OAHS"
+      label: "Other Ryan White Clients (not receiving ADAP or OAHS)"
+      description: "% of suppressed clients who will lose viral suppression"
 
 # Intervention configuration
 interventions:
-  # Implementation timing - July 1st to October 1st of selected years
+  # Implementation timing with month/year selection
   dates:
-    type: "date_range"
+    type: "date_range_month_year"
     start:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Funding Ends:"
-      description: "Select the year when Ryan White funding would end"
+      label: "Programs End:"
+      description: "Select when Ryan White programs would end"
       show_label: true
       placeholder: "Select start year..."
-      min: 2025
-      max: 2030
-      value: 2025
-      options:
+      value: "2025-07"
+      month_options:
+        jan:
+          id: "01"
+          label: "January"
+        feb:
+          id: "02"
+          label: "February"
+        mar:
+          id: "03"
+          label: "March"
+        apr:
+          id: "04"
+          label: "April"
+        may:
+          id: "05"
+          label: "May"
+        jun:
+          id: "06"
+          label: "June"
+        jul:
+          id: "07"
+          label: "July"
+        aug:
+          id: "08"
+          label: "August"
+        sep:
+          id: "09"
+          label: "September"
+        oct:
+          id: "10"
+          label: "October"
+        nov:
+          id: "11"
+          label: "November"
+        dec:
+          id: "12"
+          label: "December"
+      year_options:
         2025:
-          id: "2025.5"
+          id: "2025"
           label: "2025"
         2026:
-          id: "2026.5"
+          id: "2026"
           label: "2026"
         2027:
-          id: "2027.5"
+          id: "2027"
           label: "2027"
         2028:
-          id: "2028.5"
+          id: "2028"
           label: "2028"
         2029:
-          id: "2029.5"
+          id: "2029"
           label: "2029"
         2030:
-          id: "2030.5"
+          id: "2030"
           label: "2030"
     end:
       type: "select"
       input_style: "choices"
       multiple: false
-      label: "Funding Returns:"
-      description: "Select when (or if) funding would be restored"
+      label: "Programs Begin to Return:"
+      description: "Select when (or if) programs would begin to return"
       show_label: true
       placeholder: "Select return year (if applicable)..."
-      min: 2025
-      max: 2035
-      value: 2025
-      options:
-        never:
-          id: "never"
-          label: "Never Returns"
+      value: "2026-07"
+      never_option:
+        id: "never"
+        label: "Never Return"
+      month_options:
+        jan:
+          id: "01"
+          label: "January"
+        feb:
+          id: "02"
+          label: "February"
+        mar:
+          id: "03"
+          label: "March"
+        apr:
+          id: "04"
+          label: "April"
+        may:
+          id: "05"
+          label: "May"
+        jun:
+          id: "06"
+          label: "June"
+        jul:
+          id: "07"
+          label: "July"
+        aug:
+          id: "08"
+          label: "August"
+        sep:
+          id: "09"
+          label: "September"
+        oct:
+          id: "10"
+          label: "October"
+        nov:
+          id: "11"
+          label: "November"
+        dec:
+          id: "12"
+          label: "December"
+      year_options:
+        2025:
+          id: "2025"
+          label: "2025"
         2026:
-          id: "2026.5"
+          id: "2026"
           label: "2026"
         2027:
-          id: "2027.5"
+          id: "2027"
           label: "2027"
         2028:
-          id: "2028.5"
+          id: "2028"
           label: "2028"
         2029:
-          id: "2029.5"
+          id: "2029"
           label: "2029"
         2030:
-          id: "2030.5"
+          id: "2030"
           label: "2030"
         2031:
-          id: "2031.5"
+          id: "2031"
           label: "2031"
         2032:
-          id: "2032.5"
+          id: "2032"
           label: "2032"
         2033:
-          id: "2033.5"
+          id: "2033"
           label: "2033"
         2034:
-          id: "2034.5"
+          id: "2034"
           label: "2034"
         2035:
-          id: "2035.5"
+          id: "2035"
           label: "2035"
+
+  # New recovery duration selector
+  recovery_duration:
+    type: "select"
+    input_style: "choices"
+    multiple: false
+    label: "Recovery Duration:"
+    description: "Select how long it takes for programs to return to normal after they begin to return"
+    show_label: true
+    placeholder: "Select recovery duration..."
+    value: "6"
+    visibility:
+      depends_on: "end_never"
+      show_when: false
+    options:
+      3:
+        id: "3"
+        label: "3 months"
+      6:
+        id: "6"
+        label: "6 months"
+      12:
+        id: "12"
+        label: "12 months"
+      24:
+        id: "24"
+        label: "24 months"
 
   # Intervention components - each group will use this same component
   components:
