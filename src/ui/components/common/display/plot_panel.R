@@ -172,13 +172,42 @@ plot_panel_server <- function(id, settings) {
 
           # Create plot with both simsets if baseline is available
           if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-            # Directly pass the simulations without trying to rename
-            plot <- simplot(
-              baseline_simset, sim_state$simset,
+            # Get visualization config for baseline labels
+            vis_config <- tryCatch(
+              {
+                get_component_config("visualization")
+              },
+              error = function(e) {
+                return(NULL)
+              }
+            )
+            
+            # Get baseline label with fallbacks
+            baseline_label <- "Baseline (No Intervention)"
+            intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+            
+            if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
+              if (!is.null(vis_config$baseline_simulations$default_label)) {
+                baseline_label <- vis_config$baseline_simulations$default_label
+              }
+              if (!is.null(vis_config$baseline_simulations$intervention_label)) {
+                intervention_label <- vis_config$baseline_simulations$intervention_label
+              } else if (!is.null(sim_settings$location)) {
+                intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+              }
+            }
+            
+            # Create named list for better legend labels
+            sim_list <- list()
+            sim_list[[baseline_label]] <- baseline_simset
+            sim_list[[intervention_label]] <- sim_state$simset
+            
+            # Use do.call to pass the named list as separate arguments
+            plot <- do.call(simplot, c(sim_list, list(
               outcomes = current_settings$outcomes,
               facet.by = current_settings$facet.by,
               summary.type = current_settings$summary.type
-            )
+            )))
           } else {
             # Fall back to just the intervention simset if baseline not available
             plot <- simplot(
@@ -309,13 +338,42 @@ plot_panel_server <- function(id, settings) {
 
                 # Create plot with both simsets if baseline is available
                 if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-                  # Directly pass the simulations without trying to rename
-                  plot <- simplot(
-                    baseline_simset, sim_state$simset,
+                  # Get visualization config for baseline labels
+                  vis_config <- tryCatch(
+                    {
+                      get_component_config("visualization")
+                    },
+                    error = function(e) {
+                      return(NULL)
+                    }
+                  )
+                  
+                  # Get baseline label with fallbacks
+                  baseline_label <- "Baseline (No Intervention)"
+                  intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+                  
+                  if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
+                    if (!is.null(vis_config$baseline_simulations$default_label)) {
+                      baseline_label <- vis_config$baseline_simulations$default_label
+                    }
+                    if (!is.null(vis_config$baseline_simulations$intervention_label)) {
+                      intervention_label <- vis_config$baseline_simulations$intervention_label
+                    } else if (!is.null(sim_settings$location)) {
+                      intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+                    }
+                  }
+                  
+                  # Create named list for better legend labels
+                  sim_list <- list()
+                  sim_list[[baseline_label]] <- baseline_simset
+                  sim_list[[intervention_label]] <- sim_state$simset
+                  
+                  # Use do.call to pass the named list as separate arguments
+                  plot <- do.call(simplot, c(sim_list, list(
                     outcomes = new_settings$outcomes,
                     facet.by = new_settings$facet.by,
                     summary.type = new_settings$summary.type
-                  )
+                  )))
                 } else {
                   # Fall back to just the intervention simset if baseline not available
                   plot <- simplot(

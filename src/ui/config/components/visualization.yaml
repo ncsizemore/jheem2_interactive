@@ -6,6 +6,7 @@ baseline_simulations:
   # Global settings that apply to both prerun and custom
   default_file_pattern: "base/{location}_base.Rdata"
   default_label: "Baseline (No Intervention)"
+  intervention_label: "Intervention ({location})"
   
   # Page-specific settings
   prerun:
