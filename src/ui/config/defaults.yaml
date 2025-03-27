@@ -48,8 +48,8 @@ sections:
     title: "Programs Change Timeline"
     description: "Define when Ryan White programs end and when they begin to return"
   components:
-    title: "Ryan White Program Components"
-    description: "Configure program components for each recipient group"
+    title: "Viral Suppression Loss"
+    description: "Configure viral suppression loss for each recipient group"
 
 # Panel configurations
 panels:

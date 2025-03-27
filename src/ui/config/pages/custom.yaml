@@ -9,10 +9,10 @@ subgroups:
       label: "AIDS Drug Assistance Program Recipients"
       description: "% of suppressed clients who will lose viral suppression"
     - id: "oahs"
-      label: "Outpatient Ambulatory Health Services Recipients (without ADAP)"
+      label: "Outpatient Ambulatory Health Services Recipients (without AIDS Drug Assistance Program)"
       description: "% of suppressed clients who will lose viral suppression"
     - id: "other"
-      label: "Other Ryan White Clients (not receiving ADAP or OAHS)"
+      label: "Ryan White Clients not receiving AIDS Drug Assistance Program or Outpatient Ambulatory Health Services (other support services)"
       description: "% of suppressed clients who will lose viral suppression"
 
 # Intervention configuration
@@ -200,7 +200,7 @@ interventions:
   components:
     suppression_loss:
       type: "numeric"
-      label: "Suppression Loss"
+      label: "% of suppressed clients who will lose viral suppression"
       description: "Percentage of virally suppressed clients who would stop taking ART consistently"
       placeholder: "Enter percentage..."
       min: 0
