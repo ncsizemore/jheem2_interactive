@@ -61,7 +61,7 @@
 /* Progress bar fill */
 .simulation-progress-bar-inner {
   height: 100%;
-  background-color: var(--color-info);
+  background-color: var(--color-primary);
   border-radius: var(--radius-sm);
   width: 0%;
   transition: width var(--transition-speed) var(--transition-timing);

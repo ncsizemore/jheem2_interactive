@@ -8,7 +8,7 @@ library(shinycssloaders)
 library(cachem)
 library(magrittr)
 library(plotly)
-library(httr2)  # Required for API calls
+library(httr2) # Required for API calls
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -123,25 +123,25 @@ ui <- function() {
 
     # Load CSS files based on config
     tags$head(
-    tags$link(
-    rel = "stylesheet",
-    type = "text/css",
-    href = "css/main.css"
-    ),
+      tags$link(
+        rel = "stylesheet",
+        type = "text/css",
+        href = "css/main.css"
+      ),
 
-        # Explicitly load download progress CSS
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = "css/components/feedback/download_progress.css"
-        ),
-        
-        # Explicitly load simulation progress CSS
-        tags$link(
-          rel = "stylesheet",
-          type = "text/css",
-          href = "css/components/feedback/simulation_progress.css"
-        ),
+      # Explicitly load download progress CSS
+      tags$link(
+        rel = "stylesheet",
+        type = "text/css",
+        href = "css/components/feedback/download_progress.css"
+      ),
+
+      # Explicitly load simulation progress CSS
+      tags$link(
+        rel = "stylesheet",
+        type = "text/css",
+        href = "css/components/feedback/simulation_progress.css"
+      ),
 
       # Load JavaScript files
       lapply(config$theme$scripts, function(script) {
@@ -151,6 +151,8 @@ ui <- function() {
       tags$script(src = "js/state/visualization-sync.js"),
       # Load simulation progress script
       tags$script(src = "js/interactions/simulation_progress.js"),
+      # Load progress positioning script
+      tags$script(src = "js/interactions/progress_positioning.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
@@ -287,13 +289,16 @@ server <- function(input, output, session) {
   # Initialize caches using the cache module
   cache_config <- get_component_config("caching")
   # Initialize unified cache manager
-  cache_manager <- tryCatch({
-    get_cache_manager()
-  }, error = function(e) {
-    print(sprintf("[APP] Error initializing cache manager: %s", e$message))
-    NULL
-  })
-  
+  cache_manager <- tryCatch(
+    {
+      get_cache_manager()
+    },
+    error = function(e) {
+      print(sprintf("[APP] Error initializing cache manager: %s", e$message))
+      NULL
+    }
+  )
+
   # Initialize download progress container UI
   output$download_progress_container <- renderUI({
     tags$div(
@@ -301,29 +306,29 @@ server <- function(input, output, session) {
       class = "download-progress-container"
     )
   })
-  
+
   # Initialize download manager immediately instead of waiting for onFlushed
   # This ensures the reactive observers are established from the beginning
   DOWNLOAD_MANAGER <<- create_download_manager(session, output)
   print("[APP] Download manager initialized during server startup")
-  
+
   # Initialize UI Messenger for direct messaging (bypassing reactive system)
   source("src/ui/messaging/ui_messenger.R")
   UI_MESSENGER <- create_ui_messenger(session)
   session$userData$ui_messenger <- UI_MESSENGER
   print("[APP] UI messenger initialized")
-  
+
   # Initialize progress components
   progress_components <- init_progress_components(input, output, session)
   print("[APP] Progress components initialized")
-  
-  
+
+
   # Schedule periodic cleanup if cache manager was initialized
   if (!is.null(cache_manager)) {
     cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000
     print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
   }
-  
+
   # For backward compatibility, also initialize old caches
   initialize_caches(cache_config)
 
@@ -392,15 +397,18 @@ server <- function(input, output, session) {
 
     invalidateLater(cleanup_interval)
     print("[APP] Running scheduled cleanup")
-    
+
     # Run cleanup on unified cache manager
     print("[APP] Running unified cache cleanup")
     if (!is.null(cache_manager)) {
-      tryCatch({
-        cache_manager$cleanup(force = FALSE)
-      }, error = function(e) {
-        print(sprintf("[APP] Error in unified cache cleanup: %s", e$message))
-      })
+      tryCatch(
+        {
+          cache_manager$cleanup(force = FALSE)
+        },
+        error = function(e) {
+          print(sprintf("[APP] Error in unified cache cleanup: %s", e$message))
+        }
+      )
     } else {
       print("[APP] Skipping unified cache cleanup (manager not initialized)")
     }
