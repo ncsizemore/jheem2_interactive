@@ -57,6 +57,9 @@ create_custom_intervention_content <- function(config) {
     # Special handling for dates with month/year selectors
     dates_section <- NULL
     if (!is.null(config$interventions$dates)) {
+        # NOTE: This section is manually handled here rather than through the section builder system.
+        # It's configured in defaults.yaml but processed here directly. This is a temporary approach
+        # that will be refactored in the future to use a more unified section building system.
         timing_section_config <- config$sections$timing %||% list(
             title = "Intervention Timing", 
             description = "Define when the intervention starts and is fully implemented"
@@ -106,9 +109,24 @@ create_custom_intervention_content <- function(config) {
                 # Include dates section if created
                 dates_section,
 
-                # Subgroup panels placeholder
+                # Add section header for components/subgroups
                 if (!is.null(config$subgroups)) {
-                    uiOutput("subgroup_panels_custom")
+                    # Get section config with fallback
+                    # NOTE: This section is manually handled here rather than through the section builder system.
+                    # It's configured in defaults.yaml but processed here directly. This is a temporary approach
+                    # that will be refactored in the future to use a more unified section building system.
+                    components_section_config <- config$sections$components %||% list(
+                        title = "Program Components",
+                        description = "Configure program components for each recipient group"
+                    )
+                    
+                    tagList(
+                        # Create the section header
+                        create_section_header(components_section_config$title, components_section_config$description),
+                        
+                        # Subgroup panels placeholder
+                        uiOutput("subgroup_panels_custom")
+                    )
                 }
             ),
 

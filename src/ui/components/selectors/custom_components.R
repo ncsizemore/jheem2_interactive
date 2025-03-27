@@ -245,10 +245,8 @@ create_intervention_setting <- function(type, group_num, suffix, fixed_group = N
     print("Got config:")
     print(str(config))
 
-    # Modify label if we have a fixed group
-    if (!is.null(fixed_group)) {
-        config$label <- paste(fixed_group$label, "-", config$label)
-    }
+    # We don't need to modify the label as the group label is already shown in the panel header
+    # This prevents duplicate information in the UI
 
     # Generate the base ID
     base_id <- paste0("int_", type, "_", group_num, "_", suffix)
@@ -325,7 +323,7 @@ create_subgroup_panel <- function(group_num, config_or_suffix, fixed_group = NUL
         # Intervention components section
         tags$div(
             class = "intervention-components",
-            tags$h4("Intervention Components:"),
+            # Removed the "Intervention Components:" heading as it will be moved to a section above all groups
             
             # Create whatever components are specified for this group
             lapply(names(config$interventions$components), function(type) {

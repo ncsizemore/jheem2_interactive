@@ -139,6 +139,33 @@ The section building is handled by the `create_sections_from_config()` function 
 | `description` | Explanatory text displayed below the header | No | Used in `create_section_header()` |
 | `selectors` | Array of selector IDs to include in this section | No | Used in `build_sections_internal()` |
 
+### Current Implementation Limitations
+
+**Note:** The current implementation has some limitations:
+
+1. **Manually Handled Sections:** Some sections (like `timing` and `components` in defaults.yaml) don't use the automatic section builder but are instead handled manually in the code. Look for comments in these sections:
+   - In code: `create_custom_intervention_content()` in `src/ui/components/pages/custom/content.R`
+   - In YAML: `sections` in `defaults.yaml`
+
+2. **Section Without Selectors:** The section builder primarily works with selectors. Sections that don't have selectors (like titles for groups of components) require manual handling in the code.
+
+### Future Refactoring Plan
+
+We plan to improve the section building system in the future to make it more unified and configurable:
+
+1. **Extend Section Builder to Support Non-Selector Sections:**
+   - Add a new section type called "container" or "header" that just displays a title without associated selectors.
+
+2. **Create a Registry for Special Section Types:**
+   - Define common patterns like "subgroup panels" and their rendering logic
+   - Allow the config to reference these patterns without requiring custom code
+
+3. **Add Section Types:**
+   - Add a `type` field to section configs: "selector_group", "component_group", "header_only", etc.
+   - Create handlers for each section type
+
+These improvements will allow for a more declarative UI configuration that requires less custom code.
+
 ## Configuring Selectors
 
 Selectors are the interactive UI elements like dropdowns, radio buttons, etc. They're defined in the `selectors` block:
