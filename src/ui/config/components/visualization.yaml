@@ -5,8 +5,26 @@ baseline_simulations:
   enabled: true
   # Global settings that apply to both prerun and custom
   default_file_pattern: "base/{location}_base.Rdata"
+  
+  # Labels for baseline and intervention simulations
+  # Labels support template tags like {location} which will be replaced with actual values
   default_label: "Baseline (No Intervention)"
   intervention_label: "Intervention ({location})"
+  
+  # Visual styling for baseline vs. intervention plots
+  plot_styles:
+    # General style parameters that affect all plots
+    general:
+      linewidth.slope: 0  # Set line width of slope lines to 0
+      alpha.ribbon: 0.2   # Transparency for uncertainty ribbons
+    baseline:
+      color: "#0072B2"  # Blue
+      alpha: 0.9
+    intervention:
+      color: "#D55E00"  # Orange (more prominent)
+      alpha: 1.0
+    # Set to true if you want different line types in addition to colors
+    use_different_line_types: false
   
   # Page-specific settings
   prerun:

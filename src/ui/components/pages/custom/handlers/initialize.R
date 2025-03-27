@@ -362,6 +362,59 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
         }
     })
     
+    # Helper function to collect date settings based on configuration
+    collect_date_settings <- function(input, date_config, id_base) {
+        # Get type from config
+        component_type <- date_config$type
+        
+        print(paste("Collecting date settings with type:", component_type))
+        
+        if (component_type == "date_range_month_year") {
+            # For month/year selectors
+            start_month <- isolate(input[[paste0(id_base, "_start_month")]])
+            start_year <- isolate(input[[paste0(id_base, "_start_year")]])
+            start_date <- paste0(start_year, "-", start_month)
+            
+            has_never_option <- !is.null(date_config$end$never_option)
+            end_never <- if (has_never_option) isolate(input[[paste0(id_base, "_end_never")]]) else FALSE
+            
+            end_date <- if (end_never) {
+                "never"
+            } else {
+                end_month <- isolate(input[[paste0(id_base, "_end_month")]])
+                end_year <- isolate(input[[paste0(id_base, "_end_year")]])
+                paste0(end_year, "-", end_month)
+            }
+            
+            date_settings <- list(
+                start = start_date,
+                end = end_date
+            )
+            
+            # Only include recovery_duration if relevant
+            if (!end_never && !is.null(date_config$recovery_duration)) {
+                recovery_id <- paste0(id_base, "_recovery_duration")
+                print(paste("Checking for recovery duration with ID:", recovery_id))
+                if (!is.null(input[[recovery_id]])) {
+                    date_settings$recovery_duration <- isolate(input[[recovery_id]])
+                    print(paste("Recovery duration value:", date_settings$recovery_duration))
+                }
+            }
+            
+            return(date_settings)
+        } else if (component_type == "date_range") {
+            # For simple year selectors (original implementation)
+            date_settings <- list(
+                start = isolate(input[[paste0(id_base, "_start")]]),
+                end = isolate(input[[paste0(id_base, "_end")]])
+            )
+            return(date_settings)
+        } else {
+            warning(paste("Unknown date component type:", component_type))
+            return(list())
+        }
+    }
+    
     # Function to handle the actual generate logic
     generate_custom_simulation <- function() {
 
@@ -369,11 +422,16 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             # Collect settings based on configuration
             settings <- list(
                 location = isolate(input$int_location_custom),
-                dates = list(
-                    start = isolate(input$int_dates_start_custom),
-                    end = isolate(input$int_dates_end_custom)
+                dates = collect_date_settings(
+                    input, 
+                    config$interventions$dates, 
+                    "int_dates_custom"
                 )
             )
+            
+            # Debug the collected settings
+            print("Collected settings:")
+            print(str(settings))
 
             # Collect component settings based on group type
             if (config$subgroups$fixed) {

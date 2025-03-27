@@ -37,7 +37,20 @@ baseline_simulations:
   enabled: true
   # Global settings that apply to both prerun and custom
   default_file_pattern: "base/{location}_base.Rdata"
+  
+  # Labels support template tags like {location}
   default_label: "Baseline (No Intervention)"
+  intervention_label: "Intervention ({location})"
+  
+  # Visual styling for baseline vs. intervention plots
+  plot_styles:
+    baseline:
+      color: "#0072B2"  # Blue
+      alpha: 0.9
+    intervention:
+      color: "#D55E00"  # Orange
+      alpha: 1.0
+    use_different_line_types: false
   
   # Page-specific settings
   prerun:
@@ -55,7 +68,8 @@ This allows for flexible configuration:
 - Global enable/disable
 - Per-page enable/disable
 - Custom file patterns
-- Custom labels for display
+- Custom labels for display with template support
+- Custom styling for baseline vs. intervention plots
 - Provider selection
 
 ### Integration

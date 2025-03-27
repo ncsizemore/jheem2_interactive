@@ -3,6 +3,90 @@
 # Source the baseline loader from data layer
 source("src/data/loaders/baseline_loader.R")
 
+#' Parse a template string by replacing tags with values
+#' @param template Template string with {tag} placeholders
+#' @param values Named list of values to substitute
+#' @return Parsed string with all replacements made
+parse_template <- function(template, values) {
+  # Handle NULL or empty template
+  if (is.null(template) || length(template) == 0) {
+    return(template)
+  }
+  
+  # Replace each {tag} with its corresponding value
+  result <- template
+  for (name in names(values)) {
+    if (!is.null(values[[name]])) {
+      pattern <- paste0("\\{", name, "\\}")
+      result <- gsub(pattern, values[[name]], result)
+    }
+  }
+  
+  return(result)
+}
+
+#' Create a style manager from visualization configuration
+#' @param vis_config Visualization configuration from config file
+#' @return Style manager object configured based on provided settings
+create_style_manager_from_config <- function(vis_config) {
+  # Default style manager
+  default_style_manager <- get.default.style.manager()
+  
+  # If no config provided, return default
+  if (is.null(vis_config) || 
+      is.null(vis_config$baseline_simulations) || 
+      is.null(vis_config$baseline_simulations$plot_styles)) {
+    return(default_style_manager)
+  }
+  
+  # Get style config
+  style_config <- vis_config$baseline_simulations$plot_styles
+  
+  # Set default parameters
+  params <- list(
+    color.sim.by = 'simset',    # Primary differentiation by color
+    linetype.sim.by = 'stratum' # Default line type differentiation
+  )
+  
+  # Process general style parameters if they exist
+  if (!is.null(style_config$general)) {
+    # Copy any general parameters to our params list
+    general_params <- style_config$general
+    for (param_name in names(general_params)) {
+      params[[param_name]] <- general_params[[param_name]]
+    }
+  }
+  
+  # Create custom color palette if colors are specified
+  if (!is.null(style_config$intervention$color) && !is.null(style_config$baseline$color)) {
+    # Create a custom palette function using the specified colors
+    custom_palette <- function(n) {
+      if (n <= 2) {
+        return(c(style_config$intervention$color, style_config$baseline$color))
+      } else {
+        # For more than 2 simsets, use the first two colors then fall back to default palette
+        c(style_config$intervention$color, style_config$baseline$color, 
+          ggsci::pal_jama()(n-2))
+      }
+    }
+    params$sim.palette <- custom_palette
+  }
+  
+  # Modify line type differentiation if configured
+  if (!is.null(style_config$use_different_line_types)) {
+    if (style_config$use_different_line_types) {
+      # Use simset for line type differentiation
+      params$linetype.sim.by <- 'simset'
+    } else {
+      # If explicitly set to false, don't differentiate by line type
+      # We'll keep the default of 'stratum'
+    }
+  }
+  
+  # Create custom style manager with our parameters
+  do.call(create.style.manager, params)
+}
+
 
 #' Create the plot panel UI component
 #' @param id Panel identifier
@@ -197,16 +281,29 @@ plot_panel_server <- function(id, settings) {
               }
             }
             
+            # Create values for template parsing
+            template_values <- list(
+              location = sim_settings$location
+            )
+            
+            # Parse templates
+            baseline_label <- parse_template(baseline_label, template_values)
+            intervention_label <- parse_template(intervention_label, template_values)
+            
             # Create named list for better legend labels
             sim_list <- list()
             sim_list[[baseline_label]] <- baseline_simset
             sim_list[[intervention_label]] <- sim_state$simset
             
+            # Create style manager from config
+            style_manager <- create_style_manager_from_config(vis_config)
+            
             # Use do.call to pass the named list as separate arguments
             plot <- do.call(simplot, c(sim_list, list(
               outcomes = current_settings$outcomes,
               facet.by = current_settings$facet.by,
-              summary.type = current_settings$summary.type
+              summary.type = current_settings$summary.type,
+              style.manager = style_manager
             )))
           } else {
             # Fall back to just the intervention simset if baseline not available
@@ -363,16 +460,29 @@ plot_panel_server <- function(id, settings) {
                     }
                   }
                   
+                  # Create values for template parsing
+                  template_values <- list(
+                    location = sim_settings$location
+                  )
+                  
+                  # Parse templates
+                  baseline_label <- parse_template(baseline_label, template_values)
+                  intervention_label <- parse_template(intervention_label, template_values)
+                  
                   # Create named list for better legend labels
                   sim_list <- list()
                   sim_list[[baseline_label]] <- baseline_simset
                   sim_list[[intervention_label]] <- sim_state$simset
                   
+                  # Create style manager from config
+                  style_manager <- create_style_manager_from_config(vis_config)
+                  
                   # Use do.call to pass the named list as separate arguments
                   plot <- do.call(simplot, c(sim_list, list(
                     outcomes = new_settings$outcomes,
                     facet.by = new_settings$facet.by,
-                    summary.type = new_settings$summary.type
+                    summary.type = new_settings$summary.type,
+                    style.manager = style_manager
                   )))
                 } else {
                   # Fall back to just the intervention simset if baseline not available
