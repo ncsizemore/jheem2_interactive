@@ -1,5 +1,18 @@
 source("src/adapters/interventions/model_effects.R")
 
+#' Convert YYYY-MM format to decimal year
+#' @param date_str Date string in YYYY-MM format or "never"
+#' @return Decimal year value or NA if input is "never"
+format_date_to_numeric <- function(date_str) {
+  if (date_str == "never") return(NA)
+  
+  parts <- strsplit(date_str, "-")[[1]]
+  year <- as.numeric(parts[1])
+  month <- as.numeric(parts[2])
+  # Convert to decimal year (e.g., July 2025 = 2025 + 6/12 = 2025.5)
+  return(year + (month - 1) / 12)
+}
+
 #' Check if a component is a compound component
 #' @param component Component to check
 #' @return TRUE if component is compound, FALSE otherwise
@@ -56,7 +69,20 @@ create_intervention <- function(settings, mode = c("prerun", "custom"), session_
 #' @return jheem intervention object
 create_custom_intervention <- function(settings, session_id = NULL) {
   print("Creating custom intervention with settings:")
-  str(settings)
+  print("Full settings structure:")
+  str(settings, max.level = 3)
+  
+  # Check for recovery duration
+  recovery_duration <- NULL
+  if (!is.null(settings$dates$recovery_duration)) {
+    recovery_duration <- settings$dates$recovery_duration
+    print(paste("Found recovery duration in settings$dates:", recovery_duration))
+  } else if (!is.null(settings$recovery_duration)) {
+    recovery_duration <- settings$recovery_duration
+    print(paste("Found recovery duration in settings root:", recovery_duration))
+  } else {
+    print("No recovery duration found in settings")
+  }
   
   # Extract components
   components_list <- settings$components
@@ -146,13 +172,37 @@ create_custom_intervention <- function(settings, session_id = NULL) {
       actual_value <- get_component_value(component)
       print(paste("Using actual value for effect:", actual_value))
       
+      # Convert dates to numeric format
+      start_time_num <- format_date_to_numeric(settings$dates$start)
+      end_time_num <- if (settings$dates$end == "never") NA else format_date_to_numeric(settings$dates$end)
+      
+      # Debug date conversion
+      print(paste("Start date:", settings$dates$start, "→", start_time_num))
+      print(paste("End date:", settings$dates$end, "→", ifelse(is.na(end_time_num), "never", end_time_num)))
+      
+      # Get recovery duration if available
+      effect_recovery_duration <- if (!is.null(recovery_duration)) {
+        recovery_duration
+      } else if (!is.null(settings$dates$recovery_duration)) {
+        settings$dates$recovery_duration
+      } else {
+        NULL
+      }
+      
+      if (!is.null(effect_recovery_duration)) {
+        print(paste("Using recovery duration for effect:", effect_recovery_duration, "months"))
+      } else {
+        print("No recovery duration available for effect")
+      }
+      
       # Create effect
       effect <- tryCatch({
         effect_config$create(
-          start_time = as.numeric(settings$dates$start),
-          end_time = as.numeric(settings$dates$end),
+          start_time = start_time_num,
+          end_time = end_time_num,
           value = actual_value,
-          group_id = group_id
+          group_id = group_id,
+          recovery_duration = effect_recovery_duration
         )
       }, error = function(e) {
         warning(paste("Error creating effect:", e$message))

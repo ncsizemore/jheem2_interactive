@@ -369,6 +369,14 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
         
         print(paste("Collecting date settings with type:", component_type))
         
+        # Debug prints for recovery duration condition
+        print("DEBUG - Recovery Duration Collection:")
+        print(paste("recovery_duration in config exists:", !is.null(date_config$recovery_duration)))
+        if (!is.null(date_config$recovery_duration)) {
+            print("Recovery duration config:")
+            str(date_config$recovery_duration)
+        }
+        
         if (component_type == "date_range_month_year") {
             # For month/year selectors
             start_month <- isolate(input[[paste0(id_base, "_start_month")]])
@@ -376,7 +384,17 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             start_date <- paste0(start_year, "-", start_month)
             
             has_never_option <- !is.null(date_config$end$never_option)
+            print(paste("Has never option:", has_never_option))
+            
+            end_never_id <- paste0(id_base, "_end_never")
+            print(paste("End never ID:", end_never_id))
+            print(paste("End never input exists:", !is.null(input[[end_never_id]])))
+            if (!is.null(input[[end_never_id]])) {
+                print(paste("End never value:", input[[end_never_id]]))
+            }
+            
             end_never <- if (has_never_option) isolate(input[[paste0(id_base, "_end_never")]]) else FALSE
+            print(paste("end_never value after logic:", end_never))
             
             end_date <- if (end_never) {
                 "never"
@@ -397,8 +415,12 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 print(paste("Checking for recovery duration with ID:", recovery_id))
                 if (!is.null(input[[recovery_id]])) {
                     date_settings$recovery_duration <- isolate(input[[recovery_id]])
-                    print(paste("Recovery duration value:", date_settings$recovery_duration))
+                    print(paste("Recovery duration value collected:", date_settings$recovery_duration))
+                } else {
+                    print(paste("Recovery duration input not found with ID:", recovery_id))
                 }
+            } else {
+                print("Recovery duration not applicable (end is 'never' or no recovery config)")
             }
             
             return(date_settings)
@@ -424,14 +446,26 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 location = isolate(input$int_location_custom),
                 dates = collect_date_settings(
                     input, 
-                    config$interventions$dates, 
+                    list(
+                        type = config$interventions$dates$type,
+                        start = config$interventions$dates$start,
+                        end = config$interventions$dates$end,
+                        recovery_duration = config$interventions$recovery_duration
+                    ), 
                     "int_dates_custom"
                 )
             )
             
             # Debug the collected settings
             print("Collected settings:")
-            print(str(settings))
+            print("Full settings structure:")
+            str(settings, max.level = 3)
+            
+            if (!is.null(settings$dates$recovery_duration)) {
+                print(paste("Recovery duration in settings:", settings$dates$recovery_duration))
+            } else {
+                print("No recovery_duration found in settings$dates")
+            }
 
             # Collect component settings based on group type
             if (config$subgroups$fixed) {

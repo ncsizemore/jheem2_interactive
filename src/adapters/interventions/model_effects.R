@@ -38,8 +38,9 @@ supports_subgroup_targeting <- function() {
 #' @param value Effect value
 #' @param transform Function to transform value (optional)
 #' @param group_id Group identifier for dynamic quantity determination (optional)
+#' @param recovery_duration Recovery duration in months (optional, default 3 months)
 #' @return jheem intervention effect
-create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL) {
+create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL, recovery_duration = NULL) {
   # Handle dynamic quantity names based on group_id
   if (is.function(quantity_name)) {
     quantity_name <- quantity_name(group_id)
@@ -76,13 +77,23 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
     # For temporary effects, use the Ryan White pattern with start/end times
     end_time_num <- suppressWarnings(as.numeric(end_time))
     
-    print(paste("  Creating temporary effect ending at", end_time_num))
+    # Calculate recovery period in years (default to 3 months if not specified)
+    recovery_years <- if (!is.null(recovery_duration)) {
+      recovery_months <- as.numeric(recovery_duration)
+      print(paste("  Using recovery duration of", recovery_months, "months"))
+      recovery_months / 12  # Convert months to years
+    } else {
+      print("  Using default recovery duration of 3 months")
+      0.25  # Default 3 months (1/4 year)
+    }
+    
+    print(paste("  Creating temporary effect ending at", end_time_num, "with recovery duration of", recovery_years, "years"))
     
     # Create effect with array of values and times
     create.intervention.effect(
       quantity.name = quantity_name,
       start.time = start_time_num,
-      end.time = end_time_num + 0.25,  # Add 3 months for full return
+      end.time = end_time_num + recovery_years,  # Add recovery duration
       effect.values = c(effect_value, effect_value),  # Same value at both time points
       apply.effects.as = "value",
       scale = scale,
@@ -149,14 +160,15 @@ MODEL_EFFECTS <- list(
     },
     scale = "proportion",
     value_field = "value",
-    create = function(start_time, end_time, value, group_id) {
+    create = function(start_time, end_time, value, group_id, recovery_duration = NULL) {
       create_standard_effect(
         quantity_name = MODEL_EFFECTS$suppression_loss$quantity_name,
         scale = MODEL_EFFECTS$suppression_loss$scale,
         start_time = start_time,
         end_time = end_time,
         value = value,
-        group_id = group_id
+        group_id = group_id,
+        recovery_duration = recovery_duration
       )
     }
   )
