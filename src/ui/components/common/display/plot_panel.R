@@ -3,6 +3,9 @@
 # Source the baseline loader from data layer
 source("src/data/loaders/baseline_loader.R")
 
+# Source the plot customizer
+source("src/ui/components/common/display/plot_customizer.R")
+
 #' Parse a template string by replacing tags with values
 #' @param template Template string with {tag} placeholders
 #' @param values Named list of values to substitute
@@ -34,13 +37,12 @@ create_style_manager_from_config <- function(vis_config) {
   
   # If no config provided, return default
   if (is.null(vis_config) || 
-      is.null(vis_config$baseline_simulations) || 
-      is.null(vis_config$baseline_simulations$plot_styles)) {
+      is.null(vis_config$style_manager)) {
     return(default_style_manager)
   }
   
   # Get style config
-  style_config <- vis_config$baseline_simulations$plot_styles
+  style_config <- vis_config$style_manager
   
   # Set default parameters
   params <- list(
@@ -305,6 +307,11 @@ plot_panel_server <- function(id, settings) {
               summary.type = current_settings$summary.type,
               style.manager = style_manager
             )))
+            
+            # Apply plot customizations
+            print("[PLOT_PANEL] About to apply plot customizations")
+            print(str(vis_config))
+            plot <- customize_plot_from_config(plot, vis_config)
           } else {
             # Fall back to just the intervention simset if baseline not available
             plot <- simplot(
@@ -484,6 +491,9 @@ plot_panel_server <- function(id, settings) {
                     summary.type = new_settings$summary.type,
                     style.manager = style_manager
                   )))
+                  
+                  # Apply plot customizations
+                  plot <- customize_plot_from_config(plot, vis_config)
                 } else {
                   # Fall back to just the intervention simset if baseline not available
                   plot <- simplot(

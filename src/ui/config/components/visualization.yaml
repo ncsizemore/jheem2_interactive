@@ -1,5 +1,45 @@
 # src/ui/config/visualization.yaml - Visualization settings
 
+# Style manager configuration - controls colors, line types, etc.
+style_manager:
+  # General style parameters that affect all plots
+  general:
+    linewidth.slope: 0  # Set line width of slope lines to 0
+    alpha.ribbon: 0.2   # Transparency for uncertainty ribbons
+  # Styles for baseline vs. intervention comparison
+  baseline:
+    color: "#0072B2"  # Blue
+    alpha: 0.9
+  intervention:
+    color: "#D55E00"  # Orange (more prominent)
+    alpha: 1.0
+  # Set to true if you want different line types in addition to colors
+  use_different_line_types: false
+
+# Plot appearance customizations - applies to all plots
+plot_customizations:
+  # Base theme for the plot
+  theme_name: "minimal"
+  
+  # Theme customizations
+  theme:
+    background_color: "#FFFFFF"
+    grid_color: "#E5E5E5"
+    text_size: 12
+    legend_position: "bottom"
+    legend_direction: "horizontal"
+  
+  # Axis formatting
+  axes:
+    x_title: "Year"
+    y_title: null  # Uses default from plot
+    x_format: "comma"
+  
+  # Facet customization
+  facets:
+    strip_background: "#F0F0F0"
+    strip_text_size: 11
+
 # Baseline simulations configuration
 baseline_simulations:
   enabled: true
@@ -10,21 +50,6 @@ baseline_simulations:
   # Labels support template tags like {location} which will be replaced with actual values
   default_label: "Baseline (No Intervention)"
   intervention_label: "Intervention ({location})"
-  
-  # Visual styling for baseline vs. intervention plots
-  plot_styles:
-    # General style parameters that affect all plots
-    general:
-      linewidth.slope: 0  # Set line width of slope lines to 0
-      alpha.ribbon: 0.2   # Transparency for uncertainty ribbons
-    baseline:
-      color: "#0072B2"  # Blue
-      alpha: 0.9
-    intervention:
-      color: "#D55E00"  # Orange (more prominent)
-      alpha: 1.0
-    # Set to true if you want different line types in addition to colors
-    use_different_line_types: false
   
   # Page-specific settings
   prerun:
