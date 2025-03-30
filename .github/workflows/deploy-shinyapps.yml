@@ -1,0 +1,133 @@
+name: Deploy to shinyapps.io
+
+on:
+  push:
+    tags:
+      - 'deploy-*'  # Triggers on any tag starting with "deploy-"
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+    inputs:
+      branch:
+        description: 'Branch to deploy from'
+        required: true
+        default: 'main'
+        type: 'string'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      RSCONNECT_USER: ${{ secrets.RSCONNECT_USER }}
+      RSCONNECT_TOKEN: ${{ secrets.RSCONNECT_TOKEN }}
+      RSCONNECT_SECRET: ${{ secrets.RSCONNECT_SECRET }}
+    
+    steps:
+      - name: Determine branch to deploy
+        id: determine_branch
+        run: |
+          # If triggered by workflow_dispatch, use the input branch
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BRANCH="${{ github.event.inputs.branch }}"
+            echo "Using branch from workflow dispatch: $BRANCH"
+          else
+            # For tag-based triggers, extract branch from ref using patterns
+            # Extract branch from tag if it has format deploy-{branch}-v{version}
+            TAG=${GITHUB_REF#refs/tags/}
+            if [[ "$TAG" =~ ^deploy-([^-]+)-v ]]; then
+              BRANCH="${BASH_REMATCH[1]}"
+              echo "Extracted branch from tag: $BRANCH"
+            else
+              # Default to main if can't determine branch from tag
+              BRANCH="main"
+              echo "Using default branch: $BRANCH"
+            fi
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      - name: Set deployment parameters
+        id: params
+        run: |
+          BRANCH="${{ steps.determine_branch.outputs.branch }}"
+          echo "Configuring deployment for branch: $BRANCH"
+          
+          # Set app name and other parameters based on branch
+          if [ "$BRANCH" = "ryan-white" ]; then
+            echo "APP_NAME=ryan-white" >> $GITHUB_ENV
+            echo "MODEL_TYPE=ryan-white" >> $GITHUB_ENV
+            echo "SIMULATION_PATH=simulations/ryan-white" >> $GITHUB_ENV
+          elif [ "$BRANCH" = "ehe" ]; then
+            echo "APP_NAME=ehe" >> $GITHUB_ENV
+            echo "MODEL_TYPE=ehe" >> $GITHUB_ENV
+            echo "SIMULATION_PATH=simulations/ehe" >> $GITHUB_ENV
+          else
+            # Default for main branch or any other branch
+            echo "APP_NAME=jheem-dev" >> $GITHUB_ENV
+            echo "MODEL_TYPE=ryan-white" >> $GITHUB_ENV
+            echo "SIMULATION_PATH=simulations/ryan-white" >> $GITHUB_ENV
+          fi
+        shell: bash
+      
+      - name: Checkout jheem2_interactive
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.determine_branch.outputs.branch }}
+          fetch-depth: 0
+      
+      - name: Checkout jheem_analyses_deploy
+        uses: actions/checkout@v3
+        with:
+          repository: ncsizemore/jheem_analyses_deploy
+          path: ../jheem_analyses
+          token: ${{ secrets.GH_PAT }}
+          lfs: true
+      
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.2.0'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+      
+      - name: Install R dependencies
+        run: |
+          install.packages(c("remotes", "rsconnect", "yaml"))
+          remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+      
+      - name: Setup shinyapps.io connection
+        run: |
+          rsconnect::setAccountInfo(
+            name="${{ secrets.RSCONNECT_USER }}",
+            token="${{ secrets.RSCONNECT_TOKEN }}",
+            secret="${{ secrets.RSCONNECT_SECRET }}"
+          )
+        shell: Rscript {0}
+      
+      - name: Run deployment script
+        run: Rscript deployment/deploy_shinyapps.R
+        timeout-minutes: 30
+      
+      - name: Deploy to shinyapps.io
+        run: |
+          # Use the dynamic app name based on branch
+          rsconnect::deployApp(
+            appDir = ".",
+            appName = "${{ env.APP_NAME }}",
+            account = "${{ secrets.RSCONNECT_USER }}",
+            appFiles = c(
+              "app.R",
+              ".Renviron",
+              "deployment/deployment_dependencies.R",
+              list.files("src", recursive = TRUE, full.names = TRUE),
+              list.files("www", recursive = TRUE, full.names = TRUE),
+              list.files("external/jheem_analyses", recursive = TRUE, full.names = TRUE),
+              list.files("${{ env.SIMULATION_PATH }}/prerun", recursive = TRUE, full.names = TRUE),
+              "${{ env.SIMULATION_PATH }}/base/C.12580_base.Rdata"
+            ),
+            forceUpdate = TRUE,
+            lint = FALSE
+          )
+        shell: Rscript {0}
