@@ -96,8 +96,30 @@ jobs:
       
       - name: Install R dependencies
         run: |
-          install.packages(c("remotes", "rsconnect", "yaml"))
-          remotes::install_deps(dependencies = TRUE)
+          # Install all required packages
+          install.packages(c(
+            "brio", "bslib", "cachem", "callr", "checkmate", "cli", "colorspace", "commonmark", 
+            "cpp11", "crayon", "data.table", "desc", "diffobj", "digest", "dplyr", "ellipsis", 
+            "evaluate", "fansi", "farver", "fastmap", "fontawesome", "fs", "generics", "ggplot2", 
+            "glue", "gridtext", "gtable", "htmltools", "httpuv", "isoband", "jquerylib", "jsonlite", 
+            "labeling", "latex2exp", "later", "lifecycle", "magrittr", "markdown", "memoise", "mime", 
+            "munsell", "pillar", "pkgconfig", "pkgload", "plotly", "png", "praise", "processx", 
+            "promises", "ps", "purrr", "R6", "rappdirs", "Rcpp", "reactable", "reactablefmtr", "reactR", 
+            "rematch2", "remotes", "rlang", "rprojroot", "rsconnect", "rstudioapi", "sass", "scales", 
+            "shiny", "shinydashboard", "sourcetools", "stringi", "stringr", "tibble", "tidyr", "tidyselect", 
+            "tweenr", "utf8", "vctrs", "viridisLite", "vrooms", "waldo", "withr", "xtable", "yaml", 
+            "abind", "htmlwidgets", "reshape2", "base64enc", "lazyeval", "crosstalk", "viridis", "plyr", 
+            "RColorBrewer", "hms", "gridBase", "ggbeeswarm", "polyclip", "vipor", "beeswarm", "gggenes", 
+            "ggsignif", "shinycssloaders", "DT", "colourpicker", "lubridate", "shinyjs", "assertr", 
+            "patchwork", "sf", "pbapply", "classInt", "DBI", "KernSmooth", "units", "e1071", "wk", 
+            "s2", "grid", "proxy", "waiter", "httr", "curl", "openssl"
+          ))
+          
+          # Install GitHub packages
+          remotes::install_github("tfojo1/jheem2@dev", force = TRUE)
+          remotes::install_github("tfojo1/bayesian.simulations", force = TRUE)
+          remotes::install_github("tfojo1/locations", force = TRUE)
+          remotes::install_github("tfojo1/distributions", force = TRUE)
         shell: Rscript {0}
       
       - name: Setup shinyapps.io connection
