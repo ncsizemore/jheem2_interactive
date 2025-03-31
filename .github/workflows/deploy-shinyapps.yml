@@ -185,11 +185,13 @@ jobs:
           find . -name '*.o' -type f -delete
           
           # 2. Set custom makevars from provided content
-          echo "# src/Makevars
+          cat > src/Makevars << 'EOL'
+# src/Makevars
 CFLAGS = -O0
 CXXFLAGS = -O0
-PKG_CXXFLAGS = -I\${R_HOME}/include
-PKG_LIBS = -L\${R_HOME}/lib -lR \${LAPACK_LIBS} \${BLAS_LIBS} \${FLIBS}" > src/Makevars
+PKG_CXXFLAGS = -I${R_HOME}/include
+PKG_LIBS = -L${R_HOME}/lib -lR ${LAPACK_LIBS} ${BLAS_LIBS} ${FLIBS}
+EOL
           
           # Commit and push changes
           git add -A
