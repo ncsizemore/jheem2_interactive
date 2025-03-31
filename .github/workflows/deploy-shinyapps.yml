@@ -118,7 +118,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PAT }}
         run: |
-          # Install all required packages
+          # Install all required packages from CRAN
           install.packages(c(
             "brio", "bslib", "cachem", "callr", "checkmate", "cli", "colorspace", "commonmark", 
             "cpp11", "crayon", "data.table", "desc", "diffobj", "digest", "dplyr", "ellipsis", 
@@ -134,11 +134,13 @@ jobs:
             "RColorBrewer", "hms", "gridBase", "ggfittext", "ggbeeswarm", "polyclip", "vipor", "beeswarm", 
             "gggenes", "ggsignif", "shinycssloaders", "DT", "colourpicker", "lubridate", "shinyjs", "assertr", 
             "patchwork", "sf", "pbapply", "classInt", "DBI", "KernSmooth", "units", "e1071", "wk", 
-            "s2", "proxy", "waiter", "httr", "curl", "openssl"
+            "s2", "proxy", "waiter", "httr", "curl", "openssl",
+            # Additional dependencies from deployment_dependencies.R and logs
+            "httr2", "ggmap", "ggnewscale", "deSolve", "blastula", "aws.s3", "shinyBS"
           ))
           
-          # Install CRAN packages first
-          install.packages("deSolve")
+          # Install CRAN packages from deployment_dependencies.R
+          # Already installed deSolve above
           
           # Install GitHub packages with authentication in the correct order
           remotes::install_github("tfojo1/locations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
