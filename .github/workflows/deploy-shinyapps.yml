@@ -87,14 +87,31 @@ jobs:
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.2.0'
+          r-version: '4.4.2'
       
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+          sudo apt-get install -y \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libfribidi-dev \
+            libfreetype6-dev \
+            libpng-dev \
+            libtiff5-dev \
+            libjpeg-dev \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev \
+            libsqlite3-dev \
+            libudunits2-dev
       
       - name: Install R dependencies
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
         run: |
           # Install all required packages
           install.packages(c(
@@ -107,19 +124,19 @@ jobs:
             "promises", "ps", "purrr", "R6", "rappdirs", "Rcpp", "reactable", "reactablefmtr", "reactR", 
             "rematch2", "remotes", "rlang", "rprojroot", "rsconnect", "rstudioapi", "sass", "scales", 
             "shiny", "shinydashboard", "sourcetools", "stringi", "stringr", "tibble", "tidyr", "tidyselect", 
-            "tweenr", "utf8", "vctrs", "viridisLite", "vrooms", "waldo", "withr", "xtable", "yaml", 
+            "tweenr", "utf8", "vctrs", "viridisLite", "waldo", "withr", "xtable", "yaml", 
             "abind", "htmlwidgets", "reshape2", "base64enc", "lazyeval", "crosstalk", "viridis", "plyr", 
-            "RColorBrewer", "hms", "gridBase", "ggbeeswarm", "polyclip", "vipor", "beeswarm", "gggenes", 
-            "ggsignif", "shinycssloaders", "DT", "colourpicker", "lubridate", "shinyjs", "assertr", 
+            "RColorBrewer", "hms", "gridBase", "ggfittext", "ggbeeswarm", "polyclip", "vipor", "beeswarm", 
+            "gggenes", "ggsignif", "shinycssloaders", "DT", "colourpicker", "lubridate", "shinyjs", "assertr", 
             "patchwork", "sf", "pbapply", "classInt", "DBI", "KernSmooth", "units", "e1071", "wk", 
-            "s2", "grid", "proxy", "waiter", "httr", "curl", "openssl"
+            "s2", "proxy", "waiter", "httr", "curl", "openssl"
           ))
           
-          # Install GitHub packages
-          remotes::install_github("tfojo1/jheem2@dev", force = TRUE)
-          remotes::install_github("tfojo1/bayesian.simulations", force = TRUE)
-          remotes::install_github("tfojo1/locations", force = TRUE)
-          remotes::install_github("tfojo1/distributions", force = TRUE)
+          # Install GitHub packages with authentication
+          remotes::install_github("tfojo1/jheem2@dev", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          remotes::install_github("tfojo1/bayesian.simulations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          remotes::install_github("tfojo1/locations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          remotes::install_github("tfojo1/distributions", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
         shell: Rscript {0}
       
       - name: Setup shinyapps.io connection
