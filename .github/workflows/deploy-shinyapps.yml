@@ -73,6 +73,11 @@ jobs:
           ref: ${{ steps.determine_branch.outputs.branch }}
           fetch-depth: 0
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
       - name: Create jheem_analyses directory
         run: mkdir -p jheem_analyses_deploy
       
@@ -132,11 +137,77 @@ jobs:
             "s2", "proxy", "waiter", "httr", "curl", "openssl"
           ))
           
-          # Install GitHub packages with authentication
-          remotes::install_github("tfojo1/jheem2@dev", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
-          remotes::install_github("tfojo1/bayesian.simulations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          # Install CRAN packages first
+          install.packages("deSolve")
+          
+          # Install GitHub packages with authentication in the correct order
           remotes::install_github("tfojo1/locations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
           remotes::install_github("tfojo1/distributions", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          remotes::install_github("tfojo1/bayesian.simulations", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
+          # Don't install jheem2 here - we'll use a special deployment branch
+        shell: Rscript {0}
+      
+      - name: Prepare jheem2 deployment branch
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          # Define variables
+          SOURCE_BRANCH="dev"
+          DEPLOYMENT_BRANCH="ryan-white-deployment"
+          TEMP_DIR="/tmp/jheem2_deploy"
+          
+          echo "=== Preparing jheem2 deployment branch ==="
+          
+          # Check if we need to update the deployment branch
+          echo "Checking for changes in dev branch..."
+          CURRENT_DEV_SHA=$(git ls-remote https://github.com/tfojo1/jheem2.git ${SOURCE_BRANCH} | cut -f1)
+          echo "Current dev SHA: ${CURRENT_DEV_SHA}"
+          
+          echo "Changes detected in dev branch, updating deployment branch..."
+          
+          # Create a temporary directory for cloning the repo
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          
+          # Clone the repository to the temp directory
+          git clone https://x-access-token:${GITHUB_PAT}@github.com/tfojo1/jheem2.git "$TEMP_DIR"
+          cd "$TEMP_DIR"
+          
+          # Checkout source branch and pull latest
+          git checkout "$SOURCE_BRANCH"
+          git pull origin "$SOURCE_BRANCH"
+          
+          # Create new deployment branch
+          git checkout -b "$DEPLOYMENT_BRANCH"
+          
+          # Make deployment-specific modifications
+          # 1. Remove .o files
+          find . -name '*.o' -type f -delete
+          
+          # 2. Set custom makevars from provided content
+          echo "# src/Makevars
+CFLAGS = -O0
+CXXFLAGS = -O0
+PKG_CXXFLAGS = -I\${R_HOME}/include
+PKG_LIBS = -L\${R_HOME}/lib -lR \${LAPACK_LIBS} \${BLAS_LIBS} \${FLIBS}" > src/Makevars
+          
+          # Commit and push changes
+          git add -A
+          git commit -m "Prepare ${DEPLOYMENT_BRANCH} from ${SOURCE_BRANCH} branch"
+          git push -f origin "$DEPLOYMENT_BRANCH"
+          
+          # Return to original directory
+          cd "$GITHUB_WORKSPACE"
+          
+          echo "Deployment branch created/updated successfully!"
+        shell: bash
+
+      - name: Install jheem2 from deployment branch
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          # Install from deployment branch
+          remotes::install_github("tfojo1/jheem2@ryan-white-deployment", auth_token = Sys.getenv("GITHUB_PAT"), force = TRUE)
         shell: Rscript {0}
       
       - name: Setup shinyapps.io connection
@@ -148,11 +219,12 @@ jobs:
           )
         shell: Rscript {0}
       
-      - name: Run deployment script
+      - name: Run simplified deployment script
         run: |
           # Export environment variable to tell the script where to find the jheem_analyses repository
           export JHEEM_ANALYSES_PATH="./jheem_analyses_deploy"
-          Rscript deployment/deploy_shinyapps.R
+          export SIMULATION_PATH="${{ env.SIMULATION_PATH }}"
+          Rscript deployment/simplified_deploy.R
         timeout-minutes: 30
       
       - name: Deploy to shinyapps.io
