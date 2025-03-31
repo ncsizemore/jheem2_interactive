@@ -147,6 +147,14 @@ jobs:
           # Don't install jheem2 here - we'll use a special deployment branch
         shell: Rscript {0}
       
+      - name: Create Makevars template
+        run: |
+          echo "# src/Makevars" > makevars_template
+          echo "CFLAGS = -O0" >> makevars_template
+          echo "CXXFLAGS = -O0" >> makevars_template
+          echo "PKG_CXXFLAGS = -I\${R_HOME}/include" >> makevars_template
+          echo "PKG_LIBS = -L\${R_HOME}/lib -lR \${LAPACK_LIBS} \${BLAS_LIBS} \${FLIBS}" >> makevars_template
+      
       - name: Prepare jheem2 deployment branch
         env:
           GITHUB_PAT: ${{ secrets.GH_PAT }}
@@ -184,14 +192,8 @@ jobs:
           # 1. Remove .o files
           find . -name '*.o' -type f -delete
           
-          # 2. Set custom makevars from provided content
-          cat > src/Makevars << 'EOL'
-# src/Makevars
-CFLAGS = -O0
-CXXFLAGS = -O0
-PKG_CXXFLAGS = -I${R_HOME}/include
-PKG_LIBS = -L${R_HOME}/lib -lR ${LAPACK_LIBS} ${BLAS_LIBS} ${FLIBS}
-EOL
+          # 2. Copy the Makevars file from template
+          cp $GITHUB_WORKSPACE/makevars_template src/Makevars
           
           # Commit and push changes
           git add -A
