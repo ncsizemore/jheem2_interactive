@@ -73,11 +73,14 @@ jobs:
           ref: ${{ steps.determine_branch.outputs.branch }}
           fetch-depth: 0
       
+      - name: Create jheem_analyses directory
+        run: mkdir -p jheem_analyses_deploy
+      
       - name: Checkout jheem_analyses_deploy
         uses: actions/checkout@v3
         with:
           repository: ncsizemore/jheem_analyses_deploy
-          path: ../jheem_analyses
+          path: jheem_analyses_deploy
           token: ${{ secrets.GH_PAT }}
           lfs: true
       
@@ -107,7 +110,10 @@ jobs:
         shell: Rscript {0}
       
       - name: Run deployment script
-        run: Rscript deployment/deploy_shinyapps.R
+        run: |
+          # Export environment variable to tell the script where to find the jheem_analyses repository
+          export JHEEM_ANALYSES_PATH="./jheem_analyses_deploy"
+          Rscript deployment/deploy_shinyapps.R
         timeout-minutes: 30
       
       - name: Deploy to shinyapps.io
