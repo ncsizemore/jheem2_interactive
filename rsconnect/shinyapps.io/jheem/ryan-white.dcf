@@ -5,6 +5,6 @@ account: jheem
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14228680
-bundleId: 10014390
+bundleId: 10033163
 url: https://jheem.shinyapps.io/ryan-white/
 version: 1

@@ -10,6 +10,10 @@ library(magrittr)
 library(plotly)
 library(httr2) # Required for API calls
 
+# Initialize remote logging if enabled
+source("src/utils/logging.R")
+initialize_logging()
+
 # Source configuration system
 source("src/ui/config/load_config.R")
 

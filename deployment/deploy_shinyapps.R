@@ -6,14 +6,6 @@ library(rsconnect)
 library(remotes)
 library(yaml)
 
-# Debug information
-cat("=== Environment and Path Information ===\n")
-cat("Working directory:", getwd(), "\n")
-jheem_analyses_path <- Sys.getenv("JHEEM_ANALYSES_PATH", "../jheem_analyses")
-cat("jheem_analyses path:", jheem_analyses_path, "\n")
-cat("jheem_analyses exists:", dir.exists(jheem_analyses_path), "\n")
-cat("jheem_analyses cached dir exists:", dir.exists(file.path(jheem_analyses_path, "cached")), "\n")
-
 # Load deployment modules
 source("deployment/prepare_cache_manager.R")
 
@@ -204,7 +196,7 @@ copy_directory_recursive <- function(source_dir, target_dir) {
 
 # Create enhanced function to discover dependencies recursively
 # This version detects both source() calls and data file references (read.csv, etc.)
-discover_dependencies <- function(file_path, base_dir = Sys.getenv("JHEEM_ANALYSES_PATH", "../jheem_analyses/")) {
+discover_dependencies <- function(file_path, base_dir = "../jheem_analyses/") {
   if (!file.exists(file_path)) {
     warning(paste("File not found:", file_path))
     return(character(0))
@@ -302,7 +294,7 @@ discover_dependencies <- function(file_path, base_dir = Sys.getenv("JHEEM_ANALYS
 }
 
 # Function to copy data files identified by discover_dependencies
-copy_data_files <- function(data_file_paths, base_dir = Sys.getenv("JHEEM_ANALYSES_PATH", "../jheem_analyses/")) {
+copy_data_files <- function(data_file_paths, base_dir = "../jheem_analyses/") {
   cat("\n=== Copying data files ===\n")
 
   # Process each data file
@@ -401,8 +393,7 @@ for (source_path in all_dependencies) {
 copy_data_files(all_dependencies)
 
 # Copy object_for_version_cache directory (needed for cached model objects)
-jheem_analyses_path <- Sys.getenv("JHEEM_ANALYSES_PATH", "../jheem_analyses")
-source_cache_obj_dir <- file.path(jheem_analyses_path, "commoncode/object_for_version_cache")
+source_cache_obj_dir <- "../jheem_analyses/commoncode/object_for_version_cache"
 target_cache_obj_dir <- "external/jheem_analyses/commoncode/object_for_version_cache"
 
 if (dir.exists(source_cache_obj_dir)) {
@@ -426,7 +417,7 @@ prepare_cache_manager(
 cat("\n=== Copying cached directory ===\n")
 
 # Copy the entire cached directory
-source_cache_dir <- file.path(jheem_analyses_path, "cached")
+source_cache_dir <- "../jheem_analyses/cached"
 target_cache_dir <- "external/jheem_analyses/cached"
 
 if (dir.exists(source_cache_dir)) {

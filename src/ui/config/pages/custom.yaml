@@ -178,7 +178,7 @@ interventions:
     description: "Select how long it takes for programs to return to normal after they begin to return"
     show_label: true
     placeholder: "Select recovery duration..."
-    value: "6"
+    value: "12"
     visibility:
       depends_on: "end_never"
       show_when: false
@@ -206,7 +206,7 @@ interventions:
       min: 0
       max: 100
       step: 1
-      value: 0
+      value: 50
       format: "percentage"
 
 # Simulation file configuration
