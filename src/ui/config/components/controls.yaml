@@ -12,6 +12,12 @@ plot_controls:
         id: "incidence"
         label: "Incidence"
         description: "Rate of new HIV infections"
+        
+      # New diagnoses
+      new:
+        id: "new"
+        label: "New Diagnoses"
+        description: "New HIV diagnoses"
 
       # HIV diagnoses tracking
       diagnoses:
@@ -54,6 +60,48 @@ plot_controls:
         id: "awareness"
         label: "Knowledge of Status"
         description: "Proportion of PLWH aware of their status"
+        
+      # Ryan White clients
+      rw_clients:
+        id: "rw.clients"
+        label: "Ryan White Clients"
+        description: "Number of Ryan White clients"
+        
+      # ADAP clients
+      adap_clients:
+        id: "adap.clients"
+        label: "ADAP Clients"
+        description: "Number of ADAP clients"
+        
+      # Non-ADAP clients
+      non_adap_clients:
+        id: "non.adap.clients"
+        label: "Non-ADAP Clients"
+        description: "Number of non-ADAP clients"
+        
+      # OAHS clients
+      oahs_clients:
+        id: "oahs.clients"
+        label: "OAHS Clients"
+        description: "Number of OAHS clients"
+        
+      # ADAP proportion
+      adap_proportion:
+        id: "adap.proportion"
+        label: "ADAP Proportion"
+        description: "Proportion of ADAP clients"
+        
+      # OAHS suppression
+      oahs_suppression:
+        id: "oahs.suppression"
+        label: "OAHS Viral Suppression"
+        description: "Viral suppression rate among OAHS clients"
+        
+      # ADAP suppression
+      adap_suppression:
+        id: "adap.suppression"
+        label: "ADAP Viral Suppression"
+        description: "Viral suppression rate among ADAP clients"
 
   stratification:
     type: "choices-select"

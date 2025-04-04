@@ -4,7 +4,7 @@ application:
   version: "2.0.0"
   title: "JHEEM 2 - Ryan White Program"
   defaults:
-    selected_tab: 'custom_interventions'
+    selected_tab: 'prerun'
 
 # Simulation directory configuration
 simulation_root: "simulations/ryan-white"  # Root directory for simulation files

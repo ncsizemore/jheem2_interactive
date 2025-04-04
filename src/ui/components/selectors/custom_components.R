@@ -440,7 +440,7 @@ create_date_range_month_year <- function(id, config, container_class = NULL) {
                 checkboxInput(
                     paste0(id, "_end_never"),
                     label = end_config$never_option$label,
-                    value = FALSE
+                    value = end_config$value == "never"
                 )
             ),
             

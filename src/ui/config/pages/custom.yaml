@@ -93,7 +93,7 @@ interventions:
       description: "Select when (or if) programs would begin to return"
       show_label: true
       placeholder: "Select return year (if applicable)..."
-      value: "2026-07"
+      value: "never"
       never_option:
         id: "never"
         label: "Never Return"

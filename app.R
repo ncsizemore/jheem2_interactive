@@ -97,7 +97,7 @@ ui <- function() {
   config <- get_base_config()
 
   # Default selections from config
-  selected_tab <- config$application$defaults$selected_tab %||% "custom_interventions"
+  selected_tab <- config$application$defaults$selected_tab %||% "custom"
   app_title <- config$application$name
 
   tags$html(
@@ -200,14 +200,14 @@ ui <- function() {
         # Pre-run tab
         tabPanel(
           title = "Pre-Run",
-          value = "prerun_interventions",
+          value = "prerun",
           create_prerun_layout()
         ),
 
         # Custom tab
         tabPanel(
           title = "Custom",
-          value = "custom_interventions",
+          value = "custom",
           create_custom_layout()
         ),
 

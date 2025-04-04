@@ -33,7 +33,7 @@ plot_customizations:
   axes:
     x_title: "Year"
     y_title: null  # Uses default from plot
-    x_format: "comma"
+    x_format: null  # No special formatting for years
   
   # Facet customization
   facets:
