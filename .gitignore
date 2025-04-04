@@ -9,6 +9,7 @@
 
 # Project-specific
 cache/
+logs/
 env.R
 
 R_scripts/master_scripts

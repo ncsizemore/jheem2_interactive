@@ -1,0 +1,28 @@
+# Logging configuration for JHEEM application
+
+# Main configuration
+enabled: true
+log_dir: "logs"
+capture_messages: true
+
+# Log file settings
+max_file_size_mb: 10
+max_files: 100
+max_days: 30
+
+# Google Drive integration
+google_drive:
+  enabled: true
+  folder_name: "JHEEM Logs"
+  upload_interval_seconds: 300  # 5 minutes
+  retention_days: 30
+  max_files: 100
+  
+  # Authentication method
+  # Options: 
+  # - "auto": Try to use cached token or interactive auth (good for development)
+  # - "service_account": Use service account (good for production)
+  auth_method: "auto"
+  
+  # Uncomment and set for service account auth in production
+  # service_account_path: "path/to/service-account.json"
