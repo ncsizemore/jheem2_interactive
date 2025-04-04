@@ -7,20 +7,24 @@ selectors:
     type: "select"
     input_style: "choices"
     label: "Funding Scenario"
-    description: "Select whether Ryan White funding is permanently discontinued or temporarily suspended"
+    description: "Select whether Ryan White funding is briefly interrupted, completely ceases, or interrupted for an extended period"
     show_label: false
     show_description: false
     placeholder: "Select a scenario..."
-    value: "permanent_loss"  # Default to permanent loss scenario
+    value: "cessation"  # Default to cessation scenario
     options:
-      permanent_loss:
-        id: "permanent_loss"
-        label: "Permanent Funding Loss"
-        description: "Ryan White funding is discontinued permanently"
-      temporary_loss:
-        id: "temporary_loss"
-        label: "Temporary Funding Loss"
-        description: "Ryan White funding is discontinued but returns in 2029"
+      brief_interruption:
+        id: "brief_interruption"
+        label: "Brief Interruption"
+        description: "Ryan White funding is briefly interrupted"
+      cessation:
+        id: "cessation"
+        label: "Cessation"
+        description: "Ryan White funding completely ceases"
+      prolonged_interruption:
+        id: "prolonged_interruption"
+        label: "Prolonged Interruption"
+        description: "Ryan White funding is interrupted for an extended period"
 
 # Simulation file configuration
 prerun_simulations:
