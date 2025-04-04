@@ -11,8 +11,8 @@ library(plotly)
 library(httr2) # Required for API calls
 
 # Initialize remote logging if enabled
-source("src/utils/logging.R")
-initialize_logging()
+#source("src/utils/logging.R")
+#initialize_logging()
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -145,6 +145,13 @@ ui <- function() {
         rel = "stylesheet",
         type = "text/css",
         href = "css/components/feedback/simulation_progress.css"
+      ),
+
+      # Load simulation differences CSS
+      tags$link(
+        rel = "stylesheet",
+        type = "text/css",
+        href = "css/components/display/simulation_differences.css"
       ),
 
       # Load JavaScript files
