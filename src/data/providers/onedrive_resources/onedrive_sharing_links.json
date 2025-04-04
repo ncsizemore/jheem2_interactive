@@ -1,43 +1,739 @@
 {
   "format_version": "1.0",
-  "generated_at": "2025-03-22 11:29:30",
+  "generated_at": "2025-04-04 11:28:39",
   "model_version": "ryan-white",
   "simulations": {
-    "C.12580_base": {
-      "location": "C.12580",
+    "C.12060_base": {
+      "location": "C.12060",
       "scenario": "base",
-      "filename": "base/C.12580_base.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUSB8lBFQF5Fqvd2ljILCSIB1huif7SLiSP4bo1dxCm5lA?download=1"
+      "filename": "base/C.12060_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXX58ZfOjvZFoSkLFrws64gB44XQTJ5-n8fI_LBzyC10pA?download=1"
     },
-    "C.12580_permanent_loss": {
-      "location": "C.12580",
-      "scenario": "permanent_loss",
-      "filename": "prerun/C.12580/permanent_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXMphz43r2JKj1mZWLAY3esBa9EdtJE3xb91lKGADpbWvw?download=1"
+    "C.12420_base": {
+      "location": "C.12420",
+      "scenario": "base",
+      "filename": "base/C.12420_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfooQOkHeVFDl0JkDDxeFJYBbjavZ_9HnUjkxkm0-sOIOg?download=1"
     },
-    "C.12580_temporary_loss": {
-      "location": "C.12580",
-      "scenario": "temporary_loss",
-      "filename": "prerun/C.12580/temporary_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdGnxurssnNIqxLN36Vtl7wBSyM5ABb4uB8hc0MfwqN5yg?download=1"
+    "C.12940_base": {
+      "location": "C.12940",
+      "scenario": "base",
+      "filename": "base/C.12940_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESneUtHYN45PsD0xC_Ji32UBMU5rPf_qex3xInC3vcb0OQ?download=1"
     },
-    "C.12580_base_test": {
-      "location": "C.12580",
-      "scenario": "base_test",
-      "filename": "test/base/C.12580_base.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYgrejzB3GVMk-6Y0FEh_UkB3llTcYUvNkSYZAmZMiIDNg?download=1"
+    "C.14460_base": {
+      "location": "C.14460",
+      "scenario": "base",
+      "filename": "base/C.14460_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EV4rrYIbWHRKn5fR3ziIHr8BvB5v232O9ne0omDlecdSBw?download=1"
     },
-    "C.12580_permanent_loss_test": {
-      "location": "C.12580",
-      "scenario": "permanent_loss_test",
-      "filename": "test/prerun/C.12580/permanent_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUt1R2O6BzdLg3ThCqIcSv8BaC7xAjZBn1Plq_9y7Lw5_w?download=1"
+    "C.16740_base": {
+      "location": "C.16740",
+      "scenario": "base",
+      "filename": "base/C.16740_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EZKH7dSRgwNDg5E231n5DRMBubJP1YJsVPw8SwEgTMRwFg?download=1"
     },
-    "C.12580_temporary_loss_test": {
+    "C.16980_base": {
+      "location": "C.16980",
+      "scenario": "base",
+      "filename": "base/C.16980_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESZLSEu2YNRBvukdAZqa7PwBfuh5wujdo-Iva96aXQdMuw?download=1"
+    },
+    "C.17460_base": {
+      "location": "C.17460",
+      "scenario": "base",
+      "filename": "base/C.17460_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETxbFcXmtidLu59Aro1YZfsBloMMuTZaFVBs5i2dL6p7zg?download=1"
+    },
+    "C.18140_base": {
+      "location": "C.18140",
+      "scenario": "base",
+      "filename": "base/C.18140_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUvtpNy7eFdDhK0iJpw8wxkBK53_oMrlrN82M17Q2107fA?download=1"
+    },
+    "C.19100_base": {
+      "location": "C.19100",
+      "scenario": "base",
+      "filename": "base/C.19100_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EcoMt3GMqoVBl5_U3ydW3qYB9Um56PxvsGiTCUJPDZi_IA?download=1"
+    },
+    "C.19820_base": {
+      "location": "C.19820",
+      "scenario": "base",
+      "filename": "base/C.19820_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWplcv6-4ABFgq64i6oNFekBg1lI3UW8XME0d5r99EqQ-w?download=1"
+    },
+    "C.26420_base": {
+      "location": "C.26420",
+      "scenario": "base",
+      "filename": "base/C.26420_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdknV8X_FC1OsY2mTiidrQsBpNE9rFV4-g4b9uKXNEmFiw?download=1"
+    },
+    "C.26900_base": {
+      "location": "C.26900",
+      "scenario": "base",
+      "filename": "base/C.26900_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWgSMAghYD9AiVyLfKCDEBgBsyn4pNYRWt_DlTf2uBQkVg?download=1"
+    },
+    "C.27260_base": {
+      "location": "C.27260",
+      "scenario": "base",
+      "filename": "base/C.27260_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EesKRcFivJNKuaGBSjpze8MBSl8McypQVxw_7SvvUHZ7fQ?download=1"
+    },
+    "C.29820_base": {
+      "location": "C.29820",
+      "scenario": "base",
+      "filename": "base/C.29820_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVuDwIi5_GpIpcnhjEiADlkB9gI2xMf1AcXoR98FpqMEQQ?download=1"
+    },
+    "C.31080_base": {
+      "location": "C.31080",
+      "scenario": "base",
+      "filename": "base/C.31080_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfryiwStJxNKoV57GI6Qpx8BX2muLZnPYUyO_obiali53Q?download=1"
+    },
+    "C.32820_base": {
+      "location": "C.32820",
+      "scenario": "base",
+      "filename": "base/C.32820_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ERkXH_Qp3vVAro__nTK_DGUBAtMo6sN4OzcXUZbV1iKVnw?download=1"
+    },
+    "C.33100_base": {
+      "location": "C.33100",
+      "scenario": "base",
+      "filename": "base/C.33100_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbB3Z53Z31NOht0ew0oDo7MBUBEVKZ99Y2uji1jWyy-6Rw?download=1"
+    },
+    "C.35380_base": {
+      "location": "C.35380",
+      "scenario": "base",
+      "filename": "base/C.35380_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfwDsomdNK1Bugy350dMvrsB6_p4Ad5SM0HzVWgeNGwp3g?download=1"
+    },
+    "C.35620_base": {
+      "location": "C.35620",
+      "scenario": "base",
+      "filename": "base/C.35620_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ET33OB2TOE9Gv1HxbrBBBjUBqLNOChm0xiUSkg-F2vJOYw?download=1"
+    },
+    "C.36740_base": {
+      "location": "C.36740",
+      "scenario": "base",
+      "filename": "base/C.36740_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQdF_EKSaoNDkzrDSfP5fgABQAQH0hyPm-oCHt3wdjokMg?download=1"
+    },
+    "C.37980_base": {
+      "location": "C.37980",
+      "scenario": "base",
+      "filename": "base/C.37980_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVgs9OUdd2lKvMV4mhoMXQ4BheRCGCcE_uYmctSWG_BVDw?download=1"
+    },
+    "C.38060_base": {
+      "location": "C.38060",
+      "scenario": "base",
+      "filename": "base/C.38060_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ea85E62PBPdJoK-zpSRGP0EBlOuG9RYkd94dWB9mKqRPKg?download=1"
+    },
+    "C.40140_base": {
+      "location": "C.40140",
+      "scenario": "base",
+      "filename": "base/C.40140_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EZTCCZXNWIxAm-7cCx4UgvwBG_13n9yj789PnmDP53UdqQ?download=1"
+    },
+    "C.40900_base": {
+      "location": "C.40900",
+      "scenario": "base",
+      "filename": "base/C.40900_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EY4hsCd7uq9JmS-0_QoMWrgBrZPRiRJvt9XkJfcN2hHM4A?download=1"
+    },
+    "C.41700_base": {
+      "location": "C.41700",
+      "scenario": "base",
+      "filename": "base/C.41700_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EaNLlJKVFFJAjYPlOeTnGvwBSMRSIUpFSuT_cwVPPipb7Q?download=1"
+    },
+    "C.41740_base": {
+      "location": "C.41740",
+      "scenario": "base",
+      "filename": "base/C.41740_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EU8Xozb_aO5GpTOm2TPPupQBO5lYbuanJSGtfB3O8vcCIw?download=1"
+    },
+    "C.41860_base": {
+      "location": "C.41860",
+      "scenario": "base",
+      "filename": "base/C.41860_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUQwtmrojIVBn5AuM55I9qgBMB3vNaDc2KWiYMyQI4qOsA?download=1"
+    },
+    "C.42660_base": {
+      "location": "C.42660",
+      "scenario": "base",
+      "filename": "base/C.42660_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWk4PzzAA7BKsHu5id327tsBg2Fe-e_r-8mWbIzNMXvnmQ?download=1"
+    },
+    "C.45300_base": {
+      "location": "C.45300",
+      "scenario": "base",
+      "filename": "base/C.45300_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ERsmGyO2q4JJobh-txnL2gcBJ7Fr1aBVBXa4DypFoOLT_w?download=1"
+    },
+    "C.47900_base": {
+      "location": "C.47900",
+      "scenario": "base",
+      "filename": "base/C.47900_base.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYOwGa45Zs5KrxgQai5Ts1YBW-zV2yyYhcGPvVo8pfgReg?download=1"
+    },
+    "C.12060_brief_interruption": {
+      "location": "C.12060",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.12060/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQ7xe5kqwLFDq9SbcLBZ4HgBD19AiIkfHUAfzvBdFNtkGA?download=1"
+    },
+    "C.12060_cessation": {
+      "location": "C.12060",
+      "scenario": "cessation",
+      "filename": "prerun/C.12060/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ERCkp9Q91RlCstQEG7B5f0UBoyTZPLI1FPhuMSAjImW8IA?download=1"
+    },
+    "C.12060_prolonged_interruption": {
+      "location": "C.12060",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.12060/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdGkxzdEbGFKspls9-3pxoEBPAvnDGoQCwxV9GtQ0Cn2oA?download=1"
+    },
+    "C.12420_brief_interruption": {
+      "location": "C.12420",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.12420/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ec7dvkATMCRIgzH7S58IKRUBe94HBXXSW0t70MXYXHBMnQ?download=1"
+    },
+    "C.12420_cessation": {
+      "location": "C.12420",
+      "scenario": "cessation",
+      "filename": "prerun/C.12420/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXFSehb7mXdNvsQS0NgKm-kB89YfIlpKNksW8LxPw-d01A?download=1"
+    },
+    "C.12420_prolonged_interruption": {
+      "location": "C.12420",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.12420/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EeidgMNln7pLjqZkDIUWbN8BgFINw8i30sPfrC9ecA7fZw?download=1"
+    },
+    "C.12580_brief_interruption": {
       "location": "C.12580",
-      "scenario": "temporary_loss_test",
-      "filename": "test/prerun/C.12580/temporary_loss.Rdata",
-      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETLi6FXpcSdImA62ayqrhMsBhcKPlmyl_a4AKJiHxO6IJw?download=1"
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.12580/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXqpI-bcY7ZKkhXKI6L5R-wBfL-2gy8cd3S5LwfoOe6NMQ?download=1"
+    },
+    "C.12580_cessation": {
+      "location": "C.12580",
+      "scenario": "cessation",
+      "filename": "prerun/C.12580/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EeRQHsaprDFLnDHIuRTzqHsBZkagyq4KSxGKln_VtkJVZQ?download=1"
+    },
+    "C.12580_prolonged_interruption": {
+      "location": "C.12580",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.12580/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQf9cyhOttVKqFxNyVmlNC8BhkyPYYsRpPcAPia4skT8sw?download=1"
+    },
+    "C.12940_brief_interruption": {
+      "location": "C.12940",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.12940/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVkn-zu20exMqzL09ndXogEBjuofYyTsGXx9fTvhM5yEdQ?download=1"
+    },
+    "C.12940_cessation": {
+      "location": "C.12940",
+      "scenario": "cessation",
+      "filename": "prerun/C.12940/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESYB6xeB7_tGu57Ed7KLVcQB7pVewtRX5aVZLPxWD_aYMw?download=1"
+    },
+    "C.12940_prolonged_interruption": {
+      "location": "C.12940",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.12940/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETBPAf6MStVAjRb6W9-GKjAB_sHr1ILE95nfjOl-eyT8fg?download=1"
+    },
+    "C.14460_brief_interruption": {
+      "location": "C.14460",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.14460/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVCQaX2qDlNOhtfGvqHH2KUBhrSmziUl6I6urFwXUFzrPQ?download=1"
+    },
+    "C.14460_cessation": {
+      "location": "C.14460",
+      "scenario": "cessation",
+      "filename": "prerun/C.14460/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdWR7WijOUhNssvKy8saIYcB2Eh4fA29EWJkmYLzV5hg8A?download=1"
+    },
+    "C.14460_prolonged_interruption": {
+      "location": "C.14460",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.14460/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESWFtTuP2nhIsTB8LXvXZTkBbBhpoTV58BdEeoPqBssZSA?download=1"
+    },
+    "C.16740_brief_interruption": {
+      "location": "C.16740",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.16740/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESQP4eG7uYFOvOAGcgnquMcBuhPiPOj0wPTob1aiPchg4g?download=1"
+    },
+    "C.16740_cessation": {
+      "location": "C.16740",
+      "scenario": "cessation",
+      "filename": "prerun/C.16740/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQiztcCGXwdIq9eVP9T4GTgB06-YmRvalxNPBCvob0W_kQ?download=1"
+    },
+    "C.16740_prolonged_interruption": {
+      "location": "C.16740",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.16740/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EZ7YELAaaIpPuLuYPFYKEFoBDI9_HbQjTRZJ_V3GsxHb1A?download=1"
+    },
+    "C.16980_brief_interruption": {
+      "location": "C.16980",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.16980/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESGcCd1OBrBKhTeH82dY4QUBcLaybVqltRCtfO_2e8fsJw?download=1"
+    },
+    "C.16980_cessation": {
+      "location": "C.16980",
+      "scenario": "cessation",
+      "filename": "prerun/C.16980/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EeolBLFDimNAmJx1iahz1zUB8o_AHwra_vjRPTeFg91jcA?download=1"
+    },
+    "C.16980_prolonged_interruption": {
+      "location": "C.16980",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.16980/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Eb7Vz77SwSdKuTzMsZlp8XgB1Fb1_h-R-GUJ4Hcd49M_qQ?download=1"
+    },
+    "C.17460_brief_interruption": {
+      "location": "C.17460",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.17460/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdENap7LLqhCn3Q2T17u9oIBmFq7Cob6ZYYK847JRkmjAQ?download=1"
+    },
+    "C.17460_cessation": {
+      "location": "C.17460",
+      "scenario": "cessation",
+      "filename": "prerun/C.17460/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ef_3ZmqwtX5Es7JEgcHAg3wB2ZGh_kLjWYxC-hXBHqsVqw?download=1"
+    },
+    "C.17460_prolonged_interruption": {
+      "location": "C.17460",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.17460/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETTW4gOkEgZFvrfwPM0XytIBmykyngcIUpLCV1laS6krwg?download=1"
+    },
+    "C.18140_brief_interruption": {
+      "location": "C.18140",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.18140/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EcKo8e66dNZGmUrzgkZdANMBUpLj8IJpcZYETFhwakXnQg?download=1"
+    },
+    "C.18140_cessation": {
+      "location": "C.18140",
+      "scenario": "cessation",
+      "filename": "prerun/C.18140/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EaRL0iNy_mhCvtEiow4IdYMB-vJiFeJ1Rq7ZpY5xtypUbQ?download=1"
+    },
+    "C.18140_prolonged_interruption": {
+      "location": "C.18140",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.18140/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EThYlMU84zRGokLCR2sh0H8Blq54gtR6-Ngt412oqCTkmg?download=1"
+    },
+    "C.19100_brief_interruption": {
+      "location": "C.19100",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.19100/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Eb_xx58hpq1OvVZerOqNfUMBNtGyXc4CJC6AudB_3zwk8Q?download=1"
+    },
+    "C.19100_cessation": {
+      "location": "C.19100",
+      "scenario": "cessation",
+      "filename": "prerun/C.19100/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXh_ogbkoiJAiDbayXRVcnsBJy5gQ5aDseudbuqK7unIxg?download=1"
+    },
+    "C.19100_prolonged_interruption": {
+      "location": "C.19100",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.19100/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EctHeKSkCSdKk894HtwIYWABYhqT71ikKjzSqIFd2D8RVg?download=1"
+    },
+    "C.19820_brief_interruption": {
+      "location": "C.19820",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.19820/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQYuYigew6NNvu9ebgggXrMB7W6xnuxr8H9yJ3MQYxy6XA?download=1"
+    },
+    "C.19820_cessation": {
+      "location": "C.19820",
+      "scenario": "cessation",
+      "filename": "prerun/C.19820/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYqWcG3NrtxLnt4FcKVb5d8B3BV53tC_PSTI8EkP6OkXUw?download=1"
+    },
+    "C.19820_prolonged_interruption": {
+      "location": "C.19820",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.19820/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWzd0ypl4WFOtcJJDCBJorIBNY3esLbHsLfH0PDp48o5DQ?download=1"
+    },
+    "C.26420_brief_interruption": {
+      "location": "C.26420",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.26420/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfLWhXlDEZhAuyGmzw3iCM4ByxTVrHUOZHou-BHS7Bktiw?download=1"
+    },
+    "C.26420_cessation": {
+      "location": "C.26420",
+      "scenario": "cessation",
+      "filename": "prerun/C.26420/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ec34pMeDYthBoo9efJ_dqNYB4UNNO-90vskII4_0TMFRMg?download=1"
+    },
+    "C.26420_prolonged_interruption": {
+      "location": "C.26420",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.26420/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWWgIyw0FbdHiWnPKa6llHoBkdDMT6O15o_vMfbUXHlAfA?download=1"
+    },
+    "C.26900_brief_interruption": {
+      "location": "C.26900",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.26900/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdJO0BIz0YlJr1yY8qajH6kB-064quNjhFtwuyKTd8ZXKg?download=1"
+    },
+    "C.26900_cessation": {
+      "location": "C.26900",
+      "scenario": "cessation",
+      "filename": "prerun/C.26900/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESrBwbXOCnxNhn94yj9PdqoBNtYAIVtV-qbr7oIeVU3FeA?download=1"
+    },
+    "C.26900_prolonged_interruption": {
+      "location": "C.26900",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.26900/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ET1eKHQNxzFNhzgtYE7SL9wBdeCOUL7zUAwohlxwotbcTg?download=1"
+    },
+    "C.27260_brief_interruption": {
+      "location": "C.27260",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.27260/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EZR6jzpE4iVFkV5Gwa3TKSABMefh1aw3kVRMbphfNPDlNQ?download=1"
+    },
+    "C.27260_cessation": {
+      "location": "C.27260",
+      "scenario": "cessation",
+      "filename": "prerun/C.27260/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfNFqS5UMg1CpkzTenJbTFgBC9F2jSg4xgPnj-qHqkx-Dg?download=1"
+    },
+    "C.27260_prolonged_interruption": {
+      "location": "C.27260",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.27260/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EUjn8zNeiDpHq_TZ9ePX69oBMq94SUi32e_z4AiEa90SBQ?download=1"
+    },
+    "C.29820_brief_interruption": {
+      "location": "C.29820",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.29820/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQBSlSXyjYJFkho61FHOaREBxKJz4GMprQBIbGfq-dOniw?download=1"
+    },
+    "C.29820_cessation": {
+      "location": "C.29820",
+      "scenario": "cessation",
+      "filename": "prerun/C.29820/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXDwAVaR0A9Fli06XUcxL5MBpxU_bBv-J8RwF5MASg0Jpg?download=1"
+    },
+    "C.29820_prolonged_interruption": {
+      "location": "C.29820",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.29820/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EcEgeAMNc9xHm10K18tN_1ABqY-f09V7y0O86oq4WcQv3w?download=1"
+    },
+    "C.31080_brief_interruption": {
+      "location": "C.31080",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.31080/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EY6n19rLfilDnnWDQR0I7lEBEccbC5IBr1K7W2_81xOzqg?download=1"
+    },
+    "C.31080_cessation": {
+      "location": "C.31080",
+      "scenario": "cessation",
+      "filename": "prerun/C.31080/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVIVqAg4zPJEn_nEe8SK6MABsJM5C3PLekXyuQ_2LUegkg?download=1"
+    },
+    "C.31080_prolonged_interruption": {
+      "location": "C.31080",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.31080/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbNsc4Vg2VlNkEKf4hvrN8cBjoY7N2HtQZmHRt8Wn7B0_w?download=1"
+    },
+    "C.32820_brief_interruption": {
+      "location": "C.32820",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.32820/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ed7YKOc9ZNJDu3zh8HjVLrEBWA-F51p-jzS_lyksHg8WAQ?download=1"
+    },
+    "C.32820_cessation": {
+      "location": "C.32820",
+      "scenario": "cessation",
+      "filename": "prerun/C.32820/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbaVALJkptxDmZBaKQJ7F_0BxBCCIGVDvXoFoFSNc_20Tg?download=1"
+    },
+    "C.32820_prolonged_interruption": {
+      "location": "C.32820",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.32820/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Ed8Fyjwya0dAhZJwrfCLOM8BBN7wkDGVxZEepddLdCLNlg?download=1"
+    },
+    "C.33100_brief_interruption": {
+      "location": "C.33100",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.33100/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/Eb2mImjj_19AlT1OdSZR0noBjgf91oRGvwC6Aq1r2CGP1Q?download=1"
+    },
+    "C.33100_cessation": {
+      "location": "C.33100",
+      "scenario": "cessation",
+      "filename": "prerun/C.33100/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWzLaOrsj0xIttvYQcg3cKIBBQH4rllF7YwDplY-iIWpDQ?download=1"
+    },
+    "C.33100_prolonged_interruption": {
+      "location": "C.33100",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.33100/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EeH5a1z3NwFDhhwFeiKbgmMBrR-6gn_Ed5pNh8EkuG1z9w?download=1"
+    },
+    "C.35380_brief_interruption": {
+      "location": "C.35380",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.35380/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EZxylxhHQ1pJgkOCHUwn5-kBbqy4MReXj9KLCpCYIfskIQ?download=1"
+    },
+    "C.35380_cessation": {
+      "location": "C.35380",
+      "scenario": "cessation",
+      "filename": "prerun/C.35380/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EY0bO9OFjytOgEKQ2E0EsqYBoGv7MogOvYGg_MGXLnhF1w?download=1"
+    },
+    "C.35380_prolonged_interruption": {
+      "location": "C.35380",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.35380/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESY49KN7dClBmAVgL6M1tBgBo08iAgK6bL0mquzM_YGjFQ?download=1"
+    },
+    "C.35620_brief_interruption": {
+      "location": "C.35620",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.35620/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EezHDh_u8pVKgEsodeJ0nvwB1g2VFcSkFfbyXFFcvDugvQ?download=1"
+    },
+    "C.35620_cessation": {
+      "location": "C.35620",
+      "scenario": "cessation",
+      "filename": "prerun/C.35620/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWcsu3oN3hlCh12fK-_IJFYB4XpxSshAqP39GIr90SQXmw?download=1"
+    },
+    "C.35620_prolonged_interruption": {
+      "location": "C.35620",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.35620/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EdM_hx7a-iVFnGveJh0prcYBk4nf0f00mTgB2jzUCp3HxQ?download=1"
+    },
+    "C.36740_brief_interruption": {
+      "location": "C.36740",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.36740/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYe-WQQVaZhFlB0NzA6H2W8BgpKfP5OXVh9Z51xdp6wRgQ?download=1"
+    },
+    "C.36740_cessation": {
+      "location": "C.36740",
+      "scenario": "cessation",
+      "filename": "prerun/C.36740/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EctHZ2UtYJJDgAMhiNXeZfkBEQ81Md1ylr6664sMPtQ9dw?download=1"
+    },
+    "C.37980_brief_interruption": {
+      "location": "C.37980",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.37980/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQm3HwWWtWVCrLd_-QZss0IBLiBqXvDAGZ72_Aw2euWEJw?download=1"
+    },
+    "C.37980_cessation": {
+      "location": "C.37980",
+      "scenario": "cessation",
+      "filename": "prerun/C.37980/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYITVsr4OCFGqEheKlYnX3YBTB4Ci1iYK8SGvwlqWFLlQg?download=1"
+    },
+    "C.37980_prolonged_interruption": {
+      "location": "C.37980",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.37980/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EcGRUjIG2DlLmqNH8eeFaagBNVoURqFm0gE_j5QkoxyrqA?download=1"
+    },
+    "C.38060_brief_interruption": {
+      "location": "C.38060",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.38060/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYYzIbX8qlpCrYYxT4LClEYBbzyjkpze_Nz9zAkJYZHS4Q?download=1"
+    },
+    "C.38060_cessation": {
+      "location": "C.38060",
+      "scenario": "cessation",
+      "filename": "prerun/C.38060/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYEZlzLfl2tEubQ4y1BwS3kB1ag-fBvdTifYTd_Mvld6-g?download=1"
+    },
+    "C.38060_prolonged_interruption": {
+      "location": "C.38060",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.38060/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXT83Hwdp_FNpsuFZIvu4KYB3wky4HXbiAWFFVzVZkSFWw?download=1"
+    },
+    "C.40140_brief_interruption": {
+      "location": "C.40140",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.40140/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYQGcMMsZ6xNtF0yTC1BDOUBzVw2D1c-qGX34iyBoF8lYA?download=1"
+    },
+    "C.40140_cessation": {
+      "location": "C.40140",
+      "scenario": "cessation",
+      "filename": "prerun/C.40140/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EW7pcdAdNwVIoQcyt9jkQTsBNR1eK34WZfHaecSE-RV50w?download=1"
+    },
+    "C.40140_prolonged_interruption": {
+      "location": "C.40140",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.40140/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYdz5ck0SxpLmFZX2lHOo9oBi_zwZsmkhYSyIAGqm81KCA?download=1"
+    },
+    "C.40900_brief_interruption": {
+      "location": "C.40900",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.40900/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ERJH-rqsDI1JrTS1TUtcAg4BrjfmQ-3Y9zGyD4r70b26uQ?download=1"
+    },
+    "C.40900_cessation": {
+      "location": "C.40900",
+      "scenario": "cessation",
+      "filename": "prerun/C.40900/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVOJe-cos4RBjCZtsXHut4IBNSJF2YqGJH1LHqFvQ5A-SQ?download=1"
+    },
+    "C.40900_prolonged_interruption": {
+      "location": "C.40900",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.40900/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWWpAEbmN1VPjEc5aiSwZu0BEEBNKSUNZlM6upTkDbjJsg?download=1"
+    },
+    "C.41700_brief_interruption": {
+      "location": "C.41700",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.41700/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EfW26z_D1K1BlbH4VuqPhY0BEKtrq6aIlVgz9TW05vQ27A?download=1"
+    },
+    "C.41700_cessation": {
+      "location": "C.41700",
+      "scenario": "cessation",
+      "filename": "prerun/C.41700/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ET_oN_BBmAJBsXgKsQn6TZsB7_DjjOq_cCf6DXXv-bfnag?download=1"
+    },
+    "C.41700_prolonged_interruption": {
+      "location": "C.41700",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.41700/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESmAWPg1lqdAgBTq0vZUMx8BhEXDdTRlFoQ94RZnzej71w?download=1"
+    },
+    "C.41740_brief_interruption": {
+      "location": "C.41740",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.41740/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EYifJEb9PqRKtxqO3fCq_UABpZ80MXv1hLtNlLMxc9O0-w?download=1"
+    },
+    "C.41740_cessation": {
+      "location": "C.41740",
+      "scenario": "cessation",
+      "filename": "prerun/C.41740/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXxgYfbC5zZOrqt4POHMb7EBX9ds8MF6gjpKxQiDe3LVUg?download=1"
+    },
+    "C.41740_prolonged_interruption": {
+      "location": "C.41740",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.41740/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXOrL9o05yhDlEe1b5pZ-n8BZAr1m59T01RT8PMYHGSGlg?download=1"
+    },
+    "C.41860_brief_interruption": {
+      "location": "C.41860",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.41860/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ETJYjL4gDeZAiNziWGoRJ0cBoh2nngDM8FmpWgbSprJFNw?download=1"
+    },
+    "C.41860_cessation": {
+      "location": "C.41860",
+      "scenario": "cessation",
+      "filename": "prerun/C.41860/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EXrpxy_JFp1HupXa9dKQP5UB4NQEPF-gRedHXUwoWLWQHg?download=1"
+    },
+    "C.41860_prolonged_interruption": {
+      "location": "C.41860",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.41860/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ERjRfJJzNQNCjmiKVdJFiicBXcu0pqEfSXV_Yo1A9NU2ug?download=1"
+    },
+    "C.42660_brief_interruption": {
+      "location": "C.42660",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.42660/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EVd8X1WR9XlMmWcdllywTBABZlNGmQCUE_uIRUaSi_QgSA?download=1"
+    },
+    "C.42660_cessation": {
+      "location": "C.42660",
+      "scenario": "cessation",
+      "filename": "prerun/C.42660/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbD7Uqg-kCpJplmPYnwB2mUB15hZM_o9pIQF-9NIJGm4HA?download=1"
+    },
+    "C.42660_prolonged_interruption": {
+      "location": "C.42660",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.42660/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbFIcRPdFAJDjuO0A4NzpIUBygGfkNrnSXflrR6cIXjWvQ?download=1"
+    },
+    "C.45300_brief_interruption": {
+      "location": "C.45300",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.45300/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EWSsroGPUJ5Nqvz2KlFL3wgBT_VbhSGbOBKKWpJMrThSkg?download=1"
+    },
+    "C.45300_cessation": {
+      "location": "C.45300",
+      "scenario": "cessation",
+      "filename": "prerun/C.45300/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQV70BAgl6NBsAf1UnasqdsBqOZh6cx4qeEjkRIQ8zMACQ?download=1"
+    },
+    "C.45300_prolonged_interruption": {
+      "location": "C.45300",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.45300/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EQoy8eYYrQRFvjPduot8oiYBYBoDWOcAGvodvYp2UgWS-A?download=1"
+    },
+    "C.47900_brief_interruption": {
+      "location": "C.47900",
+      "scenario": "brief_interruption",
+      "filename": "prerun/C.47900/brief_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EaCc-Cn3BbBGmtgcnBzvaj4Bp177EeOT3jsywGiuHGuShw?download=1"
+    },
+    "C.47900_cessation": {
+      "location": "C.47900",
+      "scenario": "cessation",
+      "filename": "prerun/C.47900/cessation.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/EbqciIv57SlIn6kG6fFnS1oBfI0vcSPT3NDBAb6fp9B8LA?download=1"
+    },
+    "C.47900_prolonged_interruption": {
+      "location": "C.47900",
+      "scenario": "prolonged_interruption",
+      "filename": "prerun/C.47900/prolonged_interruption.Rdata",
+      "sharing_link": "https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/nsizemo1_jh_edu/ESzT1WE3N2NAkY02wP3_RDkBSZz4lUG-5M9Kp8p_svIJOw?download=1"
     }
   }
 }
