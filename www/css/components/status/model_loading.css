@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: rgba(33, 37, 41, 0.4); /* Even lighter background */
-  z-index: 9999;
+  z-index: 10000; /* Increased z-index to be above all other elements */
   display: flex;
   justify-content: center;
   align-items: center;

@@ -42,7 +42,7 @@ sections:
     selectors: ["location"]
   scenario:
     title: "Funding Scenario"
-    description: "Choose whether Ryan White funding is permanently discontinued or temporarily suspended"
+    description: "Select whether Ryan White funding is briefly interrupted, completely ceases, or interrupted for an extended period"
     selectors: ["scenario"]
   timing:
     title: "Programs Change Timeline"

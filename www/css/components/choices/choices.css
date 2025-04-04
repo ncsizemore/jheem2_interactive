@@ -10,15 +10,15 @@
     position: relative;
     isolation: isolate;
     /* Create new stacking context */
-    z-index: 9999;
-    /* Much higher z-index */
+    z-index: 999;
+    /* High z-index but lower than modal overlays */
     margin-bottom: var(--spacing-md);
 }
 
 .location-selector .choices__list--dropdown {
     position: absolute;
-    z-index: 10000;
-    /* Higher than parent */
+    z-index: 1000;
+    /* Higher than parent but still lower than modal overlays */
 }
 
 /* Subgroup characteristics section */
