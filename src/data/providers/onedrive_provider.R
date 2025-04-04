@@ -457,19 +457,12 @@ OneDriveProvider <- R6::R6Class(
             # Create temporary file path
             temp_file <- file.path(self$temp_dir, filename)
             
-            # Check if already downloaded and recent (less than 1 hour old)
+            # TEMP FIX: Always download a fresh copy, skipping the cache check
+            print(sprintf("[ONEDRIVE] Bypassing cache check for: %s", temp_file))
+            # Removing cache check to ensure fresh downloads every time
             if (file.exists(temp_file)) {
-                file_info <- file.info(temp_file)
-                age <- as.numeric(difftime(Sys.time(), file_info$mtime, units = "hours"))
-                
-                if (age < 1) {
-                    print(sprintf("[ONEDRIVE] Using cached file (%.1f minutes old): %s", 
-                                 age * 60, temp_file))
-                    return(temp_file)
-                }
-                
-                print(sprintf("[ONEDRIVE] Cached file too old (%.1f hours): %s", 
-                             age, temp_file))
+                print(sprintf("[ONEDRIVE] Removing existing cached file: %s", temp_file))
+                file.remove(temp_file)
             }
             
             # Ensure the sharing link has the correct download parameter

@@ -376,6 +376,13 @@ StateStore <- R6Class("StateStore",
             print(paste0("[STATE_STORE] Looking for matching simulation for mode: ", mode))
             print("[STATE_STORE DEBUG] Settings:")
             print(str(settings))
+            
+            # Log scenario specifically to help with debugging
+            if (!is.null(settings$scenario)) {
+                print(sprintf("[STATE_STORE DEBUG] Current requested scenario: '%s'", settings$scenario))
+            } else {
+                print("[STATE_STORE DEBUG] No scenario specified in settings")
+            }
 
             # Step 1: Look through existing simulations in memory
             print("[STATE_STORE DEBUG] Step 1: Checking for matches in memory")
@@ -388,6 +395,10 @@ StateStore <- R6Class("StateStore",
                 # Only match simulations of the same mode
                 if (sim_state$mode == mode) {
                     print(sprintf("[STATE_STORE DEBUG] Found simulation with matching mode: %s", id))
+                    # Print scenario info specifically for debugging
+                    if (!is.null(sim_state$settings$scenario)) {
+                        print(sprintf("[STATE_STORE DEBUG] Checking against existing scenario: '%s'", sim_state$settings$scenario))
+                    }
                     # Check if settings match
                     settings_match <- private$are_settings_equal(sim_state$settings, settings)
                     print(sprintf("[STATE_STORE DEBUG] Settings match: %s", settings_match))
@@ -1102,6 +1113,17 @@ StateStore <- R6Class("StateStore",
             if (is.null(settings1) || is.null(settings2)) {
                 print("[STATE_STORE DEBUG] One or both settings are NULL")
                 return(identical(settings1, settings2))
+            }
+            
+            # TEMPORARY FIX: Check for scenario changes specifically 
+            # This is needed because scenario changes should force new downloads
+            if (!is.null(settings1$scenario) && !is.null(settings2$scenario)) {
+                print(sprintf("[STATE_STORE DEBUG] Comparing scenarios: '%s' vs '%s'", settings1$scenario, settings2$scenario))
+                if (settings1$scenario != settings2$scenario) {
+                    print("[STATE_STORE DEBUG] Scenarios don't match - forcing new download")
+                    return(FALSE)
+                }
+                print("[STATE_STORE DEBUG] Scenarios match, continuing with other checks")
             }
 
             # Create normalized copies for comparison

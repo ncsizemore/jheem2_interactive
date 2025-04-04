@@ -154,14 +154,12 @@ UnifiedCacheManager <- R6::R6Class(
       # Create file path
       file_path <- file.path(private$onedrive_path, filename)
 
-      # Check if file already exists and is in registry
-      if (file.exists(file_path) && file_path %in% names(private$registry$files)) {
-        # File found in registry, update access time
-        private$update_registry_access(file_path)
-        private$save_registry()
-        print(sprintf("[UCACHE] Using cached OneDrive file: %s", filename))
-        return(file_path)
+      # TEMP FIX: Bypass cache checking for OneDrive files
+      if (file.exists(file_path)) {
+        print(sprintf("[UCACHE] Removing existing cached OneDrive file: %s", filename))
+        file.remove(file_path)
       }
+      print("[UCACHE] Cache bypassed - will download fresh copy")
 
       # Generate a unique download ID
       download_id <- paste0("dl-", format(Sys.time(), "%Y%m%d%H%M%S"), "-", sample.int(1000, 1))
