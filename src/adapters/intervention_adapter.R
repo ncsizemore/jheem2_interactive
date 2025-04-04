@@ -215,8 +215,18 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         next
       }
       
-      # Add to all effects list
-      all_effects[[length(all_effects) + 1]] <- effect
+      # Check if effect is a list (multiple effects) or a single effect
+      if (is.list(effect) && !inherits(effect, "intervention.effect")) {
+        # Multiple effects - add each one
+        for (single_effect in effect) {
+          all_effects[[length(all_effects) + 1]] <- single_effect
+        }
+        print(paste("Added", length(effect), "effects for group:", group_id))
+      } else {
+        # Single effect - add it directly
+        all_effects[[length(all_effects) + 1]] <- effect
+        print(paste("Added single effect for group:", group_id))
+      }
       
       # If using subgroup targeting, create separate interventions
       if (!use_whole_population && supports_subgroups) {
@@ -229,21 +239,48 @@ create_custom_intervention <- function(settings, session_id = NULL) {
         # Create intervention for this effect and target
         intervention_code <- paste0(intervention_code_base, ".", length(group_interventions))
         
-        # Create intervention with target population first
-        tryCatch({
-          int <- create.intervention(
-            target_pop,  # Target population first
-            effect,      # Then effect
-            code = intervention_code,
-            overwrite.existing.intervention = TRUE
+        # Check if effect is a list or a single effect
+        if (is.list(effect) && !inherits(effect, "intervention.effect")) {
+          # Handle multiple effects
+          print(paste("Creating intervention with", length(effect), "effects for group:", group_id))
+          
+          # Construct arguments list with target population first, then all effects
+          args <- c(
+            list(target_pop),  # Target population first
+            effect,            # Then all effects
+            list(
+              code = intervention_code,
+              overwrite.existing.intervention = TRUE
+            )
           )
           
-          # Add to list of interventions
-          group_interventions[[length(group_interventions) + 1]] <- int
-          print(paste("Successfully created targeted intervention for group:", group_id))
-        }, error = function(e) {
-          warning(paste("Error creating targeted intervention:", e$message))
-        })
+          # Create intervention
+          tryCatch({
+            int <- do.call(create.intervention, args)
+            
+            # Add to list of interventions
+            group_interventions[[length(group_interventions) + 1]] <- int
+            print(paste("Successfully created targeted intervention with multiple effects for group:", group_id))
+          }, error = function(e) {
+            warning(paste("Error creating targeted intervention with multiple effects:", e$message))
+          })
+        } else {
+          # Handle single effect (original implementation)
+          tryCatch({
+            int <- create.intervention(
+              target_pop,  # Target population first
+              effect,      # Then effect
+              code = intervention_code,
+              overwrite.existing.intervention = TRUE
+            )
+            
+            # Add to list of interventions
+            group_interventions[[length(group_interventions) + 1]] <- int
+            print(paste("Successfully created targeted intervention for group:", group_id))
+          }, error = function(e) {
+            warning(paste("Error creating targeted intervention:", e$message))
+          })
+        }
       }
     }
   }

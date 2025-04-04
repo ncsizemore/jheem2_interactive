@@ -39,11 +39,19 @@ supports_subgroup_targeting <- function() {
 #' @param transform Function to transform value (optional)
 #' @param group_id Group identifier for dynamic quantity determination (optional)
 #' @param recovery_duration Recovery duration in months (optional, default 3 months)
+#' @param suffix Optional suffix to add to quantity name (e.g., "expansion" or "nonexpansion")
 #' @return jheem intervention effect
-create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL, recovery_duration = NULL) {
+create_standard_effect <- function(quantity_name, scale, start_time, end_time, value, transform = NULL, group_id = NULL, recovery_duration = NULL, suffix = NULL) {
   # Handle dynamic quantity names based on group_id
   if (is.function(quantity_name)) {
-    quantity_name <- quantity_name(group_id)
+    quantity_name <- quantity_name(group_id, suffix)
+  }
+  
+  # Add suffix if provided
+  if (!is.null(suffix) && !grepl(paste0("\\.", suffix, "\\."), quantity_name)) {
+    # Only add suffix if it's not already part of the quantity name
+    quantity_name <- gsub("\\.$", paste0(".", suffix, "."), quantity_name)
+    quantity_name <- gsub("\\.$", "", quantity_name) # Remove trailing dot if any
   }
   
   # Apply transformation if provided
@@ -147,29 +155,53 @@ percentage_to_proportion <- function(value) value / 100
 MODEL_EFFECTS <- list(
   # Generic suppression_loss effect that works for any group
   suppression_loss = list(
-    quantity_name = function(group_id) {
-      if (group_id == "adap") {
-        "adap.suppression.effect"
+    quantity_name = function(group_id, suffix = NULL) {
+      # Base effect name based on group_id
+      base_name <- if (group_id == "adap") {
+        "adap.suppression"
       } else if (group_id == "oahs") {
-        "oahs.suppression.effect" 
+        "oahs.suppression"
       } else if (group_id == "other") {
-        "rw.support.suppression.effect"
+        "rw.support.suppression"
       } else {
         stop(paste("Unknown group ID for suppression_loss:", group_id))
+      }
+      
+      # Add suffix if provided
+      if (!is.null(suffix)) {
+        paste0(base_name, ".", suffix, ".effect")
+      } else {
+        paste0(base_name, ".effect")
       }
     },
     scale = "proportion",
     value_field = "value",
     create = function(start_time, end_time, value, group_id, recovery_duration = NULL) {
-      create_standard_effect(
+      # Create both expansion and nonexpansion effects
+      expansion_effect <- create_standard_effect(
         quantity_name = MODEL_EFFECTS$suppression_loss$quantity_name,
         scale = MODEL_EFFECTS$suppression_loss$scale,
         start_time = start_time,
         end_time = end_time,
         value = value,
         group_id = group_id,
-        recovery_duration = recovery_duration
+        recovery_duration = recovery_duration,
+        suffix = "expansion"
       )
+      
+      nonexpansion_effect <- create_standard_effect(
+        quantity_name = MODEL_EFFECTS$suppression_loss$quantity_name,
+        scale = MODEL_EFFECTS$suppression_loss$scale,
+        start_time = start_time,
+        end_time = end_time,
+        value = value,
+        group_id = group_id,
+        recovery_duration = recovery_duration,
+        suffix = "nonexpansion"
+      )
+      
+      # Return a list of both effects
+      list(expansion_effect, nonexpansion_effect)
     }
   )
 )
