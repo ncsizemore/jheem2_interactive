@@ -107,8 +107,8 @@ OneDriveProvider <- R6::R6Class(
                            paste(names(settings), collapse = ", ")))
             }
             
-            # Download and load the file
-            local_path <- private$download_file(file_info$sharing_link, file_info$filename)
+            # Download and load the file, passing settings for proper caching
+            local_path <- private$download_file(file_info$sharing_link, file_info$filename, settings)
             
             if (is.null(local_path)) {
                 stop("[ONEDRIVE] Failed to download file")
@@ -420,8 +420,9 @@ OneDriveProvider <- R6::R6Class(
         #' Download a file from a sharing link
         #' @param sharing_link OneDrive sharing link
         #' @param filename Filename to use for the downloaded file
+        #' @param settings Optional settings containing location and scenario information
         #' @return Path to downloaded file or NULL on failure
-        download_file = function(sharing_link, filename) {
+        download_file = function(sharing_link, filename, settings = NULL) {
             # Debug the arguments
             print(sprintf("[ONEDRIVE] download_file called with sharing_link type: %s, class: %s", 
                          typeof(sharing_link), paste(class(sharing_link), collapse=",")))
@@ -444,9 +445,11 @@ OneDriveProvider <- R6::R6Class(
                     sharing_link <- sharing_link$sharing_link
                 }
                 
-                # Call UnifiedCacheManager's download_file method (no progress callback needed)
+                # Call UnifiedCacheManager's download_file method, passing settings for proper caching
                 print("[ONEDRIVE] Calling UnifiedCacheManager download_file method")
-                result <- self$cache_manager$download_file(sharing_link, filename)
+                print("[ONEDRIVE] Passing settings to UnifiedCacheManager for proper caching:")
+                print(str(settings))
+                result <- self$cache_manager$download_file(sharing_link, filename, settings)
                 print(sprintf("[ONEDRIVE] download_file result: %s", result))
                 return(result)
             }
@@ -454,15 +457,70 @@ OneDriveProvider <- R6::R6Class(
             # Fallback to original implementation
             print(sprintf("[ONEDRIVE] Downloading file: %s", filename))
             
-            # Create temporary file path
-            temp_file <- file.path(self$temp_dir, filename)
+            # Create a cache filename that includes location and scenario for uniqueness
+            # This prevents files with the same name but from different locations/scenarios from colliding
+            cache_filename <- filename
             
-            # TEMP FIX: Always download a fresh copy, skipping the cache check
-            print(sprintf("[ONEDRIVE] Bypassing cache check for: %s", temp_file))
-            # Removing cache check to ensure fresh downloads every time
+            # If settings are provided with location and scenario, include them in the cache path
+            if (!is.null(settings)) {
+                if (!is.null(settings$location) && !is.null(settings$scenario)) {
+                    # Create a subdirectory pattern based on location and scenario
+                    subdir <- paste0(settings$location, "/", settings$scenario)
+                    print(sprintf("[ONEDRIVE] Creating cache path with location and scenario: %s", subdir))
+                    
+                    # Create the subdirectory if it doesn't exist
+                    subdir_path <- file.path(self$temp_dir, subdir)
+                    if (!dir.exists(subdir_path)) {
+                        dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
+                    }
+                    
+                    # Store in location/scenario/filename structure
+                    temp_file <- file.path(subdir_path, filename)
+                } else if (!is.null(settings$location)) {
+                    # Just use location if scenario not available
+                    subdir <- settings$location
+                    print(sprintf("[ONEDRIVE] Creating cache path with location: %s", subdir))
+                    
+                    # Create the subdirectory if it doesn't exist
+                    subdir_path <- file.path(self$temp_dir, subdir)
+                    if (!dir.exists(subdir_path)) {
+                        dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
+                    }
+                    
+                    # Store in location/filename structure
+                    temp_file <- file.path(subdir_path, filename)
+                } else {
+                    # Default to just using filename if neither location nor scenario is available
+                    temp_file <- file.path(self$temp_dir, filename)
+                }
+            } else {
+                # If no settings provided, fall back to just using filename
+                temp_file <- file.path(self$temp_dir, filename)
+            }
+            
+            print(sprintf("[ONEDRIVE] Cache file path: %s", temp_file))
+            
+            # Check if already downloaded and recent (less than 1 hour old)
             if (file.exists(temp_file)) {
-                print(sprintf("[ONEDRIVE] Removing existing cached file: %s", temp_file))
-                file.remove(temp_file)
+                print(sprintf("[ONEDRIVE DEBUG] Found existing cache file: %s", temp_file))
+                file_info <- file.info(temp_file)
+                age <- as.numeric(difftime(Sys.time(), file_info$mtime, units = "hours"))
+                file_size_mb <- file_info$size / (1024 * 1024)
+                
+                print(sprintf("[ONEDRIVE DEBUG] File details: Age=%.2f hours, Size=%.2f MB", age, file_size_mb))
+                
+                if (age < 1) {
+                    print(sprintf("[ONEDRIVE] Using cached file (%.1f minutes old): %s", 
+                                 age * 60, temp_file))
+                    return(temp_file)
+                } else {
+                    print(sprintf("[ONEDRIVE DEBUG] Cache file too old (%.1f hours > 1 hour limit)", age))
+                }
+                
+                print(sprintf("[ONEDRIVE] Cached file too old (%.1f hours): %s", 
+                             age, temp_file))
+            } else {
+                print(sprintf("[ONEDRIVE DEBUG] No existing cache file found at: %s", temp_file))
             }
             
             # Ensure the sharing link has the correct download parameter

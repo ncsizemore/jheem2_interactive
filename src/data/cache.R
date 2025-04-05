@@ -340,6 +340,11 @@ generate_simulation_cache_key <- function(settings, mode) {
             settings_copy$location <- normalize_location_code(settings_copy$location)
             print(sprintf("[CACHE DEBUG] Normalized location: %s", settings_copy$location))
         }
+        
+        # Log scenario specifically (important for caching)
+        if (!is.null(settings_copy$scenario)) {
+            print(sprintf("[CACHE DEBUG] Using scenario '%s' in cache key", settings_copy$scenario))
+        }
     }
     
     # Get a consistent identifier for the simulation

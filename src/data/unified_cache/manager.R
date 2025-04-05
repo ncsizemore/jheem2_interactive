@@ -128,8 +128,9 @@ UnifiedCacheManager <- R6::R6Class(
     #' Download a file from OneDrive
     #' @param sharing_link OneDrive sharing link
     #' @param filename Filename to use for the downloaded file
+    #' @param settings Optional settings containing location and scenario information
     #' @return Path to the downloaded file or NULL on failure
-    download_file = function(sharing_link, filename) {
+    download_file = function(sharing_link, filename, settings = NULL) {
       print("[UCACHE] Starting file download operation")
 
       # Validate inputs
@@ -151,15 +152,132 @@ UnifiedCacheManager <- R6::R6Class(
 
       print(sprintf("[UCACHE] Downloading OneDrive file: %s", filename))
 
-      # Create file path
-      file_path <- file.path(private$onedrive_path, filename)
-
-      # TEMP FIX: Bypass cache checking for OneDrive files
-      if (file.exists(file_path)) {
-        print(sprintf("[UCACHE] Removing existing cached OneDrive file: %s", filename))
-        file.remove(file_path)
+      # Create a file path that includes location and scenario for uniqueness
+      # This prevents files with the same name but from different locations/scenarios from colliding
+      
+      # If settings provided with location and scenario, include them in the cache path
+      if (!is.null(settings)) {
+        if (!is.null(settings$location) && !is.null(settings$scenario)) {
+          # Create a subdirectory pattern based on location and scenario
+          subdir <- paste0(settings$location, "/", settings$scenario)
+          print(sprintf("[UCACHE] Creating cache path with location and scenario: %s", subdir))
+          
+          # Create the subdirectory if it doesn't exist
+          subdir_path <- file.path(private$onedrive_path, subdir)
+          if (!dir.exists(subdir_path)) {
+            dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
+          }
+          
+          # Store in location/scenario/filename structure
+          file_path <- file.path(subdir_path, filename)
+        } else if (!is.null(settings$location)) {
+          # Just use location if scenario not available
+          subdir <- settings$location
+          print(sprintf("[UCACHE] Creating cache path with location: %s", subdir))
+          
+          # Create the subdirectory if it doesn't exist
+          subdir_path <- file.path(private$onedrive_path, subdir)
+          if (!dir.exists(subdir_path)) {
+            dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
+          }
+          
+          # Store in location/filename structure
+          file_path <- file.path(subdir_path, filename)
+        } else {
+          # Default to just using filename if neither location nor scenario is available
+          file_path <- file.path(private$onedrive_path, filename)
+        } else {
+          print("[UCACHE DEBUG] File exists but not in registry, removing for fresh download")
+          # File exists but not in registry - downloading fresh copy and will add to registry
+          file.remove(file_path)
+        } else {
+          print("[UCACHE DEBUG] File exists but not in registry, removing for fresh download")
+          # File exists but not in registry - downloading fresh copy and will add to registry
+          file.remove(file_path)
+        }
+      } else {
+        print("[UCACHE DEBUG] File doesn't exist, will download fresh copy")
+      } else {
+        print("[UCACHE DEBUG] File doesn't exist, will download fresh copy")
+      } else {
+        # If no settings provided, fall back to just using filename
+        file_path <- file.path(private$onedrive_path, filename)
       }
-      print("[UCACHE] Cache bypassed - will download fresh copy")
+      
+      print(sprintf("[UCACHE] Cache file path: %s", file_path))
+
+      # Check if file already exists and is in registry
+      if (file.exists(file_path)) {
+        print(sprintf("[UCACHE DEBUG] Found existing file: %s", file_path))
+        
+        # Check if it's in the registry
+        if (file_path %in% names(private$registry$files)) {
+          print("[UCACHE DEBUG] File exists in registry")
+          print("[UCACHE DEBUG] Checking source metadata...")
+          
+          # Get the registry entry
+          registry_entry <- private$registry$files[[file_path]]
+          print("[UCACHE DEBUG] Registry entry metadata:")
+          print(str(registry_entry$metadata))
+          
+          # Check if the source link matches to ensure we have the right file version
+          source_match <- TRUE
+          
+          # Compare sharing links if available
+          if (!is.null(registry_entry$metadata$sharing_link)) {
+            print(sprintf("[UCACHE DEBUG] Comparing sharing link:\nRegistry: %s\nRequested: %s", 
+                         registry_entry$metadata$sharing_link, sharing_link))
+                         
+            if (registry_entry$metadata$sharing_link != sharing_link) {
+              print("[UCACHE DEBUG] Source URL doesn't match")
+              source_match <- FALSE
+            } else {
+              print("[UCACHE DEBUG] Source URL matches")
+            }
+          } else {
+            print("[UCACHE DEBUG] No sharing link in registry metadata")
+          }
+          
+          # Check if scenario matches to ensure we're getting the right scenario file
+          if (!is.null(settings) && !is.null(settings$scenario) && 
+              !is.null(registry_entry$metadata$scenario)) {
+              
+            print(sprintf("[UCACHE DEBUG] Comparing scenarios: Registry='%s', Requested='%s'", 
+                         registry_entry$metadata$scenario, settings$scenario))
+                         
+            if (registry_entry$metadata$scenario != settings$scenario) {
+              print(sprintf("[UCACHE DEBUG] Scenarios don't match ('%s' vs '%s')", 
+                           registry_entry$metadata$scenario, settings$scenario))
+              source_match <- FALSE
+            } else {
+              print("[UCACHE DEBUG] Scenarios match")
+            }
+          } else {
+            print("[UCACHE DEBUG] Scenario comparison skipped (missing data)")
+            if (is.null(settings) || is.null(settings$scenario)) {
+              print("[UCACHE DEBUG] - No scenario in request settings")
+            }
+            if (is.null(registry_entry$metadata$scenario)) {
+              print("[UCACHE DEBUG] - No scenario in registry metadata")
+            }
+          }
+        
+        # Only use the cached file if all source information matches
+        if (source_match) {
+        # File found in registry with matching source info, update access time
+        print("[UCACHE DEBUG] Source information matches, using cached file")
+        private$update_registry_access(file_path)
+        private$save_registry()
+        print(sprintf("[UCACHE] Using cached OneDrive file: %s", filename))
+          return(file_path)
+        } else {
+        print("[UCACHE DEBUG] Source information doesn't match, downloading fresh copy")
+        # Remove the file so we can download a fresh copy
+        file.remove(file_path)
+        # Remove from registry
+          private$registry$files[[file_path]] <- NULL
+          }
+      }
 
       # Generate a unique download ID
       download_id <- paste0("dl-", format(Sys.time(), "%Y%m%d%H%M%S"), "-", sample.int(1000, 1))
@@ -520,17 +638,32 @@ UnifiedCacheManager <- R6::R6Class(
 
       # If download was successful, add to registry
       if (download_success) {
-        # Add to registry
-        private$add_to_registry(
-          file_path = file_path,
-          type = "onedrive",
-          priority = "normal",
-          references = list(),
-          metadata = list(
-            sharing_link = sharing_link,
-            original_filename = filename
-          )
+        # Add to registry with enhanced metadata including source information
+        metadata <- list(
+        sharing_link = sharing_link,
+        original_filename = filename
         )
+        
+        # Add settings info to metadata if available
+        if (!is.null(settings)) {
+        if (!is.null(settings$location)) {
+          metadata$location <- settings$location
+            print(sprintf("[UCACHE] Adding location '%s' to metadata", settings$location))
+        }
+        if (!is.null(settings$scenario)) {
+          metadata$scenario <- settings$scenario
+          print(sprintf("[UCACHE] Adding scenario '%s' to metadata", settings$scenario))
+        }
+      }
+      
+      # Add to registry
+      private$add_to_registry(
+        file_path = file_path,
+        type = "onedrive",
+        priority = "normal",
+        references = list(),
+        metadata = metadata
+      )
 
         return(file_path)
       }

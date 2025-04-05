@@ -5,6 +5,22 @@
 #' @param settings Settings to determine appropriate baseline (needs location)
 #' @return Baseline simulation set or NULL if not available/enabled
 load_baseline_simulation <- function(page_id, settings) {
+  # Check if we have a cached version already
+  # Use a simple global variable to track loaded baselines by location
+  if (!exists(".BASELINE_CACHE", envir = .GlobalEnv)) {
+    assign(".BASELINE_CACHE", list(), envir = .GlobalEnv) 
+  }
+  
+  # Try to get from cache first
+  cache_key <- paste0(page_id, "_", settings$location, "_base")
+  print(sprintf("[BASELINE] Checking for cached baseline with key: %s", cache_key))
+  
+  if (cache_key %in% names(get(".BASELINE_CACHE", envir = .GlobalEnv))) {
+    print(sprintf("[BASELINE] Found cached baseline for %s, returning without reloading", cache_key))
+    return(get(".BASELINE_CACHE", envir = .GlobalEnv)[[cache_key]])
+  }
+  
+  print(sprintf("[BASELINE] No cached baseline found for %s, loading from provider", cache_key))
   # Early return if settings missing location
   if (is.null(settings) || is.null(settings$location)) {
     warning("Cannot load baseline: settings missing location")
@@ -121,24 +137,30 @@ load_baseline_simulation <- function(page_id, settings) {
 
   # Try to load the baseline simulation
   tryCatch(
-    {
-      print(sprintf(
-        "[BASELINE] Loading baseline simulation for location: %s",
-        settings$location
-      ))
+  {
+  print(sprintf(
+  "[BASELINE] Loading baseline simulation for location: %s",
+  settings$location
+  ))
 
-      baseline_simset <- provider$load_simset(baseline_settings)
+  baseline_simset <- provider$load_simset(baseline_settings)
 
-      # Just log success instead of trying to set names
-      if (!is.null(baseline_simset)) {
-        print("[BASELINE] Successfully loaded baseline simulation")
-      }
+  # Just log success instead of trying to set names
+  if (!is.null(baseline_simset)) {
+  print("[BASELINE] Successfully loaded baseline simulation")
+    
+            # Cache the result for future use
+    cache <- get(".BASELINE_CACHE", envir = .GlobalEnv)
+      cache[[cache_key]] <- baseline_simset
+      assign(".BASELINE_CACHE", cache, envir = .GlobalEnv)
+    print(sprintf("[BASELINE] Cached baseline simulation with key: %s", cache_key))
+  }
 
       baseline_simset
-    },
-    error = function(e) {
-      warning(paste("Failed to load baseline simulation:", e$message))
-      NULL
-    }
-  )
+        },
+        error = function(e) {
+          warning(paste("Failed to load baseline simulation:", e$message))
+          NULL
+        }
+      )
 }

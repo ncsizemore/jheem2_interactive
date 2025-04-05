@@ -395,10 +395,26 @@ StateStore <- R6Class("StateStore",
                 # Only match simulations of the same mode
                 if (sim_state$mode == mode) {
                     print(sprintf("[STATE_STORE DEBUG] Found simulation with matching mode: %s", id))
+                    print("[STATE_STORE DEBUG] Existing simulation details:")
+                    print(sprintf("- status: %s", sim_state$status))
+                    
+                    # Print more details about the simulation state
+                    if (!is.null(sim_state$timestamp)) {
+                        age <- difftime(Sys.time(), sim_state$timestamp, units = "mins")
+                        print(sprintf("- age: %.1f minutes", as.numeric(age)))
+                    }
+                    
                     # Print scenario info specifically for debugging
                     if (!is.null(sim_state$settings$scenario)) {
                         print(sprintf("[STATE_STORE DEBUG] Checking against existing scenario: '%s'", sim_state$settings$scenario))
                     }
+                    
+                    # If the simulation is complete, show if it has results or not
+                    if (sim_state$status == "complete") {
+                        has_results = !is.null(sim_state$results) && !is.null(sim_state$results$simset)
+                        print(sprintf("- has results: %s", has_results))
+                    }
+                    
                     # Check if settings match
                     settings_match <- private$are_settings_equal(sim_state$settings, settings)
                     print(sprintf("[STATE_STORE DEBUG] Settings match: %s", settings_match))
@@ -1115,12 +1131,12 @@ StateStore <- R6Class("StateStore",
                 return(identical(settings1, settings2))
             }
             
-            # TEMPORARY FIX: Check for scenario changes specifically 
-            # This is needed because scenario changes should force new downloads
+            # Essential comparisons first (fail fast)
+            # Check scenario specifically - this is a critical field for simulation identification
             if (!is.null(settings1$scenario) && !is.null(settings2$scenario)) {
                 print(sprintf("[STATE_STORE DEBUG] Comparing scenarios: '%s' vs '%s'", settings1$scenario, settings2$scenario))
                 if (settings1$scenario != settings2$scenario) {
-                    print("[STATE_STORE DEBUG] Scenarios don't match - forcing new download")
+                    print("[STATE_STORE DEBUG] Scenarios don't match - settings are not equal")
                     return(FALSE)
                 }
                 print("[STATE_STORE DEBUG] Scenarios match, continuing with other checks")

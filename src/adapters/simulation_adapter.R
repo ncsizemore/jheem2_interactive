@@ -266,8 +266,16 @@ SimulationAdapter <- R6::R6Class(
 
             tryCatch(
                 {
-                    # Load base simset
-                    simset <- provider$load_simset(settings)
+                # Load base simset
+                print("[SIMULATION_ADAPTER] Loading base simset from provider")
+                print("[SIMULATION_ADAPTER] Provider class:")
+                print(class(provider))
+                print("[SIMULATION_ADAPTER] Provider mode:")
+                print(provider$mode)
+                print("[SIMULATION_ADAPTER] Settings for load_simset:")
+                print(str(settings))
+                simset <- provider$load_simset(settings)
+                print("[SIMULATION_ADAPTER] Successfully loaded simset!")
 
                     # For custom mode, run intervention
                     if (mode == "custom") {

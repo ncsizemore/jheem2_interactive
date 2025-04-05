@@ -16,8 +16,8 @@ unified_cache:
 
 # Simulation-specific cache for preventing re-runs
 simulation_cache:
-  provider: "disk"  # Options: "disk", "onedrive", "aws" (Phase 6)
-  enable_disk_cache: false  # Whether to cache simulations to disk
+  provider: "onedrive"  # Options: "disk", "onedrive", "aws" (Phase 6)
+  enable_disk_cache: true  # Whether to cache simulations to disk
   max_size: 2000000000  # 2GB
   evict_strategy: "lru"
   path: "cache/simulations"
