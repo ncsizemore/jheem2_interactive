@@ -37,23 +37,65 @@ OneDriveProvider <- R6::R6Class(
             print(str(config))
             
             # Get unified cache manager (if available)
+            print("[ONEDRIVE] Attempting to get UnifiedCacheManager")
+            print(sprintf("[ONEDRIVE] Current working directory: %s", getwd()))
+            
             tryCatch({
+                print("[ONEDRIVE] About to call get_cache_manager()")
                 self$cache_manager <- get_cache_manager()
-                print("[ONEDRIVE] Using UnifiedCacheManager for caching")
+                print("[ONEDRIVE] Successfully got UnifiedCacheManager instance")
+                print(sprintf("[ONEDRIVE] Cache manager class: %s", class(self$cache_manager)[1]))
                 
-                # Use unified cache path for temp directory
-                self$temp_dir <- self$cache_manager$get_onedrive_cache_path()
-                print(sprintf("[ONEDRIVE] Using unified cache path: %s", self$temp_dir))
+                # Check if the cache manager has the required method
+                if (!is.null(self$cache_manager) && exists("get_onedrive_cache_path", self$cache_manager)) {
+                    print("[ONEDRIVE] get_onedrive_cache_path method exists")
+                    
+                    # Use unified cache path for temp directory
+                    self$temp_dir <- self$cache_manager$get_onedrive_cache_path()
+                    print(sprintf("[ONEDRIVE] Using unified cache path: %s", self$temp_dir))
+                    
+                    # Verify the path exists
+                    print(sprintf("[ONEDRIVE] Checking if cache path exists: %s", dir.exists(self$temp_dir)))
+                    if (!dir.exists(self$temp_dir)) {
+                        print("[ONEDRIVE] Creating cache directory as it doesn't exist")
+                        dir.create(self$temp_dir, recursive = TRUE)
+                    }
+                } else {
+                    print("[ONEDRIVE] WARNING: Cache manager doesn't have get_onedrive_cache_path method")
+                    throw("Cache manager missing required method")
+                }
             }, error = function(e) {
                 print(sprintf("[ONEDRIVE] UnifiedCacheManager not available: %s", e$message))
-                print("[ONEDRIVE] Falling back to temporary directory for caching")
+                print("[ONEDRIVE] Falling back to project-relative cache directory")
                 
-                # Fallback to temp directory
-                self$temp_dir <- file.path(tempdir(), "onedrive_cache")
-                if (!dir.exists(self$temp_dir)) {
-                    dir.create(self$temp_dir, recursive = TRUE)
-                }
-                print(sprintf("[ONEDRIVE] Created temp directory: %s", self$temp_dir))
+                # First try project-relative cache path
+                project_cache <- "cache/onedrive"
+                print(sprintf("[ONEDRIVE] Checking if project cache exists: %s", project_cache))
+                print(sprintf("[ONEDRIVE] Directory exists: %s", dir.exists(project_cache)))
+                
+                # Create project cache if possible
+                tryCatch({
+                    if (!dir.exists(project_cache)) {
+                        print(sprintf("[ONEDRIVE] Creating project cache directory: %s", project_cache))
+                        dir.create(project_cache, recursive = TRUE)
+                        print(sprintf("[ONEDRIVE] Project cache created successfully: %s", dir.exists(project_cache)))
+                        self$temp_dir <- normalizePath(project_cache)
+                    } else {
+                        print("[ONEDRIVE] Using existing project cache directory")
+                        self$temp_dir <- normalizePath(project_cache)
+                    }
+                    print(sprintf("[ONEDRIVE] Using project cache directory: %s", self$temp_dir))
+                }, error = function(create_err) {
+                    print(sprintf("[ONEDRIVE] Error creating project cache: %s", create_err$message))
+                    print("[ONEDRIVE] Falling back to temporary directory for caching")
+                    
+                    # Fallback to temp directory
+                    self$temp_dir <- file.path(tempdir(), "onedrive_cache")
+                    if (!dir.exists(self$temp_dir)) {
+                        dir.create(self$temp_dir, recursive = TRUE)
+                    }
+                    print(sprintf("[ONEDRIVE] Created temp directory: %s", self$temp_dir))
+                })
             })
             
             # Load sharing links configuration

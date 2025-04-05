@@ -186,19 +186,7 @@ UnifiedCacheManager <- R6::R6Class(
         } else {
           # Default to just using filename if neither location nor scenario is available
           file_path <- file.path(private$onedrive_path, filename)
-        } else {
-          print("[UCACHE DEBUG] File exists but not in registry, removing for fresh download")
-          # File exists but not in registry - downloading fresh copy and will add to registry
-          file.remove(file_path)
-        } else {
-          print("[UCACHE DEBUG] File exists but not in registry, removing for fresh download")
-          # File exists but not in registry - downloading fresh copy and will add to registry
-          file.remove(file_path)
         }
-      } else {
-        print("[UCACHE DEBUG] File doesn't exist, will download fresh copy")
-      } else {
-        print("[UCACHE DEBUG] File doesn't exist, will download fresh copy")
       } else {
         # If no settings provided, fall back to just using filename
         file_path <- file.path(private$onedrive_path, filename)
@@ -262,21 +250,28 @@ UnifiedCacheManager <- R6::R6Class(
             }
           }
         
-        # Only use the cached file if all source information matches
-        if (source_match) {
-        # File found in registry with matching source info, update access time
-        print("[UCACHE DEBUG] Source information matches, using cached file")
-        private$update_registry_access(file_path)
-        private$save_registry()
-        print(sprintf("[UCACHE] Using cached OneDrive file: %s", filename))
-          return(file_path)
-        } else {
-        print("[UCACHE DEBUG] Source information doesn't match, downloading fresh copy")
-        # Remove the file so we can download a fresh copy
-        file.remove(file_path)
-        # Remove from registry
-          private$registry$files[[file_path]] <- NULL
+          # Only use the cached file if all source information matches
+          if (source_match) {
+            # File found in registry with matching source info, update access time
+            print("[UCACHE DEBUG] Source information matches, using cached file")
+            private$update_registry_access(file_path)
+            private$save_registry()
+            print(sprintf("[UCACHE] Using cached OneDrive file: %s", filename))
+            return(file_path)
+          } else {
+            print("[UCACHE DEBUG] Source information doesn't match, downloading fresh copy")
+            # Remove the file so we can download a fresh copy
+            file.remove(file_path)
+            # Remove from registry
+            private$registry$files[[file_path]] <- NULL
           }
+        } else {
+          print("[UCACHE DEBUG] File exists but not in registry, removing for fresh download")
+          # File exists but not in registry - downloading fresh copy and will add to registry
+          file.remove(file_path)
+        }
+      } else {
+        print("[UCACHE DEBUG] File doesn't exist, will download fresh copy")
       }
 
       # Generate a unique download ID
@@ -640,30 +635,30 @@ UnifiedCacheManager <- R6::R6Class(
       if (download_success) {
         # Add to registry with enhanced metadata including source information
         metadata <- list(
-        sharing_link = sharing_link,
-        original_filename = filename
+          sharing_link = sharing_link,
+          original_filename = filename
         )
         
         # Add settings info to metadata if available
         if (!is.null(settings)) {
-        if (!is.null(settings$location)) {
-          metadata$location <- settings$location
+          if (!is.null(settings$location)) {
+            metadata$location <- settings$location
             print(sprintf("[UCACHE] Adding location '%s' to metadata", settings$location))
+          }
+          if (!is.null(settings$scenario)) {
+            metadata$scenario <- settings$scenario
+            print(sprintf("[UCACHE] Adding scenario '%s' to metadata", settings$scenario))
+          }
         }
-        if (!is.null(settings$scenario)) {
-          metadata$scenario <- settings$scenario
-          print(sprintf("[UCACHE] Adding scenario '%s' to metadata", settings$scenario))
-        }
-      }
       
-      # Add to registry
-      private$add_to_registry(
-        file_path = file_path,
-        type = "onedrive",
-        priority = "normal",
-        references = list(),
-        metadata = metadata
-      )
+        # Add to registry
+        private$add_to_registry(
+          file_path = file_path,
+          type = "onedrive",
+          priority = "normal",
+          references = list(),
+          metadata = metadata
+        )
 
         return(file_path)
       }

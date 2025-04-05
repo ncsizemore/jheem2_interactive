@@ -300,15 +300,77 @@ server <- function(input, output, session) {
   # Initialize caches using the cache module
   cache_config <- get_component_config("caching")
   # Initialize unified cache manager
+  print("[APP] Starting cache manager initialization")
+  print(sprintf("[APP] Current working directory: %s", getwd()))
+  
+  # First, check important directories
+  cache_dir <- "cache"
+  onedrive_cache_dir <- "cache/onedrive"
+  simulation_cache_dir <- "cache/simulations"
+  
+  print("[APP] Checking cache directories:")
+  print(sprintf("[APP] Main cache directory exists: %s", dir.exists(cache_dir)))
+  print(sprintf("[APP] OneDrive cache directory exists: %s", dir.exists(onedrive_cache_dir)))
+  print(sprintf("[APP] Simulation cache directory exists: %s", dir.exists(simulation_cache_dir)))
+  
+  # Create cache directories if they don't exist
+  if (!dir.exists(cache_dir)) {
+    print("[APP] Creating main cache directory")
+    dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(onedrive_cache_dir)) {
+    print("[APP] Creating onedrive cache directory")
+    dir.create(onedrive_cache_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(simulation_cache_dir)) {
+    print("[APP] Creating simulation cache directory")
+    dir.create(simulation_cache_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  
+  # Now initialize the cache manager
   cache_manager <- tryCatch(
     {
-      get_cache_manager()
+      print("[APP] Calling get_cache_manager()")
+      cm <- get_cache_manager()
+      print("[APP] Cache manager initialization successful")
+      print(sprintf("[APP] Cache manager class: %s", class(cm)[1]))
+      cm
     },
     error = function(e) {
       print(sprintf("[APP] Error initializing cache manager: %s", e$message))
+      print("[APP] Stack trace:")
+      print(traceback())
       NULL
     }
   )
+  
+  # Check if initialization was successful
+  if (!is.null(cache_manager)) {
+    print("[APP] Cache manager initialized successfully")
+    
+    # Schedule periodic cleanup
+    cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000 # Default: 10 minutes
+    print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
+  } else {
+    print("[APP] WARNING: Cache manager is NULL, caching will be degraded")
+    print("[APP] Creating standard cache directories for fallback use")
+    
+    # Create standard cache directories that OneDriveProvider can use as fallback
+    standard_cache_dirs <- c(
+      "cache",
+      "cache/onedrive",
+      "cache/simulations"
+    )
+    
+    for (dir_path in standard_cache_dirs) {
+      if (!dir.exists(dir_path)) {
+        print(sprintf("[APP] Creating standard cache directory: %s", dir_path))
+        dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+      }
+    }
+    
+    print("[APP] Standard cache directories ready for use by providers")
+  }
 
   # Initialize download progress container UI
   output$download_progress_container <- renderUI({
