@@ -828,19 +828,18 @@ StateStore <- R6Class("StateStore",
         #' @param id Download identifier
         #' @param percent Progress percentage (0-100)
         #' @return Invisible self (for chaining)
-        #' Update the progress of an active download
-        #' @param id Download identifier
-        #' @param percent Progress percentage (0-100)
-        #' @return Invisible self (for chaining)
         update_download_progress = function(id, percent) {
-          timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-          print(sprintf("[STATE_STORE %s] Updating download progress: ID=%s, Progress=%d%%", timestamp, id, percent))
+          # Reduced logging - only log for major milestones (0, 25, 50, 75, 100%)
+          if (percent == 0 || percent == 25 || percent == 50 || percent == 75 || percent == 100) {
+            timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+            print(sprintf("[STATE_STORE %s] Updating download progress: ID=%s, Progress=%d%%", timestamp, id, percent))
+          }
           
           current_state <- private$state$downloads
           
           # Check if download exists
           if (is.null(current_state$active_downloads[[id]])) {
-            print(sprintf("[STATE_STORE %s] Warning: Cannot update non-existent download: %s", timestamp, id))
+            print(sprintf("[STATE_STORE] Warning: Cannot update non-existent download: %s", id))
             return(invisible(self))
           }
           
@@ -851,7 +850,6 @@ StateStore <- R6Class("StateStore",
           
           # Update state
           private$state$downloads <- validate_download_progress_state(current_state)
-          print(sprintf("[STATE_STORE %s] Successfully updated progress for download %s", timestamp, id))
           
           invisible(self)
         },

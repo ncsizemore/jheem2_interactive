@@ -73,6 +73,9 @@ UIMessenger <- R6Class("UIMessenger",
         return(invisible(FALSE))
       }
       
+      # Only log significant progress updates to reduce console clutter
+      verbose_logging <- FALSE
+      
       tryCatch({
         message_data <- list(
           action = "update",

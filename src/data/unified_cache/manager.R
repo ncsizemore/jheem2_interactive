@@ -363,15 +363,15 @@ UnifiedCacheManager <- R6::R6Class(
 
       # Define progress update function that both updates StateStore and sends UI messages
       update_progress <- function(percent) {
-        timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-        print(sprintf("[UCACHE %s] Updating progress for %s: %d%% (trace_id: %s)", timestamp, download_id, percent, trace_id))
+        # Only log at major milestone points to reduce console clutter
+        if (percent == 0 || percent == 25 || percent == 50 || percent == 75 || percent == 100) {
+          timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+          print(sprintf("[UCACHE %s] Progress update for %s: %d%%", timestamp, download_id, percent))
+        }
 
         # Update StateStore
         if (!is.null(store)) {
           store$update_download_progress(download_id, percent)
-          print(sprintf("[UCACHE %s] StateStore progress updated for %s: %d%%", timestamp, download_id, percent))
-        } else {
-          print(sprintf("[UCACHE %s] Warning: Cannot update progress in StateStore (NULL)", timestamp))
         }
 
         # Send direct UI message if messenger is available
@@ -501,10 +501,14 @@ UnifiedCacheManager <- R6::R6Class(
 
               # Update progress every 5%
               progress <- min(round(bytes_downloaded / total_size * 100), 100)
-              if (progress >= 95 || progress > last_progress + 2) {
+              if (progress >= 95 || progress > last_progress + 5) {
                 # Skip sending 100% progress here to avoid duplication
                 if (progress < 100 || !has_sent_completion) {
-                  print(sprintf("[UCACHE] Progress update: %d%%", progress))
+                  # Only log at 0, 25, 50, 75, 90, 100% to reduce console output
+                  if (progress == 0 || progress == 25 || progress == 50 || 
+                      progress == 75 || progress == 90 || progress == 100) {
+                    print(sprintf("[UCACHE] Progress update: %d%%", progress))
+                  }
                   update_progress(progress)
                   last_progress <- progress
 
