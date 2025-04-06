@@ -7,46 +7,47 @@ on:
 
 jobs:
   sync:
-    # Add this 'if' condition to the job:
     # Only run this job if the repository is your fork
-    if: github.repository == 'ncsizemore/jheem2_interactive'
+    if: github.repository == 'ncsizemore/jheem2_interactive' # Ensure this matches your fork name
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Fetch all history so we can push correctly
           fetch-depth: 0
+          # Optional: Persist credentials used during checkout? Might not be needed.
+          # persist-credentials: false
 
       - name: Set up Git user
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # NEW STEP: Configure the upstream remote explicitly with PAT
+      - name: Configure Upstream Remote with PAT
+        env:
+          UPSTREAM_PAT: ${{ secrets.UPSTREAM_PAT }}
+          # Your GitHub username (owner of the PAT)
+          GH_USERNAME: ncsizemore
+        run: |
+          echo "Configuring upstream remote..."
+          # Remove any existing upstream remote definition (might be SSH from checkout)
+          git remote remove upstream || true
+          # Add the upstream remote using HTTPS URL with embedded credentials
+          git remote add upstream "https://github.com/tfojo1/jheem2_interactive.git"
+          git remote set-url upstream --push "https://${GH_USERNAME}:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git"
+
+          # Optional: Verify the remote URLs
+          echo "Verifying remote configuration:"
+          git remote -v
+
+      # MODIFIED STEP: Push using the configured remote name
       - name: Push changes to upstream
         env:
-          UPSTREAM_PAT: ${{ secrets.UPSTREAM_PAT }} # Assuming secret exists in the fork
-          # UPSTREAM_REPO is not strictly needed here if using the direct push URL
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          echo "PAT environment variable length: ${#UPSTREAM_PAT}"
-          if [ ${#UPSTREAM_PAT} -gt 0 ]; then
-            echo "PAT environment variable seems set."
-          else
-            echo "::error::PAT environment variable is EMPTY!"
-            exit 1
-          fi
-
-      # Optional force push step would also be skipped due to the job 'if' condition
-
-      # Optional: Add a force push step if needed (use with extreme caution!)
-      # Uncomment ONLY if you understand the risks and need to overwrite upstream history.
-      # - name: Force push changes to upstream (Use with caution!)
-      #   if: false # Set to true only if you need force push
-      #   env:
-      #     UPSTREAM_PAT: ${{ secrets.UPSTREAM_PAT }}
-      #     UPSTREAM_REPO: https://github.com/tfojo1/jheem2_interactive.git
-      #     BRANCH_NAME: ${{ github.ref_name }}
-      #   run: |
-      #     echo "WARNING: Force pushing changes on branch ${BRANCH_NAME} to upstream repository..."
-      #     git push --force https://x-access-token:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
-      #     echo "Force push completed."
+          echo "Attempting to push changes on branch '${BRANCH_NAME}' from fork to upstream repository using configured remote..."
+          # Push using the 'upstream' remote name, which now has the push URL with PAT
+          git push upstream HEAD:${BRANCH_NAME}
+          echo "Push for branch '${BRANCH_NAME}' completed."
