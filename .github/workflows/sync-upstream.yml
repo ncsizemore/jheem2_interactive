@@ -1,19 +1,20 @@
-name: Sync Fork to Upstream (All Branches) # Updated name slightly for clarity
+name: Sync Fork to Upstream (All Branches)
 
 on:
   push:
     branches:
-      - '**' # Trigger on push to any branch (matches main, feature/xyz, etc.)
-            # This pattern also effectively ignores tag pushes.
+      - '**'
 
 jobs:
   sync:
+    # Add this 'if' condition to the job:
+    # Only run this job if the repository is your fork
+    if: github.repository == 'ncsizemore/jheem2_interactive'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Fetch all history so we can push correctly
           fetch-depth: 0
 
       - name: Set up Git user
@@ -23,18 +24,16 @@ jobs:
 
       - name: Push changes to upstream
         env:
-          UPSTREAM_PAT: ${{ secrets.GH_PAT }}
-          UPSTREAM_REPO: https://github.com/tfojo1/jheem2_interactive.git
-          # github.ref_name will contain the exact branch name that was pushed
+          UPSTREAM_PAT: ${{ secrets.GH_PAT }} # Assuming secret exists in the fork
+          # UPSTREAM_REPO is not strictly needed here if using the direct push URL
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          echo "Attempting to push changes on branch '${BRANCH_NAME}' to upstream repository..."
+          echo "Attempting to push changes on branch '${BRANCH_NAME}' from fork to upstream repository..."
           # Use the PAT for authentication
-          # HEAD:${BRANCH_NAME} pushes the current commit (HEAD from checkout)
-          # to the branch with the *same name* on the upstream remote.
-          # This command will create the branch on upstream if it doesn't exist.
           git push https://x-access-token:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
           echo "Push for branch '${BRANCH_NAME}' completed."
+
+      # Optional force push step would also be skipped due to the job 'if' condition
 
       # Optional: Add a force push step if needed (use with extreme caution!)
       # Uncomment ONLY if you understand the risks and need to overwrite upstream history.
