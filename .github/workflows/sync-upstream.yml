@@ -24,7 +24,7 @@ jobs:
 
       - name: Push changes to upstream
         env:
-          UPSTREAM_PAT: ${{ secrets.GH_PAT }} # Assuming secret exists in the fork
+          UPSTREAM_PAT: ${{ secrets.UPSTREAM_PAT }} # Assuming secret exists in the fork
           # UPSTREAM_REPO is not strictly needed here if using the direct push URL
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
