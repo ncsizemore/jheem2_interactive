@@ -115,9 +115,9 @@ selectors:
       chicago:
         id: "C.16980"
         label: "Chicago-Naperville-Elgin, IL-IN-WI"
-      cincinnati:
-        id: "C.17140"
-        label: "Cincinnati, OH-KY-IN"
+      #cincinnati:
+      #  id: "C.17140"
+      #  label: "Cincinnati, OH-KY-IN"
       cleveland:
         id: "C.17460"
         label: "Cleveland-Elyria, OH"
@@ -172,9 +172,9 @@ selectors:
       sacramento:
         id: "C.40900"
         label: "Sacramento-Roseville-Arden-Arcade, CA"
-      st_louis:
-        id: "C.41180"
-        label: "St. Louis, MO-IL"
+      #st_louis:
+      #  id: "C.41180"
+      #  label: "St. Louis, MO-IL"
       san_antonio:
         id: "C.41700"
         label: "San Antonio-New Braunfels, TX"
