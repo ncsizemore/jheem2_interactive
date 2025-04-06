@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Attempting to push changes on branch '${BRANCH_NAME}' from fork to upstream repository..."
           # Use the PAT for authentication
-          git push https://x-access-token:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
+          git push https://ncsizemore:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
           echo "Push for branch '${BRANCH_NAME}' completed."
 
       # Optional force push step would also be skipped due to the job 'if' condition
