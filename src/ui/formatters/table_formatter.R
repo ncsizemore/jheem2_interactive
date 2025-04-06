@@ -26,11 +26,11 @@ format_table_data <- function(transformed_data, config) {
     on.exit(options(digits = old_digits))
     options(digits = 7)
 
-    # Create base data frame
+    # Create simulation data frame
     sim_data <- data.frame(
         Year = df.sim$year,
         Outcome = df.sim$outcome.display.name,
-        Source = rep("Projected", nrow(df.sim)),
+        Source = df.sim$simset, # Use simset name for source
         stringsAsFactors = FALSE
     )
 
@@ -78,6 +78,30 @@ format_table_data <- function(transformed_data, config) {
         }
     }
 
+    # Create observed data frame if available
+    if (!is.null(df.truth) && nrow(df.truth) > 0) {
+        truth_data <- data.frame(
+            Year = df.truth$year,
+            Outcome = df.truth$outcome.display.name,
+            Source = rep("Observed", nrow(df.truth)),
+            stringsAsFactors = FALSE
+        )
+        
+        # Add value column
+        truth_data$Value <- format_number(df.truth$value)
+        
+        # Add dimension columns if present in the truth data
+        for (col in names(sim_data)) {
+            if (!(col %in% c("Year", "Outcome", "Source", "Value")) && 
+                !(col %in% names(truth_data))) {
+                truth_data[[col]] <- NA
+            }
+        }
+        
+        # Combine with simulation data
+        sim_data <- rbind(truth_data, sim_data)
+    }
+    
     # Return data frame with columns in configured order
     sim_data[, ordered_cols]
 }

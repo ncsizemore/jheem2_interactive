@@ -1,5 +1,30 @@
 # src/ui/components/common/display/table_panel.R
 
+# Source the baseline loader from data layer
+source("src/data/loaders/baseline_loader.R")
+
+#' Parse a template string by replacing tags with values
+#' @param template Template string with {tag} placeholders
+#' @param values Named list of values to substitute
+#' @return Parsed string with all replacements made
+parse_template <- function(template, values) {
+  # Handle NULL or empty template
+  if (is.null(template) || length(template) == 0) {
+    return(template)
+  }
+  
+  # Replace each {tag} with its corresponding value
+  result <- template
+  for (name in names(values)) {
+    if (!is.null(values[[name]])) {
+      pattern <- paste0("\\{", name, "\\}")
+      result <- gsub(pattern, values[[name]], result)
+    }
+  }
+  
+  return(result)
+}
+
 #' Create the table panel UI component
 #' @param id Panel identifier
 #' @return Shiny UI element containing the table panel
@@ -150,8 +175,74 @@ table_panel_server <- function(id, settings) {
       current_settings <- control_manager$get_settings()
 
       tryCatch({
-        # Get transformed data - this will retransform if settings changed
-        transformed_data <- store$get_current_transformed_data(id, current_settings)
+        # Get current simulation data
+        sim_state <- store$get_current_simulation_data(id)
+        
+        # Get simulation settings from store
+        sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
+
+        # For custom interventions, check if we have the original base simulation
+        baseline_simset <- NULL
+        if (id == "custom") {
+          # Use the dedicated method to get the original base simulation
+          baseline_simset <- store$get_original_base_simulation(id)
+          if (!is.null(baseline_simset)) {
+            print("[TABLE_PANEL] Using original base simulation for baseline comparison")
+          }
+        }
+
+        # If no baseline from original base simulation, try loading from provider
+        if (is.null(baseline_simset)) {
+          baseline_simset <- load_baseline_simulation(id, sim_settings)
+        }
+
+        # Create a list of simsets if baseline is available
+        if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
+          # Get visualization config for baseline labels
+          vis_config <- tryCatch(
+            {
+              get_component_config("visualization")
+            },
+            error = function(e) {
+              return(NULL)
+            }
+          )
+          
+          # Get baseline label with fallbacks
+          baseline_label <- "Baseline (No Intervention)"
+          intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+          
+          if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
+            if (!is.null(vis_config$baseline_simulations$default_label)) {
+              baseline_label <- vis_config$baseline_simulations$default_label
+            }
+            if (!is.null(vis_config$baseline_simulations$intervention_label)) {
+              intervention_label <- vis_config$baseline_simulations$intervention_label
+            } else if (!is.null(sim_settings$location)) {
+              intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+            }
+          }
+          
+          # Create values for template parsing
+          template_values <- list(
+            location = sim_settings$location
+          )
+          
+          # Parse templates
+          baseline_label <- parse_template(baseline_label, template_values)
+          intervention_label <- parse_template(intervention_label, template_values)
+          
+          # Create named list for simulations
+          sim_list <- list()
+          sim_list[[baseline_label]] <- baseline_simset
+          sim_list[[intervention_label]] <- sim_state$simset
+          
+          # Transform data with both simulations
+          transformed_data <- transform_simulation_data(sim_list, current_settings)
+        } else {
+          # Fall back to just the intervention simset if baseline not available
+          transformed_data <- transform_simulation_data(sim_state$simset, current_settings)
+        }
         
         # Format and paginate
         formatted <- format_table_data(transformed_data, get_component_config("controls"))
@@ -257,8 +348,74 @@ table_panel_server <- function(id, settings) {
           vis_manager$set_plot_status("loading")
           output$mainTable <- renderTable({
             tryCatch({
-              # Get transformed data - this will retransform if settings changed
-              transformed_data <- store$get_current_transformed_data(id, new_settings)
+              # Get current simulation data
+              sim_state <- store$get_current_simulation_data(id)
+              
+              # Get simulation settings from store
+              sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
+
+              # For custom interventions, check if we have the original base simulation
+              baseline_simset <- NULL
+              if (id == "custom") {
+                # Use the dedicated method to get the original base simulation
+                baseline_simset <- store$get_original_base_simulation(id)
+                if (!is.null(baseline_simset)) {
+                  print("[TABLE_PANEL] Using original base simulation for baseline comparison")
+                }
+              }
+
+              # If no baseline from original base simulation, try loading from provider
+              if (is.null(baseline_simset)) {
+                baseline_simset <- load_baseline_simulation(id, sim_settings)
+              }
+
+              # Create a list of simsets if baseline is available
+              if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
+                # Get visualization config for baseline labels
+                vis_config <- tryCatch(
+                  {
+                    get_component_config("visualization")
+                  },
+                  error = function(e) {
+                    return(NULL)
+                  }
+                )
+                
+                # Get baseline label with fallbacks
+                baseline_label <- "Baseline (No Intervention)"
+                intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+                
+                if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
+                  if (!is.null(vis_config$baseline_simulations$default_label)) {
+                    baseline_label <- vis_config$baseline_simulations$default_label
+                  }
+                  if (!is.null(vis_config$baseline_simulations$intervention_label)) {
+                    intervention_label <- vis_config$baseline_simulations$intervention_label
+                  } else if (!is.null(sim_settings$location)) {
+                    intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+                  }
+                }
+                
+                # Create values for template parsing
+                template_values <- list(
+                  location = sim_settings$location
+                )
+                
+                # Parse templates
+                baseline_label <- parse_template(baseline_label, template_values)
+                intervention_label <- parse_template(intervention_label, template_values)
+                
+                # Create named list for simulations
+                sim_list <- list()
+                sim_list[[baseline_label]] <- baseline_simset
+                sim_list[[intervention_label]] <- sim_state$simset
+                
+                # Transform data with both simulations
+                transformed_data <- transform_simulation_data(sim_list, new_settings)
+              } else {
+                # Fall back to just the intervention simset if baseline not available
+                transformed_data <- transform_simulation_data(sim_state$simset, new_settings)
+              }
               
               # Format and paginate
               formatted <- format_table_data(transformed_data, get_component_config("controls"))
