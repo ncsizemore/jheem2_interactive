@@ -7,14 +7,15 @@ on:
 
 jobs:
   sync:
-    if: github.repository == 'ncsizemore/jheem2_interactive'
+    # Only run this job if the repository is your fork
+    if: github.repository == 'ncsizemore/jheem2_interactive' # Ensure this matches your fork name
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # *** CHANGE: Explicitly disable credential persistence from checkout ***
+          # Disable credential persistence from checkout
           persist-credentials: false
 
       - name: Set up Git user
@@ -24,18 +25,18 @@ jobs:
 
       - name: Configure Upstream Remote with PAT
         env:
-          UPSTREAM_PAT: ${{ secrets.UPSTREAM_PAT }}
-          GH_USERNAME: ncsizemore
+          # Only the PAT secret is needed now
+          UPSTREAM_PAT: ${{ secrets.GH_PAT }}
         run: |
           echo "Configuring upstream remote..."
           git remote remove upstream || true
+          # Add fetch URL (doesn't need PAT)
           git remote add upstream "https://github.com/tfojo1/jheem2_interactive.git"
-          # *** Ensure this push URL is correct and uses the PAT ***
-          git remote set-url upstream --push "https://${GH_USERNAME}:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git"
+          # Set push URL using x-access-token and the PAT environment variable
+          git remote set-url upstream --push "https://x-access-token:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git"
           echo "Verifying remote configuration:"
           git remote -v
 
-      # *** NEW STEP: Unset any interfering Git credential helper ***
       - name: Unset Git credential helper (if any)
         run: |
           git config --local --unset-all credential.helper || true
@@ -46,6 +47,6 @@ jobs:
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
           echo "Attempting to push changes on branch '${BRANCH_NAME}' from fork to upstream repository..."
-          # Push should now only use the URL credential
+          # Push using the configured 'upstream' remote name
           git push upstream HEAD:${BRANCH_NAME}
           echo "Push for branch '${BRANCH_NAME}' completed."
