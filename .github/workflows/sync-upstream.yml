@@ -33,7 +33,7 @@ jobs:
           # HEAD:${BRANCH_NAME} pushes the current commit (HEAD from checkout)
           # to the branch with the *same name* on the upstream remote.
           # This command will create the branch on upstream if it doesn't exist.
-          git push https://x-access-token:${GH_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
+          git push https://x-access-token:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
           echo "Push for branch '${BRANCH_NAME}' completed."
 
       # Optional: Add a force push step if needed (use with extreme caution!)
