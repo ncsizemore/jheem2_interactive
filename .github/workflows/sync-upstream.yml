@@ -28,10 +28,13 @@ jobs:
           # UPSTREAM_REPO is not strictly needed here if using the direct push URL
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          echo "Attempting to push changes on branch '${BRANCH_NAME}' from fork to upstream repository..."
-          # Use the PAT for authentication
-          git push https://ncsizemore:${UPSTREAM_PAT}@github.com/tfojo1/jheem2_interactive.git HEAD:${BRANCH_NAME}
-          echo "Push for branch '${BRANCH_NAME}' completed."
+          echo "PAT environment variable length: ${#UPSTREAM_PAT}"
+          if [ ${#UPSTREAM_PAT} -gt 0 ]; then
+            echo "PAT environment variable seems set."
+          else
+            echo "::error::PAT environment variable is EMPTY!"
+            exit 1
+          fi
 
       # Optional force push step would also be skipped due to the job 'if' condition
 
