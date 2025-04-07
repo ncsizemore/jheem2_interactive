@@ -11,8 +11,8 @@ library(plotly)
 library(httr2) # Required for API calls
 
 # Initialize remote logging if enabled
-#source("src/utils/logging.R")
-#initialize_logging()
+# source("src/utils/logging.R")
+# initialize_logging()
 
 # Source configuration system
 source("src/ui/config/load_config.R")
@@ -70,18 +70,21 @@ source("src/ui/components/common/display/display_size.R")
 source("src/ui/components/common/display/handlers.R")
 
 # Source page components
-source("src/ui/components/pages/about/about.R")
-source("src/ui/components/pages/about/content.R")
-source("src/ui/components/pages/faq/faq.R")
-source("src/ui/components/pages/faq/content.R")
-source("src/ui/components/pages/team/team.R")
-source("src/ui/components/pages/team/content.R")
-source("src/ui/components/pages/team/member_card.R")
+# Comment out unused pages for performance improvement
+# source("src/ui/components/pages/about/about.R")
+# source("src/ui/components/pages/about/content.R")
+# source("src/ui/components/pages/faq/faq.R")
+# source("src/ui/components/pages/faq/content.R")
+# source("src/ui/components/pages/team/team.R")
+# source("src/ui/components/pages/team/content.R")
+# source("src/ui/components/pages/team/member_card.R")
+# source("src/ui/components/pages/overview/overview.R")
+# source("src/ui/components/pages/overview/content.R")
+
+# Keep contact page which is still in use
 source("src/ui/components/pages/contact/contact.R")
 source("src/ui/components/pages/contact/content.R")
 source("src/ui/components/pages/contact/form.R")
-source("src/ui/components/pages/overview/overview.R")
-source("src/ui/components/pages/overview/content.R")
 
 # Source download manager
 source("src/ui/components/common/downloads/download_manager.R")
@@ -184,18 +187,19 @@ ui <- function() {
         collapsible = FALSE,
         selected = selected_tab,
 
-        # Overview tab
-        tabPanel(
-          id = "overview",
-          value = "overview",
-          title = "Overview",
-          make_tab_popover(
-            "overview",
-            title = config$pages$overview$popover$title,
-            content = config$pages$overview$popover$content
-          ),
-          create_overview_page(config)
-        ),
+        # Overview tab - temporarily removed for performance
+        # tabPanel(
+        #   id = "overview",
+        #   value = "overview",
+        #   title = "Overview",
+        #   make_tab_popover(
+        #     "overview",
+        #     title = config$pages$overview$popover$title,
+        #     content = config$pages$overview$popover$content
+        #   ),
+        #   create_overview_page(config)
+        # ),
+
 
         # Pre-run tab
         tabPanel(
@@ -211,41 +215,44 @@ ui <- function() {
           create_custom_layout()
         ),
 
-        # FAQ tab
-        tabPanel(
-          title = "FAQ",
-          value = "faq",
-          make_tab_popover(
-            "faq",
-            title = config$pages$faq$popover$title,
-            content = config$pages$faq$popover$content
-          ),
-          create_faq_page(config)
-        ),
+        # FAQ tab - temporarily removed for performance
+        # tabPanel(
+        #   title = "FAQ",
+        #   value = "faq",
+        #   make_tab_popover(
+        #     "faq",
+        #     title = config$pages$faq$popover$title,
+        #     content = config$pages$faq$popover$content
+        #   ),
+        #   create_faq_page(config)
+        # ),
 
-        # About tab
-        tabPanel(
-          title = "About the JHEEM",
-          value = "about_the_jheem",
-          make_tab_popover(
-            "about_the_jheem",
-            title = config$pages$about$popover$title,
-            content = config$pages$about$popover$content
-          ),
-          create_about_page(config)
-        ),
 
-        # Team tab
-        tabPanel(
-          title = "Our Team",
-          value = "our_team",
-          make_tab_popover(
-            "our_team",
-            title = config$pages$team$popover$title,
-            content = config$pages$team$popover$content
-          ),
-          create_team_page(config)
-        ),
+        # About tab - temporarily removed for performance
+        # tabPanel(
+        #   title = "About the JHEEM",
+        #   value = "about_the_jheem",
+        #   make_tab_popover(
+        #     "about_the_jheem",
+        #     title = config$pages$about$popover$title,
+        #     content = config$pages$about$popover$content
+        #   ),
+        #   create_about_page(config)
+        # ),
+
+
+        # Team tab - temporarily removed for performance
+        # tabPanel(
+        #   title = "Our Team",
+        #   value = "our_team",
+        #   make_tab_popover(
+        #     "our_team",
+        #     title = config$pages$team$popover$title,
+        #     content = config$pages$team$popover$content
+        #   ),
+        #   create_team_page(config)
+        # ),
+
 
         # Contact tab
         tabPanel(
@@ -302,17 +309,17 @@ server <- function(input, output, session) {
   # Initialize unified cache manager
   print("[APP] Starting cache manager initialization")
   print(sprintf("[APP] Current working directory: %s", getwd()))
-  
+
   # First, check important directories
   cache_dir <- "cache"
   onedrive_cache_dir <- "cache/onedrive"
   simulation_cache_dir <- "cache/simulations"
-  
+
   print("[APP] Checking cache directories:")
   print(sprintf("[APP] Main cache directory exists: %s", dir.exists(cache_dir)))
   print(sprintf("[APP] OneDrive cache directory exists: %s", dir.exists(onedrive_cache_dir)))
   print(sprintf("[APP] Simulation cache directory exists: %s", dir.exists(simulation_cache_dir)))
-  
+
   # Create cache directories if they don't exist
   if (!dir.exists(cache_dir)) {
     print("[APP] Creating main cache directory")
@@ -326,7 +333,7 @@ server <- function(input, output, session) {
     print("[APP] Creating simulation cache directory")
     dir.create(simulation_cache_dir, recursive = TRUE, showWarnings = FALSE)
   }
-  
+
   # Now initialize the cache manager
   cache_manager <- tryCatch(
     {
@@ -343,32 +350,32 @@ server <- function(input, output, session) {
       NULL
     }
   )
-  
+
   # Check if initialization was successful
   if (!is.null(cache_manager)) {
     print("[APP] Cache manager initialized successfully")
-    
+
     # Schedule periodic cleanup
     cleanup_interval <- cache_config$unified_cache$cleanup_interval_ms %||% 600000 # Default: 10 minutes
     print(sprintf("[APP] Scheduling cache cleanup every %d ms", cleanup_interval))
   } else {
     print("[APP] WARNING: Cache manager is NULL, caching will be degraded")
     print("[APP] Creating standard cache directories for fallback use")
-    
+
     # Create standard cache directories that OneDriveProvider can use as fallback
     standard_cache_dirs <- c(
       "cache",
       "cache/onedrive",
       "cache/simulations"
     )
-    
+
     for (dir_path in standard_cache_dirs) {
       if (!dir.exists(dir_path)) {
         print(sprintf("[APP] Creating standard cache directory: %s", dir_path))
         dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
       }
     }
-    
+
     print("[APP] Standard cache directories ready for use by providers")
   }
 
