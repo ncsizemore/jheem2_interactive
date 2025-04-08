@@ -83,15 +83,6 @@ create_plot_panel <- function(id, type = "static") {
         class = "panel-container", 
         tags$div( 
           class = "panel-content", 
-          # Add the Update Visualization button at the top
-          tags$div( 
-            class = "update-controls mb-3", 
-            actionButton( 
-              inputId = ns("update_visualization"), 
-              label = "Update Visualization", 
-              class = "btn btn-primary" 
-            ) 
-          ), 
           plotOutput( 
             ns("mainPlot"), 
             height = "600px", 

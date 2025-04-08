@@ -107,6 +107,19 @@ create_prerun_plot_controls <- function(config) {
             config = plot_config$display,
             suffix = "prerun",
             ns = ns
+        ),
+        
+        # Update Visualization Button
+        tags$div(
+            class = "generate-controls",  # Same class as Generate button
+            actionButton(
+                inputId = ns("update_visualization"),
+                label = "Update Visualization",
+                class = paste(
+                    "btn",
+                    config$theme$buttons$primary_class
+                )
+            )
         )
     )
 }

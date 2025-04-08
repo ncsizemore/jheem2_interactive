@@ -33,15 +33,6 @@ create_table_panel <- function(id) {
         class = "panel-container", 
         tags$div( 
           class = "panel-content", 
-          # Add Update Visualization button
-          tags$div( 
-            class = "update-controls mb-3", 
-            actionButton( 
-              inputId = ns("update_visualization"), 
-              label = "Update Visualization", 
-              class = "btn btn-primary" 
-            ) 
-          ), 
           tableOutput(ns("mainTable")), 
           tags$div( 
             class = "pagination-controls", 
@@ -114,31 +105,36 @@ table_panel_server <- function(id, settings) {
       session, output, id, "simulation", state_manager = vis_manager
     )
 
-    output$mainTable <- renderTable({
+    # --- Reactive expression for generating the FULL dataset ---
+    # Depends ONLY on control_manager settings (which change on button press)
+    full_formatted_data <- reactive({
+        # Take dependency on settings
+        current_settings <- control_manager$get_settings()
+        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE) # Require valid settings
+
+        # Check visibility/type here as well
         req(input$visualization_state == "visible", cancelOutput = TRUE)
         req(input$display_type == "table", cancelOutput = TRUE)
-        
-        current_settings <- control_manager$get_settings() # Depends on store$shared_control_states[[id]]()
-        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
-        
-        print(paste0("-[ renderTable", id, " ]- Running. Reading settings via control_manager (from store)..."))
+
+        print(paste0("-[ Reactive full_formatted_data", id, " ]- Running DATA GENERATION. Settings Read:"))
         str(current_settings)
 
-        table_content <- isolate({ # Isolate data generation
-            print(paste0("-[ renderTable", id, " ]- Using settings: O=", 
+        # --- Isolate the actual data generation ---
+        data_result <- isolate({
+            print(paste0("-[ Reactive full_formatted_data", id, " ]- ISOLATED BLOCK: Using settings: O=", 
                          paste(current_settings$outcomes, collapse=", "), 
                          ", F=", paste(current_settings$facet.by, collapse=", "), 
                          ", S=", current_settings$summary.type))
             
             isolate(vis_manager$set_plot_status("loading")) # Isolate status update
-            
-            # Sim/Data Checks...
+
+            # Sim/Data Checks
             sim_id <- store$get_current_simulation_id(id)
             sim_state_check <- if (!is.null(sim_id)) store$get_simulation(sim_id) else NULL
             
             if (is.null(sim_state_check) || sim_state_check$status == "error") { 
                 err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
-                print(paste0("-[ renderTable", id, " ]- Sim Error: ", err_msg))
+                print(paste0("-[ Reactive full_formatted_data", id, " ]- Sim Error: ", err_msg))
                 
                 isolate({ 
                     sim_boundary$set_error(
@@ -150,15 +146,14 @@ table_panel_server <- function(id, settings) {
                 })
                 
                 direct_table_error_message(paste("Error:", err_msg))
-                total_rows_in_data(0)
-                return(NULL) 
+                return(NULL) # Return NULL inside isolate
             }
             
             sim_state_data <- store$get_current_simulation_data(id)
             
             if (is.null(sim_state_data) || is.null(sim_state_data$simset)) { 
                 err_msg <- "No sim data."
-                print(paste0("-[ renderTable", id, " ]- Data Error: ", err_msg))
+                print(paste0("-[ Reactive full_formatted_data", id, " ]- Data Error: ", err_msg))
                 
                 isolate({ 
                     sim_boundary$set_error(
@@ -170,12 +165,11 @@ table_panel_server <- function(id, settings) {
                 })
                 
                 direct_table_error_message(paste("Error:", err_msg))
-                total_rows_in_data(0)
-                return(NULL) 
+                return(NULL)
             }
-            
-            # Generate FULL formatted data...
-            full_data <- tryCatch({ 
+
+            # Generate FULL formatted data
+            fdata <- tryCatch({
                 sim_settings <- sim_state_check$settings
                 req(sim_settings)
                 
@@ -223,7 +217,7 @@ table_panel_server <- function(id, settings) {
                 transformed_data <- transform_simulation_data(data_source, current_settings)
                 formatted <- format_table_data(transformed_data, get_component_config("controls"))
                 
-                print(paste0("-[ renderTable", id, " ]- Full data generated. Rows: ", nrow(formatted)))
+                print(paste0("-[ Reactive full_formatted_data", id, " ]- Full data generated. Rows: ", nrow(formatted)))
                 
                 isolate({ 
                     sim_boundary$clear()
@@ -233,11 +227,11 @@ table_panel_server <- function(id, settings) {
                 })
                 
                 direct_table_error_message(NULL)
-                formatted 
+                formatted
             }, 
             error = function(e) { 
                 err_msg <- conditionMessage(e)
-                print(paste0("-[ renderTable", id, " ]- Data Gen Error: ", err_msg))
+                print(paste0("-[ Reactive full_formatted_data", id, " ]- Data Gen Error: ", err_msg))
                 
                 isolate({ 
                     sim_boundary$set_error(
@@ -258,42 +252,56 @@ table_panel_server <- function(id, settings) {
                 direct_table_error_message(paste("Error:", err_msg))
                 NULL 
             })
-            
-            # Pagination Logic...
-            if (is.null(full_data)) { 
-                total_rows_in_data(0)
-                return(NULL) 
-            }
-            
-            total_rows <- nrow(full_data)
-            total_rows_in_data(total_rows)
-            
-            page <- current_page()
-            size <- as.numeric(input$page_size %||% 50)
-            
-            if(total_rows > 0 && ((page - 1) * size) >= total_rows && page > 1) { 
-                print("...page invalid, resetting...")
-                current_page(1)
-                page <- 1 
-            }
-            
-            start_idx <- max(1, ((page - 1) * size) + 1)
-            end_idx <- min(start_idx + size - 1, total_rows)
-            
-            if (total_rows == 0 || start_idx > end_idx) { 
-                print("...no rows for page...")
-                return(NULL) 
-            }
-            
-            sliced_data <- full_data[start_idx:end_idx, , drop = FALSE]
-            print(paste0("-[ renderTable", id, " ]- Displaying rows ", start_idx, "-", end_idx))
-            
-            return(sliced_data)
-        }) # End isolate() block
-        
-        return(table_content)
-    }, 
-    striped=TRUE, hover=TRUE, bordered=TRUE) # End renderTable
+
+            # Update total rows reactiveVal after data generation attempt
+            isolate(total_rows_in_data(if(is.null(fdata)) 0 else nrow(fdata)))
+
+            return(fdata) # Return the full data frame (or NULL)
+        }) # End isolate() for data generation
+
+        return(data_result) # Return result from isolate
+    }) # End full_formatted_data reactive
+
+    # --- Table Output: Now depends on full_formatted_data and pagination ---
+    output$mainTable <- renderTable({
+        # Take dependency on generated data
+        full_data <- full_formatted_data()
+        # Also take dependencies for pagination slicing
+        page <- current_page()
+        size <- as.numeric(input$page_size %||% 50)
+
+        # Req required data/state AFTER taking dependencies
+        req(!is.null(full_data), cancelOutput = TRUE) # Stop if data gen failed
+        req(input$visualization_state == "visible", cancelOutput = TRUE)
+        req(input$display_type == "table", cancelOutput = TRUE)
+
+        # --- Pagination Slicing ---
+        total_rows <- total_rows_in_data() # Read reactiveVal
+
+        print(paste0("-[ renderTable", id, " ]- Running PAGINATION/SLICING. Page: ", page, ", Size: ", size, ", Total: ", total_rows))
+
+        # Handle invalid page number (reset if needed)
+        if(total_rows > 0 && ((page - 1) * size) >= total_rows && page > 1) {
+            print(paste0("-[ renderTable", id, " ]- Page ", page, " invalid. Resetting to page 1."))
+            # Update reactiveVal; this will cause this renderTable to re-run once more
+            current_page(1)
+            # For this run, use page 1 values to avoid error/empty display
+            page <- 1
+        }
+
+        start_idx <- max(1, ((page - 1) * size) + 1)
+        end_idx <- min(start_idx + size - 1, total_rows)
+
+        if (total_rows == 0 || start_idx > end_idx) {
+            print(paste0("-[ renderTable", id, " ]- No rows to display for this page."))
+            return(NULL) # Return NULL if no rows for current page
+        }
+
+        # Slice the data using updated page/size values
+        sliced_data <- full_data[start_idx:end_idx, , drop = FALSE]
+        print(paste0("-[ renderTable", id, " ]- Displaying rows ", start_idx, "-", end_idx))
+        return(sliced_data)
+    }, striped=TRUE, hover=TRUE, bordered=TRUE) # End renderTable
 
     # --- Pagination UI Updates ---
     output$page_info <- renderText({ 

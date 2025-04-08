@@ -206,6 +206,19 @@ create_custom_plot_controls <- function(config) {
             config = plot_config$display,
             suffix = "custom",
             ns = ns # Add namespace
+        ),
+        
+        # Update Visualization Button
+        tags$div(
+            class = "generate-controls",  # Same class as Generate button
+            actionButton(
+                inputId = ns("update_visualization"),
+                label = "Update Visualization",
+                class = paste(
+                    "btn",
+                    config$theme$buttons$primary_class
+                )
+            )
         )
     )
 }
