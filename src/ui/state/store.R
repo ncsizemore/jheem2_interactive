@@ -14,6 +14,9 @@ StateStore <- R6Class("StateStore",
     public = list(
         #' @field panel_states List of ReactiveVal objects for each panel
         panel_states = NULL,
+        
+        #' @field shared_control_states List of ReactiveVal objects for control settings
+        shared_control_states = NULL,
 
         #' @description Initialize the store
         #' @param page_ids Character vector of page identifiers
@@ -29,6 +32,7 @@ StateStore <- R6Class("StateStore",
 
             # Setup other components
             private$setup_panel_states(page_ids)
+            private$setup_shared_control_states(page_ids)
             private$setup_simulation_storage()
             private$setup_page_error_states(page_ids)
         },
@@ -105,20 +109,39 @@ StateStore <- R6Class("StateStore",
             invisible(self)
         },
 
-        #' @description Update control state for a panel
+        #' @description Get shared control state for a page
+        #' @param page_id Character: page identifier
+        #' @return Current control state
+        get_shared_control_state = function(page_id) {
+            if (is.null(self$shared_control_states[[page_id]])) {
+                stop(paste0("No shared control state found for page: ", page_id))
+            }
+            print(paste0("--- Store: Reading SHARED controls for ", page_id, " ---"))
+            val <- self$shared_control_states[[page_id]]() # Read dedicated reactiveVal
+            # Add fallback if needed
+            if(is.null(val)) { return(create_control_state()) } # Use default constructor
+            return(val)
+        },
+        
+        #' @description Update shared control state for a page
+        #' @param page_id Character: page identifier
+        #' @param settings List: complete control settings
+        update_shared_control_state = function(page_id, settings) {
+            if (is.null(self$shared_control_states[[page_id]])) {
+                stop(paste0("No shared control state found for page: ", page_id))
+            }
+            validated_settings <- validate_control_state(settings)
+            print(paste0("--- Store: Updating SHARED controls for ", page_id, " ---"))
+            self$shared_control_states[[page_id]](validated_settings) # Update dedicated reactiveVal
+            invisible(self)
+        },
+        
+        #' @description Update control state for a panel (DEPRECATED - use update_shared_control_state)
         #' @param page_id Character: panel identifier
         #' @param settings List: complete control settings
         update_control_state = function(page_id, settings) {
-            if (is.null(settings)) {
-                return()
-            }
-
-            current_state <- self$get_panel_state(page_id)
-
-            # Update control state
-            current_state$controls <- validate_control_state(settings)
-            self$panel_states[[page_id]](current_state)
-
+            warning("update_control_state is deprecated, use update_shared_control_state instead")
+            self$update_shared_control_state(page_id, settings)
             invisible(self)
         },
 
@@ -1075,6 +1098,15 @@ StateStore <- R6Class("StateStore",
                 reactiveVal(create_panel_state(id))
             })
             names(self$panel_states) <- page_ids
+        },
+        
+        #' @description Set up shared control states
+        #' @param page_ids Character vector of page identifiers
+        setup_shared_control_states = function(page_ids) {
+            self$shared_control_states <- lapply(page_ids, function(id) {
+                reactiveVal(create_control_state())
+            })
+            names(self$shared_control_states) <- page_ids
         },
 
         #' @description Set up simulation storage

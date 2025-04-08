@@ -246,13 +246,11 @@ create_control_state <- function(outcomes = NULL,
 #' @return List with panel state properties
 create_panel_state <- function(page_id,
                                visualization = create_visualization_state(),
-                               controls = create_control_state(),
                                validation = create_validation_state(),
                                current_simulation_id = NULL) {
     validate_panel_state(list(
         page_id = page_id,
         visualization = visualization,
-        controls = controls,
         validation = validation,
         current_simulation_id = current_simulation_id
     ))
@@ -416,7 +414,7 @@ validate_panel_state <- function(state) {
     if (!is.list(state)) stop("Panel state must be a list")
 
     # Required fields
-    required <- c("page_id", "visualization", "controls", "validation", "current_simulation_id")
+    required <- c("page_id", "visualization", "validation", "current_simulation_id")
     missing <- setdiff(required, names(state))
     if (length(missing) > 0) {
         stop(sprintf(
@@ -438,7 +436,6 @@ validate_panel_state <- function(state) {
 
     # Validate nested states
     state$visualization <- validate_visualization_state(state$visualization)
-    state$controls <- validate_control_state(state$controls)
     state$validation <- validate_validation_state(state$validation)
 
     state

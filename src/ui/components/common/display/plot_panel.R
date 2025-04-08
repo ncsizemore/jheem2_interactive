@@ -1,681 +1,489 @@
 # src/ui/components/common/display/plot_panel.R
 
-# Source the baseline loader from data layer
 source("src/data/loaders/baseline_loader.R")
-
-# Source the plot customizer
 source("src/ui/components/common/display/plot_customizer.R")
 
-#' Parse a template string by replacing tags with values
-#' @param template Template string with {tag} placeholders
-#' @param values Named list of values to substitute
-#' @return Parsed string with all replacements made
-parse_template <- function(template, values) {
-  # Handle NULL or empty template
-  if (is.null(template) || length(template) == 0) {
-    return(template)
+parse_template <- function(template, values) { 
+  if (is.null(template) || length(template) == 0) { 
+    return(template) 
   }
-  
-  # Replace each {tag} with its corresponding value
   result <- template
-  for (name in names(values)) {
-    if (!is.null(values[[name]])) {
+  for (name in names(values)) { 
+    if (!is.null(values[[name]])) { 
       pattern <- paste0("\\{", name, "\\}")
-      result <- gsub(pattern, values[[name]], result)
+      result <- gsub(pattern, values[[name]], result) 
     }
   }
-  
-  return(result)
+  return(result) 
 }
 
-#' Create a style manager from visualization configuration
-#' @param vis_config Visualization configuration from config file
-#' @return Style manager object configured based on provided settings
-create_style_manager_from_config <- function(vis_config) {
-  # Default style manager
-  default_style_manager <- get.default.style.manager()
+create_style_manager_from_config <- function(vis_config) { 
+  default_style_manager <- tryCatch(get.default.style.manager(), error = function(e) { 
+    warning("Default style manager error: ", e$message)
+    NULL 
+  })
   
-  # If no config provided, return default
-  if (is.null(vis_config) || 
-      is.null(vis_config$style_manager)) {
-    return(default_style_manager)
+  if (is.null(vis_config) || is.null(vis_config$style_manager)) { 
+    return(default_style_manager) 
   }
   
-  # Get style config
   style_config <- vis_config$style_manager
+  params <- list(color.sim.by = 'simset', linetype.sim.by = 'stratum')
   
-  # Set default parameters
-  params <- list(
-    color.sim.by = 'simset',    # Primary differentiation by color
-    linetype.sim.by = 'stratum' # Default line type differentiation
-  )
-  
-  # Process general style parameters if they exist
-  if (!is.null(style_config$general)) {
-    # Copy any general parameters to our params list
-    general_params <- style_config$general
-    for (param_name in names(general_params)) {
-      params[[param_name]] <- general_params[[param_name]]
-    }
+  if (!is.null(style_config$general)) { 
+    for (param_name in names(style_config$general)) { 
+      params[[param_name]] <- style_config$general[[param_name]] 
+    } 
   }
   
-  # Create custom color palette if colors are specified
-  if (!is.null(style_config$intervention$color) && !is.null(style_config$baseline$color)) {
-    # Create a custom palette function using the specified colors
-    custom_palette <- function(n) {
-      if (n <= 2) {
-        return(c(style_config$intervention$color, style_config$baseline$color))
-      } else {
-        # For more than 2 simsets, use the first two colors then fall back to default palette
-        c(style_config$intervention$color, style_config$baseline$color, 
-          ggsci::pal_jama()(n-2))
-      }
+  if (!is.null(style_config$intervention$color) && !is.null(style_config$baseline$color)) { 
+    custom_palette <- function(n) { 
+      pal_jama_safe <- tryCatch(ggsci::pal_jama(), error = function(e) scales::hue_pal())
+      if (n <= 2) { 
+        return(c(style_config$intervention$color, style_config$baseline$color)) 
+      } else { 
+        c(style_config$intervention$color, style_config$baseline$color, pal_jama_safe(n-2)) 
+      } 
     }
-    params$sim.palette <- custom_palette
+    params$sim.palette <- custom_palette 
   }
   
-  # Modify line type differentiation if configured
-  if (!is.null(style_config$use_different_line_types)) {
-    if (style_config$use_different_line_types) {
-      # Use simset for line type differentiation
-      params$linetype.sim.by <- 'simset'
-    } else {
-      # If explicitly set to false, don't differentiate by line type
-      # We'll keep the default of 'stratum'
-    }
+  if (!is.null(style_config$use_different_line_types)) { 
+    if (style_config$use_different_line_types) { 
+      params$linetype.sim.by <- 'simset' 
+    } else { 
+      if (!("linetype.sim.by" %in% names(style_config$general))) { 
+        params$linetype.sim.by <- 'stratum' 
+      } 
+    } 
   }
   
-  # Create custom style manager with our parameters
-  do.call(create.style.manager, params)
+  if (exists("create.style.manager") && is.function(create.style.manager)) { 
+    do.call(create.style.manager, params) 
+  } else { 
+    warning("create.style.manager not found.")
+    default_style_manager 
+  } 
 }
 
-
-#' Create the plot panel UI component
-#' @param id Panel identifier
-#' @param type Plot type ('static' or 'interactive')
-#' @return Shiny UI element containing the plot panel
-create_plot_panel <- function(id, type = "static") {
+create_plot_panel <- function(id, type = "static") { 
   ns <- NS(id)
-
-  tags$div(
-    class = paste0("main-panel main-panel-plot ", id, "-plot-panel"),
-    conditionalPanel(
-      condition = sprintf(
-        "input['%s'] === 'visible' && input['%s'] === 'plot'",
-        ns("visualization_state"),
-        ns("display_type")
-      ),
-      tags$div(
-        class = "panel-container",
-        tags$div(
-          class = "panel-content",
-          plotOutput(
-            ns("mainPlot"),
-            height = "600px",
-            width = "100%"
-          ),
-          # Loading indicator
-          conditionalPanel(
-            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
+  
+  tags$div( 
+    class = paste0("main-panel main-panel-plot ", id, "-plot-panel"), 
+    tags$input(id = ns("visualization_state"), type = "hidden", value = "hidden"), 
+    tags$input(id = ns("display_type"), type = "hidden", value = "plot"), 
+    conditionalPanel( 
+      condition = sprintf( 
+        "input['%s'] === 'visible' && input['%s'] === 'plot'", 
+        ns("visualization_state"), 
+        ns("display_type") 
+      ), 
+      tags$div( 
+        class = "panel-container", 
+        tags$div( 
+          class = "panel-content", 
+          # Add the Update Visualization button at the top
+          tags$div( 
+            class = "update-controls mb-3", 
+            actionButton( 
+              inputId = ns("update_visualization"), 
+              label = "Update Visualization", 
+              class = "btn btn-primary" 
+            ) 
+          ), 
+          plotOutput( 
+            ns("mainPlot"), 
+            height = "600px", 
+            width = "100%" 
+          ), 
+          conditionalPanel( 
+            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")), 
             tags$div(
-              class = "loading-indicator",
+              class = "loading-indicator", 
               tags$div(
-                class = "loading-content",
-                tags$span(class = "loading-spinner"),
+                class = "loading-content", 
+                tags$span(class = "loading-spinner"), 
                 tags$span("Generating plot...")
               )
-            )
-          ),
+            ) 
+          ), 
           tags$div(
-            class = "hidden",
+            class = "hidden", 
             textInput(ns("plot_status"), label = NULL, value = "ready")
-          )
-        )
-      )
-    ),
-    # Use a unique ID for the plot panel error message
+          ) 
+        ) 
+      ) 
+    ), 
     tags$div(
-      class = "plot-error error",
+      class = "plot-error error", 
       textOutput(ns("plot_error_message"), inline = FALSE)
-    ),
-    # Add error boundary output for structured errors
-    uiOutput(ns("error_display"))
-  )
+    ), 
+    uiOutput(ns("error_display")) 
+  ) 
 }
 
-#' Plot panel server logic
-#' @param id Panel identifier
-#' @param data Reactive source for plot data
-#' @param settings Reactive source for plot settings
-#' @return None
 plot_panel_server <- function(id, settings) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     store <- get_store()
-
-    # Initialize error message with NULL so it doesn't display by default
-    output$plot_error_message <- renderText({
-      NULL
-    })
-
-    # Add diagnostic observer for debugging when needed
-    # observe({
-    #   # Wait for panel to become visible
-    #   req(input$visualization_state == "visible")
-    #
-    #   # Set a timeout to update the error message
-    #   invalidateLater(2000)
-    #
-    #   # Set a direct test error message for debugging
-    #   print("[PLOT_PANEL] Setting test error message after delay")
-    #   output$error_message <- renderText({
-    #     "DELAYED TEST ERROR MESSAGE - SHOULD APPEAR 2 SECONDS AFTER PANEL VISIBLE"
-    #   })
-    # })
-
-    # Create state managers
+    req(store)
+    
+    direct_error_message <- reactiveVal(NULL)
+    output$plot_error_message <- renderText({ direct_error_message() })
+    
     vis_manager <- create_visualization_manager(session, id, ns("visualization"))
-    control_manager <- create_control_manager(session, id, ns("controls"), settings)
-
-    # Create error boundaries
+    control_manager <- create_control_manager(session, id, ns("controls"), settings) # Uses new stateless manager
+    
     validation_boundary <- create_validation_boundary(
-      session, output, id, "validation",
-      state_manager = vis_manager
+      session, output, id, "validation", state_manager = vis_manager
     )
-
     plot_boundary <- create_plot_boundary(
-      session, output, id, "plot",
-      state_manager = vis_manager
+      session, output, id, "plot", state_manager = vis_manager
     )
-
-    # Create simulation error boundary
     sim_boundary <- create_simulation_boundary(
-      session, output, id, "simulation",
-      state_manager = vis_manager
+      session, output, id, "simulation", state_manager = vis_manager
     )
 
-    # Initial plot output definition
     output$mainPlot <- renderPlot({
-      req(input$visualization_state == "visible")
+        req(input$visualization_state == "visible", cancelOutput = TRUE)
+        req(input$display_type == "plot", cancelOutput = TRUE)
+        
+        current_settings <- control_manager$get_settings() # Depends on store$shared_control_states[[id]]()
+        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
+        
+        print(paste0("-[ renderPlot", id, " ]- Running. Reading settings via control_manager (from store)..."))
+        str(current_settings)
 
-      # Check if there's an error in the current simulation first
-      sim_id <- store$get_current_simulation_id(id)
-      if (!is.null(sim_id)) {
-        sim_state <- store$get_simulation(sim_id)
-        if (sim_state$status == "error") {
-          # If simulation has error, don't try to render plot
-          # Use the simulation boundary to display the error
-          sim_boundary$set_error(
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-
-          # Also set direct error output as fallback
-          output$plot_error_message <- renderText({
-            sprintf("Error: %s", sim_state$error_message)
-          })
-
-          # Update global error state for cross-panel persistence
-          store$update_page_error_state(
-            id,
-            has_error = TRUE,
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-
-          vis_manager$set_plot_status("error")
-          return(NULL) # Don't render anything
-        }
-      }
-
-      vis_manager$set_plot_status("loading")
-      current_settings <- control_manager$get_settings()
-
-      tryCatch(
-        {
-          # Get current simulation data 
-          sim_state <- store$get_current_simulation_data(id)
-          
-          # Get simulation settings from store
-          sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
-
-          # For custom interventions, check if we have the original base simulation
-          baseline_simset <- NULL
-          if (id == "custom") {
-            # Use the dedicated method to get the original base simulation
-            baseline_simset <- store$get_original_base_simulation(id)
-            if (!is.null(baseline_simset)) {
-              print("[PLOT_PANEL] Using original base simulation for baseline comparison")
-            }
-          }
-          
-          # If no baseline from original base simulation, try loading from provider
-          if (is.null(baseline_simset)) {
-            baseline_simset <- load_baseline_simulation(id, sim_settings)
-          }
-
-          # Create plot with both simsets if baseline is available
-          if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-            # Get visualization config for baseline labels
-            vis_config <- tryCatch(
-              {
-                get_component_config("visualization")
-              },
-              error = function(e) {
-                return(NULL)
-              }
-            )
+        generated_plot_isolated <- isolate({
+            print(paste0("-[ renderPlot", id, " ]- Using settings: O=", paste(current_settings$outcomes, collapse=", "), 
+                       ", F=", paste(current_settings$facet.by, collapse=", "), 
+                       ", S=", current_settings$summary.type))
             
-            # Get baseline label with fallbacks
-            baseline_label <- "Baseline (No Intervention)"
-            intervention_label <- paste0("Intervention (", sim_settings$location, ")")
+            isolate(vis_manager$set_plot_status("loading")) # Isolate status update
             
-            if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
-              if (!is.null(vis_config$baseline_simulations$default_label)) {
-                baseline_label <- vis_config$baseline_simulations$default_label
-              }
-              if (!is.null(vis_config$baseline_simulations$intervention_label)) {
-                intervention_label <- vis_config$baseline_simulations$intervention_label
-              } else if (!is.null(sim_settings$location)) {
-                intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-              }
-            }
+            # Get current simulation and check for errors
+            sim_id <- store$get_current_simulation_id(id)
+            sim_state_check <- if (!is.null(sim_id)) store$get_simulation(sim_id) else NULL
             
-            # Create values for template parsing
-            template_values <- list(
-              location = sim_settings$location
-            )
-            
-            # Parse templates
-            baseline_label <- parse_template(baseline_label, template_values)
-            intervention_label <- parse_template(intervention_label, template_values)
-            
-            # Create named list for better legend labels
-            sim_list <- list()
-            sim_list[[baseline_label]] <- baseline_simset
-            sim_list[[intervention_label]] <- sim_state$simset
-            
-            # Create style manager from config
-            style_manager <- create_style_manager_from_config(vis_config)
-            
-            # Use do.call to pass the named list as separate arguments
-            plot <- do.call(simplot, c(sim_list, list(
-              outcomes = current_settings$outcomes,
-              facet.by = current_settings$facet.by,
-              summary.type = current_settings$summary.type,
-              style.manager = style_manager
-            )))
-            
-            # Apply plot customizations
-            print("[PLOT_PANEL] About to apply plot customizations")
-            print(str(vis_config))
-            plot <- customize_plot_from_config(plot, vis_config)
-          } else {
-            # Fall back to just the intervention simset if baseline not available
-            plot <- simplot(
-              sim_state$simset,
-              outcomes = current_settings$outcomes,
-              facet.by = current_settings$facet.by,
-              summary.type = current_settings$summary.type
-            )
-          }
-          # When plot is created successfully, clear any errors
-          sim_boundary$clear()
-          plot_boundary$clear()
-          validation_boundary$clear()
-          output$plot_error_message <- renderText({
-            NULL
-          })
-
-          # Clear global error state
-          store$clear_page_error_state(id)
-
-          vis_manager$set_plot_status("ready")
-          plot
-        },
-        error = function(e) {
-          print(paste("Error in plot creation:", conditionMessage(e)))
-          # Use plot_boundary for plot errors
-          plot_boundary$set_error(
-            message = conditionMessage(e),
-            type = ERROR_TYPES$PLOT,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-
-          # Also set direct error output as fallback
-          output$plot_error_message <- renderText({
-            sprintf("Error: %s", conditionMessage(e))
-          })
-
-          NULL
-        }
-      )
-    })
-
-    # Combined observer for all control changes
-    observe({
-      print("\n=== Plot Panel Control Update ===")
-
-      # Get all current control values
-      outcomes <- input[[paste0("outcomes_", id)]]
-      facet_by <- input[[paste0("facet_by_", id)]]
-      summary_type <- input[[paste0("summary_type_", id)]]
-
-      print("Current control values:")
-      print(paste("- outcomes:", paste(outcomes, collapse = ", ")))
-      print(paste("- facet_by:", paste(facet_by, collapse = ", ")))
-      print(paste("- summary_type:", summary_type))
-
-      # Only proceed if we have a visible plot and any controls are set
-      if (!is.null(input$visualization_state) &&
-        input$visualization_state == "visible" &&
-        (!is.null(outcomes) || !is.null(facet_by) || !is.null(summary_type))) {
-        # Get current settings with isolate
-        current_settings <- isolate(control_manager$get_settings())
-
-        # Create settings update
-        new_settings <- list(
-          outcomes = if (!is.null(outcomes)) as.character(outcomes) else current_settings$outcomes,
-          facet.by = if (!is.null(facet_by)) as.character(facet_by) else current_settings$facet.by,
-          summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
-        )
-
-        print("\nSettings for plot:")
-        str(new_settings)
-
-        # Update state and plot together
-        isolate({
-          # Update control state
-          control_manager$update_settings(new_settings)
-
-          # Direct plot update
-          vis_manager$set_plot_status("loading")
-
-          # Check if there's an error in the current simulation first
-          sim_id <- store$get_current_simulation_id(id)
-          if (!is.null(sim_id)) {
-            sim_state <- store$get_simulation(sim_id)
-            if (sim_state$status == "error") {
-              # If simulation has error, don't try to render plot
-              # Use the simulation boundary to display the error
-              sim_boundary$set_error(
-                message = sim_state$error_message,
-                type = ERROR_TYPES$SIMULATION,
-                severity = SEVERITY_LEVELS$ERROR
-              )
-
-              # Also set direct error output as fallback
-              output$plot_error_message <- renderText({
-                sprintf("Error: %s", sim_state$error_message)
-              })
-
-              vis_manager$set_plot_status("error")
-              return() # Exit early
-            }
-          }
-
-          output$mainPlot <- renderPlot({
-            tryCatch(
-              {
-                # Get current simulation data
-                sim_state <- store$get_current_simulation_data(id)
+            if (is.null(sim_state_check) || sim_state_check$status == "error") { 
+                err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
+                print(paste0("-[ renderPlot", id, " ]- Sim Error: ", err_msg))
                 
-                # Get simulation settings from store
-                sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
-
-                # For custom interventions, check if we have the original base simulation
+                isolate({ 
+                    sim_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$SIMULATION, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
+                })
+                
+                direct_error_message(paste("Error:", err_msg))
+                return(NULL) 
+            }
+            
+            # Get simulation data
+            sim_state_data <- store$get_current_simulation_data(id)
+            
+            if (is.null(sim_state_data) || is.null(sim_state_data$simset)) { 
+                err_msg <- "No sim data."
+                print(paste0("-[ renderPlot", id, " ]- Data Error: ", err_msg))
+                
+                isolate({ 
+                    plot_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$PLOT, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
+                })
+                
+                direct_error_message(paste("Error:", err_msg))
+                return(NULL) 
+            }
+            
+            # Generate the plot
+            generated_plot <- tryCatch({ 
+                sim_settings <- sim_state_check$settings
+                req(sim_settings)
+                
+                vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
+                
+                req(exists("load_baseline_simulation") && is.function(load_baseline_simulation), 
+                    exists("create_style_manager_from_config") && is.function(create_style_manager_from_config), 
+                    exists("customize_plot_from_config") && is.function(customize_plot_from_config), 
+                    exists("simplot") && is.function(simplot))
+                
+                # Get baseline simulation if applicable
                 baseline_simset <- NULL
                 if (id == "custom") {
-                  # Use the dedicated method to get the original base simulation
-                  baseline_simset <- store$get_original_base_simulation(id)
-                  if (!is.null(baseline_simset)) {
-                    print("[PLOT_PANEL] Using original base simulation for baseline comparison")
-                  }
+                    baseline_simset <- store$get_original_base_simulation(id)
                 }
                 
-                # If no baseline from original base simulation, try loading from provider
                 if (is.null(baseline_simset)) {
-                  baseline_simset <- load_baseline_simulation(id, sim_settings)
+                    baseline_simset <- tryCatch(load_baseline_simulation(id, sim_settings), error=function(e) NULL)
                 }
-
-                # Create plot with both simsets if baseline is available
-                if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-                  # Get visualization config for baseline labels
-                  vis_config <- tryCatch(
-                    {
-                      get_component_config("visualization")
-                    },
-                    error = function(e) {
-                      return(NULL)
-                    }
-                  )
-                  
-                  # Get baseline label with fallbacks
-                  baseline_label <- "Baseline (No Intervention)"
-                  intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-                  
-                  if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
-                    if (!is.null(vis_config$baseline_simulations$default_label)) {
-                      baseline_label <- vis_config$baseline_simulations$default_label
-                    }
-                    if (!is.null(vis_config$baseline_simulations$intervention_label)) {
-                      intervention_label <- vis_config$baseline_simulations$intervention_label
-                    } else if (!is.null(sim_settings$location)) {
-                      intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-                    }
-                  }
-                  
-                  # Create values for template parsing
-                  template_values <- list(
-                    location = sim_settings$location
-                  )
-                  
-                  # Parse templates
-                  baseline_label <- parse_template(baseline_label, template_values)
-                  intervention_label <- parse_template(intervention_label, template_values)
-                  
-                  # Create named list for better legend labels
-                  sim_list <- list()
-                  sim_list[[baseline_label]] <- baseline_simset
-                  sim_list[[intervention_label]] <- sim_state$simset
-                  
-                  # Create style manager from config
-                  style_manager <- create_style_manager_from_config(vis_config)
-                  
-                  # Use do.call to pass the named list as separate arguments
-                  plot <- do.call(simplot, c(sim_list, list(
-                    outcomes = new_settings$outcomes,
-                    facet.by = new_settings$facet.by,
-                    summary.type = new_settings$summary.type,
-                    style.manager = style_manager
-                  )))
-                  
-                  # Apply plot customizations
-                  plot <- customize_plot_from_config(plot, vis_config)
-                } else {
-                  # Fall back to just the intervention simset if baseline not available
-                  plot <- simplot(
-                    sim_state$simset,
-                    outcomes = new_settings$outcomes,
-                    facet.by = new_settings$facet.by,
-                    summary.type = new_settings$summary.type
-                  )
-                }
-                # When plot is updated successfully, clear any errors
-                sim_boundary$clear()
-                plot_boundary$clear()
-                validation_boundary$clear()
-                output$plot_error_message <- renderText({
-                  NULL
-                })
-                vis_manager$set_plot_status("ready")
-                plot
-              },
-              error = function(e) {
-                print(paste("Error in plot update:", conditionMessage(e)))
-                # Use plot_boundary for plot errors
-                plot_boundary$set_error(
-                  message = conditionMessage(e),
-                  type = ERROR_TYPES$PLOT,
-                  severity = SEVERITY_LEVELS$ERROR
+                
+                # Set up plot arguments
+                plot_args <- list(
+                    outcomes = current_settings$outcomes, 
+                    facet.by = current_settings$facet.by, 
+                    summary.type = current_settings$summary.type
                 )
-
-                # Also set direct error output as fallback
-                output$plot_error_message <- renderText({
-                  sprintf("Error: %s", conditionMessage(e))
+                
+                style_manager <- create_style_manager_from_config(vis_config)
+                if (!is.null(style_manager)) {
+                    plot_args$style.manager <- style_manager
+                }
+                
+                # Create the plot
+                the_plot <- NULL
+                
+                if (!is.null(baseline_simset)) {
+                    # Use both baseline and intervention simsets
+                    location_val <- sim_settings$location %||% "Current"
+                    template_values <- list(location = location_val)
+                    
+                    baseline_label <- "Baseline"
+                    intervention_label <- "Intervention"
+                    
+                    if (!is.null(vis_config$baseline_simulations)) {
+                        baseline_label <- vis_config$baseline_simulations$default_label %||% baseline_label
+                        intervention_label_template <- vis_config$baseline_simulations$intervention_label %||% "Intervention ({location})"
+                        
+                        if(exists("parse_template")) {
+                            baseline_label <- parse_template(baseline_label, template_values)
+                            intervention_label <- parse_template(intervention_label_template, template_values)
+                        }
+                    }
+                    
+                    sim_list <- list()
+                    sim_list[[baseline_label]] <- baseline_simset
+                    sim_list[[intervention_label]] <- sim_state_data$simset
+                    
+                    the_plot <- do.call(simplot, c(sim_list, plot_args))
+                } else {
+                    # Use just the intervention simset
+                    the_plot <- do.call(simplot, c(list(sim_state_data$simset), plot_args))
+                }
+                
+                req(the_plot)
+                
+                # Apply customizations
+                the_plot <- customize_plot_from_config(the_plot, vis_config)
+                req(the_plot)
+                
+                print(paste0("-[ renderPlot", id, " ]- Plot generated."))
+                
+                # Clear any errors and update status
+                isolate({ 
+                    sim_boundary$clear()
+                    plot_boundary$clear()
+                    validation_boundary$clear()
+                    store$clear_page_error_state(id)
+                    vis_manager$set_plot_status("ready") 
                 })
-
-                NULL
-              }
-            )
-          })
-        })
-      }
-    })
-
-    # Watch for current simulation changes and errors
-    observe({
-      # Get current simulation ID
-      sim_id <- store$get_current_simulation_id(id)
-
-      if (!is.null(sim_id)) {
-        # Check if simulation has error status
-        sim_state <- store$get_simulation(sim_id)
-
-        if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
-          # Set the error using simulation boundary
-          sim_boundary$set_error(
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-
-          # Also set direct error output as fallback
-          output$plot_error_message <- renderText({
-            sprintf("Error: %s", as.character(sim_state$error_message))
-          })
-
-          # Update visualization status
-          vis_manager$set_plot_status("error")
-        }
-      }
-    })
-
-    # Error persistence observer to sync with global error state
-    observe({
-      # Get page error state
-      page_error_state <- store$get_page_error_state(id)
-
-      # Check if there's a global error for this page
-      if (page_error_state$has_error && !is.null(page_error_state$message)) {
-        # Set error in local boundary
-        sim_boundary$set_error(
-          message = page_error_state$message,
-          type = page_error_state$type %||% ERROR_TYPES$SIMULATION,
-          severity = page_error_state$severity %||% SEVERITY_LEVELS$ERROR
-        )
-
-        # Also set direct error output
-        output$plot_error_message <- renderText({
-          sprintf("Error: %s", page_error_state$message)
-        })
-      }
-    })
-
-    # Debug observer for error state visibility
-    # Create a tracker for last error state
-    last_error_state <- reactiveVal(list(has_error = FALSE, message = NULL))
-
-    observe({
-      # Check error boundary state
-      error_state <- if (!is.null(sim_boundary)) sim_boundary$get_state() else NULL
-      error_visible <- !is.null(error_state) && error_state$has_error
-
-      # Check direct error output
-      has_direct_error <- FALSE
-      tryCatch(
-        {
-          direct_error <- output$plot_error_message()
-          has_direct_error <- !is.null(direct_error) && nchar(direct_error) > 0
-        },
-        error = function(e) {
-          # Just catch any errors silently
-        }
-      )
-
-      # Only log when error state changes
-      current <- list(
-        has_error = error_visible,
-        message = if (error_visible) error_state$message else NULL,
-        direct_error = has_direct_error
-      )
-
-      prev <- last_error_state()
-      if (!identical(current$has_error, prev$has_error) ||
-        !identical(current$message, prev$message) ||
-        !identical(current$direct_error, prev$direct_error)) {
-        # Log debug info if there's any error state
-        if (error_visible || has_direct_error) {
-          print(sprintf(
-            "[DEBUG][%s] Error boundary: %s, Direct error: %s",
-            id,
-            if (error_visible) "VISIBLE" else "HIDDEN",
-            if (has_direct_error) "VISIBLE" else "HIDDEN"
-          ))
-          if (error_visible) {
-            print(sprintf("  Message: %s", error_state$message))
-          }
-        }
-
-        # Update last state
-        last_error_state(current)
-      }
-    })
-
-    # Reset states when visibility changes
-    observeEvent(input$visualization_state, {
-      if (input$visualization_state == "hidden") {
-        vis_manager$reset()
-        control_manager$reset()
-        validation_boundary$clear()
-        plot_boundary$clear()
-        sim_boundary$clear()
-        output$plot_error_message <- renderText({
-          NULL
-        })
-
-        # Clear global error state
-        store$clear_page_error_state(id)
-
-        # Clear simulation errors for this page if they exist
-        sim_adapter <- get_simulation_adapter()
-        if (!is.null(sim_adapter$error_boundaries) && !is.null(sim_adapter$error_boundaries[[id]])) {
-          sim_adapter$error_boundaries[[id]]$clear()
-        }
-      } else if (input$visualization_state == "visible") {
-        # Check for errors when becoming visible
-        sim_id <- store$get_current_simulation_id(id)
-        if (!is.null(sim_id)) {
-          sim_state <- store$get_simulation(sim_id)
-          if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
-            # Use the simulation boundary to display the error
-            sim_boundary$set_error(
-              message = sim_state$error_message,
-              type = ERROR_TYPES$SIMULATION,
-              severity = SEVERITY_LEVELS$ERROR
-            )
-
-            # Also set direct error output as fallback
-            output$plot_error_message <- renderText({
-              sprintf("Error: %s", sim_state$error_message)
+                
+                direct_error_message(NULL)
+                
+                # Return the plot
+                the_plot 
+            }, 
+            error = function(e) { 
+                err_msg <- conditionMessage(e)
+                print(paste0("-[ renderPlot", id, " ]- Plot Error: ", err_msg))
+                
+                isolate({ 
+                    plot_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$PLOT, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    store$update_page_error_state(
+                        id, 
+                        has_error = TRUE, 
+                        message = err_msg, 
+                        type = ERROR_TYPES$PLOT, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
+                })
+                
+                direct_error_message(paste("Error:", err_msg))
+                NULL 
             })
+            
+            return(generated_plot)
+        }) # End isolate
+        
+        return(generated_plot_isolated)
+    }, 
+    res=96) # End renderPlot
 
-            vis_manager$set_plot_status("error")
-          }
+    # --- Visibility Observer (Handles Reset Only) ---
+    observeEvent(list(input$visualization_state, input$display_type), {
+        state <- input$visualization_state
+        display <- input$display_type
+        id_log_prefix <- paste0("-[ PlotVisDisp", id, " ]-")
+        panel_type <- "plot"
+        
+        if (!(state == "visible" && display == panel_type)) { 
+            if(!is.null(isolate(direct_error_message())) || 
+               isolate(store$get_panel_state(id)$visualization$plot_status == 'loading')) { 
+                print(paste0(id_log_prefix, " Deactivating. Resetting local state..."))
+                isolate({ 
+                    vis_manager$reset()
+                    validation_boundary$clear()
+                    plot_boundary$clear()
+                    sim_boundary$clear()
+                    direct_error_message(NULL)
+                }) 
+            }
+        } else { 
+            print(paste0(id_log_prefix, " State is active. renderPlot will run."))
+            isolate(direct_error_message(NULL)) 
         }
-      }
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+    # --- Button Observer (Updates control_manager ONLY) ---
+    observeEvent(input$update_visualization, {
+        req(input$update_visualization > 0)
+        req(input$visualization_state == "visible")
+        req(input$display_type == "plot")
+        
+        print(paste0("-[ PlotButton", id, " ]- Clicked."))
+        
+        new_settings <- isolate({ 
+            outcomes <- input[[paste0("outcomes_", id)]]
+            facet_by_in <- input[[paste0("facet_by_", id)]]
+            summary_type <- input[[paste0("summary_type_", id)]]
+            
+            valid <- TRUE
+            
+            if (is.null(outcomes) || length(outcomes) == 0 || all(outcomes == "")) { 
+                showNotification("Select outcome.", type="warning")
+                valid <- FALSE 
+            }
+            
+            if (is.null(summary_type) || summary_type == "") { 
+                showNotification("Select summary.", type="warning")
+                valid <- FALSE 
+            }
+            
+            if(!valid) return(NULL)
+            
+            facet_value <- if (!is.null(facet_by_in) && 
+                               length(facet_by_in) > 0 && 
+                               !all(facet_by_in == "")) { 
+                as.character(facet_by_in) 
+            } else { 
+                NULL 
+            }
+            
+            list(
+                outcomes = as.character(outcomes), 
+                facet.by = facet_value, 
+                summary.type = summary_type
+            ) 
+        })
+        
+        if (!is.null(new_settings)) { 
+            print(paste0("-[ PlotButton", id, " ]- Updating control_manager ONLY..."))
+            str(new_settings)
+            control_manager$update_settings(new_settings) 
+        } else { 
+            print(paste0("-[ PlotButton", id, " ]- Settings validation failed.")) 
+        }
     })
-  })
+
+    # --- Error handling & Debug observers ---
+    observe({ 
+        sim_id <- isolate(store$get_current_simulation_id(id))
+        sim_state <- if (!is.null(sim_id)) isolate(store$get_simulation(sim_id)) else NULL
+        
+        isolate({ 
+            if (!is.null(sim_state) && 
+                sim_state$status == "error" && 
+                !is.null(sim_state$error_message)) { 
+                
+                err_msg <- sprintf("Error: %s", as.character(sim_state$error_message))
+                
+                if (is.null(direct_error_message()) || direct_error_message() != err_msg) { 
+                    print(paste0("-[ PlotSimObserver", id, " ]- Sim error: ", err_msg))
+                    
+                    sim_boundary$set_error(
+                        message = sim_state$error_message, 
+                        type = ERROR_TYPES$SIMULATION, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    
+                    direct_error_message(err_msg)
+                    vis_manager$set_plot_status("error")
+                }
+            }
+        })
+    })
+    
+    observe({ 
+        page_error_state <- isolate(store$get_page_error_state(id))
+        
+        isolate({ 
+            if (page_error_state$has_error && !is.null(page_error_state$message)) { 
+                err_msg <- sprintf("Error: %s", page_error_state$message)
+                
+                if(is.null(direct_error_message()) || direct_error_message() != err_msg) { 
+                    print(paste0("-[ PlotPersistObserver", id, " ]- Syncing global error: ", err_msg))
+                    
+                    error_type <- page_error_state$type %||% ERROR_TYPES$SIMULATION
+                    boundary_to_use <- switch(error_type, 
+                                             SIMULATION = sim_boundary, 
+                                             PLOT = plot_boundary, 
+                                             VALIDATION = validation_boundary, 
+                                             sim_boundary)
+                    
+                    if (!is.null(boundary_to_use)) {
+                        boundary_to_use$set_error(
+                            message = page_error_state$message, 
+                            type = error_type, 
+                            severity = page_error_state$severity %||% SEVERITY_LEVELS$ERROR
+                        )
+                    }
+                    
+                    direct_error_message(err_msg)
+                    vis_manager$set_plot_status("error")
+                }
+            }
+        })
+    })
+    
+    last_error_state <- reactiveVal(list(has_error = FALSE, message = NULL))
+    
+    observe({ 
+        error_state <- if (!is.null(sim_boundary)) isolate(sim_boundary$get_state()) else NULL
+        error_visible <- !is.null(error_state) && error_state$has_error
+        
+        current_direct_error <- direct_error_message()
+        has_direct_error <- !is.null(current_direct_error) && nzchar(current_direct_error)
+        
+        current <- list(
+            has_error = error_visible, 
+            message = if(error_visible) error_state$message else NULL, 
+            direct_error = has_direct_error
+        )
+        
+        prev <- last_error_state()
+        
+        if (!identical(current, prev)) { 
+            if(error_visible || has_direct_error) {
+                print(sprintf("[DEBUG_PLOT][%s] Error boundary:%s Direct:%s", 
+                             id, 
+                             if(error_visible) "VISIBLE" else "HIDDEN", 
+                             if(has_direct_error) "VISIBLE" else "HIDDEN"))
+            }
+            
+            last_error_state(current) 
+        }
+    })
+  }) # END moduleServer
 }

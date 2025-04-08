@@ -1,652 +1,528 @@
 # src/ui/components/common/display/table_panel.R
 
-# Source the baseline loader from data layer
 source("src/data/loaders/baseline_loader.R")
 
-#' Parse a template string by replacing tags with values
-#' @param template Template string with {tag} placeholders
-#' @param values Named list of values to substitute
-#' @return Parsed string with all replacements made
-parse_template <- function(template, values) {
-  # Handle NULL or empty template
-  if (is.null(template) || length(template) == 0) {
-    return(template)
+parse_template <- function(template, values) { 
+  if (is.null(template) || length(template) == 0) { 
+    return(template) 
   }
-  
-  # Replace each {tag} with its corresponding value
   result <- template
-  for (name in names(values)) {
-    if (!is.null(values[[name]])) {
+  for (name in names(values)) { 
+    if (!is.null(values[[name]])) { 
       pattern <- paste0("\\{", name, "\\}")
-      result <- gsub(pattern, values[[name]], result)
+      result <- gsub(pattern, values[[name]], result) 
     }
   }
-  
-  return(result)
+  return(result) 
 }
 
-#' Create the table panel UI component
-#' @param id Panel identifier
-#' @return Shiny UI element containing the table panel
-create_table_panel <- function(id) {
+create_table_panel <- function(id) { 
   ns <- NS(id)
-
-  tags$div(
-    class = paste0("main-panel main-panel-table ", id, "-table-panel"),
-    conditionalPanel(
-      condition = sprintf(
-        "input['%s'] === 'visible' && input['%s'] === 'table'",
-        ns("visualization_state"),
-        ns("display_type")
-      ),
-      tags$div(
-        class = "panel-container",
-        tags$div(
-          class = "panel-content",
-          # Table content
-          tableOutput(ns("mainTable")),
-          # Pagination controls
-          tags$div(
-            class = "pagination-controls",
+  
+  tags$div( 
+    class = paste0("main-panel main-panel-table ", id, "-table-panel"), 
+    tags$input(id = ns("visualization_state"), type = "hidden", value = "hidden"), 
+    tags$input(id = ns("display_type"), type = "hidden", value = "plot"), 
+    conditionalPanel( 
+      condition = sprintf( 
+        "input['%s'] === 'visible' && input['%s'] === 'table'", 
+        ns("visualization_state"), 
+        ns("display_type") 
+      ), 
+      tags$div( 
+        class = "panel-container", 
+        tags$div( 
+          class = "panel-content", 
+          # Add Update Visualization button
+          tags$div( 
+            class = "update-controls mb-3", 
+            actionButton( 
+              inputId = ns("update_visualization"), 
+              label = "Update Visualization", 
+              class = "btn btn-primary" 
+            ) 
+          ), 
+          tableOutput(ns("mainTable")), 
+          tags$div( 
+            class = "pagination-controls", 
             tags$div(
-              class = "pagination-container",
+              class = "pagination-container", 
               tags$div(
-                class = "rows-per-page",
-                tags$label(`for` = ns("page_size"), "Rows per page:"),
+                class = "rows-per-page", 
+                tags$label(`for` = ns("page_size"), "Rows per page:"), 
                 tags$select(
-                  id = ns("page_size"),
-                  class = "page-size-select",
-                  tags$option("50", value = "50", selected = TRUE),
-                  tags$option("100", value = "100"),
-                  tags$option("200", value = "200")
-                )
-              ),
+                  id = ns("page_size"), 
+                  class = "page-size-select", 
+                  tags$option("50", value = "50", selected = TRUE), 
+                  tags$option("100", value = "100"), 
+                  tags$option("200", value = "200") 
+                ) 
+              ), 
               tags$div(
-                class = "pagination-navigation",
-                actionButton(ns("prev_page"), "Previous", class = "btn-pagination"),
-                tags$span(
-                  class = "page-info",
-                  textOutput(ns("page_info"), inline = TRUE)
-                ),
-                actionButton(ns("next_page"), "Next", class = "btn-pagination")
-              )
-            )
-          ),
-          # Loading indicator
-          conditionalPanel(
-            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
+                class = "pagination-navigation", 
+                actionButton(ns("prev_page"), "Previous", class = "btn-pagination"), 
+                tags$span(class = "page-info", textOutput(ns("page_info"), inline = TRUE)), 
+                actionButton(ns("next_page"), "Next", class = "btn-pagination") 
+              ) 
+            ) 
+          ), 
+          conditionalPanel( 
+            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")), 
             tags$div(
-              class = "loading-indicator",
+              class = "loading-indicator", 
               tags$div(
-                class = "loading-content",
-                tags$span(class = "loading-spinner"),
+                class = "loading-content", 
+                tags$span(class = "loading-spinner"), 
                 tags$span("Generating table...")
               )
-            )
-          ),
+            ) 
+          ), 
           tags$div(
-            class = "hidden",
+            class = "hidden", 
             textInput(ns("plot_status"), label = NULL, value = "ready")
-          )
-        )
-      )
-    ),
-    # Error displays moved outside conditionalPanel for guaranteed visibility
+          ) 
+        ) 
+      ) 
+    ), 
     tags$div(
-      class = "plot-error error table-error", # Added table-error class for specific targeting
+      class = "plot-error error table-error", 
       textOutput(ns("table_error_message"), inline = FALSE)
-    ),
-    # Error boundary output for structured errors
-    uiOutput(ns("error_display"))
-  )
+    ), 
+    uiOutput(ns("error_display")) 
+  ) 
 }
 
-#' Table panel server logic
-#' @param id Panel identifier
-#' @param data Reactive source for table data
-#' @param settings Reactive source for display settings
-#' @return None
 table_panel_server <- function(id, settings) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     store <- get_store()
+    req(store)
     
-    # Initialize error message with an empty string instead of NULL
-    # This ensures the output is rendered immediately
-    output$table_error_message <- renderText({
-      NULL
-    })
-
-    # Get config once at initialization
-    config <- get_component_config("controls")
-
-    # Create state managers
-    vis_manager <- create_visualization_manager(session, id, ns("visualization"))
-    control_manager <- create_control_manager(session, id, ns("controls"), settings)
-
-    # Create validation boundary
-    validation_boundary <- create_validation_boundary(
-      session,
-      output,
-      id,
-      "validation",
-      state_manager = vis_manager
-    )
-    
-    # Create simulation error boundary
-    sim_boundary <- create_simulation_boundary(
-      session, output, id, "simulation",
-      state_manager = vis_manager
-    )
-
-    # Add pagination state
+    direct_table_error_message <- reactiveVal(NULL)
     current_page <- reactiveVal(1)
-    has_more_data <- reactiveVal(FALSE)
+    total_rows_in_data <- reactiveVal(0)
+    
+    output$table_error_message <- renderText({ direct_table_error_message() })
+    
+    vis_manager <- create_visualization_manager(session, id, ns("visualization"))
+    control_manager <- create_control_manager(session, id, ns("controls"), settings) # Uses new stateless manager
+    
+    validation_boundary <- create_validation_boundary(
+      session, output, id, "validation", state_manager = vis_manager
+    )
+    sim_boundary <- create_simulation_boundary(
+      session, output, id, "simulation", state_manager = vis_manager
+    )
 
-    # Table output with pagination
     output$mainTable <- renderTable({
-      req(input$visualization_state == "visible")
-      req(input$display_type == "table")
-
-      # Check if there's an error in the current simulation first
-      sim_id <- store$get_current_simulation_id(id)
-      if (!is.null(sim_id)) {
-        sim_state <- store$get_simulation(sim_id)
-        if (sim_state$status == "error") {
-          # If simulation has error, don't try to render table
-          # Use the simulation boundary to display the error
-          sim_boundary$set_error(
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-          
-          # Also set direct error output as fallback
-          output$table_error_message <- renderText({
-            sprintf("Error: %s", sim_state$error_message)
-          })
-          
-          vis_manager$set_plot_status("error")
-          return(NULL) # Don't render anything
-        }
-      }
-
-      vis_manager$set_plot_status("loading")
-      current_settings <- control_manager$get_settings()
-
-      tryCatch({
-        # Get current simulation data
-        sim_state <- store$get_current_simulation_data(id)
+        req(input$visualization_state == "visible", cancelOutput = TRUE)
+        req(input$display_type == "table", cancelOutput = TRUE)
         
-        # Get simulation settings from store
-        sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
-
-        # For custom interventions, check if we have the original base simulation
-        baseline_simset <- NULL
-        if (id == "custom") {
-          # Use the dedicated method to get the original base simulation
-          baseline_simset <- store$get_original_base_simulation(id)
-          if (!is.null(baseline_simset)) {
-            print("[TABLE_PANEL] Using original base simulation for baseline comparison")
-          }
-        }
-
-        # If no baseline from original base simulation, try loading from provider
-        if (is.null(baseline_simset)) {
-          baseline_simset <- load_baseline_simulation(id, sim_settings)
-        }
-
-        # Create a list of simsets if baseline is available
-        if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-          # Get visualization config for baseline labels
-          vis_config <- tryCatch(
-            {
-              get_component_config("visualization")
-            },
-            error = function(e) {
-              return(NULL)
-            }
-          )
-          
-          # Get baseline label with fallbacks
-          baseline_label <- "Baseline (No Intervention)"
-          intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-          
-          if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
-            if (!is.null(vis_config$baseline_simulations$default_label)) {
-              baseline_label <- vis_config$baseline_simulations$default_label
-            }
-            if (!is.null(vis_config$baseline_simulations$intervention_label)) {
-              intervention_label <- vis_config$baseline_simulations$intervention_label
-            } else if (!is.null(sim_settings$location)) {
-              intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-            }
-          }
-          
-          # Create values for template parsing
-          template_values <- list(
-            location = sim_settings$location
-          )
-          
-          # Parse templates
-          baseline_label <- parse_template(baseline_label, template_values)
-          intervention_label <- parse_template(intervention_label, template_values)
-          
-          # Create named list for simulations
-          sim_list <- list()
-          sim_list[[baseline_label]] <- baseline_simset
-          sim_list[[intervention_label]] <- sim_state$simset
-          
-          # Transform data with both simulations
-          transformed_data <- transform_simulation_data(sim_list, current_settings)
-        } else {
-          # Fall back to just the intervention simset if baseline not available
-          transformed_data <- transform_simulation_data(sim_state$simset, current_settings)
-        }
+        current_settings <- control_manager$get_settings() # Depends on store$shared_control_states[[id]]()
+        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
         
-        # Format and paginate
-        formatted <- format_table_data(transformed_data, get_component_config("controls"))
-        
-        # Apply pagination
-        total_rows <- nrow(formatted)
-        start_idx <- ((current_page() - 1) * as.numeric(input$page_size %||% 50)) + 1
-        end_idx <- min(start_idx + as.numeric(input$page_size %||% 50) - 1, total_rows)
-        
-        # Create result structure
-        result <- list(
-            data = formatted[start_idx:end_idx, , drop = FALSE],
-            metadata = list(
-                total_rows = total_rows,
-                current_page = current_page(),
-                has_more = end_idx < total_rows
-            )
-        )
+        print(paste0("-[ renderTable", id, " ]- Running. Reading settings via control_manager (from store)..."))
+        str(current_settings)
 
-        # Update pagination state
-        has_more_data(result$metadata$has_more)
-
-        # Update pagination info if available
-        if (!is.null(result$metadata)) {
-            output$page_info <- renderText({
-                total <- result$metadata$total_rows
-                page <- result$metadata$current_page
-                size <- as.numeric(input$page_size %||% 50)
-                start_row <- ((page - 1) * size) + 1
-                end_row <- min(page * size, total)
-                sprintf("%d-%d of %d", start_row, end_row, total)
-            })
-        }
-
-        # Clear any errors when successful
-        sim_boundary$clear()
-        validation_boundary$clear()
-        output$table_error_message <- renderText({ NULL })
-        
-        # Clear global error state
-        store$clear_page_error_state(id)
-        
-        vis_manager$set_plot_status("ready")
-
-        result$data
-      }, error = function(e) {
-        print(paste("Error in table creation:", conditionMessage(e)))
-        # Set error using simulation boundary
-        sim_boundary$set_error(
-          message = conditionMessage(e),
-          type = ERROR_TYPES$DATA,
-          severity = SEVERITY_LEVELS$ERROR
-        )
-        
-        # Also set direct error output as fallback
-        output$table_error_message <- renderText({
-          sprintf("Error: %s", conditionMessage(e))
-        })
-        
-        NULL
-      })
-    })
-
-    # Combined observer for all control changes
-    observe({
-      print("=== Table Panel Control Update ===")
-
-      # Get all current control values
-      outcomes <- input[[paste0("outcomes_", id)]]
-      facet_by <- input[[paste0("facet_by_", id)]]
-      summary_type <- input[[paste0("summary_type_", id)]]
-
-      print("Current control values:")
-      print(paste("- outcomes:", paste(outcomes, collapse = ", ")))
-      print(paste("- facet_by:", paste(facet_by, collapse = ", ")))
-      print(paste("- summary_type:", summary_type))
-
-      # Only proceed if we have a visible table and any controls are set
-      if (!is.null(input$visualization_state) &&
-        input$visualization_state == "visible" &&
-        input$display_type == "table" &&
-        (!is.null(outcomes) || !is.null(facet_by) || !is.null(summary_type))) {
-        # Get current settings with isolate
-        current_settings <- isolate(control_manager$get_settings())
-
-        # Create settings update
-        new_settings <- list(
-          outcomes = if (!is.null(outcomes)) as.character(outcomes) else current_settings$outcomes,
-          facet.by = if (!is.null(facet_by)) as.character(facet_by) else current_settings$facet.by,
-          summary.type = if (!is.null(summary_type)) summary_type else current_settings$summary.type
-        )
-
-        print("Settings for table:")
-        str(new_settings)
-
-        # Update state and table together
-        isolate({
-          # Update control state
-          control_manager$update_settings(new_settings)
-          current_page(1) # Reset to first page on control changes
-
-          # Update table display
-          vis_manager$set_plot_status("loading")
-          output$mainTable <- renderTable({
-            tryCatch({
-              # Get current simulation data
-              sim_state <- store$get_current_simulation_data(id)
-              
-              # Get simulation settings from store
-              sim_settings <- store$get_simulation(store$get_current_simulation_id(id))$settings
-
-              # For custom interventions, check if we have the original base simulation
-              baseline_simset <- NULL
-              if (id == "custom") {
-                # Use the dedicated method to get the original base simulation
-                baseline_simset <- store$get_original_base_simulation(id)
-                if (!is.null(baseline_simset)) {
-                  print("[TABLE_PANEL] Using original base simulation for baseline comparison")
-                }
-              }
-
-              # If no baseline from original base simulation, try loading from provider
-              if (is.null(baseline_simset)) {
-                baseline_simset <- load_baseline_simulation(id, sim_settings)
-              }
-
-              # Create a list of simsets if baseline is available
-              if (!is.null(baseline_simset) && !is.null(sim_state$simset)) {
-                # Get visualization config for baseline labels
-                vis_config <- tryCatch(
-                  {
-                    get_component_config("visualization")
-                  },
-                  error = function(e) {
-                    return(NULL)
-                  }
-                )
+        table_content <- isolate({ # Isolate data generation
+            print(paste0("-[ renderTable", id, " ]- Using settings: O=", 
+                         paste(current_settings$outcomes, collapse=", "), 
+                         ", F=", paste(current_settings$facet.by, collapse=", "), 
+                         ", S=", current_settings$summary.type))
+            
+            isolate(vis_manager$set_plot_status("loading")) # Isolate status update
+            
+            # Sim/Data Checks...
+            sim_id <- store$get_current_simulation_id(id)
+            sim_state_check <- if (!is.null(sim_id)) store$get_simulation(sim_id) else NULL
+            
+            if (is.null(sim_state_check) || sim_state_check$status == "error") { 
+                err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
+                print(paste0("-[ renderTable", id, " ]- Sim Error: ", err_msg))
                 
-                # Get baseline label with fallbacks
-                baseline_label <- "Baseline (No Intervention)"
-                intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-                
-                if (!is.null(vis_config) && !is.null(vis_config$baseline_simulations)) {
-                  if (!is.null(vis_config$baseline_simulations$default_label)) {
-                    baseline_label <- vis_config$baseline_simulations$default_label
-                  }
-                  if (!is.null(vis_config$baseline_simulations$intervention_label)) {
-                    intervention_label <- vis_config$baseline_simulations$intervention_label
-                  } else if (!is.null(sim_settings$location)) {
-                    intervention_label <- paste0("Intervention (", sim_settings$location, ")")
-                  }
-                }
-                
-                # Create values for template parsing
-                template_values <- list(
-                  location = sim_settings$location
-                )
-                
-                # Parse templates
-                baseline_label <- parse_template(baseline_label, template_values)
-                intervention_label <- parse_template(intervention_label, template_values)
-                
-                # Create named list for simulations
-                sim_list <- list()
-                sim_list[[baseline_label]] <- baseline_simset
-                sim_list[[intervention_label]] <- sim_state$simset
-                
-                # Transform data with both simulations
-                transformed_data <- transform_simulation_data(sim_list, new_settings)
-              } else {
-                # Fall back to just the intervention simset if baseline not available
-                transformed_data <- transform_simulation_data(sim_state$simset, new_settings)
-              }
-              
-              # Format and paginate
-              formatted <- format_table_data(transformed_data, get_component_config("controls"))
-              
-              # Apply pagination
-              total_rows <- nrow(formatted)
-              start_idx <- ((current_page() - 1) * as.numeric(input$page_size %||% 50)) + 1
-              end_idx <- min(start_idx + as.numeric(input$page_size %||% 50) - 1, total_rows)
-              
-              # Create result structure
-              result <- list(
-                  data = formatted[start_idx:end_idx, , drop = FALSE],
-                  metadata = list(
-                      total_rows = total_rows,
-                      current_page = current_page(),
-                      has_more = end_idx < total_rows
-                  )
-              )
-
-              # Update pagination state
-              has_more_data(result$metadata$has_more)
-
-              # Clear any errors when successful
-              sim_boundary$clear()
-              validation_boundary$clear()
-              output$table_error_message <- renderText({ NULL })
-              vis_manager$set_plot_status("ready")
-
-              result$data
-              },
-              error = function(e) {
-                print(paste("Error in table update:", conditionMessage(e)))
-                # Set error using simulation boundary
-                sim_boundary$set_error(
-                  message = conditionMessage(e),
-                  type = ERROR_TYPES$DATA,
-                  severity = SEVERITY_LEVELS$ERROR
-                )
-                
-                # Also set direct error output as fallback
-                output$table_error_message <- renderText({
-                  sprintf("Error: %s", conditionMessage(e))
+                isolate({ 
+                    sim_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$SIMULATION, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
                 })
                 
-                NULL
-              }
-            )
-          })
-        })
-      }
-    })
-
-    # Pagination handlers
-    observeEvent(input$prev_page, {
-      if (current_page() > 1) {
-        current_page(current_page() - 1)
-      }
-    })
-
-    observeEvent(input$next_page, {
-      if (has_more_data()) {
-        current_page(current_page() + 1)
-      }
-    })
-
-    observeEvent(input$page_size, {
-      current_page(1) # Reset to first page when changing page size
-    })
-
-    # Watch for current simulation changes and errors
-    observe({
-      # Get current simulation ID
-      sim_id <- store$get_current_simulation_id(id)
-      
-      if (!is.null(sim_id)) {
-        # Check if simulation has error status
-        sim_state <- store$get_simulation(sim_id)
-        
-        if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
-          # Display the error using simulation boundary
-          sim_boundary$set_error(
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-          
-          # Also set direct error output as fallback
-          output$table_error_message <- renderText({
-            sprintf("Error: %s", sim_state$error_message)
-          })
-          
-          # Update global error state for cross-panel persistence
-          store$update_page_error_state(
-            id,
-            has_error = TRUE,
-            message = sim_state$error_message,
-            type = ERROR_TYPES$SIMULATION,
-            severity = SEVERITY_LEVELS$ERROR
-          )
-          
-          # Update visualization status
-          vis_manager$set_plot_status("error")
-        }
-      }
-    })
-    
-    # Reset states when visibility changes
-    observeEvent(input$visualization_state, {
-      if (input$visualization_state == "hidden") {
-        vis_manager$reset()
-        control_manager$reset()
-        validation_boundary$clear()
-        sim_boundary$clear()
-        current_page(1) # Reset pagination
-        has_more_data(FALSE) # Reset has_more_data
-        output$table_error_message <- renderText({
-          NULL
-        })
-        
-        # Clear global error state
-        store$clear_page_error_state(id)
-        
-        # Clear simulation errors for this page if they exist
-        sim_adapter <- get_simulation_adapter()
-        if (!is.null(sim_adapter$error_boundaries) && !is.null(sim_adapter$error_boundaries[[id]])) {
-          sim_adapter$error_boundaries[[id]]$clear()
-        }
-      } else if (input$visualization_state == "visible") {
-        # Check for errors when becoming visible
-        sim_id <- store$get_current_simulation_id(id)
-        if (!is.null(sim_id)) {
-          sim_state <- store$get_simulation(sim_id)
-          if (sim_state$status == "error" && !is.null(sim_state$error_message)) {
-            # Display the error using simulation boundary
-            sim_boundary$set_error(
-              message = sim_state$error_message,
-              type = ERROR_TYPES$SIMULATION,
-              severity = SEVERITY_LEVELS$ERROR
-            )
+                direct_table_error_message(paste("Error:", err_msg))
+                total_rows_in_data(0)
+                return(NULL) 
+            }
             
-            # Also set direct error output as fallback
-            output$table_error_message <- renderText({
-              sprintf("Error: %s", sim_state$error_message)
+            sim_state_data <- store$get_current_simulation_data(id)
+            
+            if (is.null(sim_state_data) || is.null(sim_state_data$simset)) { 
+                err_msg <- "No sim data."
+                print(paste0("-[ renderTable", id, " ]- Data Error: ", err_msg))
+                
+                isolate({ 
+                    sim_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$DATA, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
+                })
+                
+                direct_table_error_message(paste("Error:", err_msg))
+                total_rows_in_data(0)
+                return(NULL) 
+            }
+            
+            # Generate FULL formatted data...
+            full_data <- tryCatch({ 
+                sim_settings <- sim_state_check$settings
+                req(sim_settings)
+                
+                vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
+                
+                req(exists("load_baseline_simulation") && is.function(load_baseline_simulation), 
+                    exists("transform_simulation_data") && is.function(transform_simulation_data), 
+                    exists("format_table_data") && is.function(format_table_data))
+                
+                baseline_simset <- NULL
+                if (id == "custom") {
+                    baseline_simset <- store$get_original_base_simulation(id)
+                }
+                
+                if (is.null(baseline_simset)) {
+                    baseline_simset <- tryCatch(load_baseline_simulation(id, sim_settings), error=function(e) NULL)
+                }
+                
+                data_source <- NULL
+                
+                if (!is.null(baseline_simset)) {
+                    location_val <- sim_settings$location %||% "Current"
+                    template_values <- list(location = location_val)
+                    
+                    baseline_label <- "Baseline"
+                    intervention_label <- "Intervention"
+                    
+                    if (!is.null(vis_config$baseline_simulations)) {
+                        baseline_label <- vis_config$baseline_simulations$default_label %||% baseline_label
+                        intervention_label_template <- vis_config$baseline_simulations$intervention_label %||% "Intervention ({location})"
+                        
+                        if(exists("parse_template")) {
+                            baseline_label <- parse_template(baseline_label, template_values)
+                            intervention_label <- parse_template(intervention_label_template, template_values)
+                        }
+                    }
+                    
+                    data_source <- list()
+                    data_source[[baseline_label]] <- baseline_simset
+                    data_source[[intervention_label]] <- sim_state_data$simset
+                } else {
+                    data_source <- sim_state_data$simset
+                }
+                
+                transformed_data <- transform_simulation_data(data_source, current_settings)
+                formatted <- format_table_data(transformed_data, get_component_config("controls"))
+                
+                print(paste0("-[ renderTable", id, " ]- Full data generated. Rows: ", nrow(formatted)))
+                
+                isolate({ 
+                    sim_boundary$clear()
+                    validation_boundary$clear()
+                    store$clear_page_error_state(id)
+                    vis_manager$set_plot_status("ready") 
+                })
+                
+                direct_table_error_message(NULL)
+                formatted 
+            }, 
+            error = function(e) { 
+                err_msg <- conditionMessage(e)
+                print(paste0("-[ renderTable", id, " ]- Data Gen Error: ", err_msg))
+                
+                isolate({ 
+                    sim_boundary$set_error(
+                        message = err_msg, 
+                        type = ERROR_TYPES$DATA, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    store$update_page_error_state(
+                        id, 
+                        has_error = TRUE, 
+                        message = err_msg, 
+                        type = ERROR_TYPES$DATA, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    vis_manager$set_plot_status("error") 
+                })
+                
+                direct_table_error_message(paste("Error:", err_msg))
+                NULL 
             })
             
-            vis_manager$set_plot_status("error")
-          }
-        }
-      }
+            # Pagination Logic...
+            if (is.null(full_data)) { 
+                total_rows_in_data(0)
+                return(NULL) 
+            }
+            
+            total_rows <- nrow(full_data)
+            total_rows_in_data(total_rows)
+            
+            page <- current_page()
+            size <- as.numeric(input$page_size %||% 50)
+            
+            if(total_rows > 0 && ((page - 1) * size) >= total_rows && page > 1) { 
+                print("...page invalid, resetting...")
+                current_page(1)
+                page <- 1 
+            }
+            
+            start_idx <- max(1, ((page - 1) * size) + 1)
+            end_idx <- min(start_idx + size - 1, total_rows)
+            
+            if (total_rows == 0 || start_idx > end_idx) { 
+                print("...no rows for page...")
+                return(NULL) 
+            }
+            
+            sliced_data <- full_data[start_idx:end_idx, , drop = FALSE]
+            print(paste0("-[ renderTable", id, " ]- Displaying rows ", start_idx, "-", end_idx))
+            
+            return(sliced_data)
+        }) # End isolate() block
+        
+        return(table_content)
+    }, 
+    striped=TRUE, hover=TRUE, bordered=TRUE) # End renderTable
+
+    # --- Pagination UI Updates ---
+    output$page_info <- renderText({ 
+        total <- total_rows_in_data()
+        page <- current_page()
+        size <- as.numeric(input$page_size %||% 50)
+        
+        if (total == 0) return("0-0 of 0")
+        
+        start_row <- max(1, ((page - 1) * size) + 1)
+        end_row <- min(page * size, total)
+        
+        if (end_row < start_row) start_row <- end_row
+        
+        sprintf("%d-%d of %d", start_row, end_row, total) 
+    })
+    
+    observe({ 
+        page <- current_page()
+        total <- total_rows_in_data()
+        size <- as.numeric(input$page_size %||% 50)
+        
+        has_prev <- page > 1
+        has_next <- (page * size) < total
+        
+        updateActionButton(session, "prev_page", disabled = !has_prev)
+        updateActionButton(session, "next_page", disabled = !has_next) 
     })
 
-    # Error persistence observer to sync with global error state
-    observe({
-      # Get page error state
-      page_error_state <- store$get_page_error_state(id)
+    # --- Visibility Observer (Handles Reset Only) ---
+    observeEvent(list(input$visualization_state, input$display_type), {
+      state <- input$visualization_state
+      display <- input$display_type
+      id_log_prefix <- paste0("-[ TableVisDisp", id, " ]-")
+      panel_type <- "table"
       
-      # Check if there's a global error for this page
-      if (page_error_state$has_error && !is.null(page_error_state$message)) {
-        # Set error in local boundary
-        sim_boundary$set_error(
-          message = page_error_state$message,
-          type = page_error_state$type %||% ERROR_TYPES$SIMULATION,
-          severity = page_error_state$severity %||% SEVERITY_LEVELS$ERROR
+      if (!(state == "visible" && display == "table")) { 
+          if(!is.null(isolate(direct_table_error_message())) || 
+             isolate(total_rows_in_data() > 0) || 
+             isolate(current_page() != 1) || 
+             isolate(store$get_panel_state(id)$visualization$plot_status == 'loading')) { 
+              print(paste0(id_log_prefix, " Deactivating. Resetting state..."))
+              isolate({ 
+                  current_page(1)
+                  total_rows_in_data(0)
+                  validation_boundary$clear()
+                  sim_boundary$clear()
+                  direct_table_error_message(NULL)
+              }) 
+          }
+      } else { 
+          print(paste0(id_log_prefix, " State is active. renderTable will run."))
+          isolate({ 
+              current_page(1)
+              direct_table_error_message(NULL) 
+          }) 
+      }
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
+    # --- Button Observer (Updates control_manager ONLY) ---
+    observeEvent(input$update_visualization, {
+        req(input$update_visualization > 0) 
+        req(input$visualization_state == "visible")
+        req(input$display_type == "table")
+        
+        print(paste0("-[ TableButton", id, " ]- Clicked."))
+        
+        new_settings <- isolate({ 
+            outcomes <- input[[paste0("outcomes_", id)]]
+            facet_by_in <- input[[paste0("facet_by_", id)]]
+            summary_type <- input[[paste0("summary_type_", id)]]
+            
+            valid <- TRUE
+            
+            if (is.null(outcomes) || length(outcomes) == 0 || all(outcomes == "")) { 
+                showNotification("Select outcome.", type="warning")
+                valid <- FALSE 
+            }
+            
+            if (is.null(summary_type) || summary_type == "") { 
+                showNotification("Select summary.", type="warning")
+                valid <- FALSE 
+            }
+            
+            if(!valid) return(NULL)
+            
+            facet_value <- if (!is.null(facet_by_in) && 
+                               length(facet_by_in) > 0 && 
+                               !all(facet_by_in == "")) { 
+                as.character(facet_by_in) 
+            } else { 
+                NULL 
+            }
+            
+            list(
+                outcomes = as.character(outcomes), 
+                facet.by = facet_value, 
+                summary.type = summary_type
+            ) 
+        })
+        
+        if (!is.null(new_settings)) { 
+            print(paste0("-[ TableButton", id, " ]- Updating control_manager ONLY..."))
+            str(new_settings)
+            control_manager$update_settings(new_settings)
+            isolate(current_page(1)) 
+        } else { 
+            print(paste0("-[ TableButton", id, " ]- Settings validation failed.")) 
+        }
+    })
+
+    # --- Pagination Handlers ---
+    observeEvent(input$prev_page, { 
+        req(input$prev_page > 0)
+        isolate({ 
+            if (current_page() > 1) { 
+                print(paste0("-[ Pagination", id, " ]- Prev clicked."))
+                current_page(current_page() - 1) 
+            } 
+        }) 
+    })
+    
+    observeEvent(input$next_page, { 
+        req(input$next_page > 0)
+        isolate({ 
+            page <- current_page()
+            total <- total_rows_in_data()
+            size <- as.numeric(input$page_size %||% 50)
+            
+            if ((page * size) < total) { 
+                print(paste0("-[ Pagination", id, " ]- Next clicked."))
+                current_page(page + 1) 
+            } 
+        }) 
+    })
+    
+    observeEvent(input$page_size, { 
+        print(paste0("-[ Pagination", id, " ]- Size change: ", input$page_size))
+        isolate(current_page(1)) 
+    })
+
+    # --- Error handling observers ---
+    observe({ 
+        sim_id <- isolate(store$get_current_simulation_id(id))
+        sim_state <- if (!is.null(sim_id)) isolate(store$get_simulation(sim_id)) else NULL
+        
+        isolate({ 
+            if (!is.null(sim_state) && 
+                sim_state$status == "error" && 
+                !is.null(sim_state$error_message)) { 
+                
+                err_msg <- sprintf("Error: %s", as.character(sim_state$error_message))
+                
+                if (is.null(direct_table_error_message()) || direct_table_error_message() != err_msg) { 
+                    print(paste0("-[ TableSimObserver", id, " ]- Sim error: ", err_msg))
+                    
+                    sim_boundary$set_error(
+                        message = sim_state$error_message, 
+                        type = ERROR_TYPES$SIMULATION, 
+                        severity = SEVERITY_LEVELS$ERROR
+                    )
+                    
+                    direct_table_error_message(err_msg)
+                    vis_manager$set_plot_status("error")
+                }
+            }
+        })
+    })
+    
+    observe({ 
+        page_error_state <- isolate(store$get_page_error_state(id))
+        
+        isolate({ 
+            if (page_error_state$has_error && !is.null(page_error_state$message)) { 
+                err_msg <- sprintf("Error: %s", page_error_state$message)
+                
+                if(is.null(direct_table_error_message()) || direct_table_error_message() != err_msg) { 
+                    print(paste0("-[ TablePersistObserver", id, " ]- Syncing global error: ", err_msg))
+                    
+                    error_type <- page_error_state$type %||% ERROR_TYPES$SIMULATION
+                    boundary_to_use <- switch(error_type, 
+                                             SIMULATION = sim_boundary, 
+                                             PLOT = plot_boundary, 
+                                             VALIDATION = validation_boundary, 
+                                             sim_boundary)
+                    
+                    if (!is.null(boundary_to_use)) {
+                        boundary_to_use$set_error(
+                            message = page_error_state$message, 
+                            type = error_type, 
+                            severity = page_error_state$severity %||% SEVERITY_LEVELS$ERROR
+                        )
+                    }
+                    
+                    direct_table_error_message(err_msg)
+                    vis_manager$set_plot_status("error")
+                }
+            }
+        })
+    })
+
+    # --- Debug observer ---
+    last_table_error_state <- reactiveVal(list(has_error = FALSE, message = NULL))
+    
+    observe({ 
+        error_state <- if (!is.null(sim_boundary)) isolate(sim_boundary$get_state()) else NULL
+        error_visible <- !is.null(error_state) && error_state$has_error
+        
+        current_direct_error <- direct_table_error_message()
+        has_direct_error <- !is.null(current_direct_error) && nzchar(current_direct_error)
+        
+        current <- list(
+            has_error = error_visible, 
+            message = if(error_visible) error_state$message else NULL, 
+            direct_error = has_direct_error
         )
         
-        # Also set direct error output
-        output$table_error_message <- renderText({
-          sprintf("Error: %s", page_error_state$message)
-        })
-      }
-    })
-    
-    # Debug observer for error state visibility
-    # Create a tracker for last error state
-    last_error_state <- reactiveVal(list(has_error = FALSE, message = NULL))
-    
-    observe({
-      # Check error boundary state
-      error_state <- if (!is.null(sim_boundary)) sim_boundary$get_state() else NULL
-      error_visible <- !is.null(error_state) && error_state$has_error
-      
-      # Check direct error output
-      has_direct_error <- FALSE
-      tryCatch({
-        direct_error <- output$table_error_message()
-        has_direct_error <- !is.null(direct_error) && nchar(direct_error) > 0
-      }, error = function(e) {
-        # Just catch any errors silently
-      })
-      
-      # Only log when error state changes
-      current <- list(
-        has_error = error_visible,
-        message = if(error_visible) error_state$message else NULL,
-        direct_error = has_direct_error
-      )
-      
-      prev <- last_error_state()
-      if (!identical(current$has_error, prev$has_error) || 
-          !identical(current$message, prev$message) ||
-          !identical(current$direct_error, prev$direct_error)) {
+        prev <- last_table_error_state()
         
-        # Log debug info if there's any error state
-        if(error_visible || has_direct_error) {
-          print(sprintf("[DEBUG][%s] Error boundary: %s, Direct error: %s", 
-                      id, 
-                      if(error_visible) "VISIBLE" else "HIDDEN",
-                      if(has_direct_error) "VISIBLE" else "HIDDEN"))
-          if(error_visible) {
-            print(sprintf("  Message: %s", error_state$message))
-          }
+        if (!identical(current, prev)) { 
+            if(error_visible || has_direct_error) {
+                print(sprintf("[DEBUG_TABLE][%s] Error boundary:%s Direct:%s", 
+                             id, 
+                             if(error_visible) "VISIBLE" else "HIDDEN", 
+                             if(has_direct_error) "VISIBLE" else "HIDDEN"))
+            }
+            
+            last_table_error_state(current) 
         }
-        
-        # Update last state
-        last_error_state(current)
-      }
     })
-    
-    # Update button states
-    observe({
-      if (current_page() <= 1) {
-        updateActionButton(session, "prev_page", label = "Previous", disabled = TRUE)
-      } else {
-        updateActionButton(session, "prev_page", label = "Previous", disabled = FALSE)
-      }
-
-      if (!has_more_data()) {
-        updateActionButton(session, "next_page", label = "Next", disabled = TRUE)
-      } else {
-        updateActionButton(session, "next_page", label = "Next", disabled = FALSE)
-      }
-    })
-  })
+  }) # END moduleServer
 }

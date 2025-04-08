@@ -28,7 +28,7 @@ selectors:
 
 # Simulation file configuration
 prerun_simulations:
-  provider: "onedrive"  # Options: "local", "onedrive" - change to "onedrive" to use OneDrive
+  provider: "local"  # Options: "local", "onedrive" - change to "onedrive" to use OneDrive
   file_pattern: "prerun/{location}/{scenario}.Rdata"
   config_file: "src/data/providers/onedrive_resources/onedrive_sharing_links.json"  # Path to sharing links file
 

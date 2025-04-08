@@ -9,97 +9,40 @@
 create_control_manager <- function(session, page_id, id, initial_settings = NULL) {
     store <- get_store()
     ns <- session$ns
-
-    # Get defaults from config
-    config <- get_component_config("controls")
-    print("=== Control Manager Creation ===")
-    print("1. Raw config defaults:")
-    str(config$plot_controls$outcomes$defaults)
-
-    # Get the outcome IDs from the options
-    outcome_ids <- sapply(config$plot_controls$outcomes$options, function(x) x$id)
-    print("2. Available outcome IDs:")
-    str(outcome_ids)
-
-    # Map default IDs to their option keys
-    default_outcomes <- config$plot_controls$outcomes$defaults
-    print("3. Default outcomes:")
-    str(default_outcomes)
-
-    config_defaults <- list(
-        outcomes = default_outcomes, # Use direct IDs instead of mapping
-        facet.by = NULL,
-        summary.type = "mean.and.interval"
-    )
-    print("4. Final config defaults:")
-    str(config_defaults)
-
-    # Initialize with config defaults
-    settings_state <- reactiveVal(config_defaults)
-
-    # Initialize settings if provided
-    observe({
-        if (!is.null(initial_settings)) {
-            init_settings <- initial_settings()
-            if (!is.null(init_settings)) {
-                # Ensure proper structure
-                processed_settings <- list(
-                    outcomes = init_settings$outcomes,
-                    facet.by = init_settings$facet.by, # Using dot notation
-                    summary.type = init_settings$summary.type # Using dot notation
-                )
-                settings_state(processed_settings)
-                store$update_control_state(page_id, processed_settings)
-
-                # Update UI to reflect initial settings
-                if (!is.null(processed_settings$outcomes)) {
-                    updateSelectInput(session,
-                        ns("outcomes"),
-                        selected = processed_settings$outcomes
-                    )
-                }
-                if (!is.null(processed_settings$facet.by)) {
-                    updateSelectInput(session,
-                        ns("stratification"),
-                        selected = processed_settings$facet.by
-                    )
-                }
-            }
-        }
-    })
-
+    
+    # Get config defaults ONLY for the reset function
+    config <- tryCatch(get_component_config("controls"), error = function(e){ NULL })
+    config_defaults <- list( outcomes = NULL, facet.by = NULL, summary.type = "mean.and.interval" )
+    if (!is.null(config)) {
+       config_defaults$outcomes <- config$plot_controls$outcomes$defaults %||% NULL
+       config_defaults$facet.by <- config$plot_controls$stratification$defaults %||% NULL
+       config_defaults$summary.type <- config$plot_controls$summary_type$defaults %||% "mean.and.interval"
+    }
+    
+    print(paste0("=== Control Manager Creation (page: ", page_id, ") - Stateless Version ==="))
+    
     list(
         get_settings = function() {
-            current <- settings_state()
-            print("=== Getting Control Settings ===")
-            print("Current settings:")
-            str(current)
-            return(current)
+            current_settings <- store$get_shared_control_state(page_id) # Calls new store method
+            print(paste0("--- control_manager$get_settings (page: ", page_id, ") reading FROM STORE ---"))
+            str(current_settings)
+            if (is.null(current_settings)) { return(config_defaults) } # Fallback
+            return(current_settings)
         },
         update_settings = function(settings) {
-            if (is.null(settings)) {
-                return()
+            if (is.null(settings)) { return() }
+            if (!is.list(settings) || is.null(settings$outcomes) || is.null(settings$summary.type)) { 
+                warning("Invalid settings passed to control_manager$update_settings")
+                return() 
             }
-            print("=== Updating Control Settings ===")
-            print("New settings:")
+            if (!"facet.by" %in% names(settings)) { settings$facet.by <- NULL }
+            print(paste0("--- control_manager$update_settings (page: ", page_id, ") updating STORE ---"))
             str(settings)
-
-            settings_state(settings)
-            store$update_control_state(page_id, settings)
-
-            print("After update:")
-            str(settings_state())
+            store$update_shared_control_state(page_id, settings) # Calls new store method
         },
         reset = function() {
-            print("=== Resetting Control Settings ===")
-            print("Resetting to defaults:")
-            str(config_defaults)
-
-            settings_state(config_defaults)
-            store$update_control_state(page_id, config_defaults)
-
-            print("After reset:")
-            str(settings_state())
+            print(paste0("--- control_manager$reset (page: ", page_id, ") updating STORE ---"))
+            store$update_shared_control_state(page_id, config_defaults) # Calls new store method
         }
     )
 }
