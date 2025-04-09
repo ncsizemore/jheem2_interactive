@@ -137,38 +137,42 @@ plot_panel_server <- function(id, settings) {
     )
 
     output$mainPlot <- renderPlot({
+        # Initial UI state checks
         req(input$visualization_state == "visible", cancelOutput = TRUE)
         req(input$display_type == "plot", cancelOutput = TRUE)
         
-        current_settings <- control_manager$get_settings() # Depends on store$shared_control_states[[id]]()
-        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
+        # Take explicit reactive dependencies on both control settings and simulation ID
+        # These are the key dependencies that should trigger re-rendering
+        current_settings <- control_manager$get_settings()
+        current_sim_id <- store$get_current_simulation_id(id)
         
-        print(paste0("-[ renderPlot", id, " ]- Running. Reading settings via control_manager (from store)..."))
-        str(current_settings)
+        # Validate settings and sim ID
+        req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
+        req(!is.null(current_sim_id), cancelOutput = TRUE)
+        
+        print(paste0("-[ renderPlot", id, " ]- Running with SimID: ", current_sim_id))
+        print(paste0("-[ renderPlot", id, " ]- Using settings: O=", paste(current_settings$outcomes, collapse=", "), 
+                     ", F=", paste(current_settings$facet.by, collapse=", "), 
+                     ", S=", current_settings$summary.type))
 
-        generated_plot_isolated <- isolate({
-            print(paste0("-[ renderPlot", id, " ]- Using settings: O=", paste(current_settings$outcomes, collapse=", "), 
-                       ", F=", paste(current_settings$facet.by, collapse=", "), 
-                       ", S=", current_settings$summary.type))
-            
-            isolate(vis_manager$set_plot_status("loading")) # Isolate status update
+        # Wrap the actual plot generation in isolate to prevent unwanted internal dependencies
+        generated_plot <- isolate({
+            # Set status - won't create unwanted dependencies because it uses a separate reactiveVal
+            store$set_plot_status(id, "loading")
             
             # Get current simulation and check for errors
-            sim_id <- store$get_current_simulation_id(id)
-            sim_state_check <- if (!is.null(sim_id)) store$get_simulation(sim_id) else NULL
+            sim_state_check <- store$get_simulation(current_sim_id)
             
             if (is.null(sim_state_check) || sim_state_check$status == "error") { 
                 err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
                 print(paste0("-[ renderPlot", id, " ]- Sim Error: ", err_msg))
                 
-                isolate({ 
-                    sim_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$SIMULATION, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                sim_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$SIMULATION, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_error_message(paste("Error:", err_msg))
                 return(NULL) 
@@ -181,14 +185,12 @@ plot_panel_server <- function(id, settings) {
                 err_msg <- "No sim data."
                 print(paste0("-[ renderPlot", id, " ]- Data Error: ", err_msg))
                 
-                isolate({ 
-                    plot_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$PLOT, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                plot_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$PLOT, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_error_message(paste("Error:", err_msg))
                 return(NULL) 
@@ -268,13 +270,11 @@ plot_panel_server <- function(id, settings) {
                 print(paste0("-[ renderPlot", id, " ]- Plot generated."))
                 
                 # Clear any errors and update status
-                isolate({ 
-                    sim_boundary$clear()
-                    plot_boundary$clear()
-                    validation_boundary$clear()
-                    store$clear_page_error_state(id)
-                    vis_manager$set_plot_status("ready") 
-                })
+                sim_boundary$clear()
+                plot_boundary$clear()
+                validation_boundary$clear()
+                store$clear_page_error_state(id)
+                store$set_plot_status(id, "ready")
                 
                 direct_error_message(NULL)
                 
@@ -285,21 +285,19 @@ plot_panel_server <- function(id, settings) {
                 err_msg <- conditionMessage(e)
                 print(paste0("-[ renderPlot", id, " ]- Plot Error: ", err_msg))
                 
-                isolate({ 
-                    plot_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$PLOT, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    store$update_page_error_state(
-                        id, 
-                        has_error = TRUE, 
-                        message = err_msg, 
-                        type = ERROR_TYPES$PLOT, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                plot_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$PLOT, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$update_page_error_state(
+                    id, 
+                    has_error = TRUE, 
+                    message = err_msg, 
+                    type = ERROR_TYPES$PLOT, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_error_message(paste("Error:", err_msg))
                 NULL 
@@ -308,7 +306,7 @@ plot_panel_server <- function(id, settings) {
             return(generated_plot)
         }) # End isolate
         
-        return(generated_plot_isolated)
+        return(generated_plot)
     }, 
     res=96) # End renderPlot
 
@@ -321,7 +319,7 @@ plot_panel_server <- function(id, settings) {
         
         if (!(state == "visible" && display == panel_type)) { 
             if(!is.null(isolate(direct_error_message())) || 
-               isolate(store$get_panel_state(id)$visualization$plot_status == 'loading')) { 
+               isolate(store$get_plot_status(id) == 'loading')) { 
                 print(paste0(id_log_prefix, " Deactivating. Resetting local state..."))
                 isolate({ 
                     vis_manager$reset()
@@ -329,6 +327,7 @@ plot_panel_server <- function(id, settings) {
                     plot_boundary$clear()
                     sim_boundary$clear()
                     direct_error_message(NULL)
+                    store$set_plot_status(id, "ready")
                 }) 
             }
         } else { 
@@ -410,7 +409,7 @@ plot_panel_server <- function(id, settings) {
                     )
                     
                     direct_error_message(err_msg)
-                    vis_manager$set_plot_status("error")
+                    store$set_plot_status(id, "error")
                 }
             }
         })
@@ -442,7 +441,7 @@ plot_panel_server <- function(id, settings) {
                     }
                     
                     direct_error_message(err_msg)
-                    vis_manager$set_plot_status("error")
+                    store$set_plot_status(id, "error")
                 }
             }
         })

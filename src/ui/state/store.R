@@ -14,9 +14,15 @@ StateStore <- R6Class("StateStore",
     public = list(
         #' @field panel_states List of ReactiveVal objects for each panel
         panel_states = NULL,
-        
+
         #' @field shared_control_states List of ReactiveVal objects for control settings
         shared_control_states = NULL,
+
+        #' @field current_simulation_ids List of ReactiveVal objects for current simulation IDs
+        current_simulation_ids = NULL,
+
+        #' @field panel_plot_statuses List of ReactiveVal objects for plot statuses
+        panel_plot_statuses = NULL,
 
         #' @description Initialize the store
         #' @param page_ids Character vector of page identifiers
@@ -26,7 +32,7 @@ StateStore <- R6Class("StateStore",
 
             # Add model state
             private$state$model <- create_model_state()
-            
+
             # Add download progress state
             private$state$downloads <- create_download_progress_state()
 
@@ -35,6 +41,10 @@ StateStore <- R6Class("StateStore",
             private$setup_shared_control_states(page_ids)
             private$setup_simulation_storage()
             private$setup_page_error_states(page_ids)
+
+            # Setup new state components for decoupled states
+            private$setup_current_simulation_ids(page_ids)
+            private$setup_panel_plot_statuses(page_ids)
         },
 
         #' @description Get the current model state
@@ -76,12 +86,10 @@ StateStore <- R6Class("StateStore",
         #' @description Update visualization state for a panel
         #' @param page_id Character: panel identifier
         #' @param visibility Character: new visibility state
-        #' @param plot_status Character: new plot status
         #' @param display_type Character: display type ("plot" or "table")
         #' @param error_message Character: new error message
         update_visualization_state = function(page_id,
                                               visibility = NULL,
-                                              plot_status = NULL,
                                               display_type = NULL,
                                               error_message = NULL) {
             current_state <- self$get_panel_state(page_id)
@@ -89,9 +97,6 @@ StateStore <- R6Class("StateStore",
             # Only update provided fields
             if (!is.null(visibility)) {
                 current_state$visualization$visibility <- visibility
-            }
-            if (!is.null(plot_status)) {
-                current_state$visualization$plot_status <- plot_status
             }
             if (!is.null(display_type)) {
                 current_state$visualization$display_type <- display_type
@@ -119,10 +124,12 @@ StateStore <- R6Class("StateStore",
             print(paste0("--- Store: Reading SHARED controls for ", page_id, " ---"))
             val <- self$shared_control_states[[page_id]]() # Read dedicated reactiveVal
             # Add fallback if needed
-            if(is.null(val)) { return(create_control_state()) } # Use default constructor
+            if (is.null(val)) {
+                return(create_control_state())
+            } # Use default constructor
             return(val)
         },
-        
+
         #' @description Update shared control state for a page
         #' @param page_id Character: page identifier
         #' @param settings List: complete control settings
@@ -135,7 +142,7 @@ StateStore <- R6Class("StateStore",
             self$shared_control_states[[page_id]](validated_settings) # Update dedicated reactiveVal
             invisible(self)
         },
-        
+
         #' @description Update control state for a panel (DEPRECATED - use update_shared_control_state)
         #' @param page_id Character: panel identifier
         #' @param settings List: complete control settings
@@ -162,16 +169,16 @@ StateStore <- R6Class("StateStore",
         #' @param page_id Character: panel identifier
         #' @return List containing simset and transformed data
         get_current_simulation_data = function(page_id) {
-        sim_id <- self$get_current_simulation_id(page_id)
-        if (is.null(sim_id)) {
-        stop("No current simulation set for page: ", page_id)
-        }
-        
-        # Get raw simulation state
-        sim_state <- self$get_simulation(sim_id)
-        
-        # Continue with regular function
-        sim_state$results
+            sim_id <- self$get_current_simulation_id(page_id)
+            if (is.null(sim_id)) {
+                stop("No current simulation set for page: ", page_id)
+            }
+
+            # Get raw simulation state
+            sim_state <- self$get_simulation(sim_id)
+
+            # Continue with regular function
+            sim_state$results
         },
 
         #' @description Get the original base simulation for a page (for baseline comparison)
@@ -183,22 +190,22 @@ StateStore <- R6Class("StateStore",
             if (is.null(sim_id)) {
                 return(NULL)
             }
-            
+
             # Get the full simulation state
             sim_state <- self$get_simulation(sim_id)
             if (is.null(sim_state)) {
                 return(NULL)
             }
-            
+
             # Get the original base simulation from the top level
             if (!is.null(sim_state$original_base_simset)) {
                 return(sim_state$original_base_simset)
             }
-            
+
             # Not found
             return(NULL)
         },
-        
+
         #' @description Get transformed data for current simulation
         #' @param page_id Character: panel identifier
         #' @param settings List: display settings (optional)
@@ -226,6 +233,65 @@ StateStore <- R6Class("StateStore",
         #' @param page_id Character: panel identifier
         reset_panel_state = function(page_id) {
             self$panel_states[[page_id]](create_panel_state(page_id))
+            invisible(self)
+        },
+
+        # Current Simulation Methods ---------------------------------------
+
+        #' @description Get the current simulation ID for a panel
+        #' @param page_id Character: panel identifier
+        #' @return Character: current simulation ID or NULL
+        get_current_simulation_id = function(page_id) {
+            if (is.null(self$current_simulation_ids[[page_id]])) {
+                stop(sprintf("No simulation ID state found for page: %s", page_id))
+            }
+            self$current_simulation_ids[[page_id]]()
+        },
+
+        #' @description Update the current simulation for a panel
+        #' @param page_id Character: panel identifier
+        #' @param simulation_id Character: simulation identifier
+        set_current_simulation = function(page_id, simulation_id) {
+            if (!is.null(simulation_id)) {
+                # Verify simulation exists
+                if (is.null(private$simulations[[simulation_id]])) {
+                    stop(sprintf("No simulation found with ID: %s", simulation_id))
+                }
+            }
+
+            if (is.null(self$current_simulation_ids[[page_id]])) {
+                stop(sprintf("No simulation ID state found for page: %s", page_id))
+            }
+            self$current_simulation_ids[[page_id]](simulation_id)
+
+            invisible(self)
+        },
+
+        #' @description Get the current plot status for a panel
+        #' @param page_id Character: panel identifier
+        #' @return Character: current plot status
+        get_plot_status = function(page_id) {
+            if (is.null(self$panel_plot_statuses[[page_id]])) {
+                stop(sprintf("No plot status found for page: %s", page_id))
+            }
+            self$panel_plot_statuses[[page_id]]()
+        },
+
+        #' @description Set the plot status for a panel
+        #' @param page_id Character: panel identifier
+        #' @param status Character: new status ("ready", "loading", or "error")
+        set_plot_status = function(page_id, status) {
+            # Print diagnostic information to debug issues
+            print(sprintf("[STORE] Setting plot status for page '%s' to '%s'", page_id, status))
+            print(sprintf("[STORE] Available page IDs: %s", paste(names(self$panel_plot_statuses), collapse=", ")))
+            
+            if (is.null(self$panel_plot_statuses[[page_id]])) {
+                stop(sprintf("No plot status found for page: %s", page_id))
+            }
+            if (!status %in% c("ready", "loading", "error")) {
+                stop("Invalid plot_status value. Must be 'ready', 'loading', or 'error'")
+            }
+            self$panel_plot_statuses[[page_id]](status)
             invisible(self)
         },
 
@@ -399,7 +465,7 @@ StateStore <- R6Class("StateStore",
             print(paste0("[STATE_STORE] Looking for matching simulation for mode: ", mode))
             print("[STATE_STORE DEBUG] Settings:")
             print(str(settings))
-            
+
             # Log scenario specifically to help with debugging
             if (!is.null(settings$scenario)) {
                 print(sprintf("[STATE_STORE DEBUG] Current requested scenario: '%s'", settings$scenario))
@@ -420,24 +486,24 @@ StateStore <- R6Class("StateStore",
                     print(sprintf("[STATE_STORE DEBUG] Found simulation with matching mode: %s", id))
                     print("[STATE_STORE DEBUG] Existing simulation details:")
                     print(sprintf("- status: %s", sim_state$status))
-                    
+
                     # Print more details about the simulation state
                     if (!is.null(sim_state$timestamp)) {
                         age <- difftime(Sys.time(), sim_state$timestamp, units = "mins")
                         print(sprintf("- age: %.1f minutes", as.numeric(age)))
                     }
-                    
+
                     # Print scenario info specifically for debugging
                     if (!is.null(sim_state$settings$scenario)) {
                         print(sprintf("[STATE_STORE DEBUG] Checking against existing scenario: '%s'", sim_state$settings$scenario))
                     }
-                    
+
                     # If the simulation is complete, show if it has results or not
                     if (sim_state$status == "complete") {
-                        has_results = !is.null(sim_state$results) && !is.null(sim_state$results$simset)
+                        has_results <- !is.null(sim_state$results) && !is.null(sim_state$results$simset)
                         print(sprintf("- has results: %s", has_results))
                     }
-                    
+
                     # Check if settings match
                     settings_match <- private$are_settings_equal(sim_state$settings, settings)
                     print(sprintf("[STATE_STORE DEBUG] Settings match: %s", settings_match))
@@ -644,31 +710,7 @@ StateStore <- R6Class("StateStore",
             NULL
         },
 
-        #' @description Get the current simulation ID for a panel
-        #' @param page_id Character: panel identifier
-        #' @return Character: current simulation ID or NULL
-        get_current_simulation_id = function(page_id) {
-            current_state <- self$get_panel_state(page_id)
-            current_state$current_simulation_id
-        },
 
-        #' @description Update the current simulation for a panel
-        #' @param page_id Character: panel identifier
-        #' @param simulation_id Character: simulation identifier
-        set_current_simulation = function(page_id, simulation_id) {
-            if (!is.null(simulation_id)) {
-                # Verify simulation exists
-                if (is.null(private$simulations[[simulation_id]])) {
-                    stop(sprintf("No simulation found with ID: %s", simulation_id))
-                }
-            }
-
-            current_state <- self$get_panel_state(page_id)
-            current_state$current_simulation_id <- simulation_id
-            self$panel_states[[page_id]](current_state)
-
-            invisible(self)
-        },
 
         #' @description Clean up old simulations to prevent memory issues
         #' @param max_age Numeric: maximum age in seconds before a simulation is considered old
@@ -806,9 +848,9 @@ StateStore <- R6Class("StateStore",
                 referenced_ids = unique(referenced_ids)
             )
         },
-        
+
         # ---- DOWNLOAD MANAGEMENT METHODS ----
-        
+
         #' Add a new download to the active downloads list
         #' @param id Unique identifier for the download
         #' @param filename Name of the file being downloaded
@@ -820,31 +862,33 @@ StateStore <- R6Class("StateStore",
         #' @param total_size Total size of the file in bytes (if known)
         #' @return Invisible self (for chaining)
         add_download = function(id, filename, total_size = NULL) {
-          timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-          print(sprintf("[STATE_STORE %s] Adding new download: ID=%s, Filename=%s", timestamp, id, filename))
-          
-          current_state <- private$state$downloads
-          
-          # Create new download entry
-          entry <- create_download_entry(id, filename, total_size)
-          
-          # Log existing downloads before adding
-          active_count <- length(names(current_state$active_downloads))
-          print(sprintf("[STATE_STORE %s] Current active downloads: %d", timestamp, active_count))
-          
-          # Add to active downloads
-          current_state$active_downloads[[id]] <- entry
-          current_state$last_updated <- Sys.time()
-          
-          # Update state
-          private$state$downloads <- validate_download_progress_state(current_state)
-          
-          # Log active downloads after adding
-          new_count <- length(names(private$state$downloads$active_downloads))
-          print(sprintf("[STATE_STORE %s] Active downloads after adding: %d (added: %s)", 
-                        timestamp, new_count, new_count > active_count))
-          
-          invisible(self)
+            timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+            print(sprintf("[STATE_STORE %s] Adding new download: ID=%s, Filename=%s", timestamp, id, filename))
+
+            current_state <- private$state$downloads
+
+            # Create new download entry
+            entry <- create_download_entry(id, filename, total_size)
+
+            # Log existing downloads before adding
+            active_count <- length(names(current_state$active_downloads))
+            print(sprintf("[STATE_STORE %s] Current active downloads: %d", timestamp, active_count))
+
+            # Add to active downloads
+            current_state$active_downloads[[id]] <- entry
+            current_state$last_updated <- Sys.time()
+
+            # Update state
+            private$state$downloads <- validate_download_progress_state(current_state)
+
+            # Log active downloads after adding
+            new_count <- length(names(private$state$downloads$active_downloads))
+            print(sprintf(
+                "[STATE_STORE %s] Active downloads after adding: %d (added: %s)",
+                timestamp, new_count, new_count > active_count
+            ))
+
+            invisible(self)
         },
 
         #' Update the progress of an active download
@@ -852,29 +896,29 @@ StateStore <- R6Class("StateStore",
         #' @param percent Progress percentage (0-100)
         #' @return Invisible self (for chaining)
         update_download_progress = function(id, percent) {
-          # Reduced logging - only log for major milestones (0, 25, 50, 75, 100%)
-          if (percent == 0 || percent == 25 || percent == 50 || percent == 75 || percent == 100) {
-            timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-            print(sprintf("[STATE_STORE %s] Updating download progress: ID=%s, Progress=%d%%", timestamp, id, percent))
-          }
-          
-          current_state <- private$state$downloads
-          
-          # Check if download exists
-          if (is.null(current_state$active_downloads[[id]])) {
-            print(sprintf("[STATE_STORE] Warning: Cannot update non-existent download: %s", id))
-            return(invisible(self))
-          }
-          
-          # Update progress
-          current_state$active_downloads[[id]]$percent <- min(100, max(0, percent))
-          current_state$active_downloads[[id]]$last_updated <- Sys.time()
-          current_state$last_updated <- Sys.time()
-          
-          # Update state
-          private$state$downloads <- validate_download_progress_state(current_state)
-          
-          invisible(self)
+            # Reduced logging - only log for major milestones (0, 25, 50, 75, 100%)
+            if (percent == 0 || percent == 25 || percent == 50 || percent == 75 || percent == 100) {
+                timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+                print(sprintf("[STATE_STORE %s] Updating download progress: ID=%s, Progress=%d%%", timestamp, id, percent))
+            }
+
+            current_state <- private$state$downloads
+
+            # Check if download exists
+            if (is.null(current_state$active_downloads[[id]])) {
+                print(sprintf("[STATE_STORE] Warning: Cannot update non-existent download: %s", id))
+                return(invisible(self))
+            }
+
+            # Update progress
+            current_state$active_downloads[[id]]$percent <- min(100, max(0, percent))
+            current_state$active_downloads[[id]]$last_updated <- Sys.time()
+            current_state$last_updated <- Sys.time()
+
+            # Update state
+            private$state$downloads <- validate_download_progress_state(current_state)
+
+            invisible(self)
         },
 
         #' Mark a download as complete
@@ -884,36 +928,38 @@ StateStore <- R6Class("StateStore",
         #' @param id Download identifier
         #' @return Invisible self (for chaining)
         complete_download = function(id) {
-          timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-          print(sprintf("[STATE_STORE %s] Marking download as complete: ID=%s", timestamp, id))
-          
-          current_state <- private$state$downloads
-          
-          # Check if download exists
-          if (is.null(current_state$active_downloads[[id]])) {
-            print(sprintf("[STATE_STORE %s] Warning: Cannot complete non-existent download: %s", timestamp, id))
-            return(invisible(self))
-          }
-          
-          # Move from active to completed
-          entry <- current_state$active_downloads[[id]]
-          entry$percent <- 100
-          entry$completion_time <- Sys.time()
-          current_state$completed_downloads[[id]] <- entry
-          current_state$active_downloads[[id]] <- NULL
-          current_state$last_updated <- Sys.time()
-          
-          # Update state
-          private$state$downloads <- validate_download_progress_state(current_state)
-          print(sprintf("[STATE_STORE %s] Successfully moved download %s to completed list", timestamp, id))
-          
-          # Log download counts after change
-          active_count <- length(names(private$state$downloads$active_downloads))
-          completed_count <- length(names(private$state$downloads$completed_downloads))
-          print(sprintf("[STATE_STORE %s] After completion - Active: %d, Completed: %d", 
-                        timestamp, active_count, completed_count))
-          
-          invisible(self)
+            timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+            print(sprintf("[STATE_STORE %s] Marking download as complete: ID=%s", timestamp, id))
+
+            current_state <- private$state$downloads
+
+            # Check if download exists
+            if (is.null(current_state$active_downloads[[id]])) {
+                print(sprintf("[STATE_STORE %s] Warning: Cannot complete non-existent download: %s", timestamp, id))
+                return(invisible(self))
+            }
+
+            # Move from active to completed
+            entry <- current_state$active_downloads[[id]]
+            entry$percent <- 100
+            entry$completion_time <- Sys.time()
+            current_state$completed_downloads[[id]] <- entry
+            current_state$active_downloads[[id]] <- NULL
+            current_state$last_updated <- Sys.time()
+
+            # Update state
+            private$state$downloads <- validate_download_progress_state(current_state)
+            print(sprintf("[STATE_STORE %s] Successfully moved download %s to completed list", timestamp, id))
+
+            # Log download counts after change
+            active_count <- length(names(private$state$downloads$active_downloads))
+            completed_count <- length(names(private$state$downloads$completed_downloads))
+            print(sprintf(
+                "[STATE_STORE %s] After completion - Active: %d, Completed: %d",
+                timestamp, active_count, completed_count
+            ))
+
+            invisible(self)
         },
 
         #' Mark a download as failed
@@ -923,27 +969,27 @@ StateStore <- R6Class("StateStore",
         #' @param severity Error severity from SEVERITY_LEVELS
         #' @return Invisible self (for chaining)
         fail_download = function(id, message, type = ERROR_TYPES$DOWNLOAD, severity = SEVERITY_LEVELS$ERROR) {
-          current_state <- private$state$downloads
-          
-          # Check if download exists
-          if (is.null(current_state$active_downloads[[id]])) {
-            return(invisible(self))
-          }
-          
-          # Move from active to failed
-          entry <- current_state$active_downloads[[id]]
-          entry$failure_time <- Sys.time()
-          entry$error_message <- message
-          entry$error_type <- type
-          entry$error_severity <- severity
-          current_state$failed_downloads[[id]] <- entry
-          current_state$active_downloads[[id]] <- NULL
-          current_state$last_updated <- Sys.time()
-          
-          # Update state
-          private$state$downloads <- validate_download_progress_state(current_state)
-          
-          invisible(self)
+            current_state <- private$state$downloads
+
+            # Check if download exists
+            if (is.null(current_state$active_downloads[[id]])) {
+                return(invisible(self))
+            }
+
+            # Move from active to failed
+            entry <- current_state$active_downloads[[id]]
+            entry$failure_time <- Sys.time()
+            entry$error_message <- message
+            entry$error_type <- type
+            entry$error_severity <- severity
+            current_state$failed_downloads[[id]] <- entry
+            current_state$active_downloads[[id]] <- NULL
+            current_state$last_updated <- Sys.time()
+
+            # Update state
+            private$state$downloads <- validate_download_progress_state(current_state)
+
+            invisible(self)
         },
 
         #' Get all active downloads
@@ -951,79 +997,81 @@ StateStore <- R6Class("StateStore",
         #' Get all active downloads
         #' @return List of active downloads
         get_active_downloads = function() {
-          timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
-          active_downloads <- private$state$downloads$active_downloads
-          count <- length(names(active_downloads))
-          print(sprintf("[STATE_STORE %s] get_active_downloads called, returning %d downloads", timestamp, count))
-          
-          # If there are active downloads, log them
-          if (count > 0) {
-            for (id in names(active_downloads)) {
-              download <- active_downloads[[id]]
-              print(sprintf("[STATE_STORE %s] Active download: ID=%s, Progress=%d%%, Filename=%s", 
-                           timestamp, id, download$percent, download$filename))
+            timestamp <- format(Sys.time(), "%H:%M:%S.%OS3")
+            active_downloads <- private$state$downloads$active_downloads
+            count <- length(names(active_downloads))
+            print(sprintf("[STATE_STORE %s] get_active_downloads called, returning %d downloads", timestamp, count))
+
+            # If there are active downloads, log them
+            if (count > 0) {
+                for (id in names(active_downloads)) {
+                    download <- active_downloads[[id]]
+                    print(sprintf(
+                        "[STATE_STORE %s] Active download: ID=%s, Progress=%d%%, Filename=%s",
+                        timestamp, id, download$percent, download$filename
+                    ))
+                }
             }
-          }
-          
-          active_downloads
+
+            active_downloads
         },
 
         #' Get all completed downloads
         #' @return List of completed downloads
         get_completed_downloads = function() {
-          private$state$downloads$completed_downloads
+            private$state$downloads$completed_downloads
         },
 
         #' Get all failed downloads
         #' @return List of failed downloads
         get_failed_downloads = function() {
-          private$state$downloads$failed_downloads
+            private$state$downloads$failed_downloads
         },
 
         #' Clear completed downloads
         #' @param keep_count Number of recent completed downloads to keep (default: 0)
         #' @return Invisible self (for chaining)
         clear_completed_downloads = function(keep_count = 0) {
-          current_state <- private$state$downloads
-          
-          # Sort completed downloads by completion time
-          if (length(current_state$completed_downloads) > keep_count) {
-            sorted_downloads <- current_state$completed_downloads[
-              order(sapply(current_state$completed_downloads, function(d) d$completion_time), decreasing = TRUE)
-            ]
-            
-            # Keep only the specified number of recent downloads
-            current_state$completed_downloads <- sorted_downloads[1:min(keep_count, length(sorted_downloads))]
-            current_state$last_updated <- Sys.time()
-            
-            # Update state
-            private$state$downloads <- validate_download_progress_state(current_state)
-          }
-          
-          invisible(self)
+            current_state <- private$state$downloads
+
+            # Sort completed downloads by completion time
+            if (length(current_state$completed_downloads) > keep_count) {
+                sorted_downloads <- current_state$completed_downloads[
+                    order(sapply(current_state$completed_downloads, function(d) d$completion_time), decreasing = TRUE)
+                ]
+
+                # Keep only the specified number of recent downloads
+                current_state$completed_downloads <- sorted_downloads[1:min(keep_count, length(sorted_downloads))]
+                current_state$last_updated <- Sys.time()
+
+                # Update state
+                private$state$downloads <- validate_download_progress_state(current_state)
+            }
+
+            invisible(self)
         },
 
         #' Clear failed downloads
         #' @param keep_count Number of recent failed downloads to keep (default: 0)
         #' @return Invisible self (for chaining)
         clear_failed_downloads = function(keep_count = 0) {
-          current_state <- private$state$downloads
-          
-          # Sort failed downloads by failure time
-          if (length(current_state$failed_downloads) > keep_count) {
-            sorted_downloads <- current_state$failed_downloads[
-              order(sapply(current_state$failed_downloads, function(d) d$failure_time), decreasing = TRUE)
-            ]
-            
-            # Keep only the specified number of recent downloads
-            current_state$failed_downloads <- sorted_downloads[1:min(keep_count, length(sorted_downloads))]
-            current_state$last_updated <- Sys.time()
-            
-            # Update state
-            private$state$downloads <- validate_download_progress_state(current_state)
-          }
-          
-          invisible(self)
+            current_state <- private$state$downloads
+
+            # Sort failed downloads by failure time
+            if (length(current_state$failed_downloads) > keep_count) {
+                sorted_downloads <- current_state$failed_downloads[
+                    order(sapply(current_state$failed_downloads, function(d) d$failure_time), decreasing = TRUE)
+                ]
+
+                # Keep only the specified number of recent downloads
+                current_state$failed_downloads <- sorted_downloads[1:min(keep_count, length(sorted_downloads))]
+                current_state$last_updated <- Sys.time()
+
+                # Update state
+                private$state$downloads <- validate_download_progress_state(current_state)
+            }
+
+            invisible(self)
         },
 
         # Page Error State Methods ---------------------------------------
@@ -1099,7 +1147,7 @@ StateStore <- R6Class("StateStore",
             })
             names(self$panel_states) <- page_ids
         },
-        
+
         #' @description Set up shared control states
         #' @param page_ids Character vector of page identifiers
         setup_shared_control_states = function(page_ids) {
@@ -1107,6 +1155,24 @@ StateStore <- R6Class("StateStore",
                 reactiveVal(create_control_state())
             })
             names(self$shared_control_states) <- page_ids
+        },
+
+        #' @description Set up current simulation ID state
+        #' @param page_ids Character vector of page identifiers
+        setup_current_simulation_ids = function(page_ids) {
+            self$current_simulation_ids <- lapply(page_ids, function(id) {
+                reactiveVal(NULL)
+            })
+            names(self$current_simulation_ids) <- page_ids
+        },
+
+        #' @description Set up panel plot status state
+        #' @param page_ids Character vector of page identifiers
+        setup_panel_plot_statuses = function(page_ids) {
+            self$panel_plot_statuses <- lapply(page_ids, function(id) {
+                reactiveVal("ready")
+            })
+            names(self$panel_plot_statuses) <- page_ids
         },
 
         #' @description Set up simulation storage
@@ -1160,7 +1226,7 @@ StateStore <- R6Class("StateStore",
                 print("[STATE_STORE DEBUG] One or both settings are NULL")
                 return(identical(settings1, settings2))
             }
-            
+
             # Essential comparisons first (fail fast)
             # Check scenario specifically - this is a critical field for simulation identification
             if (!is.null(settings1$scenario) && !is.null(settings2$scenario)) {
@@ -1227,8 +1293,6 @@ StateStore <- R6Class("StateStore",
             print("[STATE_STORE DEBUG] All checks passed, settings are equal")
             return(TRUE)
         },
-
-
 
         #' @field simulations Internal storage for simulation ReactiveVals
         simulations = NULL,

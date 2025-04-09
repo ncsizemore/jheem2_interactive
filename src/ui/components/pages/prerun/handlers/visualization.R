@@ -7,8 +7,20 @@
 #' @param vis_manager Visualization manager instance
 initialize_prerun_visualization_handlers <- function(input, output, session, vis_manager) {
     # Register simulation error boundary for prerun page
-    get_simulation_adapter()$register_error_boundary("prerun", session, output)
-    print("[PRERUN] Registered simulation error boundary")
+    sim_adapter <- get_simulation_adapter()
+    sim_adapter$register_error_boundary("prerun", session, output, vis_manager)
+    print("[PRERUN] Registered simulation error boundary for prerun page with visualization manager")
+    
+    # Create simulation and plot error boundaries for visualization updates
+    sim_boundary <- create_simulation_boundary(
+        session, output, "prerun", "simulation", 
+        state_manager = vis_manager
+    )
+    plot_boundary <- create_plot_boundary(
+        session, output, "prerun", "plot", 
+        state_manager = vis_manager
+    )
+    print("[PRERUN] Created additional error boundaries for visualization updates")
 
     # Handle plot toggle
     observeEvent(input[["prerun-toggle_plot"]],

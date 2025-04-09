@@ -133,7 +133,12 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
 
                 # Update visualization status if manager provided
                 if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
+                    # Don't pass page_id - visualization manager already has it in closure
+                    print(sprintf("[ERROR_BOUNDARY] Setting plot status to 'error' using %s", 
+                                  if("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"))
                     state_manager$set_plot_status("error")
+                } else {
+                    print("[ERROR_BOUNDARY] No state_manager with set_plot_status available")
                 }
             })
         }
@@ -153,12 +158,58 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
 
                 # Update visualization status if manager provided
                 if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
+                    # Don't pass page_id - visualization manager already has it in closure
+                    print(sprintf("[ERROR_BOUNDARY] Clearing error and setting plot status to 'ready' using %s", 
+                                  if("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"))
                     state_manager$set_plot_status("ready")
+                } else {
+                    print("[ERROR_BOUNDARY] No state_manager with set_plot_status available for clearing error")
                 }
             })
         }
 
-        # Other functions same as before...
+        # Handle expressions with error handling
+        handle <- function(expr, type = ERROR_TYPES$SYSTEM, message = NULL, severity = SEVERITY_LEVELS$ERROR, propagate = FALSE) {
+            print("Handling expression with error boundary")
+            tryCatch({
+                result <- expr
+                # Clear any existing error
+                clear_error()
+                return(result)
+            }, error = function(e) {
+                # Get error message
+                error_msg <- if (is.null(message)) {
+                    as.character(e$message)
+                } else {
+                    paste0(message, ": ", as.character(e$message))
+                }
+                
+                print(sprintf("Expression error caught: %s", error_msg))
+                
+                # Set error in this boundary
+                set_error(
+                    message = error_msg,
+                    type = type,
+                    severity = severity,
+                    details = as.character(e)
+                )
+                
+                # Propagate to parent if requested
+                if (propagate && !is.null(error_registry[[id]])) {
+                    error_registry[[id]]$propagate_error(error_msg, type, severity)
+                }
+                
+                # Return NULL to indicate failure
+                NULL
+            })
+        }
+        
+        # Propagate errors to parent components
+        propagate_error <- function(message, type = ERROR_TYPES$SYSTEM, severity = SEVERITY_LEVELS$ERROR) {
+            # Implementation would depend on the registry structure
+            print("Error propagation not yet implemented")
+        }
+        
         environment()
     }) -> error_fns
 

@@ -107,6 +107,7 @@ table_panel_server <- function(id, settings) {
 
     # --- Reactive expression for generating the FULL dataset ---
     # Depends ONLY on control_manager settings (which change on button press)
+    # AND the current simulation ID (which changes when a new simulation is generated)
     full_formatted_data <- reactive({
         # Take dependency on settings
         current_settings <- control_manager$get_settings()
@@ -115,35 +116,36 @@ table_panel_server <- function(id, settings) {
         # Check visibility/type here as well
         req(input$visualization_state == "visible", cancelOutput = TRUE)
         req(input$display_type == "table", cancelOutput = TRUE)
+        
+        # Take dependency on current simulation ID
+        current_sim_id <- store$get_current_simulation_id(id)
+        # Require a sim ID if rendering shouldn't happen without one
+        req(!is.null(current_sim_id), cancelOutput = TRUE)
 
-        print(paste0("-[ Reactive full_formatted_data", id, " ]- Running DATA GENERATION. Settings Read:"))
-        str(current_settings)
+        print(paste0("-[ Reactive full_formatted_data", id, " ]- Running DATA GENERATION. SimID: ", current_sim_id))
+        print(paste0("-[ Reactive full_formatted_data", id, " ]- Using settings: O=", 
+                    paste(current_settings$outcomes, collapse=", "), 
+                    ", F=", paste(current_settings$facet.by, collapse=", "), 
+                    ", S=", current_settings$summary.type))
 
         # --- Isolate the actual data generation ---
         data_result <- isolate({
-            print(paste0("-[ Reactive full_formatted_data", id, " ]- ISOLATED BLOCK: Using settings: O=", 
-                         paste(current_settings$outcomes, collapse=", "), 
-                         ", F=", paste(current_settings$facet.by, collapse=", "), 
-                         ", S=", current_settings$summary.type))
-            
-            isolate(vis_manager$set_plot_status("loading")) # Isolate status update
+            # Set loading status without creating unwanted dependencies
+            store$set_plot_status(id, "loading")
 
             # Sim/Data Checks
-            sim_id <- store$get_current_simulation_id(id)
-            sim_state_check <- if (!is.null(sim_id)) store$get_simulation(sim_id) else NULL
+            sim_state_check <- store$get_simulation(current_sim_id)
             
             if (is.null(sim_state_check) || sim_state_check$status == "error") { 
                 err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
                 print(paste0("-[ Reactive full_formatted_data", id, " ]- Sim Error: ", err_msg))
                 
-                isolate({ 
-                    sim_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$SIMULATION, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                sim_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$SIMULATION, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_table_error_message(paste("Error:", err_msg))
                 return(NULL) # Return NULL inside isolate
@@ -155,14 +157,12 @@ table_panel_server <- function(id, settings) {
                 err_msg <- "No sim data."
                 print(paste0("-[ Reactive full_formatted_data", id, " ]- Data Error: ", err_msg))
                 
-                isolate({ 
-                    sim_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$DATA, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                sim_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$DATA, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_table_error_message(paste("Error:", err_msg))
                 return(NULL)
@@ -219,12 +219,11 @@ table_panel_server <- function(id, settings) {
                 
                 print(paste0("-[ Reactive full_formatted_data", id, " ]- Full data generated. Rows: ", nrow(formatted)))
                 
-                isolate({ 
-                    sim_boundary$clear()
-                    validation_boundary$clear()
-                    store$clear_page_error_state(id)
-                    vis_manager$set_plot_status("ready") 
-                })
+                # Clear any errors and update status
+                sim_boundary$clear()
+                validation_boundary$clear()
+                store$clear_page_error_state(id)
+                store$set_plot_status(id, "ready")
                 
                 direct_table_error_message(NULL)
                 formatted
@@ -233,28 +232,26 @@ table_panel_server <- function(id, settings) {
                 err_msg <- conditionMessage(e)
                 print(paste0("-[ Reactive full_formatted_data", id, " ]- Data Gen Error: ", err_msg))
                 
-                isolate({ 
-                    sim_boundary$set_error(
-                        message = err_msg, 
-                        type = ERROR_TYPES$DATA, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    store$update_page_error_state(
-                        id, 
-                        has_error = TRUE, 
-                        message = err_msg, 
-                        type = ERROR_TYPES$DATA, 
-                        severity = SEVERITY_LEVELS$ERROR
-                    )
-                    vis_manager$set_plot_status("error") 
-                })
+                sim_boundary$set_error(
+                    message = err_msg, 
+                    type = ERROR_TYPES$DATA, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$update_page_error_state(
+                    id, 
+                    has_error = TRUE, 
+                    message = err_msg, 
+                    type = ERROR_TYPES$DATA, 
+                    severity = SEVERITY_LEVELS$ERROR
+                )
+                store$set_plot_status(id, "error")
                 
                 direct_table_error_message(paste("Error:", err_msg))
                 NULL 
             })
 
             # Update total rows reactiveVal after data generation attempt
-            isolate(total_rows_in_data(if(is.null(fdata)) 0 else nrow(fdata)))
+            total_rows_in_data(if(is.null(fdata)) 0 else nrow(fdata))
 
             return(fdata) # Return the full data frame (or NULL)
         }) # End isolate() for data generation
@@ -342,7 +339,7 @@ table_panel_server <- function(id, settings) {
           if(!is.null(isolate(direct_table_error_message())) || 
              isolate(total_rows_in_data() > 0) || 
              isolate(current_page() != 1) || 
-             isolate(store$get_panel_state(id)$visualization$plot_status == 'loading')) { 
+             isolate(store$get_plot_status(id) == 'loading')) { 
               print(paste0(id_log_prefix, " Deactivating. Resetting state..."))
               isolate({ 
                   current_page(1)
@@ -350,6 +347,7 @@ table_panel_server <- function(id, settings) {
                   validation_boundary$clear()
                   sim_boundary$clear()
                   direct_table_error_message(NULL)
+                  store$set_plot_status(id, "ready")
               }) 
           }
       } else { 
@@ -465,7 +463,7 @@ table_panel_server <- function(id, settings) {
                     )
                     
                     direct_table_error_message(err_msg)
-                    vis_manager$set_plot_status("error")
+                    store$set_plot_status(id, "error")
                 }
             }
         })
@@ -497,7 +495,7 @@ table_panel_server <- function(id, settings) {
                     }
                     
                     direct_table_error_message(err_msg)
-                    vis_manager$set_plot_status("error")
+                    store$set_plot_status(id, "error")
                 }
             }
         })

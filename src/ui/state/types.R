@@ -2,18 +2,15 @@
 
 #' Create a visualization state object
 #' @param visibility Character: "visible", "hidden", or "loading"
-#' @param plot_status Character: "ready", "loading", or "error"
 #' @param display_type Character: "plot" or "table"
 #' @param error_message Character: Error message if any
 #' @return List with visualization state properties
 create_visualization_state <- function(
     visibility = "hidden",
-    plot_status = "ready",
     display_type = "plot", # Default to plot view
     error_message = "") {
     validate_visualization_state(list(
         visibility = visibility,
-        plot_status = plot_status,
         display_type = display_type,
         error_message = error_message
     ))
@@ -241,18 +238,15 @@ create_control_state <- function(outcomes = NULL,
 #' Create a new panel state object
 #' @param page_id Character: page identifier
 #' @param visualization Visualization state object
-#' @param controls Control state object
 #' @param validation Validation state object
 #' @return List with panel state properties
 create_panel_state <- function(page_id,
                                visualization = create_visualization_state(),
-                               validation = create_validation_state(),
-                               current_simulation_id = NULL) {
+                               validation = create_validation_state()) {
     validate_panel_state(list(
         page_id = page_id,
         visualization = visualization,
-        validation = validation,
-        current_simulation_id = current_simulation_id
+        validation = validation
     ))
 }
 
@@ -320,7 +314,7 @@ validate_visualization_state <- function(state) {
     if (!is.list(state)) stop("Visualization state must be a list")
 
     # Required fields
-    required <- c("visibility", "plot_status", "display_type", "error_message")
+    required <- c("visibility", "display_type", "error_message")
     missing <- setdiff(required, names(state))
     if (length(missing) > 0) {
         stop(sprintf(
@@ -332,11 +326,6 @@ validate_visualization_state <- function(state) {
     # Validate visibility
     if (!state$visibility %in% c("visible", "hidden", "loading")) {
         stop("Invalid visibility value. Must be 'visible', 'hidden', or 'loading'")
-    }
-
-    # Validate plot_status
-    if (!state$plot_status %in% c("ready", "loading", "error")) {
-        stop("Invalid plot_status value. Must be 'ready', 'loading', or 'error'")
     }
 
     # Validate display_type
@@ -414,7 +403,7 @@ validate_panel_state <- function(state) {
     if (!is.list(state)) stop("Panel state must be a list")
 
     # Required fields
-    required <- c("page_id", "visualization", "validation", "current_simulation_id")
+    required <- c("page_id", "visualization", "validation")
     missing <- setdiff(required, names(state))
     if (length(missing) > 0) {
         stop(sprintf(
@@ -426,12 +415,6 @@ validate_panel_state <- function(state) {
     # Validate page_id
     if (!state$page_id %in% c("prerun", "custom")) {
         stop("page_id must be either 'prerun' or 'custom'")
-    }
-
-    # Validate current_simulation_id
-    if (!is.null(state$current_simulation_id) &&
-        (!is.character(state$current_simulation_id) || length(state$current_simulation_id) != 1)) {
-        stop("current_simulation_id must be NULL or a single character string")
     }
 
     # Validate nested states

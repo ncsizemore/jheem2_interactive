@@ -31,16 +31,26 @@ SimulationAdapter <- R6::R6Class(
         #' @param page_id Character: page identifier
         #' @param session Shiny session object - Also used to access UI messenger for progress updates
         #' @param output Shiny output object
+        #' @param vis_manager Optional visualization manager for state management
         #' 
         #' This method not only registers error boundaries but also stores the session object
         #' which is crucial for the dual approach to progress tracking. The stored session
         #' allows us to access the UI messenger even when the main thread is blocked.
-        register_error_boundary = function(page_id, session, output) {
+        register_error_boundary = function(page_id, session, output, vis_manager = NULL) {
             if (!is.null(session) && !is.null(output)) {
+                # Determine which state manager to use
+                state_manager <- if (!is.null(vis_manager)) {
+                    print(sprintf("[SIMULATION_ADAPTER] Using visualization manager for error boundary of page %s", page_id))
+                    vis_manager
+                } else {
+                    print(sprintf("[SIMULATION_ADAPTER] Using store for error boundary of page %s", page_id))
+                    private$store
+                }
+                
                 # Create a simulation boundary for the adapter
                 private$error_boundaries[[page_id]] <- create_simulation_boundary(
                     session, output, page_id, "simulation",
-                    state_manager = private$store
+                    state_manager = state_manager
                 )
                 
                 # Store the session for this page
@@ -61,6 +71,11 @@ SimulationAdapter <- R6::R6Class(
             print(paste("Mode:", mode))
             print("Settings:")
             str(settings)
+            
+            # Make sure the error boundary exists for this mode
+            if (is.null(private$error_boundaries[[mode]])) {
+                print(sprintf("[WARNING] No error boundary found for mode: %s", mode))
+            }
 
 
             # Get current model state

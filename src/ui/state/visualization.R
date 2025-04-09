@@ -23,9 +23,11 @@ create_visualization_manager <- function(session, page_id, id) {
         store$update_visualization_state(
             page_id,
             visibility = "visible",
-            display_type = "plot",
-            plot_status = "ready"
+            display_type = "plot"
         )
+        
+        # Also set plot status
+        store$set_plot_status(page_id, "ready")
 
         # 2. Update UI inputs with full prefixed IDs
         updateTextInput(session, vis_state_id, value = "visible")
@@ -69,10 +71,7 @@ create_visualization_manager <- function(session, page_id, id) {
             )
         },
         set_plot_status = function(status) {
-            store$update_visualization_state(
-                page_id,
-                plot_status = status
-            )
+            store$set_plot_status(page_id, status)
             updateTextInput(
                 session,
                 paste0(page_id, "-plot_status"),
@@ -94,8 +93,8 @@ create_visualization_manager <- function(session, page_id, id) {
         update_display = function(input, output, intervention_settings) {
             print("[VISUALIZATION] === update_display called ===")
             
-            # Get current control state from store
-            control_state <- store$get_panel_state(page_id)$controls
+            # Get current control state from store (using the new shared control state)
+            control_state <- store$get_shared_control_state(page_id)
             print("[VISUALIZATION] Control state:")
             str(control_state)
 
@@ -107,7 +106,7 @@ create_visualization_manager <- function(session, page_id, id) {
             )
 
             # Set status to loading while we work
-            store$update_visualization_state(page_id, plot_status = "loading")
+            store$set_plot_status(page_id, "loading")
             
             # Clear any previous error message
             output[[paste0(page_id, "-error_message")]] <- renderText({ NULL })
@@ -115,7 +114,10 @@ create_visualization_manager <- function(session, page_id, id) {
             # Get/create simulation and set as current
             print("[VISUALIZATION] Getting simulation data...")
             sim_id <- tryCatch({
-                get_simulation_adapter()$get_simulation_data(intervention_settings, mode = page_id)
+                # Wrap the entire simulation data call in a try-catch
+                print(sprintf("[VISUALIZATION] Calling get_simulation_data for page_id: %s", page_id))
+                sim_adapter <- get_simulation_adapter()
+                sim_adapter$get_simulation_data(intervention_settings, mode = page_id)
             }, error = function(e) {
                 # Handle any unexpected errors that weren't caught by the adapter
                 print(sprintf("[VISUALIZATION] Error getting simulation data: %s", conditionMessage(e)))
@@ -126,7 +128,7 @@ create_visualization_manager <- function(session, page_id, id) {
                 })
                 
                 # Update visualization state
-                store$update_visualization_state(page_id, plot_status = "error")
+                store$set_plot_status(page_id, "error")
                 store$update_visualization_state(page_id, visibility = "visible")
                 
                 # Return NULL to indicate failure
@@ -154,7 +156,7 @@ create_visualization_manager <- function(session, page_id, id) {
                 })
                 
                 # Update visualization state
-                store$update_visualization_state(page_id, plot_status = "error")
+                store$set_plot_status(page_id, "error")
                 
                 # Still show visualization as visible
                 store$update_visualization_state(page_id, visibility = "visible")
@@ -176,7 +178,7 @@ create_visualization_manager <- function(session, page_id, id) {
                 })
                 
                 # Update visualization state
-                store$update_visualization_state(page_id, plot_status = "error")
+                store$set_plot_status(page_id, "error")
                 
                 # Return NULL to indicate failure
                 return(NULL)
@@ -211,9 +213,9 @@ create_visualization_manager <- function(session, page_id, id) {
             store$update_visualization_state(
                 page_id,
                 visibility = "hidden",
-                plot_status = "ready",
                 display_type = "plot"
             )
+            store$set_plot_status(page_id, "ready")
         },
         set_display = set_display
     )

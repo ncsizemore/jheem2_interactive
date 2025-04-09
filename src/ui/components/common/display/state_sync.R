@@ -13,8 +13,10 @@ create_visualization_sync <- function(page_id, session) {
   
   # Create observer to sync state → UI
   observe({
-    # Get current state 
-    state <- store$get_panel_state(page_id)$visualization
+    # Get current visualization state
+    viz_state <- store$get_panel_state(page_id)$visualization
+    # Get current plot status from dedicated reactiveVal
+    plot_status <- store$get_plot_status(page_id)
     
     # Sync UI based on current state
     # This observer runs whenever the state changes
@@ -25,12 +27,12 @@ create_visualization_sync <- function(page_id, session) {
     toggle_table_id <- paste0(page_id, "-toggle_table")
     
     # Log for debugging
-    print(sprintf("[STATE_SYNC][%s] Current display type: %s", page_id, state$display_type))
+    print(sprintf("[STATE_SYNC][%s] Current display type: %s", page_id, viz_state$display_type))
     
     # Update toggle button active states using the current classes
     # Note: This uses the existing Shiny.js patterns but could be replaced
     # with a custom JavaScript handler in the future
-    if (state$display_type == "plot") {
+    if (viz_state$display_type == "plot") {
       # Make plot button active, table button inactive
       removeClass(id = toggle_table_id, class = "active", asis = TRUE)
       addClass(id = toggle_plot_id, class = "active", asis = TRUE)
@@ -45,9 +47,9 @@ create_visualization_sync <- function(page_id, session) {
     # This relies on our custom JavaScript handler
     session$sendCustomMessage("updateVisualizationDisplay", list(
       page_id = page_id,
-      display_type = state$display_type,
-      visibility = state$visibility,
-      plot_status = state$plot_status
+      display_type = viz_state$display_type,
+      visibility = viz_state$visibility,
+      plot_status = plot_status  # Now coming from dedicated reactiveVal
     ))
   })
   
