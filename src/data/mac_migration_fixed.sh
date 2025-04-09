@@ -1,0 +1,237 @@
+#!/bin/bash
+# Bash script to migrate simulation files from rw-w and rw-ws folders
+# For use on macOS in Terminal or VSCode
+
+# Parse command line arguments
+DRY_RUN=false
+for arg in "$@"; do
+  if [ "$arg" == "--dry-run" ] || [ "$arg" == "-d" ]; then
+    DRY_RUN=true
+  fi
+done
+
+# Print header based on mode
+if [ "$DRY_RUN" = true ]; then
+  echo -e "\033[33mRunning in DRY RUN mode - no files will be copied\033[0m"
+  echo -e "\033[33mUse without the --dry-run parameter to perform actual file copying\033[0m"
+  echo ""
+fi
+
+# Configuration (adjust these values as needed)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Source paths - adjust if your paths are different
+RW_W_PATH="$PROJECT_ROOT/simulations/rw-w/final.ehe-80"
+RW_WS_PATH="$PROJECT_ROOT/simulations/rw-ws/final.ehe-80"
+
+# Destination path
+DESTINATION_ROOT_PATH="$PROJECT_ROOT/simulations/ryan-white"
+
+echo "Project root: $PROJECT_ROOT"
+echo "Source paths:"
+echo "  RW-W path: $RW_W_PATH"
+echo "  RW-WS path: $RW_WS_PATH"
+echo "Destination path: $DESTINATION_ROOT_PATH"
+echo ""
+
+# Ensure source paths exist
+if [ ! -d "$RW_W_PATH" ]; then
+  echo -e "\033[31mError: Source path does not exist: $RW_W_PATH\033[0m"
+  echo "Please check the path and update the script if necessary."
+  exit 1
+fi
+
+if [ ! -d "$RW_WS_PATH" ]; then
+  echo -e "\033[31mError: Source path does not exist: $RW_WS_PATH\033[0m"
+  echo "Please check the path and update the script if necessary."
+  exit 1
+fi
+
+# Ensure destination directories exist
+ensure_directory_exists() {
+  if [ ! -d "$1" ]; then
+    if [ "$DRY_RUN" = true ]; then
+      echo -e "\033[36mWould create directory: $1\033[0m"
+    else
+      mkdir -p "$1"
+      echo -e "\033[32mCreated directory: $1\033[0m"
+    fi
+  fi
+}
+
+# Initialize destination structure
+ensure_directory_exists "$DESTINATION_ROOT_PATH/base"
+ensure_directory_exists "$DESTINATION_ROOT_PATH/prerun"
+
+# Get all location folders from RW-W path (we'll use this as our main source of locations)
+if ! LOCATION_FOLDERS=$(find "$RW_W_PATH" -type d -depth 1 2>/dev/null); then
+  # Try with -maxdepth instead of -depth for compatibility
+  LOCATION_FOLDERS=$(find "$RW_W_PATH" -type d -maxdepth 1 -mindepth 1)
+fi
+
+LOCATION_COUNT=$(echo "$LOCATION_FOLDERS" | wc -l)
+LOCATION_COUNT=$(echo "$LOCATION_COUNT" | tr -d ' ')  # Trim whitespace
+
+if [ "$LOCATION_COUNT" -eq 0 ]; then
+  echo -e "\033[31mNo location folders found in source directory\033[0m"
+  exit 1
+fi
+
+echo -e "\033[36mFound $LOCATION_COUNT location folders in source directory\033[0m"
+
+# Initialize counters for reporting
+TOTAL_FILES=0
+COPIED_FILES=0
+ERROR_FILES=0
+CURRENT_LOCATION=0
+
+# Process each location folder
+for LOCATION_PATH in $LOCATION_FOLDERS; do
+  LOCATION_NAME=$(basename "$LOCATION_PATH")
+  CURRENT_LOCATION=$((CURRENT_LOCATION + 1))
+  
+  echo -e "\n\033[33mProcessing location ($CURRENT_LOCATION/$LOCATION_COUNT): $LOCATION_NAME\033[0m"
+  
+  # Ensure prerun directory exists for this location
+  ensure_directory_exists "$DESTINATION_ROOT_PATH/prerun/$LOCATION_NAME"
+  
+  # STEP 1: Process the baseline file from RW-WS first
+  echo -e "  Processing baseline file from RW-WS..."
+  BASELINE_PATH="$RW_WS_PATH/$LOCATION_NAME"
+  BASELINE_FILE=$(find "$BASELINE_PATH" -name "*_baseline.Rdata" 2>/dev/null)
+  
+  if [ -z "$BASELINE_FILE" ]; then
+    echo -e "  \033[33mWarning: No baseline file found in RW-WS for location $LOCATION_NAME\033[0m"
+    # Try to use the noint file from RW-W as fallback
+    echo -e "  Looking for noint file as fallback..."
+    NOINT_FILE=$(find "$LOCATION_PATH" -name "*_noint.Rdata" 2>/dev/null)
+    
+    if [ -n "$NOINT_FILE" ]; then
+      echo -e "  \033[33mFound fallback noint file: $(basename "$NOINT_FILE")\033[0m"
+      BASELINE_FILE="$NOINT_FILE"
+    else
+      echo -e "  \033[31mNo fallback noint file found either. Skipping base file for $LOCATION_NAME\033[0m"
+      ERROR_FILES=$((ERROR_FILES + 1))
+    fi
+  fi
+  
+  # Copy the baseline file if found
+  if [ -n "$BASELINE_FILE" ]; then
+    TOTAL_FILES=$((TOTAL_FILES + 1))
+    DESTINATION_PATH="$DESTINATION_ROOT_PATH/base/${LOCATION_NAME}_base.Rdata"
+    
+    if [ "$DRY_RUN" = true ]; then
+      echo -e "  \033[36mWould copy baseline: $(basename "$BASELINE_FILE") -> $DESTINATION_PATH\033[0m"
+      COPIED_FILES=$((COPIED_FILES + 1))
+    else
+      if cp "$BASELINE_FILE" "$DESTINATION_PATH"; then
+        echo -e "  \033[32mCopied baseline: $(basename "$BASELINE_FILE") -> $DESTINATION_PATH\033[0m"
+        COPIED_FILES=$((COPIED_FILES + 1))
+      else
+        echo -e "  \033[31mError copying baseline file: $(basename "$BASELINE_FILE")\033[0m"
+        ERROR_FILES=$((ERROR_FILES + 1))
+      fi
+    fi
+  fi
+  
+  # STEP 2: Process the scenario files from RW-W
+  echo -e "  Processing scenario files from RW-W..."
+  
+  # Process brief interruption file
+  BRIEF_FILE=$(find "$LOCATION_PATH" -name "*_rw.b.intr.Rdata" 2>/dev/null)
+  if [ -n "$BRIEF_FILE" ]; then
+    TOTAL_FILES=$((TOTAL_FILES + 1))
+    DESTINATION_PATH="$DESTINATION_ROOT_PATH/prerun/$LOCATION_NAME/brief_interruption.Rdata"
+    
+    if [ "$DRY_RUN" = true ]; then
+      echo -e "  \033[36mWould copy brief interruption: $(basename "$BRIEF_FILE") -> $DESTINATION_PATH\033[0m"
+      COPIED_FILES=$((COPIED_FILES + 1))
+    else
+      if cp "$BRIEF_FILE" "$DESTINATION_PATH"; then
+        echo -e "  \033[32mCopied brief interruption: $(basename "$BRIEF_FILE") -> $DESTINATION_PATH\033[0m"
+        COPIED_FILES=$((COPIED_FILES + 1))
+      else
+        echo -e "  \033[31mError copying brief interruption file: $(basename "$BRIEF_FILE")\033[0m"
+        ERROR_FILES=$((ERROR_FILES + 1))
+      fi
+    fi
+  else
+    echo -e "  \033[31mNo brief interruption file found for location $LOCATION_NAME\033[0m"
+    ERROR_FILES=$((ERROR_FILES + 1))
+  fi
+  
+  # Process cessation file
+  END_FILE=$(find "$LOCATION_PATH" -name "*_rw.end.Rdata" 2>/dev/null)
+  if [ -n "$END_FILE" ]; then
+    TOTAL_FILES=$((TOTAL_FILES + 1))
+    DESTINATION_PATH="$DESTINATION_ROOT_PATH/prerun/$LOCATION_NAME/cessation.Rdata"
+    
+    if [ "$DRY_RUN" = true ]; then
+      echo -e "  \033[36mWould copy cessation: $(basename "$END_FILE") -> $DESTINATION_PATH\033[0m"
+      COPIED_FILES=$((COPIED_FILES + 1))
+    else
+      if cp "$END_FILE" "$DESTINATION_PATH"; then
+        echo -e "  \033[32mCopied cessation: $(basename "$END_FILE") -> $DESTINATION_PATH\033[0m"
+        COPIED_FILES=$((COPIED_FILES + 1))
+      else
+        echo -e "  \033[31mError copying cessation file: $(basename "$END_FILE")\033[0m"
+        ERROR_FILES=$((ERROR_FILES + 1))
+      fi
+    fi
+  else
+    echo -e "  \033[31mNo cessation file found for location $LOCATION_NAME\033[0m"
+    ERROR_FILES=$((ERROR_FILES + 1))
+  fi
+  
+  # Process prolonged interruption file
+  PROLONGED_FILE=$(find "$LOCATION_PATH" -name "*_rw.p.intr.Rdata" 2>/dev/null)
+  if [ -n "$PROLONGED_FILE" ]; then
+    TOTAL_FILES=$((TOTAL_FILES + 1))
+    DESTINATION_PATH="$DESTINATION_ROOT_PATH/prerun/$LOCATION_NAME/prolonged_interruption.Rdata"
+    
+    if [ "$DRY_RUN" = true ]; then
+      echo -e "  \033[36mWould copy prolonged interruption: $(basename "$PROLONGED_FILE") -> $DESTINATION_PATH\033[0m"
+      COPIED_FILES=$((COPIED_FILES + 1))
+    else
+      if cp "$PROLONGED_FILE" "$DESTINATION_PATH"; then
+        echo -e "  \033[32mCopied prolonged interruption: $(basename "$PROLONGED_FILE") -> $DESTINATION_PATH\033[0m"
+        COPIED_FILES=$((COPIED_FILES + 1))
+      else
+        echo -e "  \033[31mError copying prolonged interruption file: $(basename "$PROLONGED_FILE")\033[0m"
+        ERROR_FILES=$((ERROR_FILES + 1))
+      fi
+    fi
+  else
+    echo -e "  \033[31mNo prolonged interruption file found for location $LOCATION_NAME\033[0m"
+    ERROR_FILES=$((ERROR_FILES + 1))
+  fi
+done
+
+# Summary
+echo -e "\n\033[36m==================== SUMMARY ====================\033[0m"
+echo -e "Total locations processed: $CURRENT_LOCATION"
+echo -e "Total files processed: $TOTAL_FILES"
+if [ "$DRY_RUN" = true ]; then
+  echo -e "\033[36mFiles that would be copied: $COPIED_FILES\033[0m"
+else
+  echo -e "\033[32mSuccessfully copied files: $COPIED_FILES\033[0m"
+fi
+if [ $ERROR_FILES -gt 0 ]; then
+  echo -e "\033[31mFiles with errors: $ERROR_FILES\033[0m"
+fi
+echo -e "\033[36m=================================================\033[0m"
+
+# Next steps
+echo -e "\n\033[33mNext steps:\033[0m"
+if [ "$DRY_RUN" = true ]; then
+  echo "1. Run the script without the --dry-run parameter to perform the actual file copying:"
+  echo "   ./mac_migration_fixed.sh"
+else
+  echo "1. Review the copied files to ensure they're correct"
+fi
+echo "2. Update the prerun.yaml configuration to match your scenarios"
+echo "3. Run the OneDrive upload script to generate sharing links:"
+echo "   cd src/data/providers/onedrive_resources"
+echo "   python generate_sharing_links.py --base-dir simulations/ryan-white --onedrive-dir jheem/ryan-white --model-version ryan-white"
+echo ""
