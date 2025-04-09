@@ -1,3 +1,38 @@
+# Dynamic outcomes configuration
+# -----------------------------
+# The outcomes list can be generated dynamically from a simulation file
+# Precedence order:
+# 1. If outcomes_file is specified and exists, it will be used directly
+# 2. If not, it will try to use file patterns from prerun/custom configs with default_location and default_scenario
+# 3. If dynamic loading fails, it falls back to the static outcomes list below
+
+dynamic_outcomes: true
+
+# Direct file path (highest precedence)
+outcomes_file: "simulations/ryan-white/prerun/C.12580/cessation.Rdata"
+
+# Default location and scenario for pattern-based approach
+default_location: "C.12580"
+default_scenario: "cessation"
+
+# Optional mapping for specific outcome display names
+# Used by get_dynamic_outcomes in load_config.R
+# If an outcome ID is found here, this name is used.
+# Otherwise, a default name is generated (e.g., 'diagnosed.prevalence' -> 'Diagnosed Prevalence')
+outcome_display_names:
+  new: "New Diagnoses"
+  rw.clients: "Ryan White Clients"
+  adap.clients: "ADAP Clients"
+  oahs.clients: "OAHS Clients"
+  prep.uptake: "PrEP Uptake"
+  non.adap.clients: "Non-ADAP Clients" # Added
+  adap.proportion: "ADAP Proportion"   # Added
+  oahs.suppression: "OAHS Suppression" # Added
+  adap.suppression: "ADAP Suppression" # Added
+  awareness: "Awareness of HIV Status" # Added
+  testing: "Proportion Tested"         # Added
+  # Add other specific overrides here if needed
+
 # Plot control configurations
 plot_controls:
   # Outcome Selection
@@ -199,4 +234,3 @@ types:
   outcomes: "choices-select"
   stratification: "choices-select"
   display: "radio"
-

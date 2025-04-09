@@ -29,13 +29,98 @@ get_base_config <- function() {
     load_yaml_file("src/ui/config/base.yaml")
 }
 
+# Helper function to generate default display name by capitalizing words
+.generate_default_display_name <- function(outcome_id) {
+    words <- strsplit(outcome_id, "\\.")[[1]]
+    capitalized_words <- sapply(words, function(word) {
+        # Handle potential empty strings if there are multiple dots
+        if (nchar(word) == 0) {
+            return("")
+        }
+        paste0(toupper(substr(word, 1, 1)), substr(word, 2, nchar(word)))
+    })
+    # Filter out empty strings from multiple dots and join
+    paste(capitalized_words[nchar(capitalized_words) > 0], collapse = " ")
+}
+
+#' Get dynamic outcomes from a simulation file
+#' @param file_path Path to the simulation file
+#' @param controls_config The loaded controls.yaml configuration (for display name mapping)
+#' @return List of outcome configurations for YAML
+get_dynamic_outcomes <- function(file_path, controls_config) {
+    if (!file.exists(file_path)) {
+        warning("Dynamic outcomes file does not exist: ", file_path)
+        return(NULL)
+    }
+
+    # Load the RData file - should contain a simset object
+    obj_name <- load(file_path)
+    sim_data <- get(obj_name[1])
+
+    # Check if it's a simset or contains a simset
+    if (!is.null(sim_data$simset)) {
+        sim_data <- sim_data$simset
+    }
+
+    # Get outcomes
+    if (is.null(sim_data$outcomes)) {
+        warning("No outcomes found in simset")
+        return(NULL)
+    }
+
+    # Filter and format outcomes
+    outcomes_to_show <- setdiff(sim_data$outcomes, c("infected", "uninfected"))
+    outcomes_config <- list()
+
+    # Get the display name map from the config, default to empty list if not present
+    display_name_map <- controls_config$outcome_display_names %||% list()
+
+    for (outcome in outcomes_to_show) {
+        # Determine display name: Use map if available, otherwise generate default
+        if (!is.null(display_name_map[[outcome]])) {
+            display_name <- display_name_map[[outcome]]
+        } else {
+            # Fallback: Capitalize each word separated by '.'
+            display_name <- .generate_default_display_name(outcome)
+        }
+
+        # Add to config structure
+        outcome_entry <- list(
+            id = outcome,
+            label = display_name,
+            description = paste("Outcome:", display_name)
+        )
+
+        # Add to options list with named entry
+        option_name <- gsub("\\.", "_", outcome) # Create valid R name
+        outcomes_config[[option_name]] <- outcome_entry
+    }
+
+    return(outcomes_config)
+}
+
 #' Get configuration for a specific component
 #' @param component Name of the component
 #' @return List containing component configuration
 get_component_config <- function(component) {
     path <- file.path("src", "ui", "config", "components", paste0(component, ".yaml"))
+    config <- load_yaml_file(path)
 
-    load_yaml_file(path)
+    # Handle dynamic outcomes if this is the controls component
+    if (component == "controls" && !is.null(config$dynamic_outcomes) && config$dynamic_outcomes) {
+        # Get outcomes from file if specified
+        if (!is.null(config$outcomes_file) && file.exists(config$outcomes_file)) {
+            # Pass the loaded controls config (config) to the function
+            dynamic_options <- get_dynamic_outcomes(config$outcomes_file, config)
+
+            if (!is.null(dynamic_options) && length(dynamic_options) > 0) {
+                # Replace the options section with dynamic outcomes
+                config$plot_controls$outcomes$options <- dynamic_options
+            }
+        }
+    }
+
+    return(config)
 }
 
 #' Get default configuration
@@ -296,35 +381,37 @@ get_model_dimension_value <- function(dimension, ui_value) {
 #' Source the model specification file from appropriate location
 #' @return NULL invisibly
 source_model_specification <- function() {
-  # Get model specification config from base config
-  base_config <- get_base_config()
-  model_config <- base_config$model_specification
-  
-  if (is.null(model_config)) {
-    stop("Model specification configuration not found in base.yaml")
-  }
-  
-  # Get file paths from config
-  main_file <- model_config$main_file
-  dev_path <- model_config$development_path
-  deploy_path <- model_config$deployment_path
-  model_name <- model_config$name
-  
-  # Construct full paths
-  external_path <- file.path(dev_path, main_file)
-  internal_path <- file.path(deploy_path, main_file)
-  
-  # Try to source the file
-  if (file.exists(external_path)) {
-    message(paste0("Sourcing ", model_name, " specification from development path"))
-    source(external_path)
-  } else if (file.exists(internal_path)) {
-    message(paste0("Sourcing ", model_name, " specification from deployment path"))
-    source(internal_path)
-  } else {
-    stop(paste0(model_name, " specification file not found in either location: ", 
-               external_path, " or ", internal_path))
-  }
-  
-  invisible(NULL)
+    # Get model specification config from base config
+    base_config <- get_base_config()
+    model_config <- base_config$model_specification
+
+    if (is.null(model_config)) {
+        stop("Model specification configuration not found in base.yaml")
+    }
+
+    # Get file paths from config
+    main_file <- model_config$main_file
+    dev_path <- model_config$development_path
+    deploy_path <- model_config$deployment_path
+    model_name <- model_config$name
+
+    # Construct full paths
+    external_path <- file.path(dev_path, main_file)
+    internal_path <- file.path(deploy_path, main_file)
+
+    # Try to source the file
+    if (file.exists(external_path)) {
+        message(paste0("Sourcing ", model_name, " specification from development path"))
+        source(external_path)
+    } else if (file.exists(internal_path)) {
+        message(paste0("Sourcing ", model_name, " specification from deployment path"))
+        source(internal_path)
+    } else {
+        stop(paste0(
+            model_name, " specification file not found in either location: ",
+            external_path, " or ", internal_path
+        ))
+    }
+
+    invisible(NULL)
 }
