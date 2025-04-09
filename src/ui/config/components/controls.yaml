@@ -20,10 +20,10 @@ plot_controls:
         description: "New HIV diagnoses"
 
       # HIV diagnoses tracking
-      diagnoses:
-        id: "hiv.diagnoses"
-        label: "Reported Diagnoses"
-        description: "Number of people diagnosed with HIV"
+      #diagnoses:
+      #  id: "hiv.diagnoses"
+      #  label: "Reported Diagnoses"
+      #  description: "Number of people diagnosed with HIV"
 
       # Overall HIV prevalence
       prevalence:
@@ -32,10 +32,10 @@ plot_controls:
         description: "Proportion of population with diagnosed HIV"
 
       # Death rates
-      mortality:
-        id: "hiv.mortality"
-        label: "HIV Mortality"
-        description: "Deaths among people with HIV"
+      #mortality:
+      #  id: "hiv.mortality"
+      #  label: "HIV Mortality"
+      #  description: "Deaths among people with HIV"
 
       # Testing metrics
       testing:
