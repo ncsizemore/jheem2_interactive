@@ -15,12 +15,16 @@ wrap_in_conditional <- function(element, condition) {
 
 #' Create a selector component
 #' @param selector_id String identifier matching config (e.g., "location")
+#' @param selector_id String identifier matching config (e.g., "location")
 #' @param page_type String identifying the page ("prerun" or "custom")
+#' @param config The pre-loaded page configuration object
 #' @param condition Optional condition for when selector should display
 #' @return A Shiny UI element or NULL if selector not configured
-create_selector <- function(selector_id, page_type, condition = NULL) {
-    # Load configuration
-    config <- get_page_complete_config(page_type)
+create_selector <- function(selector_id, page_type, config, condition = NULL) {
+    # Validate config input
+    if (missing(config) || !is.list(config)) {
+        stop("create_selector requires a valid 'config' object.")
+    }
 
     # Try to find selector config in either selectors or directly in config
     selector_config <- config$selectors[[selector_id]] %||% config[[selector_id]]
@@ -106,10 +110,10 @@ create_input_by_type <- function(type, id, config) {
 
     # Get show_label setting with default = TRUE for backward compatibility
     show_label <- config$show_label %||% TRUE
-    
+
     # Get show_description setting with default = TRUE for backward compatibility
     show_description <- config$show_description %||% TRUE
-    
+
     # Create the base input element
     input_element <- switch(type,
         "select" = if (input_style == "choices") {
@@ -200,72 +204,104 @@ generate_input_id <- function(selector_id, page_type) {
     paste("int", selector_id, page_type, sep = "_")
 }
 
-#' Helper functions to maintain current API
-create_location_selector <- function(id, config) {
+# Note: The helper functions below now require the 'config' object to be passed
+# from where they are called (e.g., from section_builder.R).
+
+#' Helper function for location selector
+#' @param page_type String identifying the page type
+#' @param config The pre-loaded page configuration object
+#' @return Selector UI element or NULL if not configured
+create_location_selector <- function(page_type, config) {
+    if (missing(config) || !is.list(config)) {
+        stop("create_location_selector requires a valid 'config' object.")
+    }
     tags$div(
         class = "location-selector",
         create_selector(
             selector_id = "location",
-            page_type = sub("int_location_", "", id)
+            page_type = page_type,
+            config = config # Pass config down
         )
     )
 }
 
 #' Create intervention selector if configured
 #' @param page_type String identifying the page type
+#' @param config The pre-loaded page configuration object
 #' @return Selector UI element or NULL if not configured
-create_intervention_selector <- function(page_type) {
-    config <- get_page_complete_config(page_type)
+create_intervention_selector <- function(page_type, config) {
+    if (missing(config) || !is.list(config)) {
+        stop("create_intervention_selector requires a valid 'config' object.")
+    }
     if (!is.null(config$intervention_aspects)) {
         create_selector(
-            "intervention_aspects",
-            page_type,
+            selector_id = "intervention_aspects",
+            page_type = page_type,
+            config = config, # Pass config down
             condition = sprintf("input.int_location_%s !== 'none'", page_type)
         )
+    } else {
+        NULL
     }
 }
 
 #' Create population selector if configured
 #' @param page_type String identifying the page type
+#' @param config The pre-loaded page configuration object
 #' @return Selector UI element or NULL if not configured
-create_population_selector <- function(page_type) {
-    config <- get_page_complete_config(page_type)
+create_population_selector <- function(page_type, config) {
+    if (missing(config) || !is.list(config)) {
+        stop("create_population_selector requires a valid 'config' object.")
+    }
     if (!is.null(config$population_groups)) {
         create_selector(
-            "population_groups",
-            page_type,
+            selector_id = "population_groups",
+            page_type = page_type,
+            config = config, # Pass config down
             condition = sprintf("input.int_aspect_%s !== 'none'", page_type)
         )
+    } else {
+        NULL
     }
 }
 
 #' Create timeframe selector if configured
 #' @param page_type String identifying the page type
+#' @param config The pre-loaded page configuration object
 #' @return Selector UI element or NULL if not configured
-create_timeframe_selector <- function(page_type) {
-    config <- get_page_complete_config(page_type)
+create_timeframe_selector <- function(page_type, config) {
+    if (missing(config) || !is.list(config)) {
+        stop("create_timeframe_selector requires a valid 'config' object.")
+    }
     if (!is.null(config$timeframes)) {
         create_selector(
-            "timeframes",
-            page_type,
+            selector_id = "timeframes",
+            page_type = page_type,
+            config = config, # Pass config down
             condition = sprintf(
                 "input.int_aspect_%s !== 'none' && input.int_tpop_%s !== ''",
                 page_type,
                 page_type
             )
         )
+    } else {
+        NULL
     }
 }
 
 #' Create intensity selector if configured
 #' @param page_type String identifying the page type
+#' @param config The pre-loaded page configuration object
 #' @return Selector UI element or NULL if not configured
-create_intensity_selector <- function(page_type) {
-    config <- get_page_complete_config(page_type)
+create_intensity_selector <- function(page_type, config) {
+    if (missing(config) || !is.list(config)) {
+        stop("create_intensity_selector requires a valid 'config' object.")
+    }
     if (!is.null(config$intensities)) {
         create_selector(
-            "intensities",
-            page_type,
+            selector_id = "intensities",
+            page_type = page_type,
+            config = config, # Pass config down
             condition = sprintf(
                 paste(
                     "input.int_aspect_%s !== 'none'",
@@ -276,5 +312,7 @@ create_intensity_selector <- function(page_type) {
                 page_type, page_type, page_type
             )
         )
+    } else {
+        NULL
     }
 }

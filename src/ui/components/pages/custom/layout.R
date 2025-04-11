@@ -4,8 +4,17 @@ source("src/ui/components/pages/custom/content.R")
 
 
 #' Creates the main layout for custom interventions page
-#' @param config Complete page configuration from get_page_complete_config("custom")
-create_custom_layout <- function(config = get_page_complete_config("custom")) {
+#' Note: This function should ideally be called with the pre-loaded config
+#' to avoid repeated loading. If called without config, it loads it once.
+create_custom_layout <- function(config = NULL) {
+    # Load config only if not provided
+    if (is.null(config)) {
+        print("Config not provided, loading...")
+        config <- get_page_complete_config("custom")
+    } else {
+        print("Using provided config.")
+    }
+
     # Validate required config sections
     validate_custom_config(config)
 
@@ -86,7 +95,7 @@ create_custom_layout <- function(config = get_page_complete_config("custom")) {
                 content = create_custom_plot_controls(config)
             )
         ),
-        
+
         # Add simulation progress UI
         simulation_progress_ui("custom-progress")
     )

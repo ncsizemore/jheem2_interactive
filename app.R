@@ -96,12 +96,21 @@ library(jheem2)
 
 # UI Creation
 ui <- function() {
-  # Load base configuration
-  config <- get_base_config()
+  # Load base configuration first
+  base_config <- get_base_config()
 
-  # Default selections from config
-  selected_tab <- config$application$defaults$selected_tab %||% "custom"
-  app_title <- config$application$name
+  # Default selections from base config
+  selected_tab <- base_config$application$defaults$selected_tab %||% "custom"
+  app_title <- base_config$application$name
+
+  # Load complete page configurations ONCE here
+  print("Loading prerun page config...")
+  prerun_config <- get_page_complete_config("prerun")
+  print("Loading custom page config...")
+  custom_config <- get_page_complete_config("custom")
+  print("Loading contact page config (for popover)...")
+  # Load contact page config specifically for the popover
+  contact_config <- get_page_config("contact")
 
   tags$html(
     style = "height:100%",
@@ -157,8 +166,8 @@ ui <- function() {
         href = "css/components/display/simulation_differences.css"
       ),
 
-      # Load JavaScript files
-      lapply(config$theme$scripts, function(script) {
+      # Load JavaScript files using base_config
+      lapply(base_config$theme$scripts, function(script) {
         tags$script(src = script)
       }),
       # Load our state synchronization script
@@ -192,39 +201,39 @@ ui <- function() {
         #   id = "overview",
         #   value = "overview",
         #   title = "Overview",
-        #   make_tab_popover(
+        #   make_tab_popover( # Use base_config
         #     "overview",
-        #     title = config$pages$overview$popover$title,
-        #     content = config$pages$overview$popover$content
+        #     title = base_config$pages$overview$popover$title,
+        #     content = base_config$pages$overview$popover$content
         #   ),
-        #   create_overview_page(config)
+        #   create_overview_page(base_config) # Use base_config
         # ),
 
 
-        # Pre-run tab
+        # Pre-run tab - Pass pre-loaded config
         tabPanel(
           title = "Pre-Run",
           value = "prerun",
-          create_prerun_layout()
+          create_prerun_layout(config = prerun_config)
         ),
 
-        # Custom tab
+        # Custom tab - Pass pre-loaded config
         tabPanel(
           title = "Custom",
           value = "custom",
-          create_custom_layout()
+          create_custom_layout(config = custom_config)
         ),
 
         # FAQ tab - temporarily removed for performance
         # tabPanel(
         #   title = "FAQ",
         #   value = "faq",
-        #   make_tab_popover(
+        #   make_tab_popover( # Use base_config
         #     "faq",
-        #     title = config$pages$faq$popover$title,
-        #     content = config$pages$faq$popover$content
+        #     title = base_config$pages$faq$popover$title,
+        #     content = base_config$pages$faq$popover$content
         #   ),
-        #   create_faq_page(config)
+        #   create_faq_page(base_config) # Use base_config
         # ),
 
 
@@ -232,12 +241,12 @@ ui <- function() {
         # tabPanel(
         #   title = "About the JHEEM",
         #   value = "about_the_jheem",
-        #   make_tab_popover(
+        #   make_tab_popover( # Use base_config
         #     "about_the_jheem",
-        #     title = config$pages$about$popover$title,
-        #     content = config$pages$about$popover$content
+        #     title = base_config$pages$about$popover$title,
+        #     content = base_config$pages$about$popover$content
         #   ),
-        #   create_about_page(config)
+        #   create_about_page(base_config) # Use base_config
         # ),
 
 
@@ -245,12 +254,12 @@ ui <- function() {
         # tabPanel(
         #   title = "Our Team",
         #   value = "our_team",
-        #   make_tab_popover(
+        #   make_tab_popover( # Use base_config
         #     "our_team",
-        #     title = config$pages$team$popover$title,
-        #     content = config$pages$team$popover$content
+        #     title = base_config$pages$team$popover$title,
+        #     content = base_config$pages$team$popover$content
         #   ),
-        #   create_team_page(config)
+        #   create_team_page(base_config) # Use base_config
         # ),
 
 
@@ -258,12 +267,13 @@ ui <- function() {
         tabPanel(
           title = "Contact Us",
           value = "contact_us",
-          make_tab_popover(
+          make_tab_popover( # Use contact_config for popover
             "contact_us",
-            title = config$pages$contact$popover$title,
-            content = config$pages$contact$popover$content
+            title = contact_config$popover$title,
+            content = contact_config$popover$content
           ),
-          create_contact_page(config)
+          # Pass the already loaded contact_config to the page creation function
+          create_contact_page(contact_config)
         )
       )
     )

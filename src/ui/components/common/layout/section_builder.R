@@ -23,52 +23,56 @@ create_sections_from_config <- function(config, page_type, session = NULL, outpu
   } else {
     NULL
   }
-  
+
   # Create error text ID for direct error display
   error_text_id <- paste0(page_type, "_section_error")
-  
+
   # Set up the result variable outside tryCatch
   result <- NULL
-  
+
   # Try to build sections with error handling
-  tryCatch({
-    # Clear any existing errors if we have a boundary
-    if (!is.null(error_boundary)) {
-      error_boundary$clear_error()
-      
-      # Clear direct error output if we have output
-      if (!is.null(output)) {
-        output[[error_text_id]] <- renderText({ NULL })
+  tryCatch(
+    {
+      # Clear any existing errors if we have a boundary
+      if (!is.null(error_boundary)) {
+        error_boundary$clear_error()
+
+        # Clear direct error output if we have output
+        if (!is.null(output)) {
+          output[[error_text_id]] <- renderText({
+            NULL
+          })
+        }
       }
+
+      # Build sections
+      result <- build_sections_internal(config, page_type)
+    },
+    error = function(e) {
+      # Prepare error message
+      error_message <- paste("Error creating UI sections:", conditionMessage(e))
+
+      # Log the error
+      warning(error_message)
+
+      # Set error in boundary if we have one
+      if (!is.null(error_boundary)) {
+        set_component_error(
+          boundary = error_boundary,
+          output = output,
+          error_id = error_text_id,
+          message = error_message,
+          type = ERROR_TYPES$SYSTEM,
+          severity = SEVERITY_LEVELS$ERROR,
+          details = as.character(e)
+        )
+      }
+
+      # Create fallback sections
+      result <<- create_fallback_sections(config, page_type)
     }
-    
-    # Build sections
-    result <- build_sections_internal(config, page_type)
-  }, 
-  error = function(e) {
-    # Prepare error message
-    error_message <- paste("Error creating UI sections:", conditionMessage(e))
-    
-    # Log the error
-    warning(error_message)
-    
-    # Set error in boundary if we have one
-    if (!is.null(error_boundary)) {
-      set_component_error(
-        boundary = error_boundary,
-        output = output,
-        error_id = error_text_id,
-        message = error_message,
-        type = ERROR_TYPES$SYSTEM,
-        severity = SEVERITY_LEVELS$ERROR,
-        details = as.character(e)
-      )
-    }
-    
-    # Create fallback sections
-    result <<- create_fallback_sections(config, page_type)
-  })
-  
+  )
+
   # Return sections with error display if we have a boundary
   if (!is.null(error_boundary) && !is.null(output)) {
     # Add error displays to the result
@@ -78,12 +82,12 @@ create_sections_from_config <- function(config, page_type, session = NULL, outpu
         class = "section-error error",
         textOutput(error_text_id, inline = FALSE)
       ),
-      
+
       # Error boundary display
       uiOutput(paste0(page_type, "_section_builder_", page_type, "_error_display"))
     )
   }
-  
+
   return(result)
 }
 
@@ -92,23 +96,23 @@ create_sections_from_config <- function(config, page_type, session = NULL, outpu
 #' @return TRUE if valid, throws error if invalid
 validate_section_config <- function(config) {
   if (is.null(config$sections)) {
-    return(TRUE)  # No sections defined is valid
+    return(TRUE) # No sections defined is valid
   }
-  
+
   for (section_id in names(config$sections)) {
     section <- config$sections[[section_id]]
-    
+
     # Check for required fields
     if (is.null(section$title)) {
       warning(sprintf("Section '%s' is missing a title", section_id))
     }
-    
+
     # Validate selectors if present
     if (!is.null(section$selectors) && !is.vector(section$selectors)) {
       stop(sprintf("Section '%s' has invalid selectors (must be a vector)", section_id))
     }
   }
-  
+
   TRUE
 }
 
@@ -118,35 +122,36 @@ validate_section_config <- function(config) {
 #' @return List of section elements
 build_sections_internal <- function(config, page_type) {
   sections <- list()
-  
+
   # Validate configuration
   validate_section_config(config)
-  
+
   # First, get all configured selectors
   all_selectors <- names(config$selectors)
   assigned_selectors <- c()
-  
+
   # Create sections defined in the config
   if (!is.null(config$sections)) {
     for (section_id in names(config$sections)) {
       section_config <- config$sections[[section_id]]
       section_selectors <- section_config$selectors %||% c()
-      
+
       # Only add sections that have at least one valid selector
       valid_selectors <- list()
       for (selector_id in section_selectors) {
+        # Pass the config object down
         selector <- if (selector_id == "location") {
-          create_location_selector(page_type)
+          create_location_selector(page_type, config = config)
         } else {
-          create_selector(selector_id, page_type)
+          create_selector(selector_id, page_type, config = config)
         }
-        
+
         if (!is.null(selector)) {
           valid_selectors[[length(valid_selectors) + 1]] <- selector
           assigned_selectors <- c(assigned_selectors, selector_id)
         }
       }
-      
+
       # Only add section if it has valid selectors
       if (length(valid_selectors) > 0) {
         sections[[section_id]] <- tagList(
@@ -156,43 +161,47 @@ build_sections_internal <- function(config, page_type) {
       }
     }
   }
-  
+
   # Create automatic sections for special selectors that aren't already assigned
-  
+
   # Location section (if not already in a section)
-  if (!("location" %in% assigned_selectors) && !is.null(create_location_selector(page_type))) {
+  # Check if location selector can be created by passing config
+  location_selector_ui <- create_location_selector(page_type, config = config)
+  if (!("location" %in% assigned_selectors) && !is.null(location_selector_ui)) {
     location_config <- config$sections$location %||% list(title = "Location", description = "Select the geographic area for the model")
     sections["location"] <- tagList(
       create_section_header(location_config$title, location_config$description),
-      create_location_selector(page_type)
+      location_selector_ui # Use the already created UI
     )
     assigned_selectors <- c(assigned_selectors, "location")
   }
-  
+
   # Intervention sections (if not already assigned)
   intervention_selectors <- c("intervention_aspects", "population_groups", "timeframes", "intensities")
   unassigned_intervention_selectors <- setdiff(intervention_selectors, assigned_selectors)
-  
+
   if (length(unassigned_intervention_selectors) > 0 && !is.null(config$intervention_aspects)) {
     valid_int_selectors <- list()
-    
-    # Try to create each intervention selector
+
+    # Try to create each intervention selector, passing config
     for (selector_id in intervention_selectors) {
       if (selector_id == "intervention_aspects") {
-        selector <- create_intervention_selector(page_type)
+        selector <- create_intervention_selector(page_type, config = config)
       } else if (selector_id == "population_groups") {
-        selector <- create_population_selector(page_type)
+        selector <- create_population_selector(page_type, config = config)
       } else if (selector_id == "timeframes") {
-        selector <- create_timeframe_selector(page_type)
+        selector <- create_timeframe_selector(page_type, config = config)
       } else if (selector_id == "intensities") {
-        selector <- create_intensity_selector(page_type)
+        selector <- create_intensity_selector(page_type, config = config)
+      } else {
+        selector <- NULL # Should not happen with current list
       }
-      
+
       if (!is.null(selector)) {
         valid_int_selectors[[length(valid_int_selectors) + 1]] <- selector
       }
     }
-    
+
     # Only add intervention section if it has valid selectors
     if (length(valid_int_selectors) > 0) {
       intervention_config <- config$sections$intervention %||% list(title = "Intervention", description = "Choose intervention parameters")
@@ -203,19 +212,20 @@ build_sections_internal <- function(config, page_type) {
       assigned_selectors <- c(assigned_selectors, unassigned_intervention_selectors)
     }
   }
-  
+
   # Create a fallback section for any remaining unassigned selectors
   remaining_selectors <- setdiff(all_selectors, assigned_selectors)
   if (length(remaining_selectors) > 0) {
     fallback_selectors <- list()
-    
+
     for (selector_id in remaining_selectors) {
-      selector <- create_selector(selector_id, page_type)
+      # Pass config down
+      selector <- create_selector(selector_id, page_type, config = config)
       if (!is.null(selector)) {
         fallback_selectors[[length(fallback_selectors) + 1]] <- selector
       }
     }
-    
+
     if (length(fallback_selectors) > 0) {
       sections["other"] <- tagList(
         create_section_header("Additional Settings", "Other configuration options"),
@@ -223,7 +233,7 @@ build_sections_internal <- function(config, page_type) {
       )
     }
   }
-  
+
   return(sections)
 }
 
@@ -234,26 +244,27 @@ build_sections_internal <- function(config, page_type) {
 create_fallback_sections <- function(config, page_type) {
   # Create a simple fallback with location and any directly configured selectors
   fallback_selectors <- list()
-  
-  # Try to add location
-  location_selector <- create_location_selector(page_type)
+
+  # Try to add location, passing config
+  location_selector <- create_location_selector(page_type, config = config)
   if (!is.null(location_selector)) {
     fallback_selectors[[length(fallback_selectors) + 1]] <- location_selector
   }
-  
+
   # Try to add any configured selectors directly
   if (!is.null(config$selectors)) {
     for (selector_id in names(config$selectors)) {
       # Skip location as we already tried it
       if (selector_id == "location") next
-      
-      selector <- create_selector(selector_id, page_type)
+
+      # Pass config down
+      selector <- create_selector(selector_id, page_type, config = config)
       if (!is.null(selector)) {
         fallback_selectors[[length(fallback_selectors) + 1]] <- selector
       }
     }
   }
-  
+
   # Return a basic section structure with error notice
   list(
     fallback = tagList(

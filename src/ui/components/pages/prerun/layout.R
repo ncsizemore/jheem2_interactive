@@ -4,9 +4,18 @@ source("src/ui/components/pages/prerun/content.R")
 
 
 #' Creates the main layout for the pre-run interventions page
-#' @param config Complete page configuration from get_page_complete_config("prerun")
-create_prerun_layout <- function(config = get_page_complete_config("prerun")) {
+#' Note: This function should ideally be called with the pre-loaded config
+#' to avoid repeated loading. If called without config, it loads it once.
+create_prerun_layout <- function(config = NULL) {
     print("=== Creating Prerun Layout ===")
+
+    # Load config only if not provided
+    if (is.null(config)) {
+        print("Config not provided, loading...")
+        config <- get_page_complete_config("prerun")
+    } else {
+        print("Using provided config.")
+    }
 
     # Validate required config sections
     validate_prerun_config(config)
