@@ -287,9 +287,10 @@ validate_page_config <- function(config, page) {
 #' Get configuration for a specific selector
 #' @param selector_id Selector identifier
 #' @param page_type Page type ("prerun" or "custom")
+#' @param config Pre-loaded complete page configuration object
 #' @param group_num Optional group number for custom page
 #' @return Selector configuration
-get_selector_config <- function(selector_id, page_type, group_num = NULL) {
+get_selector_config <- function(selector_id, page_type, config, group_num = NULL) {
     # Debug print
     print(paste("Getting config for selector:", selector_id))
     print(paste("Page type:", page_type))
@@ -305,9 +306,12 @@ get_selector_config <- function(selector_id, page_type, group_num = NULL) {
     if (!is.null(group_num) && (!is.numeric(group_num) || length(group_num) != 1)) {
         stop("group_num must be NULL or a single number")
     }
+    if (missing(config) || !is.list(config)) {
+        stop("get_selector_config requires a valid 'config' object.")
+    }
 
-    # Load complete configuration for the page
-    config <- get_page_complete_config(page_type)
+    # Use the provided config object directly
+    # config <- get_page_complete_config(page_type) # REMOVED
 
     # Get input type defaults
     input_types <- config$input_types %||% list()
