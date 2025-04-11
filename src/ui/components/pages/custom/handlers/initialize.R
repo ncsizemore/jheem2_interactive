@@ -15,10 +15,10 @@ initialize_component_validation <- function(session, output, validation_manager,
         sprintf("validation_group_%d_%s", group_num, component_name),
         validation_manager = validation_manager
     )
-    
+
     component <- config$interventions$components[[component_name]]
     value_id <- paste0("int_", component_name, "_", group_num, "_custom")
-    
+
     if (component$type == "numeric") {
         # Add validation for numeric input
         observeEvent(input[[value_id]], {
@@ -137,47 +137,51 @@ initialize_component_validation <- function(session, output, validation_manager,
                     error_state <- validation_manager$get_field_state(value_input_id)
                     if (!is.null(error_state) && !is.null(error_state$message)) {
                         # Use basic selectors to avoid quoting issues
-                        js <- sprintf('
+                        js <- sprintf(
+                            '
                             // First hide any current errors
                             $(".input-error-message").hide();
-                            
+
                             // Apply error styling
                             $("#%s").addClass("is-invalid");
-                            
+
                             // Show specific error
                             $("#%s_error").text("%s").show();
                         ',
-                        value_input_id,
-                        value_input_id,
-                        error_state$message)
-                        
+                            value_input_id,
+                            value_input_id,
+                            error_state$message
+                        )
+
                         runjs(js)
                     }
                 } else {
                     # Also use simpler selectors for clearing
-                    js <- sprintf('
+                    js <- sprintf(
+                        '
                         // Clear validation styling
                         $("#%s").removeClass("is-invalid");
                         $("#%s_error").hide();
                     ',
-                    value_input_id,
-                    value_input_id)
-                    
+                        value_input_id,
+                        value_input_id
+                    )
+
                     runjs(js)
                 }
             }
         })
     }
-}#' Initialize handlers for custom page
+} #' Initialize handlers for custom page
 #' @param input Shiny session object
 #' @param output Shiny output object
 #' @param session Shiny session object
 #' @param plot_state Reactive value for plot state
-initialize_custom_handlers <- function(input, output, session, plot_state) {
+#' @param config The pre-loaded configuration for the page
+initialize_custom_handlers <- function(input, output, session, plot_state, config) {
     ns <- session$ns
 
-    # Get configuration
-    config <- get_page_complete_config("custom")
+    # Configuration is now passed in
 
     # Create visualization manager with explicit page ID
     vis_manager <- create_visualization_manager(session, "custom", ns("visualization"))
@@ -215,7 +219,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
     # Initialize group panels and components
     if (!is.null(config$subgroups)) {
         cat("\n\n***** CRITICAL DEBUG *****\n")
-        cat("Available intervention components: ", paste(names(config$interventions$components), collapse=", "), "\n")
+        cat("Available intervention components: ", paste(names(config$interventions$components), collapse = ", "), "\n")
         for (component_name in names(config$interventions$components)) {
             cat("Component ", component_name, " is type: ", config$interventions$components[[component_name]]$type, "\n")
         }
@@ -255,12 +259,12 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 local({
                     group_num <- i
                     group <- config$subgroups$groups[[i]]
-                    
+
                     # For each component in the group
                     for (component_name in names(config$interventions$components)) {
                         local({
                             initialize_component_validation(
-                                session, 
+                                session,
                                 output,
                                 validation_manager,
                                 config,
@@ -305,7 +309,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                     ),
                     field_id = "subgroups_count_custom"
                 )
-                
+
                 # If count is valid, set up validation for each subgroup's components
                 if (valid_count && !is.null(count) && count > 0) {
                     cat("\n\n***** SETTING UP VALIDATION FOR USER-DEFINED GROUPS *****\n")
@@ -314,7 +318,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                         for (component_name in names(config$interventions$components)) {
                             # Set up validation for this component in this subgroup
                             initialize_component_validation(
-                                session, 
+                                session,
                                 output,
                                 validation_manager,
                                 config,
@@ -338,7 +342,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
         store <- get_store()
         model_state <- store$get_model_state()
         model_status <- model_state$status
-        
+
         # Check model status and respond accordingly
         if (model_status == "loading") {
             # Model is still loading - show notification
@@ -361,14 +365,14 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             generate_custom_simulation()
         }
     })
-    
+
     # Helper function to collect date settings based on configuration
     collect_date_settings <- function(input, date_config, id_base) {
         # Get type from config
         component_type <- date_config$type
-        
+
         print(paste("Collecting date settings with type:", component_type))
-        
+
         # Debug prints for recovery duration condition
         print("DEBUG - Recovery Duration Collection:")
         print(paste("recovery_duration in config exists:", !is.null(date_config$recovery_duration)))
@@ -376,26 +380,26 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             print("Recovery duration config:")
             str(date_config$recovery_duration)
         }
-        
+
         if (component_type == "date_range_month_year") {
             # For month/year selectors
             start_month <- isolate(input[[paste0(id_base, "_start_month")]])
             start_year <- isolate(input[[paste0(id_base, "_start_year")]])
             start_date <- paste0(start_year, "-", start_month)
-            
+
             has_never_option <- !is.null(date_config$end$never_option)
             print(paste("Has never option:", has_never_option))
-            
+
             end_never_id <- paste0(id_base, "_end_never")
             print(paste("End never ID:", end_never_id))
             print(paste("End never input exists:", !is.null(input[[end_never_id]])))
             if (!is.null(input[[end_never_id]])) {
                 print(paste("End never value:", input[[end_never_id]]))
             }
-            
+
             end_never <- if (has_never_option) isolate(input[[paste0(id_base, "_end_never")]]) else FALSE
             print(paste("end_never value after logic:", end_never))
-            
+
             end_date <- if (end_never) {
                 "never"
             } else {
@@ -403,12 +407,12 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                 end_year <- isolate(input[[paste0(id_base, "_end_year")]])
                 paste0(end_year, "-", end_month)
             }
-            
+
             date_settings <- list(
                 start = start_date,
                 end = end_date
             )
-            
+
             # Only include recovery_duration if relevant
             if (!end_never && !is.null(date_config$recovery_duration)) {
                 recovery_id <- paste0(id_base, "_recovery_duration")
@@ -422,7 +426,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             } else {
                 print("Recovery duration not applicable (end is 'never' or no recovery config)")
             }
-            
+
             return(date_settings)
         } else if (component_type == "date_range") {
             # For simple year selectors (original implementation)
@@ -436,31 +440,30 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             return(list())
         }
     }
-    
+
     # Function to handle the actual generate logic
     generate_custom_simulation <- function() {
-
         if (validation_manager$is_valid()) {
             # Collect settings based on configuration
             settings <- list(
                 location = isolate(input$int_location_custom),
                 dates = collect_date_settings(
-                    input, 
+                    input,
                     list(
                         type = config$interventions$dates$type,
                         start = config$interventions$dates$start,
                         end = config$interventions$dates$end,
                         recovery_duration = config$interventions$recovery_duration
-                    ), 
+                    ),
                     "int_dates_custom"
                 )
             )
-            
+
             # Debug the collected settings
             print("Collected settings:")
             print("Full settings structure:")
             str(settings, max.level = 3)
-            
+
             if (!is.null(settings$dates$recovery_duration)) {
                 print(paste("Recovery duration in settings:", settings$dates$recovery_duration))
             } else {
@@ -489,9 +492,9 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                                     value_input_name <- "value" # Default
                                 }
                                 value_input_id <- paste0("int_", component_name, "_", i, "_custom_", value_input_name)
-                                
+
                                 if (!input[[enabled_id]]) {
-                                    NULL  # Skip if not enabled
+                                    NULL # Skip if not enabled
                                 } else {
                                     list(
                                         group = group$id,
@@ -511,22 +514,24 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                     lapply(1:count, function(i) {
                         # Get demographics from configuration
                         demographic_fields <- names(config$demographics)
-                        
+
                         # Collect demographics dynamically
                         demographics <- lapply(demographic_fields, function(field) {
                             input[[paste0("int_", field, "_", i, "_custom")]]
                         })
                         names(demographics) <- demographic_fields
-                        
+
                         # Get abbreviations from config
                         abbreviations <- config$abbreviations$dimensions
                         default_len <- abbreviations$default_length %||% 2
-                        
+
                         # Create abbreviated group ID
                         id_components <- lapply(demographic_fields, function(field) {
-                            value <- demographics[[field]][1]  # Take first selected value
-                            if (is.null(value)) return("any")
-                            
+                            value <- demographics[[field]][1] # Take first selected value
+                            if (is.null(value)) {
+                                return("any")
+                            }
+
                             # Try to get pre-defined abbreviation
                             abbrev <- abbreviations$values[[value]]
                             if (is.null(abbrev)) {
@@ -535,15 +540,15 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                             }
                             abbrev
                         })
-                        
+
                         # Create group ID
-                        group_id <- paste(id_components, collapse="-")
-                        
+                        group_id <- paste(id_components, collapse = "-")
+
                         # Create flattened component list with group IDs
                         components <- lapply(names(config$interventions$components), function(name) {
                             component <- config$interventions$components[[name]]
                             comp_data <- NULL
-                            
+
                             if (component$type == "numeric") {
                                 comp_data <- list(
                                     group = group_id,
@@ -555,20 +560,20 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                                 if (!input[[enabled_id]]) {
                                     return(NULL)
                                 }
-                                
+
                                 # Handle different input types within compound component
                                 # Find the first non-enabled input (either numeric or select)
                                 value_input_names <- names(component$inputs)[names(component$inputs) != "enabled"]
                                 if (length(value_input_names) == 0) {
                                     return(NULL) # No value inputs found
                                 }
-                                
+
                                 value_input_name <- value_input_names[1]
                                 value_input_id <- paste0("int_", name, "_", i, "_custom_", value_input_name)
                                 value <- input[[value_input_id]]
-                                
+
                                 print(paste("For component", name, "using input", value_input_name, "with value", value))
-                                
+
                                 comp_data <- list(
                                     group = group_id,
                                     type = name,
@@ -576,10 +581,10 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
                                     value = value
                                 )
                             }
-                            
+
                             return(comp_data)
                         })
-                        
+
                         # Filter out NULL values
                         components <- components[!sapply(components, is.null)]
                         return(components)
@@ -590,7 +595,6 @@ initialize_custom_handlers <- function(input, output, session, plot_state) {
             # Update visualization state and display
             vis_manager$set_visibility("visible")
             vis_manager$update_display(input, output, settings)
-
         } else {
             showNotification(
                 "Please correct the highlighted errors before proceeding.",

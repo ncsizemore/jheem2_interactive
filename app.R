@@ -17,6 +17,13 @@ library(httr2) # Required for API calls
 # Source configuration system
 source("src/ui/config/load_config.R")
 
+# Load page configurations ONCE globally
+print("Loading PRERUN page config globally...")
+PRERUN_CONFIG <- get_page_complete_config("prerun")
+print("Loading CUSTOM page config globally...")
+CUSTOM_CONFIG <- get_page_complete_config("custom")
+print("Global configs loaded.")
+
 # Source components and helpers
 source("src/ui/components/common/popover/popover.R")
 
@@ -61,9 +68,7 @@ source("src/ui/components/pages/prerun/layout.R")
 source("src/ui/components/pages/custom/layout.R")
 
 
-# Source server handlers
-source("src/ui/components/pages/prerun/index.R")
-source("src/ui/components/pages/custom/index.R")
+# Server handlers will be sourced inside the server function
 
 # Source other required files
 source("src/ui/components/common/display/display_size.R")
@@ -103,13 +108,9 @@ ui <- function() {
   selected_tab <- base_config$application$defaults$selected_tab %||% "custom"
   app_title <- base_config$application$name
 
-  # Load complete page configurations ONCE here
-  print("Loading prerun page config...")
-  prerun_config <- get_page_complete_config("prerun")
-  print("Loading custom page config...")
-  custom_config <- get_page_complete_config("custom")
+  # Configs are now loaded globally (PRERUN_CONFIG, CUSTOM_CONFIG)
+  # Load contact page config specifically for the popover (still needed here)
   print("Loading contact page config (for popover)...")
-  # Load contact page config specifically for the popover
   contact_config <- get_page_config("contact")
 
   tags$html(
@@ -214,14 +215,16 @@ ui <- function() {
         tabPanel(
           title = "Pre-Run",
           value = "prerun",
-          create_prerun_layout(config = prerun_config)
+          # Use global config
+          create_prerun_layout(config = PRERUN_CONFIG)
         ),
 
         # Custom tab - Pass pre-loaded config
         tabPanel(
           title = "Custom",
           value = "custom",
-          create_custom_layout(config = custom_config)
+          # Use global config
+          create_custom_layout(config = CUSTOM_CONFIG)
         ),
 
         # FAQ tab - temporarily removed for performance
@@ -454,9 +457,17 @@ server <- function(input, output, session) {
   # Initialize display setup (replaces add.display.event.handlers)
   initialize_display_setup(session, input)
 
-  # Initialize page handlers (these now handle their own display events)
-  initialize_prerun_handlers(input, output, session, plot_state)
-  initialize_custom_handlers(input, output, session, plot_state)
+  # Source and initialize page handlers (these now handle their own display events)
+  # Sourcing them here defers loading until the server function runs
+  print("[APP Server] Sourcing prerun server logic...")
+  source("src/ui/components/pages/prerun/index.R")
+  # Pass global config to handlers
+  initialize_prerun_handlers(input, output, session, plot_state, config = PRERUN_CONFIG)
+
+  print("[APP Server] Sourcing custom server logic...")
+  source("src/ui/components/pages/custom/index.R")
+  # Pass global config to handlers
+  initialize_custom_handlers(input, output, session, plot_state, config = CUSTOM_CONFIG)
 
   # Initialize state synchronization for both pages
   create_visualization_sync("prerun", session)
