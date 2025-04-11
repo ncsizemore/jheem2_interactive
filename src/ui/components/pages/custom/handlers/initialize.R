@@ -218,12 +218,12 @@ initialize_custom_handlers <- function(input, output, session, plot_state, confi
 
     # Initialize group panels and components
     if (!is.null(config$subgroups)) {
-        cat("\n\n***** CRITICAL DEBUG *****\n")
-        cat("Available intervention components: ", paste(names(config$interventions$components), collapse = ", "), "\n")
-        for (component_name in names(config$interventions$components)) {
-            cat("Component ", component_name, " is type: ", config$interventions$components[[component_name]]$type, "\n")
-        }
-        cat("*************************\n\n")
+        # cat("\n\n***** CRITICAL DEBUG *****\n") # Commented out
+        # cat("Available intervention components: ", paste(names(config$interventions$components), collapse = ", "), "\n") # Commented out
+        # for (component_name in names(config$interventions$components)) {
+        #     cat("Component ", component_name, " is type: ", config$interventions$components[[component_name]]$type, "\n") # Commented out
+        # }
+        # cat("*************************\n\n") # Commented out
 
         # Render the group panels
         output$subgroup_panels_custom <- renderUI({
@@ -252,9 +252,9 @@ initialize_custom_handlers <- function(input, output, session, plot_state, confi
 
         # Initialize validation for components
         if (config$subgroups$fixed) {
-            cat("\n\n***** CRITICAL DEBUG - FIXED GROUPS *****\n")
-            cat("Initializing validation for ", config$subgroups$count, " fixed groups\n")
-            cat("*************************************\n\n")
+            # cat("\n\n***** CRITICAL DEBUG - FIXED GROUPS *****\n") # Commented out
+            # cat("Initializing validation for ", config$subgroups$count, " fixed groups\n") # Commented out
+            # cat("*************************************\n\n") # Commented out
             for (i in 1:config$subgroups$count) {
                 local({
                     group_num <- i
@@ -312,8 +312,8 @@ initialize_custom_handlers <- function(input, output, session, plot_state, confi
 
                 # If count is valid, set up validation for each subgroup's components
                 if (valid_count && !is.null(count) && count > 0) {
-                    cat("\n\n***** SETTING UP VALIDATION FOR USER-DEFINED GROUPS *****\n")
-                    cat("Setting up validation for", count, "user-defined groups\n")
+                    # cat("\n\n***** SETTING UP VALIDATION FOR USER-DEFINED GROUPS *****\n") # Commented out
+                    # cat("Setting up validation for", count, "user-defined groups\n") # Commented out
                     for (i in 1:count) {
                         for (component_name in names(config$interventions$components)) {
                             # Set up validation for this component in this subgroup
@@ -328,7 +328,7 @@ initialize_custom_handlers <- function(input, output, session, plot_state, confi
                             )
                         }
                     }
-                    cat("*************************************\n\n")
+                    # cat("*************************************\n\n") # Commented out
                 }
             })
         }
@@ -459,10 +459,10 @@ initialize_custom_handlers <- function(input, output, session, plot_state, confi
                 )
             )
 
-            # Debug the collected settings
-            print("Collected settings:")
-            print("Full settings structure:")
-            str(settings, max.level = 3)
+            # # Debug the collected settings
+            # print("Collected settings:") # Commented out
+            # print("Full settings structure:") # Commented out
+            # str(settings, max.level = 3) # Commented out
 
             if (!is.null(settings$dates$recovery_duration)) {
                 print(paste("Recovery duration in settings:", settings$dates$recovery_duration))

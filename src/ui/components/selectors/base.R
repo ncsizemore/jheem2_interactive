@@ -67,10 +67,10 @@ create_selector <- function(selector_id, page_type, config, condition = NULL) {
 #' @param config Configuration for the input
 #' @return Shiny input element
 create_input_by_type <- function(type, id, config) {
-    # Debug print
-    print(paste("Creating input:", id, "of type:", type))
-    print("Config:")
-    str(config)
+    # # Debug print
+    # print(paste("Creating input:", id, "of type:", type))
+    # print("Config:")
+    # str(config) # Commented out
 
     # Ensure default values based on type
     config$value <- config$value %||% switch(type,
@@ -104,9 +104,9 @@ create_input_by_type <- function(type, id, config) {
         list()
     }
 
-    print("Choices structured as:")
-    str(choices)
-    print(paste("Default value:", config$value))
+    # print("Choices structured as:") # Commented out
+    # str(choices) # Commented out
+    # print(paste("Default value:", config$value)) # Commented out
 
     # Get show_label setting with default = TRUE for backward compatibility
     show_label <- config$show_label %||% TRUE
@@ -117,8 +117,8 @@ create_input_by_type <- function(type, id, config) {
     # Create the base input element
     input_element <- switch(type,
         "select" = if (input_style == "choices") {
-            print("Creating choices select with defaults:")
-            print(paste("Selected:", config$value))
+            # print("Creating choices select with defaults:") # Commented out
+            # print(paste("Selected:", config$value)) # Commented out
             choicesSelectInput(
                 inputId = id,
                 label = config$label,

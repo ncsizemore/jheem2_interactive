@@ -17,13 +17,13 @@ choicesSelectInput <- function(inputId,
                                show_label = TRUE,
                                show_description = TRUE,
                                description = NULL) {
-    # Print debug info
-    print("\n=== Creating Choices Select ===")
-    print(paste("Input ID:", inputId))
-    print("Selected values:")
-    str(selected)
-    print("Choices:")
-    str(choices)
+    # # Print debug info
+    # print("\n=== Creating Choices Select ===")
+    # print(paste("Input ID:", inputId))
+    # print("Selected values:")
+    # str(selected)
+    # print("Choices:")
+    # str(choices)
 
     # Create select element
     select_tag <- tags$select(
@@ -35,7 +35,7 @@ choicesSelectInput <- function(inputId,
     # Add options with selected state
     for (choice in choices) {
         is_selected <- !is.null(selected) && choice$value %in% selected
-        print(sprintf("Option: %s, Selected: %s", choice$value, is_selected))
+        # print(sprintf("Option: %s, Selected: %s", choice$value, is_selected))
 
         select_tag <- tagAppendChild(
             select_tag,
@@ -69,18 +69,18 @@ choicesSelectInput <- function(inputId,
         sep = "\n"
     )
 
-    print("Generated script:")
-    print(init_script)
+    # print("Generated script:")
+    # print(init_script)
 
     # Create container
     container <- div(
         class = "choices-container",
         # Only show label if show_label is TRUE and label is not NULL
         if (show_label && !is.null(label)) tags$label(class = "choices-label", label),
-        
+
         # Add description if provided, but only if show_description is TRUE and description is substantially different from the label
-        if (show_description && !is.null(description) && 
-            !identical(description, label) && 
+        if (show_description && !is.null(description) &&
+            !identical(description, label) &&
             !identical(description, paste("Select", tolower(label)))) {
             tags$div(
                 class = "selector-description",
@@ -88,7 +88,6 @@ choicesSelectInput <- function(inputId,
                 description
             )
         },
-        
         select_tag,
         tags$script(HTML(init_script))
     )

@@ -3,8 +3,8 @@
 #' @return Shiny UI element
 create_contact_content <- function(config) {
     # Debug print
-    print("Contact config received:")
-    print(str(config))
+    # print("Contact config received:")
+    # print(str(config))
 
     tags$div(
         class = config$layout$container$class,

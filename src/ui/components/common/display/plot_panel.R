@@ -167,12 +167,12 @@ plot_panel_server <- function(id, settings) {
           req(current_settings, !is.null(current_settings$outcomes), cancelOutput = TRUE)
           req(!is.null(current_sim_id), cancelOutput = TRUE)
 
-          print(paste0("-[ renderPlot", id, " ]- Running with SimID: ", current_sim_id))
-          print(paste0(
-            "-[ renderPlot", id, " ]- Using settings: O=", paste(current_settings$outcomes, collapse = ", "),
-            ", F=", paste(current_settings$facet.by, collapse = ", "),
-            ", S=", current_settings$summary.type
-          ))
+          # print(paste0("-[ renderPlot", id, " ]- Running with SimID: ", current_sim_id)) # Commented out
+          # print(paste0(
+          #   "-[ renderPlot", id, " ]- Using settings: O=", paste(current_settings$outcomes, collapse = ", "),
+          #   ", F=", paste(current_settings$facet.by, collapse = ", "),
+          #   ", S=", current_settings$summary.type
+          # )) # Commented out
 
           # Wrap the actual plot generation in isolate to prevent unwanted internal dependencies
           generated_plot <- isolate({
@@ -184,7 +184,7 @@ plot_panel_server <- function(id, settings) {
 
             if (is.null(sim_state_check) || sim_state_check$status == "error") {
               err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
-              print(paste0("-[ renderPlot", id, " ]- Sim Error: ", err_msg))
+              # print(paste0("-[ renderPlot", id, " ]- Sim Error: ", err_msg)) # Keep print for actual error
 
               sim_boundary$set_error(
                 message = err_msg,
@@ -202,7 +202,7 @@ plot_panel_server <- function(id, settings) {
 
             if (is.null(sim_state_data) || is.null(sim_state_data$simset)) {
               err_msg <- "No sim data."
-              print(paste0("-[ renderPlot", id, " ]- Data Error: ", err_msg))
+              # print(paste0("-[ renderPlot", id, " ]- Data Error: ", err_msg)) # Keep print for actual error
 
               plot_boundary$set_error(
                 message = err_msg,
@@ -289,7 +289,7 @@ plot_panel_server <- function(id, settings) {
                 the_plot <- customize_plot_from_config(the_plot, vis_config)
                 req(the_plot)
 
-                print(paste0("-[ renderPlot", id, " ]- Plot generated."))
+                # print(paste0("-[ renderPlot", id, " ]- Plot generated.")) # Commented out
 
                 # Clear any errors and update status
                 sim_boundary$clear()
@@ -305,7 +305,7 @@ plot_panel_server <- function(id, settings) {
               },
               error = function(e) {
                 err_msg <- conditionMessage(e)
-                print(paste0("-[ renderPlot", id, " ]- Plot Error: ", err_msg))
+                # print(paste0("-[ renderPlot", id, " ]- Plot Error: ", err_msg)) # Keep print for actual error
 
                 plot_boundary$set_error(
                   message = err_msg,
@@ -350,7 +350,7 @@ plot_panel_server <- function(id, settings) {
         if (!(state == "visible" && display == panel_type)) {
           if (!is.null(isolate(direct_error_message())) ||
             isolate(store$get_plot_status(id) == "loading")) {
-            print(paste0(id_log_prefix, " Deactivating. Resetting local state..."))
+            # print(paste0(id_log_prefix, " Deactivating. Resetting local state...")) # Commented out
             isolate({
               vis_manager$reset()
               validation_boundary$clear()
@@ -361,7 +361,7 @@ plot_panel_server <- function(id, settings) {
             })
           }
         } else {
-          print(paste0(id_log_prefix, " State is active. renderPlot will run."))
+          # print(paste0(id_log_prefix, " State is active. renderPlot will run.")) # Commented out
           isolate(direct_error_message(NULL))
         }
       },
@@ -375,7 +375,7 @@ plot_panel_server <- function(id, settings) {
       req(input$visualization_state == "visible")
       req(input$display_type == "plot")
 
-      print(paste0("-[ PlotButton", id, " ]- Clicked."))
+      # print(paste0("-[ PlotButton", id, " ]- Clicked.")) # Commented out
 
       new_settings <- isolate({
         outcomes <- input[[paste0("outcomes_", id)]]
@@ -414,11 +414,11 @@ plot_panel_server <- function(id, settings) {
       })
 
       if (!is.null(new_settings)) {
-        print(paste0("-[ PlotButton", id, " ]- Updating control_manager ONLY..."))
-        str(new_settings)
+        # print(paste0("-[ PlotButton", id, " ]- Updating control_manager ONLY...")) # Commented out
+        # str(new_settings) # Commented out
         control_manager$update_settings(new_settings)
       } else {
-        print(paste0("-[ PlotButton", id, " ]- Settings validation failed."))
+        # print(paste0("-[ PlotButton", id, " ]- Settings validation failed.")) # Commented out
       }
     })
 
@@ -434,7 +434,7 @@ plot_panel_server <- function(id, settings) {
           err_msg <- sprintf("Error: %s", as.character(sim_state$error_message))
 
           if (is.null(direct_error_message()) || direct_error_message() != err_msg) {
-            print(paste0("-[ PlotSimObserver", id, " ]- Sim error: ", err_msg))
+            # print(paste0("-[ PlotSimObserver", id, " ]- Sim error: ", err_msg)) # Keep print for actual error
 
             sim_boundary$set_error(
               message = sim_state$error_message,
@@ -457,7 +457,7 @@ plot_panel_server <- function(id, settings) {
           err_msg <- sprintf("Error: %s", page_error_state$message)
 
           if (is.null(direct_error_message()) || direct_error_message() != err_msg) {
-            print(paste0("-[ PlotPersistObserver", id, " ]- Syncing global error: ", err_msg))
+            # print(paste0("-[ PlotPersistObserver", id, " ]- Syncing global error: ", err_msg)) # Keep print for actual error
 
             error_type <- page_error_state$type %||% ERROR_TYPES$SIMULATION
             boundary_to_use <- switch(error_type,

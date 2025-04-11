@@ -8,9 +8,9 @@ ERROR_TYPES <- list(
     DATA = "data",
     SYSTEM = "system",
     STATE = "state",
-    SIMULATION = "simulation",     # Simulation errors
+    SIMULATION = "simulation", # Simulation errors
     SIMULATION_CACHE = "sim_cache", # Simulation cache errors
-    DOWNLOAD = "download"         # Download errors
+    DOWNLOAD = "download" # Download errors
 )
 
 #' Error severity levels
@@ -56,7 +56,7 @@ create_error_state <- function(message,
 #' @return List of error handling functions
 create_error_boundary <- function(session, output, page_id, id, state_manager = NULL) {
     ns <- session$ns
-    print(sprintf("Creating error boundary for %s on page %s", id, page_id))
+    # print(sprintf("Creating error boundary for %s on page %s", id, page_id)) # Commented out
 
     # Initialize error state
     error_state <- reactiveVal(list(
@@ -75,17 +75,17 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
     # Create reactive error display
     local({
         output[[ns("error_display")]] <- renderUI({
-            print("=== Rendering Error Display ===")
+            # print("=== Rendering Error Display ===") # Commented out
             current_error <- error_state()
-            print("Current error state:")
-            str(current_error)
+            # print("Current error state:") # Commented out
+            # str(current_error) # Commented out
 
             if (!current_error$has_error) {
-                print("No error to display")
+                # print("No error to display") # Commented out
                 return(NULL)
             }
 
-            print(sprintf("Rendering error UI for type: %s", current_error$type))
+            # print(sprintf("Rendering error UI for type: %s", current_error$type)) # Commented out
 
             # Create error display based on type
             result <- if (current_error$type == ERROR_TYPES$VALIDATION) {
@@ -107,14 +107,14 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
                     }
                 )
             }
-            print("Error UI generated")
+            # print("Error UI generated") # Commented out
             result
         })
     })
 
     # Define error management functions
     local({
-        print("Defining error management functions")
+        # print("Defining error management functions") # Commented out
 
         set_error <- function(message, type = ERROR_TYPES$SYSTEM,
                               severity = SEVERITY_LEVELS$ERROR,
@@ -134,8 +134,10 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
                 # Update visualization status if manager provided
                 if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
                     # Don't pass page_id - visualization manager already has it in closure
-                    print(sprintf("[ERROR_BOUNDARY] Setting plot status to 'error' using %s", 
-                                  if("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"))
+                    print(sprintf(
+                        "[ERROR_BOUNDARY] Setting plot status to 'error' using %s",
+                        if ("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"
+                    ))
                     state_manager$set_plot_status("error")
                 } else {
                     print("[ERROR_BOUNDARY] No state_manager with set_plot_status available")
@@ -159,8 +161,10 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
                 # Update visualization status if manager provided
                 if (!is.null(state_manager) && !is.null(state_manager$set_plot_status)) {
                     # Don't pass page_id - visualization manager already has it in closure
-                    print(sprintf("[ERROR_BOUNDARY] Clearing error and setting plot status to 'ready' using %s", 
-                                  if("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"))
+                    print(sprintf(
+                        "[ERROR_BOUNDARY] Clearing error and setting plot status to 'ready' using %s",
+                        if ("update_visualization_state" %in% names(state_manager)) "store" else "visualization manager"
+                    ))
                     state_manager$set_plot_status("ready")
                 } else {
                     print("[ERROR_BOUNDARY] No state_manager with set_plot_status available for clearing error")
@@ -171,45 +175,48 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
         # Handle expressions with error handling
         handle <- function(expr, type = ERROR_TYPES$SYSTEM, message = NULL, severity = SEVERITY_LEVELS$ERROR, propagate = FALSE) {
             print("Handling expression with error boundary")
-            tryCatch({
-                result <- expr
-                # Clear any existing error
-                clear_error()
-                return(result)
-            }, error = function(e) {
-                # Get error message
-                error_msg <- if (is.null(message)) {
-                    as.character(e$message)
-                } else {
-                    paste0(message, ": ", as.character(e$message))
+            tryCatch(
+                {
+                    result <- expr
+                    # Clear any existing error
+                    clear_error()
+                    return(result)
+                },
+                error = function(e) {
+                    # Get error message
+                    error_msg <- if (is.null(message)) {
+                        as.character(e$message)
+                    } else {
+                        paste0(message, ": ", as.character(e$message))
+                    }
+
+                    print(sprintf("Expression error caught: %s", error_msg))
+
+                    # Set error in this boundary
+                    set_error(
+                        message = error_msg,
+                        type = type,
+                        severity = severity,
+                        details = as.character(e)
+                    )
+
+                    # Propagate to parent if requested
+                    if (propagate && !is.null(error_registry[[id]])) {
+                        error_registry[[id]]$propagate_error(error_msg, type, severity)
+                    }
+
+                    # Return NULL to indicate failure
+                    NULL
                 }
-                
-                print(sprintf("Expression error caught: %s", error_msg))
-                
-                # Set error in this boundary
-                set_error(
-                    message = error_msg,
-                    type = type,
-                    severity = severity,
-                    details = as.character(e)
-                )
-                
-                # Propagate to parent if requested
-                if (propagate && !is.null(error_registry[[id]])) {
-                    error_registry[[id]]$propagate_error(error_msg, type, severity)
-                }
-                
-                # Return NULL to indicate failure
-                NULL
-            })
+            )
         }
-        
+
         # Propagate errors to parent components
         propagate_error <- function(message, type = ERROR_TYPES$SYSTEM, severity = SEVERITY_LEVELS$ERROR) {
             # Implementation would depend on the registry structure
             print("Error propagation not yet implemented")
         }
-        
+
         environment()
     }) -> error_fns
 
@@ -257,8 +264,8 @@ create_error_boundary <- function(session, output, page_id, id, state_manager = 
     # Register interface in global registry
     error_registry[[id]] <- error_interface
 
-    print("Created error interface:")
-    str(error_interface)
+    # print("Created error interface:") # Commented out
+    # str(error_interface) # Commented out
     error_interface
 }
 
@@ -279,17 +286,17 @@ create_validation_boundary <- function(session, output, page_id, id,
     list(
         # Validate with custom rules
         validate = function(value, rules, field_id = id, severity = SEVERITY_LEVELS$ERROR) {
-            print("Validating value:") # Debug
-            print(value)
-            print("With rules:")
-            str(rules)
+            # print("Validating value:") # Debug - Commented out
+            # print(value) # Debug - Commented out
+            # print("With rules:") # Debug - Commented out
+            # str(rules) # Debug - Commented out
 
             for (rule in rules) {
-                print("Testing rule:") # Debug
-                str(rule)
+                # print("Testing rule:") # Debug - Commented out
+                # str(rule) # Debug - Commented out
 
                 if (!rule$test(value)) {
-                    print(sprintf("Validation failed with message: %s", rule$message)) # Debug
+                    # print(sprintf("Validation failed with message: %s", rule$message)) # Keep print for actual validation failure
                     error_boundary$set_error(
                         message = rule$message,
                         type = ERROR_TYPES$VALIDATION,
@@ -302,7 +309,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                     return(FALSE)
                 }
             }
-            print("All validations passed") # Debug
+            # print("All validations passed") # Debug - Commented out
             error_boundary$clear_error()
             # Update validation state if manager provided
             if (!is.null(validation_manager)) {
@@ -318,7 +325,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                 if (is.null(message) || length(message) == 0) {
                     message <- "This field is required"
                 }
-                print(sprintf("Creating required rule with message: %s", message))
+                # print(sprintf("Creating required rule with message: %s", message)) # Commented out
 
                 list(
                     test = function(value) {
@@ -326,7 +333,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                             length(value) > 0 &&
                             !is.na(value) &&
                             (!is.character(value) || nchar(trimws(value)) > 0)
-                        print(sprintf("Required test result: %s", result))
+                        # print(sprintf("Required test result: %s", result)) # Commented out
                         result
                     },
                     message = message,
@@ -353,7 +360,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                         if (is.null(max)) "∞" else max
                     )
                 }
-                print(sprintf("Creating range rule with message: %s", message))
+                # print(sprintf("Creating range rule with message: %s", message)) # Commented out
 
                 list(
                     test = function(value) {
@@ -364,7 +371,7 @@ create_validation_boundary <- function(session, output, page_id, id,
                         min_ok <- is.null(min) || value >= min
                         max_ok <- is.null(max) || value <= max
                         result <- min_ok && max_ok
-                        print(sprintf("Range test result: %s", result))
+                        # print(sprintf("Range test result: %s", result)) # Commented out
                         result
                     },
                     message = message,
@@ -374,8 +381,8 @@ create_validation_boundary <- function(session, output, page_id, id,
             custom = function(test_fn,
                               message,
                               severity = SEVERITY_LEVELS$ERROR) {
-                print("Creating custom rule with message:") # Debug
-                print(message)
+                # print("Creating custom rule with message:") # Debug - Commented out
+                # print(message) # Debug - Commented out
                 list(
                     test = test_fn,
                     message = message,
@@ -401,9 +408,9 @@ create_validation_boundary <- function(session, output, page_id, id,
 #' @param state_manager Optional visualization manager for integration
 #' @return Simulation error handler
 create_simulation_boundary <- function(session, output, page_id, id, state_manager = NULL) {
-    print(sprintf("Creating simulation boundary for %s on page %s", id, page_id))
-    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
-    
+    # print(sprintf("Creating simulation boundary for %s on page %s", id, page_id)) # Commented out
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager) # Inner creation print already commented
+
     list(
         # Handle simulation errors
         handle_simulation = function(expr, severity = SEVERITY_LEVELS$ERROR) {
@@ -414,7 +421,7 @@ create_simulation_boundary <- function(session, output, page_id, id, state_manag
                 severity = severity
             )
         },
-        
+
         # Handle cache errors
         handle_cache = function(expr, severity = SEVERITY_LEVELS$WARNING) {
             error_boundary$handle(
@@ -424,7 +431,7 @@ create_simulation_boundary <- function(session, output, page_id, id, state_manag
                 severity = severity
             )
         },
-        
+
         # Inherit base error boundary methods
         clear = error_boundary$clear_error,
         set_error = error_boundary$set_error,
@@ -443,9 +450,9 @@ create_simulation_boundary <- function(session, output, page_id, id, state_manag
 #' @param state_manager Optional visualization manager for integration
 #' @return Cache error handler
 create_simulation_cache_boundary <- function(session, output, page_id, id, state_manager = NULL) {
-    print(sprintf("Creating simulation cache boundary for %s on page %s", id, page_id))
-    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
-    
+    # print(sprintf("Creating simulation cache boundary for %s on page %s", id, page_id)) # Commented out
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager) # Inner creation print already commented
+
     list(
         # Cache-specific handlers
         handle_cache_read = function(expr, severity = SEVERITY_LEVELS$WARNING) {
@@ -456,7 +463,6 @@ create_simulation_cache_boundary <- function(session, output, page_id, id, state
                 severity = severity
             )
         },
-        
         handle_cache_write = function(expr, severity = SEVERITY_LEVELS$WARNING) {
             error_boundary$handle(
                 expr,
@@ -465,7 +471,7 @@ create_simulation_cache_boundary <- function(session, output, page_id, id, state
                 severity = severity
             )
         },
-        
+
         # Include base error boundary methods
         clear = error_boundary$clear_error,
         set_error = error_boundary$set_error,
@@ -483,10 +489,10 @@ create_simulation_cache_boundary <- function(session, output, page_id, id, state
 #' @param state_manager Optional visualization manager for integration
 #' @return Plot error handler
 create_plot_boundary <- function(session, output, page_id, id, state_manager = NULL) {
-    print("Creating plot boundary")
-    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager)
-    print("Plot boundary error functions:")
-    str(error_boundary)
+    # print("Creating plot boundary") # Commented out
+    error_boundary <- create_error_boundary(session, output, page_id, id, state_manager) # Inner creation print already commented
+    # print("Plot boundary error functions:") # Commented out
+    # str(error_boundary) # Commented out
 
     list(
         handle_plot = function(plot_expr, severity = SEVERITY_LEVELS$ERROR) {

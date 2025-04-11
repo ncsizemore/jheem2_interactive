@@ -1,5 +1,8 @@
 library(yaml)
 
+# Environment for caching loaded configurations
+.config_cache <- new.env(parent = emptyenv())
+
 #' Load YAML configuration file
 #' @param path Path to YAML file
 #' @return List containing configuration
@@ -23,10 +26,18 @@ load_yaml_file <- function(path) {
     )
 }
 
-#' Get base configuration
+#' Get base configuration (cached)
 #' @return List containing base configuration
 get_base_config <- function() {
-    load_yaml_file("src/ui/config/base.yaml")
+    if (exists("base", envir = .config_cache)) {
+        # print("Returning cached base config")
+        return(.config_cache$base)
+    } else {
+        # print("Loading and caching base config")
+        config <- load_yaml_file("src/ui/config/base.yaml")
+        .config_cache$base <- config
+        return(config)
+    }
 }
 
 # Helper function to generate default display name by capitalizing words
@@ -99,10 +110,22 @@ get_dynamic_outcomes <- function(file_path, controls_config) {
     return(outcomes_config)
 }
 
-#' Get configuration for a specific component
+#' Get configuration for a specific component (controls & visualization components are cached)
 #' @param component Name of the component
 #' @return List containing component configuration
 get_component_config <- function(component) {
+    # Define components to cache
+    cached_components <- c("controls", "visualization")
+    cache_key <- component # Use component name as the cache key
+
+    # Check cache if the component is designated for caching
+    if (component %in% cached_components && exists(cache_key, envir = .config_cache)) {
+        # print(paste("Returning cached config for component:", component))
+        return(.config_cache[[cache_key]])
+    }
+
+    # Load from file if not designated for caching or not found in cache
+    # print(paste("Loading config for component:", component))
     path <- file.path("src", "ui", "config", "components", paste0(component, ".yaml"))
     config <- load_yaml_file(path)
 
@@ -120,13 +143,27 @@ get_component_config <- function(component) {
         }
     }
 
+    # Cache the component config if it's designated for caching
+    if (component %in% cached_components) {
+        # print(paste("Caching config for component:", component))
+        .config_cache[[cache_key]] <- config
+    }
+
     return(config)
 }
 
-#' Get default configuration
+#' Get default configuration (cached)
 #' @return List containing default configuration
 get_defaults_config <- function() {
-    load_yaml_file("src/ui/config/defaults.yaml")
+    if (exists("defaults", envir = .config_cache)) {
+        # print("Returning cached defaults config")
+        return(.config_cache$defaults)
+    } else {
+        # print("Loading and caching defaults config")
+        config <- load_yaml_file("src/ui/config/defaults.yaml")
+        .config_cache$defaults <- config
+        return(config)
+    }
 }
 
 #' Get configuration for a specific page

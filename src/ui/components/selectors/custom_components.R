@@ -36,8 +36,8 @@ create_conditional_component <- function(id, component, config) {
 #' @param config UI configuration from YAML
 #' @param container_class Additional CSS class for container
 create_compound_input <- function(id, config, container_class = NULL) {
-    print(paste("Creating compound input with ID:", id))
-    print(paste("Config:", paste(names(config), collapse = ",")))
+    # print(paste("Creating compound input with ID:", id)) # Commented out
+    # print(paste("Config:", paste(names(config), collapse = ","))) # Commented out
     # Validate inputs
     if (is.null(config) || is.null(config$inputs)) {
         warning(sprintf("Invalid config for compound input %s", id))
@@ -107,8 +107,8 @@ create_compound_input <- function(id, config, container_class = NULL) {
                 }
 
                 input_id <- paste0(id, "_", input_name)
-                print(paste("Creating compound input element with ID:", input_id))
-                print(paste("Input config type:", input_config$type))
+                # print(paste("Creating compound input element with ID:", input_id)) # Commented out
+                # print(paste("Input config type:", input_config$type)) # Commented out
 
                 # Create the input group
                 tags$div(
@@ -239,15 +239,15 @@ create_date_range <- function(id, config, container_class = NULL) {
 #' @param config Pre-loaded complete page configuration object
 #' @param fixed_group Optional fixed group configuration
 create_intervention_setting <- function(type, group_num, suffix, config, fixed_group = NULL) {
-    print(paste("Creating intervention setting:", type, "group:", group_num, "suffix:", suffix))
+    # print(paste("Creating intervention setting:", type, "group:", group_num, "suffix:", suffix)) # Commented out
     if (missing(config) || !is.list(config)) {
         stop("create_intervention_setting requires a valid 'config' object.")
     }
 
     # Get specific selector configuration using the pre-loaded page config
     selector_config <- get_selector_config(type, suffix, config = config, group_num = group_num)
-    print("Got selector_config:")
-    print(str(selector_config))
+    # print("Got selector_config:") # Commented out
+    # print(str(selector_config)) # Commented out
 
     # We don't need to modify the label as the group label is already shown in the panel header
     # This prevents duplicate information in the UI
@@ -349,7 +349,7 @@ create_subgroup_panel <- function(group_num, config, fixed_group = NULL) {
 #' @param suffix Page suffix (usually "custom")
 #' @param config Pre-loaded complete page configuration object
 create_subgroup_characteristics <- function(group_num, suffix, config) {
-    print(paste("Creating characteristics for group:", group_num, "suffix:", suffix))
+    # print(paste("Creating characteristics for group:", group_num, "suffix:", suffix)) # Commented out
     if (missing(config) || !is.list(config)) {
         stop("create_subgroup_characteristics requires a valid 'config' object.")
     }
@@ -365,9 +365,9 @@ create_subgroup_characteristics <- function(group_num, suffix, config) {
             # Get field config using the pre-loaded config
             field_config <- get_selector_config(field_name, suffix, config = config, group_num = group_num)
 
-            # Debug what we're getting
-            print(paste("Creating field:", field_name))
-            print(str(field_config))
+            # # Debug what we're getting
+            # print(paste("Creating field:", field_name)) # Commented out
+            # print(str(field_config)) # Commented out
 
             tags$div(
                 class = "demographic-field",

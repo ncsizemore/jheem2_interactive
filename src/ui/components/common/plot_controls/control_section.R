@@ -6,11 +6,11 @@
 #' @param suffix Page suffix ('prerun' or 'custom')
 #' @param ns Optional namespace function
 create_control_section <- function(type, config, suffix, ns = NULL) {
-    print("Creating control section:")
-    print(paste("Type:", type))
-    print(paste("Suffix:", suffix))
-    print("Config:")
-    print(str(config))
+    # print("Creating control section:")
+    # print(paste("Type:", type))
+    # print(paste("Suffix:", suffix))
+    # print("Config:")
+    # print(str(config))
 
     # Map UI type to input ID prefix
     input_prefix <- switch(type,
