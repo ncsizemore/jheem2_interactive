@@ -9,6 +9,8 @@ library(cachem)
 library(magrittr)
 library(plotly)
 library(httr2) # Required for API calls
+library(promises) # For asynchronous operations
+library(future) # For background processing
 
 # Initialize remote logging if enabled
 # source("src/utils/logging.R")
@@ -213,7 +215,7 @@ ui <- function() {
 
         # Pre-run tab - Pass pre-loaded config
         tabPanel(
-          title = "Pre-Run",
+          title = "Pre-Run Scenarios",
           value = "prerun",
           # Use global config
           create_prerun_layout(config = PRERUN_CONFIG)
@@ -221,7 +223,7 @@ ui <- function() {
 
         # Custom tab - Pass pre-loaded config
         tabPanel(
-          title = "Custom",
+          title = "Custom Simulations",
           value = "custom",
           # Use global config
           create_custom_layout(config = CUSTOM_CONFIG)
@@ -285,6 +287,11 @@ ui <- function() {
 
 # Server function
 server <- function(input, output, session) {
+  # Set up future plan for asynchronous operations
+  # multisession works on all platforms; multicore is faster but Linux/macOS only (and not in RStudio)
+  future::plan(multisession)
+  print("[APP] Future plan set to multisession")
+
   # Create error boundary for model loading
   model_boundary <- create_error_boundary(
     session,

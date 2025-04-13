@@ -88,17 +88,19 @@ create_plot_panel <- function(id, type = "static") {
             height = "600px",
             width = "100%"
           ),
-          conditionalPanel(
-            condition = sprintf("input['%s'] === 'loading'", ns("plot_status")),
+          # Remove conditionalPanel, use shinyjs::show/hide instead
+          # Give the indicator div a specific ID for shinyjs targeting
+          tags$div(
+            id = ns("loading_indicator"), # Added ID
+            class = "loading-indicator",
+            style = "display: none;", # Start hidden
             tags$div(
-              class = "loading-indicator",
-              tags$div(
-                class = "loading-content",
-                tags$span(class = "loading-spinner"),
-                tags$span("Generating plot...")
-              )
+              class = "loading-content",
+              tags$span(class = "loading-spinner"),
+              tags$span("Generating plot...")
             )
-          ),
+          ), # Added comma back
+          # Keep the hidden input for plot_status, other logic might use it
           tags$div(
             class = "hidden",
             textInput(ns("plot_status"), label = NULL, value = "ready")

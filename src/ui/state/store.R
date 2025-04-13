@@ -282,9 +282,9 @@ StateStore <- R6Class("StateStore",
         #' @param status Character: new status ("ready", "loading", or "error")
         set_plot_status = function(page_id, status) {
             # Print diagnostic information to debug issues
-            print(sprintf("[STORE] Setting plot status for page '%s' to '%s'", page_id, status))
-            print(sprintf("[STORE] Available page IDs: %s", paste(names(self$panel_plot_statuses), collapse=", ")))
-            
+            print(sprintf("[STORE - DEBUG] Attempting to set plot status for page '%s' to '%s'", page_id, status)) # DEBUG
+            print(sprintf("[STORE - DEBUG] Available page IDs: %s", paste(names(self$panel_plot_statuses), collapse = ", "))) # DEBUG
+
             if (is.null(self$panel_plot_statuses[[page_id]])) {
                 stop(sprintf("No plot status found for page: %s", page_id))
             }
@@ -292,6 +292,7 @@ StateStore <- R6Class("StateStore",
                 stop("Invalid plot_status value. Must be 'ready', 'loading', or 'error'")
             }
             self$panel_plot_statuses[[page_id]](status)
+            print(sprintf("[STORE - DEBUG] Status for page '%s' successfully set to '%s' in reactiveVal", page_id, status)) # DEBUG
             invisible(self)
         },
 
@@ -460,10 +461,10 @@ StateStore <- R6Class("StateStore",
         #' @description Find a simulation with matching settings
         #' @param settings List: simulation settings to match
         #' @param mode Character: simulation mode ("prerun" or "custom")
-        #' @return Character: ID of matching simulation or NULL if no match found
+        #' @return A promise that resolves with the ID of the matching simulation (or NULL if no match/error)
         find_matching_simulation = function(settings, mode) {
-            print(paste0("[STATE_STORE] Looking for matching simulation for mode: ", mode))
-            print("[STATE_STORE DEBUG] Settings:")
+            print(paste0("[STATE_STORE ASYNC] Looking for matching simulation for mode: ", mode))
+            print("[STATE_STORE ASYNC DEBUG] Settings:")
             print(str(settings))
 
             # Log scenario specifically to help with debugging
@@ -474,17 +475,17 @@ StateStore <- R6Class("StateStore",
             }
 
             # Step 1: Look through existing simulations in memory
-            print("[STATE_STORE DEBUG] Step 1: Checking for matches in memory")
+            print("[STATE_STORE ASYNC DEBUG] Step 1: Checking for matches in memory")
             sim_ids <- names(private$simulations)
-            print(sprintf("[STATE_STORE DEBUG] Found %d simulations in memory", length(sim_ids)))
+            print(sprintf("[STATE_STORE ASYNC DEBUG] Found %d simulations in memory", length(sim_ids)))
 
             for (id in sim_ids) {
                 sim_state <- private$simulations[[id]]()
 
                 # Only match simulations of the same mode
                 if (sim_state$mode == mode) {
-                    print(sprintf("[STATE_STORE DEBUG] Found simulation with matching mode: %s", id))
-                    print("[STATE_STORE DEBUG] Existing simulation details:")
+                    print(sprintf("[STATE_STORE ASYNC DEBUG] Found simulation with matching mode: %s", id))
+                    print("[STATE_STORE ASYNC DEBUG] Existing simulation details:")
                     print(sprintf("- status: %s", sim_state$status))
 
                     # Print more details about the simulation state
@@ -495,7 +496,7 @@ StateStore <- R6Class("StateStore",
 
                     # Print scenario info specifically for debugging
                     if (!is.null(sim_state$settings$scenario)) {
-                        print(sprintf("[STATE_STORE DEBUG] Checking against existing scenario: '%s'", sim_state$settings$scenario))
+                        print(sprintf("[STATE_STORE ASYNC DEBUG] Checking against existing scenario: '%s'", sim_state$settings$scenario))
                     }
 
                     # If the simulation is complete, show if it has results or not
@@ -506,17 +507,18 @@ StateStore <- R6Class("StateStore",
 
                     # Check if settings match
                     settings_match <- private$are_settings_equal(sim_state$settings, settings)
-                    print(sprintf("[STATE_STORE DEBUG] Settings match: %s", settings_match))
+                    print(sprintf("[STATE_STORE ASYNC DEBUG] Settings match: %s", settings_match))
 
                     if (settings_match) {
-                        print(paste0("[STATE_STORE] Found matching simulation in memory with ID: ", id))
-                        return(id)
+                        print(paste0("[STATE_STORE ASYNC] Found matching simulation in memory with ID: ", id))
+                        # Return a resolved promise containing the ID
+                        return(promises::promise_resolve(id))
                     }
                 }
             }
 
             # Step 2: Check disk cache if enabled
-            print("[STATE_STORE DEBUG] Step 2: Checking disk cache")
+            print("[STATE_STORE ASYNC DEBUG] Step 2: Checking disk cache")
 
             # First try to use unified cache manager
             cache_manager <- tryCatch(
@@ -524,158 +526,92 @@ StateStore <- R6Class("StateStore",
                     get_cache_manager()
                 },
                 error = function(e) {
-                    print(sprintf("[STATE_STORE] UnifiedCacheManager not available: %s", e$message))
+                    print(sprintf("[STATE_STORE ASYNC] UnifiedCacheManager not available: %s", e$message))
                     return(NULL)
                 }
             )
 
             if (!is.null(cache_manager)) {
                 # Try to find a matching simulation using UnifiedCacheManager
-                print("[STATE_STORE DEBUG] Using UnifiedCacheManager to check cache")
-
-                # Get current Shiny session for progress updates
-                current_session <- getDefaultReactiveDomain()
+                print("[STATE_STORE ASYNC DEBUG] Using UnifiedCacheManager to check cache")
 
                 if (cache_manager$is_simulation_cached(settings, mode)) {
-                    print("[STATE_STORE] Found matching simulation in unified cache")
+                    print("[STATE_STORE ASYNC] Found matching simulation in unified cache")
 
-                    # Load from unified cache - get session for progress callback
-                    shiny_session <- getDefaultReactiveDomain()
-                    # Create progress callback
-                    progress_callback <- NULL
-                    if (!is.null(shiny_session)) {
-                        # Create a unique ID for this operation
-                        progress_id <- paste0("sim-", format(Sys.time(), "%Y%m%d%H%M%S"), "-", sample.int(10000, 1))
+                    # Call the asynchronous get_cached_simulation
+                    # This returns a promise
+                    cached_sim_promise <- cache_manager$get_cached_simulation(settings, mode)
 
-                        # Define callback function - used if any downloads are needed
-                        progress_callback <- function(percent, file) {
-                            # Pass progress updates to UI
-                            shiny_session$sendCustomMessage("download_progress_update", list(
-                                id = progress_id,
-                                percent = percent,
-                                filename = file
-                            ))
-                        }
-
-                        # Initialize progress
-                        shiny_session$sendCustomMessage("download_progress_start", list(
-                            id = progress_id,
-                            filename = paste0("Loading simulation for ", settings$location %||% "")
-                        ))
-                    }
-
-                    # Call with progress callback
-                    cached_sim <- tryCatch(
-                        {
-                            cache_manager$get_cached_simulation(settings, mode, progress_callback)
-                        },
-                        error = function(e) {
-                            print(sprintf("[STATE_STORE] Error loading cached simulation: %s", e$message))
-
-                            # Send error message to UI
-                            if (!is.null(shiny_session)) {
-                                shiny_session$sendCustomMessage("download_progress_error", list(
-                                    id = progress_id,
-                                    message = sprintf("Error loading simulation: %s", e$message)
-                                ))
-                            }
-
-                            return(NULL)
-                        }
+                    # Return a new promise that chains the loading and storing
+                    return(
+                        cached_sim_promise %...>%
+                            function(cached_sim) {{                                    if (!is.null(cached_sim)) {
+                                # Create new simulation ID
+                                id <- private$generate_simulation_id()
+                                # Store in memory
+                                private$simulations[[id]] <- reactiveVal(cached_sim)
+                                print(paste0("[STATE_STORE ASYNC] Loaded from unified cache as simulation ID: ", id))
+                                return(id) # Resolve outer promise with the new ID
+                            } else {
+                                print("[STATE_STORE ASYNC] Unified cache load returned NULL (likely error during load)")
+                                return(NULL) # Resolve outer promise with NULL
+                            }                                } %...!%
+                                function(error) {
+                                    # Handle errors from the cache loading promise itself
+                                    print(sprintf("[STATE_STORE ASYNC] Error loading from unified cache: %s", error$message))
+                                    return(NULL) # Resolve outer promise with NULL on error
+                                }}
                     )
-
-                    if (!is.null(cached_sim)) {
-                        # Create new simulation ID
-                        id <- private$generate_simulation_id()
-
-                        # Store in memory
-                        private$simulations[[id]] <- reactiveVal(cached_sim)
-
-                        print(paste0("[STATE_STORE] Loaded from unified cache as simulation ID: ", id))
-                        return(id)
-                    }
                 }
             } else {
-                # Fall back to original cache system
+                # Fall back to original cache system (KEEPING THIS SYNCHRONOUS FOR NOW)
+                # If this fallback is still needed and causes blocking, it should also be made async.
+                print("[STATE_STORE ASYNC DEBUG] Falling back to original cache system (synchronous)")
                 tryCatch(
                     {
                         cache_config <- get_component_config("caching")$simulation_cache
                         print(sprintf(
-                            "[STATE_STORE DEBUG] Cache enabled: %s",
+                            "[STATE_STORE ASYNC DEBUG] Fallback Cache enabled: %s",
                             !is.null(cache_config) && !is.null(cache_config$enable_disk_cache) &&
                                 cache_config$enable_disk_cache
                         ))
 
                         if (!is.null(cache_config) && !is.null(cache_config$enable_disk_cache) && cache_config$enable_disk_cache) {
                             # Try to find a matching simulation in the disk cache
-                            print("[STATE_STORE DEBUG] Calling is_simulation_cached()")
-
-                            # Add debug info
-                            debug_result <- debug_cache_key(settings, mode)
-                            print("[STATE_STORE DEBUG] Debug cache key result:")
-                            print(debug_result)
-
-                            # Use the config path directly as fallback
+                            print("[STATE_STORE ASYNC DEBUG] Calling fallback is_simulation_cached()")
                             cache_path <- cache_config$path
-                            print(sprintf("[STATE_STORE DEBUG] Using cache path from config: '%s'", cache_path))
+                            print(sprintf("[STATE_STORE ASYNC DEBUG] Using fallback cache path: '%s'", cache_path))
 
                             if (is_simulation_cached(settings, mode, explicit_cache_dir = cache_path)) {
-                                print("[STATE_STORE] Found matching simulation in disk cache")
+                                print("[STATE_STORE ASYNC] Found matching simulation in fallback disk cache")
 
-                                # Load from disk cache
-                                print("[STATE_STORE DEBUG] Calling get_simulation_from_cache()")
+                                # Load from disk cache (synchronously for now in fallback)
+                                print("[STATE_STORE ASYNC DEBUG] Calling fallback get_simulation_from_cache()")
                                 cached_sim <- get_simulation_from_cache(settings, mode, explicit_cache_dir = cache_path)
-                                print(sprintf("[STATE_STORE DEBUG] get_simulation_from_cache result: %s", !is.null(cached_sim)))
+                                print(sprintf("[STATE_STORE ASYNC DEBUG] Fallback get_simulation_from_cache result: %s", !is.null(cached_sim)))
 
                                 if (!is.null(cached_sim)) {
                                     # Create a new simulation ID for the loaded simulation
                                     id <- private$generate_simulation_id()
-                                    print(sprintf("[STATE_STORE DEBUG] Generated new ID for cached sim: %s", id))
+                                    print(sprintf("[STATE_STORE ASYNC DEBUG] Generated new ID for fallback cached sim: %s", id))
 
-                                    # Handle both full simulation state or just JHEEM simulation object
+                                    # (Wrapping logic remains the same)
                                     if (inherits(cached_sim, "jheem.simulation.set")) {
-                                        # Got a direct JHEEM simulation object, wrap it in a simulation state
-                                        print("[STATE_STORE DEBUG] Received direct JHEEM object, creating wrapper")
-
-                                        # Try to load metadata
-                                        meta_path <- file.path(
-                                            cache_config$path,
-                                            paste0(generate_simulation_cache_key(settings, mode), ".RData.meta")
-                                        )
+                                        print("[STATE_STORE ASYNC DEBUG] Received direct JHEEM object, creating wrapper")
+                                        meta_path <- file.path(cache_config$path, paste0(generate_simulation_cache_key(settings, mode), ".RData.meta"))
                                         metadata <- NULL
                                         if (file.exists(meta_path)) {
-                                            print(sprintf("[STATE_STORE DEBUG] Loading metadata from %s", meta_path))
                                             metadata <- readRDS(meta_path)
-                                        } else {
-                                            print("[STATE_STORE DEBUG] No metadata file found, creating default metadata")
                                         }
-
-                                        # Create a wrapper with either loaded or default metadata
                                         cache_metadata <- if (!is.null(metadata)) {
-                                            # Make sure it has the required fields
                                             metadata$loaded_from_cache <- TRUE
                                             metadata$load_time <- Sys.time()
                                             metadata
                                         } else {
-                                            list(
-                                                loaded_from_cache = TRUE,
-                                                load_time = Sys.time(),
-                                                version = cached_sim$version
-                                            )
+                                            list(loaded_from_cache = TRUE, load_time = Sys.time(), version = cached_sim$version)
                                         }
-
-                                        cached_sim <- list(
-                                            id = id,
-                                            mode = mode,
-                                            settings = settings,
-                                            results = list(simset = cached_sim),
-                                            timestamp = Sys.time(),
-                                            status = "complete",
-                                            loaded_from_cache = TRUE,
-                                            cache_metadata = cache_metadata
-                                        )
+                                        cached_sim <- list(id = id, mode = mode, settings = settings, results = list(simset = cached_sim), timestamp = Sys.time(), status = "complete", loaded_from_cache = TRUE, cache_metadata = cache_metadata)
                                     } else {
-                                        # Update ID and timestamp to reflect current state
                                         cached_sim$id <- id
                                         cached_sim$timestamp <- Sys.time()
                                         cached_sim$loaded_from_cache <- TRUE
@@ -683,31 +619,30 @@ StateStore <- R6Class("StateStore",
 
                                     # Store in memory
                                     private$simulations[[id]] <- reactiveVal(cached_sim)
-
-                                    print(paste0("[STATE_STORE] Loaded from disk cache as simulation ID: ", id))
-                                    return(id)
+                                    print(paste0("[STATE_STORE ASYNC] Loaded from fallback disk cache as simulation ID: ", id))
+                                    # Return resolved promise with ID
+                                    return(promises::promise_resolve(id))
                                 } else {
-                                    print("[STATE_STORE DEBUG] Failed to load simulation from cache")
+                                    print("[STATE_STORE ASYNC DEBUG] Failed to load simulation from fallback cache")
                                 }
                             } else {
-                                print("[STATE_STORE DEBUG] No matching simulation found in cache")
+                                print("[STATE_STORE ASYNC DEBUG] No matching simulation found in fallback cache")
                             }
                         } else {
-                            print("[STATE_STORE DEBUG] Disk cache is disabled")
+                            print("[STATE_STORE ASYNC DEBUG] Fallback disk cache is disabled")
                         }
                     },
                     error = function(e) {
-                        print(sprintf("[STATE_STORE] Error checking disk cache: %s", e$message))
-                        print("[STATE_STORE DEBUG] Stack trace:")
-                        print(traceback())
+                        print(sprintf("[STATE_STORE ASYNC] Error checking fallback disk cache: %s", e$message))
                         # Continue without cache
                     }
                 )
             }
 
-            # No match found
-            print("[STATE_STORE] No matching simulation found")
-            NULL
+            # No match found in memory or cache
+            print("[STATE_STORE ASYNC] No matching simulation found")
+            # Return resolved promise with NULL
+            promises::promise_resolve(NULL)
         },
 
 

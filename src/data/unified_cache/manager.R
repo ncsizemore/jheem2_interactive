@@ -5,6 +5,8 @@
 
 library(R6)
 library(jsonlite)
+library(promises) # Add promises
+library(future) # Add future
 
 # Null coalescing operator for default values
 `%||%` <- function(x, y) if (is.null(x)) y else x
@@ -154,33 +156,33 @@ UnifiedCacheManager <- R6::R6Class(
 
       # Create a file path that includes location and scenario for uniqueness
       # This prevents files with the same name but from different locations/scenarios from colliding
-      
+
       # If settings provided with location and scenario, include them in the cache path
       if (!is.null(settings)) {
         if (!is.null(settings$location) && !is.null(settings$scenario)) {
           # Create a subdirectory pattern based on location and scenario
           subdir <- paste0(settings$location, "/", settings$scenario)
           print(sprintf("[UCACHE] Creating cache path with location and scenario: %s", subdir))
-          
+
           # Create the subdirectory if it doesn't exist
           subdir_path <- file.path(private$onedrive_path, subdir)
           if (!dir.exists(subdir_path)) {
             dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
           }
-          
+
           # Store in location/scenario/filename structure
           file_path <- file.path(subdir_path, filename)
         } else if (!is.null(settings$location)) {
           # Just use location if scenario not available
           subdir <- settings$location
           print(sprintf("[UCACHE] Creating cache path with location: %s", subdir))
-          
+
           # Create the subdirectory if it doesn't exist
           subdir_path <- file.path(private$onedrive_path, subdir)
           if (!dir.exists(subdir_path)) {
             dir.create(subdir_path, recursive = TRUE, showWarnings = FALSE)
           }
-          
+
           # Store in location/filename structure
           file_path <- file.path(subdir_path, filename)
         } else {
@@ -191,31 +193,33 @@ UnifiedCacheManager <- R6::R6Class(
         # If no settings provided, fall back to just using filename
         file_path <- file.path(private$onedrive_path, filename)
       }
-      
+
       print(sprintf("[UCACHE] Cache file path: %s", file_path))
 
       # Check if file already exists and is in registry
       if (file.exists(file_path)) {
         print(sprintf("[UCACHE DEBUG] Found existing file: %s", file_path))
-        
+
         # Check if it's in the registry
         if (file_path %in% names(private$registry$files)) {
           print("[UCACHE DEBUG] File exists in registry")
           print("[UCACHE DEBUG] Checking source metadata...")
-          
+
           # Get the registry entry
           registry_entry <- private$registry$files[[file_path]]
           print("[UCACHE DEBUG] Registry entry metadata:")
           print(str(registry_entry$metadata))
-          
+
           # Check if the source link matches to ensure we have the right file version
           source_match <- TRUE
-          
+
           # Compare sharing links if available
           if (!is.null(registry_entry$metadata$sharing_link)) {
-            print(sprintf("[UCACHE DEBUG] Comparing sharing link:\nRegistry: %s\nRequested: %s", 
-                         registry_entry$metadata$sharing_link, sharing_link))
-                         
+            print(sprintf(
+              "[UCACHE DEBUG] Comparing sharing link:\nRegistry: %s\nRequested: %s",
+              registry_entry$metadata$sharing_link, sharing_link
+            ))
+
             if (registry_entry$metadata$sharing_link != sharing_link) {
               print("[UCACHE DEBUG] Source URL doesn't match")
               source_match <- FALSE
@@ -225,17 +229,20 @@ UnifiedCacheManager <- R6::R6Class(
           } else {
             print("[UCACHE DEBUG] No sharing link in registry metadata")
           }
-          
+
           # Check if scenario matches to ensure we're getting the right scenario file
-          if (!is.null(settings) && !is.null(settings$scenario) && 
-              !is.null(registry_entry$metadata$scenario)) {
-              
-            print(sprintf("[UCACHE DEBUG] Comparing scenarios: Registry='%s', Requested='%s'", 
-                         registry_entry$metadata$scenario, settings$scenario))
-                         
+          if (!is.null(settings) && !is.null(settings$scenario) &&
+            !is.null(registry_entry$metadata$scenario)) {
+            print(sprintf(
+              "[UCACHE DEBUG] Comparing scenarios: Registry='%s', Requested='%s'",
+              registry_entry$metadata$scenario, settings$scenario
+            ))
+
             if (registry_entry$metadata$scenario != settings$scenario) {
-              print(sprintf("[UCACHE DEBUG] Scenarios don't match ('%s' vs '%s')", 
-                           registry_entry$metadata$scenario, settings$scenario))
+              print(sprintf(
+                "[UCACHE DEBUG] Scenarios don't match ('%s' vs '%s')",
+                registry_entry$metadata$scenario, settings$scenario
+              ))
               source_match <- FALSE
             } else {
               print("[UCACHE DEBUG] Scenarios match")
@@ -249,7 +256,7 @@ UnifiedCacheManager <- R6::R6Class(
               print("[UCACHE DEBUG] - No scenario in registry metadata")
             }
           }
-        
+
           # Only use the cached file if all source information matches
           if (source_match) {
             # File found in registry with matching source info, update access time
@@ -505,8 +512,8 @@ UnifiedCacheManager <- R6::R6Class(
                 # Skip sending 100% progress here to avoid duplication
                 if (progress < 100 || !has_sent_completion) {
                   # Only log at 0, 25, 50, 75, 90, 100% to reduce console output
-                  if (progress == 0 || progress == 25 || progress == 50 || 
-                      progress == 75 || progress == 90 || progress == 100) {
+                  if (progress == 0 || progress == 25 || progress == 50 ||
+                    progress == 75 || progress == 90 || progress == 100) {
                     print(sprintf("[UCACHE] Progress update: %d%%", progress))
                   }
                   update_progress(progress)
@@ -642,7 +649,7 @@ UnifiedCacheManager <- R6::R6Class(
           sharing_link = sharing_link,
           original_filename = filename
         )
-        
+
         # Add settings info to metadata if available
         if (!is.null(settings)) {
           if (!is.null(settings$location)) {
@@ -654,7 +661,7 @@ UnifiedCacheManager <- R6::R6Class(
             print(sprintf("[UCACHE] Adding scenario '%s' to metadata", settings$scenario))
           }
         }
-      
+
         # Add to registry
         private$add_to_registry(
           file_path = file_path,
@@ -752,33 +759,32 @@ UnifiedCacheManager <- R6::R6Class(
       return(FALSE)
     },
 
-    #' Get a simulation from cache
+    #' Get a simulation from cache asynchronously
     #' @param settings Simulation settings
     #' @param mode Simulation mode
-    #' @param progress_callback Optional callback function for any downloads that might be needed
-    #' @return Simulation state or NULL if not found or error
-    get_cached_simulation = function(settings, mode, progress_callback = NULL) {
+    #' @return A promise that resolves with the simulation state or NULL
+    get_cached_simulation = function(settings, mode) {
       # Generate key
       key <- private$generate_simulation_key(settings, mode)
 
       # Create file path
       file_path <- file.path(private$simulations_path, paste0(key, ".RData"))
 
-      # Check if file exists
+      # Check if file exists synchronously first
       if (!file.exists(file_path)) {
-        print(sprintf("[UCACHE] Simulation not found in cache: %s", key))
-        return(NULL)
+        print(sprintf("[UCACHE ASYNC] Simulation not found in cache: %s", key))
+        # Return an already resolved promise with NULL
+        return(promises::promise_resolve(NULL))
       }
 
-      # Update access time in registry
+      # Update access time in registry (synchronous part)
       if (file_path %in% names(private$registry$files)) {
         private$update_registry_access(file_path)
-        private$save_registry()
+        private$save_registry() # Consider if saving registry should also be async? For now, keep sync.
       } else {
-        # File exists but not in registry, add it
-        print(sprintf("[UCACHE] Found simulation file that's not in registry: %s", key))
-
-        # Try to get metadata
+        # File exists but not in registry, add it (synchronous part)
+        print(sprintf("[UCACHE ASYNC] Found simulation file not in registry: %s", key))
+        # (Registry adding logic remains synchronous for simplicity here)
         meta_path <- paste0(file_path, ".meta")
         metadata <- NULL
         if (file.exists(meta_path)) {
@@ -787,70 +793,65 @@ UnifiedCacheManager <- R6::R6Class(
               metadata <- readRDS(meta_path)
             },
             error = function(e) {
-              print(sprintf("[UCACHE] Error reading metadata: %s", e$message))
+              print(sprintf("[UCACHE ASYNC] Error reading metadata: %s", e$message))
             }
           )
         }
-
-        # Add to registry
         private$add_to_registry(
-          file_path = file_path,
-          type = "simulation",
-          priority = "normal",
-          references = list(),
+          file_path = file_path, type = "simulation", priority = "normal", references = list(),
           metadata = if (!is.null(metadata)) {
-            list(
-              version = metadata$version %||% "unknown",
-              location = if (!is.null(metadata$settings)) metadata$settings$location else "unknown",
-              mode = metadata$mode %||% mode
-            )
+            list(version = metadata$version %||% "unknown", location = if (!is.null(metadata$settings)) metadata$settings$location else "unknown", mode = metadata$mode %||% mode)
           } else {
-            list(
-              version = "unknown",
-              location = "unknown",
-              mode = mode
-            )
+            list(version = "unknown", location = "unknown", mode = mode)
           }
         )
       }
 
-      # Load the simulation
-      tryCatch(
-        {
-          # Load the simulation from the file
-          env <- new.env()
-          load(file_path, envir = env)
+      # Return a promise that loads the simulation in the background
+      print(sprintf("[UCACHE ASYNC] Returning promise to load simulation: %s", key))
+      future_promise({
+        print(sprintf("[UCACHE FUTURE] Starting background load for: %s", key))
+        # Load the simulation inside the future
+        load_result <- tryCatch(
+          {
+            # Load the simulation from the file
+            env <- new.env()
+            load(file_path, envir = env) # This is the potentially slow part
 
-          # Find the simulation object in the environment
-          var_names <- ls(env)
+            # Find the simulation object in the environment
+            var_names <- ls(env)
+            if (length(var_names) == 0) {
+              print(sprintf("[UCACHE FUTURE] No objects found in simulation file: %s", key))
+              return(NULL) # Resolve promise with NULL
+            }
 
-          if (length(var_names) == 0) {
-            print("[UCACHE] No objects found in simulation file")
-            return(NULL)
+            # Look for "sim_state" first, then fall back to first object
+            sim_var <- if ("sim_state" %in% var_names) "sim_state" else var_names[1]
+            sim_state <- get(sim_var, envir = env)
+
+            # Add loaded_from_cache flag
+            if (is.list(sim_state) && is.null(sim_state$cache_metadata)) {
+              sim_state$cache_metadata <- list()
+            }
+            if (is.list(sim_state)) {
+              sim_state$cache_metadata$loaded_from_cache <- TRUE
+              sim_state$cache_metadata$load_time <- Sys.time() # Record load time
+            }
+
+            print(sprintf("[UCACHE FUTURE] Successfully loaded simulation: %s", key))
+            sim_state # Resolve promise with the loaded state
+          },
+          error = function(e) {
+            # If an error occurs during load, print it and resolve with NULL
+            print(sprintf("[UCACHE FUTURE] Error loading simulation %s: %s", key, e$message))
+            # We resolve with NULL instead of rejecting to simplify error handling upstream
+            # Upstream code should check for NULL result.
+            NULL
           }
-
-          # Look for "sim_state" first, then fall back to first object
-          sim_var <- if ("sim_state" %in% var_names) "sim_state" else var_names[1]
-          sim_state <- get(sim_var, envir = env)
-
-          # Add loaded_from_cache flag
-          if (is.list(sim_state) && is.null(sim_state$cache_metadata)) {
-            sim_state$cache_metadata <- list()
-          }
-
-          if (is.list(sim_state)) {
-            sim_state$cache_metadata$loaded_from_cache <- TRUE
-            sim_state$cache_metadata$load_time <- Sys.time()
-          }
-
-          print(sprintf("[UCACHE] Successfully loaded simulation: %s", key))
-          return(sim_state)
-        },
-        error = function(e) {
-          print(sprintf("[UCACHE] Error loading simulation: %s", e$message))
-          return(NULL)
-        }
-      )
+        )
+        print(sprintf("[UCACHE FUTURE] Background load finished for: %s", key))
+        load_result # Return the result (sim_state or NULL)
+      }) # End future_promise
     },
 
     #' Check if a simulation exists in cache

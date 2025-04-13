@@ -25,7 +25,7 @@ create_visualization_manager <- function(session, page_id, id) {
             visibility = "visible",
             display_type = "plot"
         )
-        
+
         # Also set plot status
         store$set_plot_status(page_id, "ready")
 
@@ -71,12 +71,23 @@ create_visualization_manager <- function(session, page_id, id) {
             )
         },
         set_plot_status = function(status) {
+            # Update the reactive value in the store
             store$set_plot_status(page_id, status)
+            # Update the hidden input (might be used elsewhere)
             updateTextInput(
                 session,
                 paste0(page_id, "-plot_status"),
                 value = status
             )
+            # Use shinyjs to directly show/hide the loading indicator div
+            indicator_id <- ns("loading_indicator") # Get the namespaced ID
+            if (status == "loading") {
+                shinyjs::show(id = indicator_id, anim = FALSE) # Show immediately
+                print(sprintf("[VISUALIZATION MANAGER] Showing loading indicator: %s", indicator_id))
+            } else {
+                shinyjs::hide(id = indicator_id, anim = FALSE) # Hide immediately
+                print(sprintf("[VISUALIZATION MANAGER] Hiding loading indicator: %s", indicator_id))
+            }
         },
         set_display_type = function(type) {
             store$update_visualization_state(
@@ -92,7 +103,7 @@ create_visualization_manager <- function(session, page_id, id) {
         # Add back the update_display function that handles simulation
         update_display = function(input, output, intervention_settings) {
             print("[VISUALIZATION] === update_display called ===")
-            
+
             # Get current control state from store (using the new shared control state)
             control_state <- store$get_shared_control_state(page_id)
             print("[VISUALIZATION] Control state:")
@@ -107,107 +118,100 @@ create_visualization_manager <- function(session, page_id, id) {
 
             # Set status to loading while we work
             store$set_plot_status(page_id, "loading")
-            
+
             # Clear any previous error message
-            output[[paste0(page_id, "-error_message")]] <- renderText({ NULL })
+            output[[paste0(page_id, "-error_message")]] <- renderText({
+                NULL
+            })
 
-            # Get/create simulation and set as current
-            print("[VISUALIZATION] Getting simulation data...")
-            sim_id <- tryCatch({
-                # Wrap the entire simulation data call in a try-catch
-                print(sprintf("[VISUALIZATION] Calling get_simulation_data for page_id: %s", page_id))
-                sim_adapter <- get_simulation_adapter()
-                sim_adapter$get_simulation_data(intervention_settings, mode = page_id)
-            }, error = function(e) {
-                # Handle any unexpected errors that weren't caught by the adapter
-                print(sprintf("[VISUALIZATION] Error getting simulation data: %s", conditionMessage(e)))
-                
-                # Set error message in the plot panel
-                output[[paste0(page_id, "-error_message")]] <- renderText({
-                    sprintf("Error: %s", conditionMessage(e))
-                })
-                
-                # Update visualization state
-                store$set_plot_status(page_id, "error")
-                store$update_visualization_state(page_id, visibility = "visible")
-                
-                # Return NULL to indicate failure
-                return(NULL)
-            })
-            
-            # If simulation failed completely (returned NULL), stop processing
-            if (is.null(sim_id)) {
-                return()
-            }
-            
-            # Set as current simulation
-            store$set_current_simulation(page_id, sim_id)
-            
-            # Get simulation state
-            sim_state <- store$get_simulation(sim_id)
-            
-            # Check if simulation has error status
-            if (sim_state$status == "error") {
-                print(sprintf("[VISUALIZATION] Simulation has error status: %s", sim_state$error_message))
-                
-                # Set error message in the plot panel - this is a backup to the error boundary
-                output[[paste0(page_id, "-error_message")]] <- renderText({
-                    sprintf("Error: %s", sim_state$error_message)
-                })
-                
-                # Update visualization state
-                store$set_plot_status(page_id, "error")
-                
-                # Still show visualization as visible
-                store$update_visualization_state(page_id, visibility = "visible")
-                
-                return()
-            }
-            
-            # Transform data for display
-            print("[VISUALIZATION] Transforming simulation data...")
-            transformed <- tryCatch({
-                transform_simulation_data(sim_state$results$simset, settings)
-            }, error = function(e) {
-                # Handle transformation errors
-                print(sprintf("[VISUALIZATION] Error transforming data: %s", conditionMessage(e)))
-                
-                # Set error message
-                output[[paste0(page_id, "-error_message")]] <- renderText({
-                    sprintf("Error transforming data: %s", conditionMessage(e))
-                })
-                
-                # Update visualization state
-                store$set_plot_status(page_id, "error")
-                
-                # Return NULL to indicate failure
-                return(NULL)
-            })
-            
-            # If transformation failed, stop processing
-            if (is.null(transformed)) {
-                return()
-            }
-            
-            # Update simulation state with transformed data
-            store$update_simulation(sim_id, list(
-                results = list(
-                    simset = sim_state$results$simset,
-                    transformed = transformed
+            # Get/create simulation (now returns a promise)
+            print("[VISUALIZATION ASYNC] Getting simulation data promise...")
+            sim_adapter <- get_simulation_adapter()
+            sim_id_promise <- sim_adapter$get_simulation_data(intervention_settings, mode = page_id)
+
+            # Chain subsequent actions onto the promise
+            # Wrap the anonymous functions in parentheses
+            sim_id_promise %...>% (function(sim_id) {
+                print(sprintf("[VISUALIZATION ASYNC] Promise resolved, got sim_id: %s", sim_id))
+
+                # If simulation failed completely during find/load/run (returned NULL or error ID), stop processing
+                if (is.null(sim_id)) {
+                    print("[VISUALIZATION ASYNC] Simulation ID is NULL, stopping.")
+                    # Ensure status is error if ID is null after promise resolves without explicit error
+                    store$set_plot_status(page_id, "error")
+                    return()
+                }
+
+                # Set as current simulation
+                store$set_current_simulation(page_id, sim_id)
+
+                # Get simulation state
+                sim_state <- store$get_simulation(sim_id)
+
+                # Check if simulation has error status
+                if (sim_state$status == "error") {
+                    print(sprintf("[VISUALIZATION ASYNC] Simulation has error status: %s", sim_state$error_message))
+                    # Error message should have been set by the adapter/store
+                    store$set_plot_status(page_id, "error")
+                    store$update_visualization_state(page_id, visibility = "visible") # Ensure panel is visible to show error
+                    return()
+                }
+
+                # Transform data for display
+                print("[VISUALIZATION ASYNC] Transforming simulation data...")
+                transformed <- tryCatch(
+                    {
+                        transform_simulation_data(sim_state$results$simset, settings)
+                    },
+                    error = function(e) {
+                        # Handle transformation errors
+                        print(sprintf("[VISUALIZATION ASYNC] Error transforming data: %s", conditionMessage(e)))
+                        # Set error message
+                        output[[paste0(page_id, "-error_message")]] <- renderText({
+                            sprintf("Error transforming data: %s", conditionMessage(e))
+                        })
+                        # Update visualization state
+                        store$set_plot_status(page_id, "error")
+                        return(NULL) # Return NULL to indicate failure
+                    }
                 )
-            ))
 
-            # Create plot-and-table structure
-            new_plot_and_table <- list(
-                plot = transformed$plot,
-                main.settings = list(),
-                control.settings = settings,
-                int.settings = intervention_settings
-            )
+                # If transformation failed, stop processing
+                if (is.null(transformed)) {
+                    return()
+                }
 
-            # Update display
-            print("[VISUALIZATION] Updating display...")
-            set_display(input, output, new_plot_and_table)
+                # Update simulation state with transformed data
+                store$update_simulation(sim_id, list(
+                    results = list(
+                        simset = sim_state$results$simset,
+                        transformed = transformed
+                    )
+                ))
+
+                # Create plot-and-table structure
+                new_plot_and_table <- list(
+                    plot = transformed$plot,
+                    main.settings = list(),
+                    control.settings = settings,
+                    int.settings = intervention_settings
+                )
+
+                # Update display (this sets status back to 'ready')
+                print("[VISUALIZATION ASYNC] Updating display...")
+                set_display(input, output, new_plot_and_table)
+            }) %...!% (function(error) { # Added parentheses
+                # Handle errors from the promise chain itself (e.g., adapter error)
+                print(sprintf("[VISUALIZATION ASYNC] Error in promise chain: %s", conditionMessage(error)))
+                output[[paste0(page_id, "-error_message")]] <- renderText({
+                    sprintf("Error: %s", conditionMessage(error))
+                })
+                store$set_plot_status(page_id, "error")
+                store$update_visualization_state(page_id, visibility = "visible")
+            })
+
+            # Return the promise itself so Shiny knows to wait
+            return(sim_id_promise)
         },
         reset = function() {
             store$update_visualization_state(
