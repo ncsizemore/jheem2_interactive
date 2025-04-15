@@ -99,12 +99,8 @@ create_plot_panel <- function(id, type = "static") {
               tags$span(class = "loading-spinner"),
               tags$span("Generating plot...")
             )
-          ), # Added comma back
-          # Keep the hidden input for plot_status, other logic might use it
-          tags$div(
-            class = "hidden",
-            textInput(ns("plot_status"), label = NULL, value = "ready")
-          )
+          ) # Removed hidden plot_status input as it's no longer needed for indicator
+          # Removed: tags$div(class = "hidden", textInput(ns("plot_status"), ...))
         )
       )
     ),
@@ -178,8 +174,8 @@ plot_panel_server <- function(id, settings) {
 
           # Wrap the actual plot generation in isolate to prevent unwanted internal dependencies
           generated_plot <- isolate({
-            # Set status - won't create unwanted dependencies because it uses a separate reactiveVal
-            store$set_plot_status(id, "loading")
+            # Set status using the visualization manager to trigger shinyjs
+            vis_manager$set_plot_status("loading") # MODIFIED: Use vis_manager
 
             # Get current simulation and check for errors
             sim_state_check <- store$get_simulation(current_sim_id)
@@ -193,7 +189,7 @@ plot_panel_server <- function(id, settings) {
                 type = ERROR_TYPES$SIMULATION,
                 severity = SEVERITY_LEVELS$ERROR
               )
-              store$set_plot_status(id, "error")
+              vis_manager$set_plot_status("error") # MODIFIED: Use vis_manager
 
               direct_error_message(paste("Error:", err_msg))
               return(NULL)
@@ -211,7 +207,7 @@ plot_panel_server <- function(id, settings) {
                 type = ERROR_TYPES$PLOT,
                 severity = SEVERITY_LEVELS$ERROR
               )
-              store$set_plot_status(id, "error")
+              vis_manager$set_plot_status("error") # MODIFIED: Use vis_manager
 
               direct_error_message(paste("Error:", err_msg))
               return(NULL)
@@ -298,7 +294,7 @@ plot_panel_server <- function(id, settings) {
                 plot_boundary$clear()
                 validation_boundary$clear()
                 store$clear_page_error_state(id)
-                store$set_plot_status(id, "ready")
+                vis_manager$set_plot_status("ready") # MODIFIED: Use vis_manager
 
                 direct_error_message(NULL)
 
@@ -321,7 +317,7 @@ plot_panel_server <- function(id, settings) {
                   type = ERROR_TYPES$PLOT,
                   severity = SEVERITY_LEVELS$ERROR
                 )
-                store$set_plot_status(id, "error")
+                vis_manager$set_plot_status("error") # MODIFIED: Use vis_manager
 
                 direct_error_message(paste("Error:", err_msg))
                 NULL

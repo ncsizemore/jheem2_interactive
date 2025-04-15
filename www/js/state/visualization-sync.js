@@ -137,4 +137,37 @@ Shiny.addCustomMessageHandler('updateVisualizationDisplay', function (message) {
     //   // indicator.style.display = 'none'; // REMOVED
     // }
   });
+
+  // Custom message handler for showing the plot loading indicator
+  Shiny.addCustomMessageHandler("plotLoading", function (message) {
+    console.log("[Plot Loading] Received message:", message);
+    if (message && message.indicator_id) {
+      const indicator = document.getElementById(message.indicator_id);
+      if (indicator) {
+        console.log(`[Plot Loading] Showing indicator: #${message.indicator_id}`);
+        indicator.style.display = 'flex'; // Use flex as determined earlier
+      } else {
+        console.warn(`[Plot Loading] Indicator element not found: #${message.indicator_id}`);
+      }
+    } else {
+      console.error("[Plot Loading] Invalid message received:", message);
+    }
+  });
+
+  // Custom message handler for hiding the plot loading indicator
+  Shiny.addCustomMessageHandler("plotReady", function (message) {
+    console.log("[Plot Ready] Received message:", message);
+    if (message && message.indicator_id) {
+      const indicator = document.getElementById(message.indicator_id);
+      if (indicator) {
+        console.log(`[Plot Ready] Hiding indicator: #${message.indicator_id}`);
+        indicator.style.display = 'none';
+      } else {
+        console.warn(`[Plot Ready] Indicator element not found: #${message.indicator_id}`);
+      }
+    } else {
+      console.error("[Plot Ready] Invalid message received:", message);
+    }
+  });
+
 });

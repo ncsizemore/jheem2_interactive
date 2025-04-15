@@ -58,6 +58,33 @@ create_visualization_manager <- function(session, page_id, id) {
         ))
     }
 
+    # Define set_plot_status here so it's in scope for update_display
+    set_plot_status <- function(status) {
+        # Update the reactive value in the store
+        store$set_plot_status(page_id, status)
+        # Update the hidden input (might be used elsewhere)
+        updateTextInput(
+            session,
+            paste0(page_id, "-plot_status"),
+            value = status
+        )
+
+        # Use UI Messenger to show/hide the loading indicator div
+        ui_messenger <- session$userData$ui_messenger
+        indicator_id <- ns("loading_indicator") # Get the namespaced ID
+
+        if (!is.null(ui_messenger)) {
+            if (status == "loading") {
+                ui_messenger$send_plot_loading(indicator_id = indicator_id)
+            } else {
+                # Send ready for both "ready" and "error" statuses
+                ui_messenger$send_plot_ready(indicator_id = indicator_id)
+            }
+        } else {
+            warning("UI Messenger not available in session$userData")
+        }
+    }
+
     list(
         set_visibility = function(visibility) {
             store$update_visualization_state(
@@ -70,25 +97,7 @@ create_visualization_manager <- function(session, page_id, id) {
                 value = visibility
             )
         },
-        set_plot_status = function(status) {
-            # Update the reactive value in the store
-            store$set_plot_status(page_id, status)
-            # Update the hidden input (might be used elsewhere)
-            updateTextInput(
-                session,
-                paste0(page_id, "-plot_status"),
-                value = status
-            )
-            # Use shinyjs to directly show/hide the loading indicator div
-            indicator_id <- ns("loading_indicator") # Get the namespaced ID
-            if (status == "loading") {
-                shinyjs::show(id = indicator_id, anim = FALSE) # Show immediately
-                print(sprintf("[VISUALIZATION MANAGER] Showing loading indicator: %s", indicator_id))
-            } else {
-                shinyjs::hide(id = indicator_id, anim = FALSE) # Hide immediately
-                print(sprintf("[VISUALIZATION MANAGER] Hiding loading indicator: %s", indicator_id))
-            }
-        },
+        set_plot_status = set_plot_status, # Reference the function defined above
         set_display_type = function(type) {
             store$update_visualization_state(
                 page_id,
@@ -116,8 +125,8 @@ create_visualization_manager <- function(session, page_id, id) {
                 summary.type = control_state$summary.type
             )
 
-            # Set status to loading while we work
-            store$set_plot_status(page_id, "loading")
+            # Set status to loading while we work using the manager's function
+            set_plot_status("loading") # MODIFIED: Call self directly
 
             # Clear any previous error message
             output[[paste0(page_id, "-error_message")]] <- renderText({
