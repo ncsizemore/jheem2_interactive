@@ -32,6 +32,9 @@ initialize_prerun_handlers <- function(input, output, session, plot_state, confi
     observeEvent(input$generate_projections_prerun, {
         print("[PRERUN] === Generate Button Event ===")
 
+        # Set loading status immediately
+        vis_manager$set_plot_status("loading")
+
         # Get the current model status from the store
         store <- get_store()
         model_state <- store$get_model_state()

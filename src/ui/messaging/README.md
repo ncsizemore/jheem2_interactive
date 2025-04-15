@@ -36,6 +36,11 @@ The UI Messenger currently supports two categories of messages:
 - `send_simulation_complete`: Marks a simulation as complete
 - `send_simulation_error`: Indicates a simulation error
 
+### Plot Loading Indicator
+- `send_plot_loading`: Shows the loading indicator for a specific plot panel.
+- `send_plot_ready`: Hides the loading indicator for a specific plot panel.
+- **Note:** This is used because the synchronous execution of `renderPlot` can block the main R thread, preventing standard reactive UI updates (like `conditionalPanel` or `shinyjs::show/hide`) from reliably displaying the indicator *during* plot generation. The UI Messenger bypasses this block. Corresponding JS handlers (`plotLoading`, `plotReady`) are located in `www/js/state/visualization-sync.js`.
+
 ## Usage
 
 ### Initialization

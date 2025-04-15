@@ -125,8 +125,7 @@ create_visualization_manager <- function(session, page_id, id) {
                 summary.type = control_state$summary.type
             )
 
-            # Set status to loading while we work using the manager's function
-            set_plot_status("loading") # MODIFIED: Call self directly
+            # REMOVED: set_plot_status("loading") - Now called earlier in button handler
 
             # Clear any previous error message
             output[[paste0(page_id, "-error_message")]] <- renderText({

@@ -1,5 +1,6 @@
 /* components/common/loading.css */
 
+/* Existing styles (can be kept or removed if not used elsewhere) */
 .loading {
   position: relative;
 }
@@ -20,5 +21,67 @@
 @media (prefers-reduced-motion: no-preference) {
   .loading::after {
     transition: opacity var(--transition-speed) ease;
+  }
+}
+
+/* New styles for the plot loading indicator */
+.loading-indicator {
+  position: absolute;
+  /* Position relative to the plot panel container */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  /* Semi-transparent white overlay */
+  display: flex;
+  /* Use flexbox for centering */
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  /* Ensure it's above the plot */
+  /* display: none; /* Initially hidden - controlled by JS */
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  /* Stack spinner and text vertically */
+  align-items: center;
+  gap: 20px;
+  /* Increased gap */
+  /* Space between spinner and text */
+  /* Removed background, padding, border-radius, shadow, min-width */
+  color: var(--text-color, #333);
+  /* Ensure text is visible on overlay */
+  /* Use app text color */
+  font-size: 1.2rem;
+  /* Increased font size */
+  /* Keep font size */
+  /* Optional: Add a subtle text shadow for better readability */
+  /* text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); */
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 50px;
+  /* Increased spinner size */
+  /* Spinner size */
+  height: 50px;
+  /* Increased spinner size */
+  border: 6px solid rgba(0, 0, 0, 0.1);
+  /* Increased border */
+  /* Light grey border */
+  border-radius: 50%;
+  border-top-color: var(--primary-color, #007bff);
+  /* Use app primary color for spinner */
+  animation: spin 1s linear infinite;
+  /* Animation defined below */
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
