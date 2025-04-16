@@ -1,7 +1,11 @@
 # src/ui/config/visualization.yaml - Visualization settings
 
 # NEW: Choose the plotting library
-plotting_backend: "plotly" # Options: "ggplot", "plotly"
+plotting_backend: "ggplot" # Options: "ggplot", "plotly"
+
+# NEW: Specify the path to the Rdata file containing the data manager object
+# If null or file not found, will use get.default.data.manager()
+data_manager_path: "external/jheem_analyses/cached/ryan.white.web.data.manager.rdata"
 
 # Style manager configuration - controls colors, line types, etc.
 style_manager:

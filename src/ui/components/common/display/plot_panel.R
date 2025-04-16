@@ -6,6 +6,7 @@ library(ggplot2)
 
 source("src/data/loaders/baseline_loader.R")
 source("src/ui/components/common/display/plot_customizer.R")
+source("src/utils/plotting_local.R") # Source the local Plotly functions
 # Assuming config loader is sourced elsewhere or available
 # source("src/ui/config/load_config.R")
 # Assuming visualization manager is sourced elsewhere
@@ -222,10 +223,53 @@ plot_panel_server <- function(id, settings) {
         })
       }
 
+      # --- Determine Data Manager ---
+      data_manager_to_use <- NULL
+      data_manager_path <- vis_config$data_manager_path # Read path from config
+      if (!is.null(data_manager_path) && nzchar(data_manager_path) && file.exists(data_manager_path)) {
+        tryCatch(
+          {
+            temp_env <- new.env(parent = emptyenv())
+            loaded_names <- load(data_manager_path, envir = temp_env)
+            if (length(loaded_names) == 1) {
+              loaded_obj <- temp_env[[loaded_names[1]]]
+              # Basic check if it looks like a data manager (adjust class name if needed)
+              if (inherits(loaded_obj, "jheem.data.manager")) {
+                data_manager_to_use <- loaded_obj
+                print(paste("Using data manager loaded from:", data_manager_path))
+              } else {
+                warning(paste("Object loaded from", data_manager_path, "is not a jheem.data.manager object."))
+              }
+            } else {
+              warning(paste("Expected one object in", data_manager_path, "but found", length(loaded_names)))
+            }
+          },
+          error = function(e) {
+            warning(paste("Error loading data manager from", data_manager_path, ":", e$message))
+          }
+        )
+      }
+
+      # Fallback to default if not loaded
+      if (is.null(data_manager_to_use)) {
+        print("Using default data manager.")
+        # Ensure get.default.data.manager() exists and is accessible
+        if (exists("get.default.data.manager") && is.function(get.default.data.manager)) {
+          data_manager_to_use <- get.default.data.manager()
+        } else {
+          warning("get.default.data.manager function not found. Cannot set data manager.")
+          # Handle error appropriately - maybe return error state from reactive?
+          return(list(error = TRUE, error_message = "Default data manager function not found.", error_type = ERROR_TYPES$PLOT))
+        }
+      }
+      # Ensure data_manager_to_use is not NULL before proceeding
+      req(data_manager_to_use)
+
       # Set up plot arguments (common args)
       plot_args <- list(
         outcomes = current_settings$outcomes,
         facet.by = current_settings$facet.by,
+        data.manager = data_manager_to_use, # Add the selected data manager
         summary.type = current_settings$summary.type
         # style.manager will be added conditionally later
       )
