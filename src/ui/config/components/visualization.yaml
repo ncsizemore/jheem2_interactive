@@ -1,5 +1,8 @@
 # src/ui/config/visualization.yaml - Visualization settings
 
+# NEW: Choose the plotting library
+plotting_backend: "plotly" # Options: "ggplot", "plotly"
+
 # Style manager configuration - controls colors, line types, etc.
 style_manager:
   # General style parameters that affect all plots
