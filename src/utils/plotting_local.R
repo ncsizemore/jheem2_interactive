@@ -1,23 +1,158 @@
-# Local copy of Plotly plotting functions from jheem2 package for debugging
+# We need access to the prepare.plot function from PLOTS_simplot.R
 
-# execute.plotly.plot function definition (copied from user input)
-execute.plotly.plot <- function(prepared.plot.data,
-                                outcomes = NULL,
-                                split.by = NULL,
-                                facet.by = NULL,
-                                plot.which = "sim.and.data",
-                                summary.type = c("individual.simulation", "mean.and.interval", "median.and.interval")[1],
-                                plot.year.lag.ratio = F,
-                                n.facet.rows = NULL,
-                                style.manager = get.default.style.manager(),
-                                debug = F,
-                                hide.legend = FALSE) {
+library(plotly)
+
+# source("R/PLOTS_simplot.R")
+
+# Need access to the Data Manager
+
+# source("R/DATA_MANAGER_data_manager.R")
+
+#' @param ... One or more of either (1) jheem.simulation.set objects or (2) lists containing only jheem.simulation or jheem.simset objects
+#' @param outcomes A character vector of which simulation outcomes to plot
+#' @param split.by A character vector of dimensions for which to make different lines
+#' @param facet.by A character vector of dimensions for which to make different panels
+#' @param dimension.values
+#' @param data.manager The data.manager from which to draw real-world data for the plots
+#' @param style.manager An object of class 'jheem.style.manager' specifying style attributes
+
+# Questions for Todd and Andrew: October 7th, 2024
+
+# - Best way to setup the environment to test/work on plot.simulations
+#    - how to properly reference prepare.plot
+# No source() commands in any files as will be used as
+# package
+# source_jheem2_package is all we need in the test
+#
+#    - how to get access to data.manager / style.manager functions
+#    - loading up the simset data
+
+# - How to deal with parameters that are not available for plot.simulations
+#    - prepare.plot
+#      - corresponding.data.outcomes
+#      - target.ontology
+#      - plot.which
+#      - summary.type
+#      - plot.year.lag.ratio
+#    - execute.simplot:
+#      - n.facet.rows
+
+#  Add these parameters to the plot.simulations function, with
+#  the exception of plot.which, which is "both"
+
+# Questions for Todd and Andrew: October 22nd, 2024
+
+# Andrew has some cleaning functionality at the beginning of sim plot;
+# validation, etc.  Would it be ok if I extracted this functionality
+# into another function and returned a list with the modified values?
+
+# Which are the correct values for plot.which?
+
+# Where should I setup the project for the new hierarchy to work?
+# I have currently:
+# JHEEM/code
+#     -> jheem2
+#     -> jheem_analyses
+# JHEEM/cached
+#     -> (cached objects)
+# and my project is setup in the JHEEM directory
+
+# simplot <- function(...,
+#                     outcomes=NULL,
+#                     corresponding.data.outcomes = NULL,
+#                     split.by = NULL,
+#                     facet.by = NULL,
+#                     dimension.values = list(),
+#                     target.ontology = NULL,
+#                     plot.which = c('sim.and.data', 'sim.only')[1],
+#                     summary.type = c('individual.simulation', 'mean.and.interval', 'median.and.interval')[1],
+#                     plot.year.lag.ratio = F,
+#                     title = "location",
+#                     n.facet.rows = NULL,
+#                     data.manager = get.default.data.manager(),
+#                     style.manager = get.default.style.manager(),
+#                     debug = F)
+
+
+plot.simulations_local <- function(...,
+                                   outcomes,
+                                   corresponding.data.outcomes = NULL,
+                                   split.by = NULL,
+                                   facet.by = NULL,
+                                   dimension.values = list(),
+                                   target.ontology = NULL,
+                                   summary.type = c("individual.simulation", "mean.and.interval", "median.and.interval")[1],
+                                   plot.year.lag.ratio = F,
+                                   title = "location",
+                                   n.facet.rows = NULL,
+                                   interval.coverate = 0.95,
+                                   data.manager = get.default.data.manager(),
+                                   # style.manager = get.default.style.manager('plotly'),
+                                   style.manager = get.default.style.manager(),
+                                   hide.legend = FALSE) {
+    plot.which <- "sim.and.data"
+
+    simset <- list(...)[[1]]
+
+    plot.data <- plot.data.validation(
+        list(...),
+        match.call(expand.dots = F)$...,
+        outcomes,
+        corresponding.data.outcomes,
+        plot.which,
+        summary.type
+    )
+
+    # These values are possibly modified by the plot.data.validation call, so
+    # they need to be extracted from the returned list.
+    simset.list <- plot.data$simset.list
+    outcomes <- plot.data$outcomes
+
+    prepared.plot.data <- prepare.plot(simset.list,
+        outcomes = outcomes,
+        locations = NULL,
+        corresponding.data.outcomes = corresponding.data.outcomes,
+        split.by = split.by,
+        facet.by = facet.by,
+        dimension.values = dimension.values,
+        target.ontology = target.ontology,
+        plot.which = plot.which,
+        summary.type = summary.type,
+        plot.year.lag.ratio = plot.year.lag.ratio,
+        title = title,
+        data.manager = data.manager,
+        debug = F
+    )
+
+    execute.plotly.plot_local(prepared.plot.data,
+        outcomes = outcomes,
+        split.by = split.by,
+        facet.by = facet.by,
+        plot.which = plot.which,
+        summary.type = summary.type,
+        plot.year.lag.ratio = plot.year.lag.ratio,
+        n.facet.rows = n.facet.rows,
+        style.manager = style.manager,
+        debug = debug,
+        hide.legend = hide.legend
+    )
+}
+execute.plotly.plot_local <- function(prepared.plot.data,
+                                      outcomes = NULL,
+                                      split.by = NULL,
+                                      facet.by = NULL,
+                                      plot.which = "sim.and.data",
+                                      summary.type = c("individual.simulation", "mean.and.interval", "median.and.interval")[1],
+                                      plot.year.lag.ratio = F,
+                                      n.facet.rows = NULL,
+                                      style.manager = get.default.style.manager(),
+                                      debug = F,
+                                      hide.legend = FALSE) {
     df.sim <- prepared.plot.data$df.sim
     df.truth <- prepared.plot.data$df.truth
     y.label <- prepared.plot.data$details$y.label
     plot.title <- prepared.plot.data$details$plot.title
-    # Ensure outcome.metadata is accessed correctly from details
-    outcome.metadata <- prepared.plot.data$details$outcome.metadata.list # Adjusted based on prepare.plot output structure
+    outcome.metadata <- prepared.plot.data$details$outcome.metadata
 
     #-- PREPARE PLOT COLORS, SHADES, SHAPES, ETC. --#
 
@@ -84,16 +219,8 @@ execute.plotly.plot <- function(prepared.plot.data,
     ## RIBBON COLOR
     color.ribbon.by <- NULL
     if (!is.null(df.sim)) {
-        # Use ggplot2::alpha for consistency, though Plotly uses rgba strings
-        alpha_val <- style.manager$alpha.ribbon %||% 0.2 # Default alpha if not set
-        # Convert hex colors to rgba strings for Plotly fillcolor
-        color.ribbon.by <- sapply(colors.for.sim, function(hex_color) {
-            rgb_val <- grDevices::col2rgb(hex_color)
-            paste0("rgba(", rgb_val[1], ",", rgb_val[2], ",", rgb_val[3], ",", alpha_val, ")")
-        })
-        names(color.ribbon.by) <- names(colors.for.sim) # Ensure names are preserved
+        color.ribbon.by <- ggplot2::alpha(colors.for.sim, style.manager$alpha.ribbon)
     }
-
 
     ## SHADES FOR DATA
     color.data.shaded.colors <- NULL
@@ -147,34 +274,22 @@ execute.plotly.plot <- function(prepared.plot.data,
     linetypes.for.sim <- gsub("dashed", "dash", linetypes.for.sim)
     # Mapping the ggplot marker shapes into plotly
     marker.mappings <- unlist(lapply(shapes.for.data, function(gg_shape) {
-        # Ensure gg_shape is treated as numeric if it's not already
-        gg_shape_num <- as.numeric(gg_shape)
-        if (is.na(gg_shape_num)) {
-            return("circle")
-        } # Default if conversion fails
-
-        if (gg_shape_num == 21) {
+        if (gg_shape == 21) {
             return("circle")
         } # Circle
-        if (gg_shape_num == 22) {
+        if (gg_shape == 22) {
             return("square")
         } # Square
-        if (gg_shape_num == 23) {
+        if (gg_shape == 23) {
             return("diamond")
         } # Diamond
-        if (gg_shape_num == 24) {
-            return("triangle-up")
-        } # Triangle UP (Plotly uses triangle-up)
-        if (gg_shape_num == 25) {
-            return("triangle-down")
-        } # Triangle DOWN (Plotly uses triangle-down)
-        return("circle") # Default shape
+        if (gg_shape == 24) {
+            return("triangleup")
+        } # Triangle UP
+        if (gg_shape == 25) {
+            return("triangledown")
+        } # Triangle DOWN
     }))
-    # Ensure names are preserved if shapes.for.data had names
-    if (!is.null(names(shapes.for.data))) {
-        names(marker.mappings) <- names(shapes.for.data)
-    }
-
 
     sim.trace.count <- 0
     trace.in.legend <- list()
@@ -186,10 +301,17 @@ execute.plotly.plot <- function(prepared.plot.data,
         marker.traces <- lapply(unique.shapes, function(shape) {
             shape.data <- subset(trace.data, marker.shapes == shape)
 
-            # Use marker.colors column directly
-            col <- shape.data$marker.colors[1] %||% "#000000" # Default to black if missing
+            col <- if (is.null(shape.data$marker.color[1])) {
+                colors.for.sim
+            } else {
+                shape.data$marker.color[1]
+            }
 
-            sym <- shape # Use the shape directly from unique.shapes
+            sym <- if (is.null(shape.data$marker.shapes[1])) {
+                "circle"
+            } else {
+                shape.data$marker.shapes[1]
+            }
 
             trace <- base.trace
             trace$showlegend <- FALSE
@@ -197,10 +319,10 @@ execute.plotly.plot <- function(prepared.plot.data,
             trace$y <- shape.data$value
 
             trace[["marker"]] <- list(
-                color = col, # Use the color from the data
+                color = col,
                 symbol = sym,
                 line = list(
-                    color = "#202020", # Border color
+                    color = "#202020",
                     width = 1
                 )
             )
@@ -208,77 +330,73 @@ execute.plotly.plot <- function(prepared.plot.data,
             return(trace)
         })
 
-        # Shape legend traces (simplified - maybe just show one example per shape?)
-        shape.traces <- lapply(unique(trace.data$marker.shapes), function(working.symbol) {
-            shape.key.val <- paste0("marker_shape_", working.symbol)
-            shape.name <- names(marker.mappings)[marker.mappings == working.symbol][1] %||% working.symbol # Get original name if possible
+        # Shape legend traces
+        shape.traces <- lapply(marker.traces, function(entry) {
+            working.symbol <- entry$marker$symbol
+            shape.key.val <- paste0("marker", working.symbol)
 
             if (is.null(trace.in.legend[[shape.key.val]])) {
-                shape.trace <- list(
-                    type = "scatter",
-                    mode = "markers",
-                    x = list(NULL), # No data points
-                    y = list(NULL),
-                    name = shape.name, # Use original name for legend
-                    legendgroup = "Shapes", # Group shape legends
-                    marker = list(
-                        color = "grey", # Use a neutral color
-                        symbol = working.symbol,
-                        line = list(color = "#202020", width = 1)
+                shape.trace <- base.trace
+                shape.trace$x <- c()
+                shape.trace$y <- c()
+                shape.trace$name <- "SHAPE"
+                shape.trace[["marker"]] <- list(
+                    color = "white",
+                    symbol = working.symbol,
+                    line = list(
+                        color = "#202020",
+                        width = 1
                     )
                 )
 
                 if (!hide.legend) {
                     trace.in.legend[[shape.key.val]] <<- TRUE
                 } else {
-                    shape.trace$showlegend <- FALSE
-                    trace.in.legend[[shape.key.val]] <<- FALSE # Explicitly set to false if hidden
+                    trace.in.legend[[shape.key.val]] <<- FALSE
                 }
 
                 return(shape.trace)
             }
+
             return(NULL)
         })
 
-
-        # Color legend traces (simplified - maybe just one example per color?)
-        color.traces <- lapply(unique(trace.data$marker.colors), function(working.color) {
-            color.key.val <- paste0("marker_color_", working.color)
-            color.name <- names(color.data.primary.colors)[color.data.primary.colors == working.color][1] %||% working.color # Get original name
+        # Color legend traces
+        color.traces <- lapply(marker.traces, function(entry) {
+            working.color <- entry$marker$color
+            color.key.val <- paste0("marker", working.color)
 
             if (is.null(trace.in.legend[[color.key.val]])) {
-                color.trace <- list(
-                    type = "scatter",
-                    mode = "markers",
-                    x = list(NULL),
-                    y = list(NULL),
-                    name = color.name, # Use original name for legend
-                    legendgroup = "Colors", # Group color legends
-                    marker = list(
-                        color = working.color,
-                        symbol = "circle", # Use a standard symbol
-                        line = list(color = "#202020", width = 1)
+                color.trace <- base.trace
+                color.trace$x <- c()
+                color.trace$y <- c()
+                color.trace$name <- "COLOR"
+                color.trace[["marker"]] <- list(
+                    color = working.color,
+                    symbol = "pentagon",
+                    line = list(
+                        color = "#202020",
+                        width = 1
                     )
                 )
 
                 if (!hide.legend) {
                     trace.in.legend[[color.key.val]] <<- TRUE
                 } else {
-                    color.trace$showlegend <- FALSE
-                    trace.in.legend[[color.key.val]] <<- FALSE # Explicitly set to false if hidden
+                    trace.in.legend[[color.key.val]] <<- FALSE
                 }
+
                 return(color.trace)
             }
+
             return(NULL)
         })
-
 
         # Combine all traces and remove NULLs
         all.traces <- c(marker.traces, shape.traces, color.traces)
         clean.traces <- Filter(Negate(is.null), all.traces)
         return(clean.traces)
     }
-
 
     inner.collector <- function(cat.list,
                                 data.for.this.facet,
@@ -288,101 +406,90 @@ execute.plotly.plot <- function(prepared.plot.data,
         trace.list <- list() # Collects all output traces
 
         for (trace_id in cat.list) {
-            # Ensure trace_id is treated as character for subsetting if it's factor
-            trace_id_char <- as.character(trace_id)
             trace.data <- subset(
                 data.for.this.facet,
-                as.character(data.for.this.facet[[trace.column]]) == trace_id_char
+                data.for.this.facet[[trace.column]] == trace_id
             )
 
-            # Skip if no data for this trace_id
-            if (nrow(trace.data) == 0) next
-
-            clean.group.id <- trace_id_char # Use character version
-            is.ribbon <- "value.upper" %in% names(trace.data) && "value.lower" %in% names(trace.data) && summary.type != "individual.simulation"
+            clean.group.id <- trace_id
+            is.ribbon <- "value.upper" %in% names(trace.data) && "value.lower" %in% names(trace.data)
 
             if (is.ribbon) {
                 # message("Ribbon Trace data found")
                 # browser()
-                # Find the correct fill color based on the group name (trace_id)
-                # Match trace_id against the names of color.ribbon.by
-                matching_color_name <- names(color.ribbon.by)[sapply(names(color.ribbon.by), function(nm) grepl(paste0("^", nm, "$"), trace_id_char))] # Exact match needed
-                fill_color <- color.ribbon.by[matching_color_name[1]] %||% "rgba(128,128,128,0.2)" # Default grey ribbon
+                fill_color <- color.ribbon.by[names(color.ribbon.by)[sapply(names(color.ribbon.by), function(nm) grepl(nm, trace_id))]]
+                print(fill_color)
 
-                # Ensure x and y are sorted by year for ribbon
-                trace.data <- trace.data[order(trace.data$year), ]
-
-                # Create combined x and y for ribbon shape (upper then reversed lower)
-                ribbon_x <- c(trace.data$year, rev(trace.data$year))
-                ribbon_y <- c(trace.data$value.upper, rev(trace.data$value.lower))
-
-                ribbon.trace <- list(
+                upper.trace <- list(
                     type = "scatter",
                     mode = "lines",
-                    name = paste0(clean.group.id, " Interval"),
-                    x = ribbon_x,
-                    y = ribbon_y,
+                    name = paste0(clean.group.id, ".max"),
+                    x = trace.data$year,
+                    y = trace.data$value.upper,
                     xaxis = paste0("x", current.facet),
                     yaxis = paste0("y", current.facet),
-                    line = list(width = 0), # No border line for the ribbon itself
-                    fill = "toself", # Fill the shape defined by the points
-                    fillcolor = fill_color,
-                    legendgroup = clean.group.id, # Group ribbon with its line
-                    showlegend = FALSE, # Don't show ribbon in legend separately
+                    line = list(width = 0),
+                    fill = NULL,
+                    showlegend = FALSE,
                     hoverinfo = "skip"
                 )
-                trace.list <- append(trace.list, list(ribbon.trace))
-            }
 
+                lower.trace <- list(
+                    type = "scatter",
+                    mode = "lines",
+                    name = paste0(clean.group.id, ".min"),
+                    x = trace.data$year,
+                    y = trace.data$value.lower,
+                    xaxis = paste0("x", current.facet),
+                    yaxis = paste0("y", current.facet),
+                    line = list(width = 0),
+                    fill = "tonexty",
+                    fillcolor = fill_color,
+                    showlegend = FALSE,
+                    hoverinfo = "skip"
+                )
+            }
 
             # Core base trace
             base.trace <- list(
                 type = "scatter",
-                mode = paste0(marker.type, "s"), # 'lines' or 'markers'
+                mode = paste0(marker.type, "s"),
                 name = clean.group.id,
                 x = trace.data$year,
                 y = trace.data$value,
                 xaxis = paste0("x", current.facet),
-                yaxis = paste0("y", current.facet),
-                legendgroup = clean.group.id # Group line/markers together
+                yaxis = paste0("y", current.facet)
             )
 
             if (marker.type == "line") {
                 # Line style logic
                 sim.trace.count <<- sim.trace.count + 1
-                # Use line.color and line.shape columns directly if they exist
-                col <- trace.data$line.color[1] %||% colors.for.sim[trace_id_char] %||% "#000000" # Default black
-                mark <- trace.data$line.shape[1] %||% linetypes.for.sim[trace_id_char] %||% "solid" # Default solid
+                col <- if (is.null(trace.data$line.color[1])) colors.for.sim else trace.data$line.color[1]
+                mark <- if (is.null(trace.data$line.shape[1])) linetypes.for.sim[[clean.group.id]] else trace.data$line.shape[1]
 
-                # Legend handling
-                trace.key <- paste0(col, mark, clean.group.id) # Make key more specific
                 if (!hide.legend) {
+                    trace.key <- paste0(col, mark)
                     if (!is.null(trace.in.legend[[trace.key]])) {
                         base.trace$showlegend <- FALSE
                     } else {
                         trace.in.legend[[trace.key]] <<- TRUE
-                        base.trace$showlegend <- TRUE # Explicitly show if first time
                     }
                 } else {
                     base.trace$showlegend <- FALSE
                 }
 
-
                 base.trace[["line"]] <- list(dash = mark, color = col)
-                trace.list <- append(trace.list, list(base.trace))
-            } else if (marker.type == "marker") {
-                # Ensure marker columns exist before calling build.marker.traces
-                if (!"marker.shapes" %in% names(trace.data) || !"marker.colors" %in% names(trace.data)) {
-                    warning(paste("Missing marker shape/color columns for trace:", trace_id_char))
-                    # Add a basic marker trace as fallback?
-                    base.trace$showlegend <- FALSE # Hide potentially incorrect legend items
-                    trace.list <- append(trace.list, list(base.trace))
+
+                if (is.ribbon) {
+                    trace.list <- append(trace.list, list(upper.trace, lower.trace, base.trace))
                 } else {
-                    marker.traces <- build.marker.traces(trace.data, base.trace, clean.group.id)
-                    trace.list <- append(trace.list, marker.traces)
+                    trace.list <- append(trace.list, list(base.trace))
                 }
+            } else if (marker.type == "marker") {
+                marker.traces <- build.marker.traces(trace.data, base.trace, clean.group.id)
+                trace.list <- append(trace.list, marker.traces)
             }
-        } # End loop through cat.list
+        }
 
         return(trace.list)
     }
@@ -396,8 +503,8 @@ execute.plotly.plot <- function(prepared.plot.data,
                                          marker.type,
                                          current.facet) {
         rv <- list()
-        if (is.null(local.split.by) || is.null(split.categories)) {
-            # No splits or categories provided, treat as single group
+        if (is.null(split.categories)) {
+            # No splits
             category.list <- unique(data.for.this.facet[[trace.column]])
             raw.traces <- inner.collector(
                 category.list,
@@ -406,48 +513,36 @@ execute.plotly.plot <- function(prepared.plot.data,
                 marker.type,
                 current.facet
             )
+            # traces = unlist(raw.traces, recursive = FALSE)
             rv <- append(rv, raw.traces)
         } else {
             # There are splits to collect
             for (spl.cat in split.categories) {
-                # Ensure spl.cat is character for subsetting if factor
-                spl.cat_char <- as.character(spl.cat)
-                data.for.this.split <- subset(
+                data.for.this.trace <- subset(
                     data.for.this.facet,
-                    as.character(data.for.this.facet[[local.split.by]]) == spl.cat_char
+                    data.for.this.facet[[local.split.by]] == spl.cat
                 )
-
-                if (nrow(data.for.this.split) > 0) {
-                    # One trace for each category within the split
-                    category.list <- unique(data.for.this.split[[trace.column]])
-                    raw.traces <- inner.collector(
-                        category.list,
-                        data.for.this.split, # Use data filtered for this split
-                        trace.column, marker.type,
-                        current.facet
-                    )
-                    rv <- append(rv, raw.traces)
-                }
+                # One trace for each category
+                category.list <- unique(data.for.this.trace[[trace.column]])
+                raw.traces <- inner.collector(
+                    category.list,
+                    data.for.this.facet,
+                    trace.column, marker.type,
+                    current.facet
+                )
+                # traces = unlist(raw.traces, recursive = FALSE)
+                rv <- append(rv, raw.traces)
             } # End of splits
         }
         rv
     }
 
-
     # Helper for properly creating the y.axis labels for the figures
     y.axis.label.helper <- function(outcome.metadata, outcome) {
-        # Ensure outcome is character and exists in metadata names
-        outcome_char <- as.character(outcome)
-        if (!outcome_char %in% names(outcome.metadata)) {
-            warning(paste("Outcome", outcome_char, "not found in outcome metadata."))
-            return(outcome_char) # Return outcome name as fallback
-        }
-        meta <- outcome.metadata[[outcome_char]]
-        label <- meta$axis.name %||% outcome_char # Use outcome name if axis.name is missing
-        unit <- meta$units %||% "" # Default to empty string if units missing
-
+        label <- outcome.metadata[[outcome]]$axis.name
+        unit <- outcome.metadata[[outcome]]$units
         # We want to prevent a 'Cases (cases)' situation here
-        if (tolower(label) == tolower(unit) || unit == "") {
+        if (tolower(label) == tolower(unit)) {
             return(label)
         }
         return(paste0(label, " (", unit, ")"))
@@ -483,331 +578,358 @@ execute.plotly.plot <- function(prepared.plot.data,
     facet.categories <- NULL
     # figures.per.row = 3
 
-    # Determine facetting columns and categories
-    facet.cols <- character(0)
-    if (!is.null(facet.by)) {
-        facet.cols <- paste0("facet.by", seq_along(facet.by))
-        # Check if these columns exist in df.sim or df.truth
-        if (!all(facet.cols %in% names(df.sim %||% data.frame())) && !all(facet.cols %in% names(df.truth %||% data.frame()))) {
-            warning("Facet columns not found in data, defaulting to outcome faceting.")
-            facet.cols <- "outcome.display.name"
-        }
-    } else {
-        facet.cols <- "outcome.display.name" # Default facet by outcome display name
-    }
-
-    # Combine data for determining facets if necessary
-    combined_facet_data <- NULL
-    if (!is.null(df.sim) && all(facet.cols %in% names(df.sim))) {
-        combined_facet_data <- unique(df.sim[, facet.cols, drop = FALSE])
-    }
-    if (!is.null(df.truth) && all(facet.cols %in% names(df.truth))) {
-        truth_facets <- unique(df.truth[, facet.cols, drop = FALSE])
-        combined_facet_data <- rbind(combined_facet_data, truth_facets)
-        combined_facet_data <- unique(combined_facet_data)
-    }
-
-    if (is.null(combined_facet_data) || nrow(combined_facet_data) == 0) {
-        warning("No data found for faceting.")
-        # Potentially return an empty plot or message
-        return(plotly::plot_ly())
-    }
-
-    # Order facets if possible (e.g., alphabetically)
-    combined_facet_data <- combined_facet_data[do.call(order, combined_facet_data), , drop = FALSE]
-    facet.categories <- combined_facet_data
-    figure.count <- nrow(facet.categories)
-
-
     # SIMULATION ELEMENTS
     if (!is.null(df.sim)) {
+        # Since this is simulation data, the marker type is "line"
         marker.type <- "line"
-        if (plotly.debug) cat("SIM\n\n")
 
-        # Pre-assign colors/shapes to df.sim if not already done by prepare.plot logic
-        if (!"line.color" %in% names(df.sim.groupids.many.members)) {
-            df.sim.groupids.many.members$line.color <- unlist(lapply(as.character(df.sim.groupids.many.members$color.sim.by), function(val) colors.for.sim[val] %||% "#000000"))
+        if (plotly.debug) {
+            cat("SIM\n\n")
         }
-        if (!"line.shape" %in% names(df.sim.groupids.many.members)) {
-            df.sim.groupids.many.members$line.shape <- unlist(lapply(as.character(df.sim.groupids.many.members$linetype.sim.by), function(val) linetypes.for.sim[val] %||% "solid"))
-        }
-        # Same for one.member df if needed
 
-        current.facet <- 1
-        for (i in 1:figure.count) {
-            facet_row <- facet.categories[i, , drop = FALSE]
-            # Filter data for the current facet combination
-            data.for.this.facet.sim <- df.sim
-            for (col_name in names(facet_row)) {
-                data.for.this.facet.sim <- subset(data.for.this.facet.sim, data.for.this.facet.sim[[col_name]] == facet_row[[col_name]])
-            }
+        # browser()
+        # Creating a new column in the df.sim.groupids.many.members dataframe called
+        # line.color, and assigning it the value of the color associated with the row
+        # browser()
+        df.sim.groupids.many.members$line.color <-
+            unlist(lapply(df.sim.groupids.many.members$color.sim.by, function(val) {
+                if (val == "") {
+                    # browser()
+                    return(style.manager$get.sim.colors(1))
+                }
+                # if (all(names(colors.for.sim) == "")) {
+                #   return(colors.for.sim)
+                # }
+                colors.for.sim[val]
+            }))
+        # Doing the same for line.shape (dashed vs solid)
+        df.sim.groupids.many.members$line.shape <-
+            unlist(lapply(df.sim.groupids.many.members$linetype.sim.by, function(val) {
+                linetypes.for.sim[val]
+            }))
 
-            if (nrow(data.for.this.facet.sim) > 0) {
-                split.categories.sim <- if (!is.null(split.by)) unique(data.for.this.facet.sim[[split.by]]) else NULL
-                traces <- collect.traces.for.facet(
-                    split.categories.sim,
-                    data.for.this.facet.sim,
-                    split.by, # Pass the actual split.by column name
-                    "groupid", # Trace groups within split are identified by groupid
-                    marker.type,
-                    current.facet
-                )
-                fig$data <- append(fig$data, traces)
+        # Doing the same as above, but for the df.sim.groupids.one.member dataframe
+        df.sim.groupids.one.member$line.color <-
+            unlist(lapply(df.sim.groupids.one.member$color.sim.by, function(val) {
+                if (all(names(colors.for.sim) == "")) {
+                    return(colors.for.sim)
+                }
+                colors.for.sim[val]
+            }))
+
+        df.sim.groupids.one.member$line.shape <-
+            unlist(lapply(df.sim.groupids.one.member$linetype.sim.by, function(val) {
+                linetypes.for.sim[val]
+            }))
+
+        if (!is.null(split.by)) {
+            if (plotly.debug) {
+                cat("split.by\n")
             }
-            current.facet <- current.facet + 1
+            if (nrow(df.sim.groupids.many.members) > 0) {
+                if (plotly.debug) {
+                    cat("  many members\n")
+                }
+                # Add lines for multiple simulation groups
+                # we know split.by has a value
+                split.categories <- unique(df.sim.groupids.many.members[[split.by]])
+                # At this point we don't know if facet.by is non-null
+                if (is.null(facet.by)) {
+                    # print("facet.by is null")
+                    # TODO
+                    # If it is null, we want only one figure
+                    # Add as many traces to the figure as we have split.categories
+                } else {
+                    if (plotly.debug) {
+                        cat("    facet by\n")
+                    }
+                    current.facet <- 1
+                    # If it is non null, we want multiple figures within this plot
+                    facet.categories <- unique(df.sim.groupids.many.members[[facet.by]])
+                    fig$y.axis.labels <- rep(y.axis.label.helper(outcome.metadata, outcomes[1]), length(facet.categories))
+                    figure.count <- length(facet.categories)
+                    # For each figure, assign the split.by traces
+                    for (fac.cat in facet.categories) {
+                        data.for.this.facet <- subset(
+                            df.sim.groupids.many.members,
+                            df.sim.groupids.many.members[[facet.by]] == fac.cat
+                        )
+                        # For each facet, we need to collect the trace for each split.by category
+                        traces <- collect.traces.for.facet(split.categories, data.for.this.facet, split.by, "groupid", marker.type, current.facet)
+                        current.facet <- current.facet + 1
+                        fig$data <- append(fig$data, traces)
+                    } # End of facets
+                }
+            }
+        } else {
+            if (plotly.debug) {
+                cat("no split by\n")
+            }
+            # Split.by is null; no splits on the plots
+            if (nrow(df.sim.groupids.many.members) > 0) {
+                if (plotly.debug) {
+                    cat("  many members\n")
+                }
+                # Collect the single trace
+                if (is.null(facet.by)) {
+                    if (plotly.debug) {
+                        cat("    no facet by\n")
+                    }
+                    # No Faceting
+                    # single outcome vs multiple outcome
+                    # In multiple outcomes we have multiple "facets" (one
+                    # for each outcome)
+                    current.facet <- 1
+
+                    # Add the proper y.axis.labels to the fig structure
+                    fig$y.axis.labels <- unlist(lapply(outcomes, function(category) {
+                        y.axis.label.helper(outcome.metadata, category)
+                    }))
+
+                    # browser()
+
+                    if (length(outcomes) > 1) {
+                        # Collect the trace for each outcome, treating each as a different facet
+                        facet.categories <- outcomes
+                        figure.count <- length(facet.categories)
+
+                        # browser()
+
+                        # For each figure, assign the split.by traces
+                        for (fac.cat in facet.categories) {
+                            data.for.this.facet <- subset(
+                                df.sim.groupids.many.members,
+                                df.sim.groupids.many.members[["outcome"]] == fac.cat
+                            )
+                            # For each facet, we need to collect the trace for each split.by category
+                            traces <- collect.traces.for.facet(NULL, data.for.this.facet, split.by, "groupid", marker.type, current.facet)
+                            current.facet <- current.facet + 1
+                            fig$data <- append(fig$data, traces)
+                        } # End of facets
+                    } else {
+                        category.list <- unique(df.sim.groupids.many.members[["groupid"]])
+
+
+                        raw.traces <- inner.collector(
+                            category.list,
+                            df.sim.groupids.many.members,
+                            "groupid",
+                            marker.type,
+                            current.facet
+                        )
+                        # traces = unlist(raw.traces, recursive = FALSE)
+                        fig$data <- append(fig$data, raw.traces)
+                    }
+                } else {
+                    if (plotly.debug) {
+                        cat("    facet\n")
+                    }
+                    # Faceting but no split by
+                    current.facet <- 1
+                    # If it is non null, we want multiple figures within this plot
+                    facet.categories <- unique(df.sim.groupids.many.members[[facet.by]])
+                    figure.count <- length(facet.categories)
+                    fig$y.axis.labels <- rep(y.axis.label.helper(outcome.metadata, outcomes[1]), figure.count)
+                    # For each figure, assign the split.by traces
+                    for (fac.cat in facet.categories) {
+                        data.for.this.facet <- subset(
+                            df.sim.groupids.many.members,
+                            df.sim.groupids.many.members[[facet.by]] == fac.cat
+                        )
+                        # For each facet, we need to collect the trace for each split.by category
+                        traces <- collect.traces.for.facet(NULL, data.for.this.facet, split.by, "groupid", marker.type, current.facet)
+                        current.facet <- current.facet + 1
+                        fig$data <- append(fig$data, traces)
+                    } # End of facets
+                }
+            }
         }
     } # End of df.sim traces
 
-
-    if (plotly.debug) cat("\nDATA\n\n")
+    if (plotly.debug) {
+        cat("\nDATA\n\n")
+        # browser()
+    }
 
     # DATA ELEMENTS
     if (!is.null(df.truth)) {
         marker.type <- "marker"
 
-        # Pre-assign marker shapes/colors
-        if (!"marker.shapes" %in% names(df.truth)) {
-            df.truth$marker.shapes <- unlist(lapply(as.character(df.truth$shape.data.by), function(val) marker.mappings[val] %||% "circle"))
-        }
-        if (!"marker.colors" %in% names(df.truth)) {
-            # Use color.and.shade.data.by for color lookup? Or just color.data.by?
-            # Assuming color.data.shaded.colors maps color.and.shade.data.by
-            df.truth$marker.colors <- unlist(lapply(as.character(df.truth$color.and.shade.data.by), function(val) color.data.shaded.colors[val] %||% "#000000"))
+        df.truth$marker.shapes <- unlist(lapply(df.truth$shape.data.by, function(val) {
+            marker.mappings[[val]]
+        }))
+        df.truth$marker.colors <- unlist(lapply(df.truth$color.data.by, function(val) {
+            color.data.primary.colors[val]
+        }))
+
+        # TODO Add reasoning for this assert or remove
+        if (length(df.truth$marker.colors) != length(df.truth$marker.shapes)) {
+            stop("df.truth: We cannot have different numbers of shapes and colors")
         }
 
-        current.facet <- 1
-        for (i in 1:figure.count) {
-            facet_row <- facet.categories[i, , drop = FALSE]
-            # Filter data for the current facet combination
-            data.for.this.facet.truth <- df.truth
-            for (col_name in names(facet_row)) {
-                data.for.this.facet.truth <- subset(data.for.this.facet.truth, data.for.this.facet.truth[[col_name]] == facet_row[[col_name]])
+        if (!is.null(split.by)) {
+            if (plotly.debug) {
+                cat("split by\n")
             }
-
-            if (nrow(data.for.this.facet.truth) > 0) {
-                split.categories.truth <- if (!is.null(split.by)) unique(data.for.this.facet.truth[[split.by]]) else NULL
-                # What defines unique traces for data points? Maybe 'source' or 'color.and.shade.data.by'?
-                # Using 'color.and.shade.data.by' as the trace identifier within splits
-                traces <- collect.traces.for.facet(
-                    split.categories.truth,
-                    data.for.this.facet.truth,
-                    split.by, # Pass the actual split.by column name
-                    "color.and.shade.data.by", # Unique data traces identified by this
-                    marker.type,
-                    current.facet
-                )
-                fig$data <- append(fig$data, traces)
+            # Add points for truth data with split groups
+            # Add lines for multiple simulation groups
+            # we know split.by has a value
+            split.categories <- unique(df.truth$stratum)
+            # At this point we don't know if facet.by is non-null
+            if (is.null(facet.by)) {
+                if (plotly.debug) {
+                    cat("  no facet by\n")
+                }
+                # print("facet.by is null")
+                # TODO
+                # If it is null, we want only one figure
+                # Add as many traces to the figure as we have split.categories
+            } else {
+                if (plotly.debug) {
+                    cat("  facet by\n")
+                }
+                # browser()
+                current.facet <- 1
+                # If it is non null, we want multiple figures within this plot
+                facet.categories <- unique(df.sim.groupids.many.members$facet.by1)
+                # For each figure, assign the split.by traces
+                for (fac.cat in facet.categories) {
+                    data.for.this.facet <- subset(
+                        df.truth,
+                        df.truth$facet.by1 == fac.cat
+                    )
+                    # For each facet, we need to collect the trace for each split.by category
+                    traces <- collect.traces.for.facet(split.categories, data.for.this.facet, "stratum", "stratum", marker.type, current.facet)
+                    current.facet <- current.facet + 1
+                    fig$data <- append(fig$data, traces)
+                } # End of facets
             }
-            current.facet <- current.facet + 1
+        } else {
+            if (plotly.debug) {
+                cat("  no split by\n")
+            }
+            # Add points for truth data without split groups
+            # We have to be careful about multiple outcomes but no faceting
+            current.facet <- 1
+            if (length(outcomes) > 1) {
+                # print("Multiple Outcomes for Data")
+                facet.categories <- outcomes
+                figure.count <- length(facet.categories)
+                # For each figure, assign the split.by traces
+                for (fac.cat in facet.categories) {
+                    data.for.this.facet <- subset(
+                        df.truth,
+                        df.truth[["outcome"]] == fac.cat
+                    )
+                    # For each facet, we need to collect the trace for each split.by category
+                    traces <- collect.traces.for.facet(NULL, data.for.this.facet, split.by, "outcome", marker.type, current.facet)
+                    current.facet <- current.facet + 1
+                    fig$data <- append(fig$data, traces)
+                } # End of facets
+            } else {
+                if (figure.count > 1) {
+                    # Facet these results
+                    current.facet <- 1
+                    # print("Multiple Facet no split by")
+                    facet.categories <- unique(df.truth[["facet.by1"]])
+                    figure.count <- length(facet.categories)
+                    # For each figure, assign the split.by traces
+                    for (fac.cat in facet.categories) {
+                        data.for.this.facet <- subset(
+                            df.truth,
+                            df.truth[["facet.by1"]] == fac.cat
+                        )
+                        # For each facet, we need to collect the trace for each split.by category
+                        traces <- collect.traces.for.facet(NULL, data.for.this.facet, split.by, "outcome", marker.type, current.facet)
+                        current.facet <- current.facet + 1
+                        fig$data <- append(fig$data, traces)
+                    } # End of facets
+                } else {
+                    # Only one figure
+                    # We need to check here if there are multiple sources for truth data
+
+                    # browser()
+
+                    marker.types <- unique(df.truth$color.data.by)
+                    # The way I understand this this could be either
+                    # color.data.by or shape.data.by above
+
+                    # for (m.type in marker.types) {
+                    raw.traces <- inner.collector(
+                        marker.types,
+                        df.truth,
+                        "color.data.by",
+                        marker.type,
+                        current.facet
+                    )
+                    # traces = unlist(raw.traces, recursive = FALSE)
+                    fig$data <- append(fig$data, raw.traces)
+                }
+            }
         }
-    } # End of df.truth traces
+    }
 
-
+    # browser()
     # LAYOUT
-    if (figure.count > 0) {
-        figures.per.row <- n.facet.rows # Use provided n.facet.rows if available
-        if (is.null(figures.per.row) || figures.per.row <= 0) {
-            figures.per.row <- ceiling(sqrt(figure.count)) # Default square-ish layout
-        }
-        plot.rows <- ceiling(figure.count / figures.per.row)
-        plot.cols <- figures.per.row
+    # At this point we have processed all the traces and now need to lay them out
 
-        fig$layout$grid <- list(rows = plot.rows, columns = plot.cols, pattern = "independent")
+    # How many figures do we need? One for each facet.
+    if (figure.count > 1) {
+        figures.per.row <- ceiling(sqrt(figure.count))
+        # if (figure.count >= 3) {
+        #   figures.per.row = 3
+        # } else if (figure.count < 3) {
+        #   figures.per.row = figure.count
+        # }
+        # How many full rows of figures do we have?
+        plot.rows <- ceiling(figure.count / figures.per.row)
+
+        fig$layout$grid <- list(rows = plot.rows, columns = figures.per.row, pattern = "independent")
         fig$layout$annotations <- list()
 
-        # Determine y-axis labels for each facet
-        fig$layout$yaxis_labels <- character(figure.count)
-        for (i in 1:figure.count) {
-            facet_row <- facet.categories[i, , drop = FALSE]
-            # Find the outcome name associated with this facet
-            # Assuming 'outcome.display.name' is always the primary or only facet column
-            outcome_name_for_facet <- facet_row$outcome.display.name[1]
-            # Find the original outcome id corresponding to the display name
-            original_outcome_id <- names(outcome.metadata)[sapply(outcome.metadata, function(meta) meta$display.name == outcome_name_for_facet)][1] %||% outcome_name_for_facet
-
-            fig$layout$yaxis_labels[i] <- y.axis.label.helper(outcome.metadata, original_outcome_id)
-        }
-
-
         # Layout constants
-        x_padding <- 0.02
-        y_padding <- 0.04
-        title_y_offset <- 0.05 # Space for subplot titles
-
-        x_domain_width <- (1 - (plot.cols + 1) * x_padding) / plot.cols
-        y_domain_height <- (1 - (plot.rows + 1) * y_padding - title_y_offset) / plot.rows # Adjust for titles
-
-        current_row <- 1
-        current_col <- 1
+        x_i <- 1
+        y_i <- 1
+        buffer <- 0.05
+        xdelta <- 1 / figures.per.row
+        ydelta <- 1 / plot.rows
 
         for (i in 1:figure.count) {
-            # Calculate domain based on current row and column (Plotly grid is 1-based from bottom-left)
-            x_start <- (current_col - 1) * (x_domain_width + x_padding) + x_padding
-            x_end <- x_start + x_domain_width
+            # Start at the beginning
+            # 0,0 is the top left corner
+            x_left <- ((x_i - 1) * xdelta) + buffer
+            x_right <- (x_i * xdelta) - buffer
+            y_bottom <- (1 - ((y_i - 1) * ydelta)) - buffer
+            y_top <- (1 - (y_i * ydelta)) + buffer
 
-            y_start <- (plot.rows - current_row) * (y_domain_height + y_padding) + y_padding # Y domain from bottom up
-            y_end <- y_start + y_domain_height
-
-            xaxis_name <- paste0("xaxis", i)
-            yaxis_name <- paste0("yaxis", i)
-
-            fig$layout[[xaxis_name]] <- list(title = list(text = "Year", standoff = 5), domain = c(x_start, x_end), anchor = yaxis_name, automargin = TRUE)
-            fig$layout[[yaxis_name]] <- list(title = list(text = fig$layout$yaxis_labels[i], standoff = 10), domain = c(y_start, y_end), anchor = xaxis_name, automargin = TRUE)
-
-            # Add subplot title annotation
-            facet_title_parts <- as.character(unlist(facet.categories[i, , drop = TRUE]))
-            facet_title <- paste(facet_title_parts, collapse = " - ")
-
+            fig$layout[[paste0("xaxis", i)]] <- list(title = "Years", domain = c(x_left, x_right), anchor = paste0("y", i))
+            fig$layout[[paste0("yaxis", i)]] <- list(title = fig$y.axis.label[i], domain = c(y_bottom, y_top), anchor = paste0("x", i))
             fig$layout$annotations <- append(fig$layout$annotations, list(list(
-                text = facet_title,
-                showarrow = FALSE,
-                xref = "paper", # Relative to subplot area
-                yref = "paper",
-                x = x_start + x_domain_width / 2, # Center above subplot
-                y = y_end + y_padding / 2, # Position above subplot
-                xanchor = "center",
-                yanchor = "bottom",
-                font = list(size = 12)
+                text = facet.categories[i],
+                showarrow = F,
+                xref = paste0("x", i, " domain"),
+                yref = paste0("y", i, " domain"),
+                x = 0.5,
+                y = 1.1,
+                font = list(
+                    size = "14"
+                )
             )))
 
-            # Move to next grid position
-            current_col <- current_col + 1
-            if (current_col > plot.cols) {
-                current_col <- 1
-                current_row <- current_row + 1
+            if (x_i == figures.per.row) {
+                x_i <- 1
+                y_i <- y_i + 1
+            } else {
+                x_i <- x_i + 1
             }
         }
-        # Remove temporary label storage
-        fig$layout$yaxis_labels <- NULL
     } else {
-        # No facets, single plot layout
-        fig$layout[["xaxis"]] <- list(title = "Year", anchor = "y1")
-        fig$layout[["yaxis"]] <- list(title = y.axis.label.helper(outcome.metadata, outcomes[1]), anchor = "x1")
+        # browser()
+        fig$layout[["xaxis"]] <- list(title = "Years", anchor = "y1")
+        fig$layout[["yaxis"]] <- list(title = fig$y.axis.labels[1], anchor = "x1")
     }
-
-    # Add general layout settings
-    fig$layout$hovermode <- "closest"
-    fig$layout$legend <- list(traceorder = "grouped", groupclick = "toggleitem") # Group legend items
-
+    # browser()
+    # print(fig)
     # Return the final plot object
-    # Use plotly::plot_ly to build from the list structure
-    # Need to ensure plotly library is loaded
-    if (!requireNamespace("plotly", quietly = TRUE)) {
-        stop("Plotly package needed for this function to work. Please install it.", call. = FALSE)
-    }
-
-    # Create the plot using plot_ly and add traces iteratively
-    p <- plotly::plot_ly()
-    for (trace in fig$data) {
-        # Add trace type if missing (should be scatter)
-        trace$type <- trace$type %||% "scatter"
-        p <- plotly::add_trace(p, !!!trace) # Use !!! to splice list arguments
-    }
-
-    # Apply layout
-    p <- plotly::layout(p, !!!fig$layout)
-
-    return(p)
+    return(plotly_build(fig))
 }
-
-
-# plot.simulations function definition (copied from user input)
-plot.simulations <- function(...,
-                             outcomes,
-                             corresponding.data.outcomes = NULL,
-                             split.by = NULL,
-                             facet.by = NULL,
-                             dimension.values = list(),
-                             target.ontology = NULL,
-                             summary.type = c("individual.simulation", "mean.and.interval", "median.and.interval")[1],
-                             plot.year.lag.ratio = F,
-                             title = "location",
-                             n.facet.rows = NULL,
-                             interval.coverate = 0.95, # Note: This parameter is not used in execute.plotly.plot
-                             data.manager = get.default.data.manager(),
-                             # style.manager = get.default.style.manager('plotly'), # Use default for now
-                             style.manager = get.default.style.manager(),
-                             hide.legend = FALSE) {
-    plot.which <- "sim.and.data" # Hardcoded as identified
-
-    # Use match.call to handle ... correctly
-    simset.args <- list(...)
-    deparsed.args <- match.call(expand.dots = FALSE)$...
-
-    # Validation step
-    # Need plot.data.validation function available or copied here
-    if (!exists("plot.data.validation") || !is.function(plot.data.validation)) {
-        stop("plot.data.validation function is required but not found.")
-    }
-    if (!exists("prepare.plot") || !is.function(prepare.plot)) {
-        stop("prepare.plot function is required but not found.")
-    }
-    if (!exists("get.default.data.manager") || !is.function(get.default.data.manager)) {
-        stop("get.default.data.manager function is required but not found.")
-    }
-    if (!exists("get.default.style.manager") || !is.function(get.default.style.manager)) {
-        stop("get.default.style.manager function is required but not found.")
-    }
-
-
-    plot.data <- plot.data.validation(
-        simset.args,
-        deparsed.args,
-        outcomes,
-        corresponding.data.outcomes,
-        plot.which,
-        summary.type
-    )
-
-    # These values are possibly modified by the plot.data.validation call, so
-    # they need to be extracted from the returned list.
-    simset.list <- plot.data$simset.list
-    outcomes <- plot.data$outcomes
-
-    # Data preparation step
-    prepared.plot.data <- prepare.plot(simset.list,
-        outcomes = outcomes,
-        locations = NULL, # prepare.plot expects locations for data.only
-        corresponding.data.outcomes = corresponding.data.outcomes,
-        split.by = split.by,
-        facet.by = facet.by,
-        dimension.values = dimension.values,
-        target.ontology = target.ontology,
-        plot.which = plot.which,
-        summary.type = summary.type,
-        plot.year.lag.ratio = plot.year.lag.ratio,
-        title = title,
-        data.manager = data.manager,
-        style.manager = style.manager, # Pass style manager to prepare.plot
-        debug = F
-    ) # Assuming debug=F
-
-    # Execution step
-    execute.plotly.plot(prepared.plot.data,
-        outcomes = outcomes,
-        split.by = split.by,
-        facet.by = facet.by,
-        plot.which = plot.which,
-        summary.type = summary.type,
-        plot.year.lag.ratio = plot.year.lag.ratio,
-        n.facet.rows = n.facet.rows,
-        style.manager = style.manager,
-        debug = debug, # Pass debug flag if needed
-        hide.legend = hide.legend
-    )
-}
-
-# Need definitions for helper functions used within plot.simulations/execute.plotly.plot
-# if they are not globally available or part of the jheem2 package namespace
-# For example:
-# - plot.data.validation
-# - prepare.plot
-# - get.default.data.manager
-# - get.default.style.manager
-# - locations::get.location.type (requires 'locations' package)
-# - grDevices::col2rgb
-# - plotly::plot_ly, plotly::add_trace, plotly::layout
-
-# Placeholder/Reminder: Ensure necessary packages (plotly, locations) are loaded
-# and helper functions (plot.data.validation, prepare.plot, etc.) are accessible
-# when sourcing this file.
