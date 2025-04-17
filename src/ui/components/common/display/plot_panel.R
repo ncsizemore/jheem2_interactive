@@ -428,7 +428,7 @@ plot_panel_server <- function(id, settings) {
           # Ensure required functions exist
           req(
             exists("create_style_manager_from_config") && is.function(create_style_manager_from_config), # Still needed? plot.simulations might use it differently
-            exists("plot.simulations") && is.function(plot.simulations)
+            exists("plot.simulations_local") && is.function(plot.simulations_local) # Check for local version
           )
 
           # Get plot args from reactive data
@@ -441,8 +441,8 @@ plot_panel_server <- function(id, settings) {
             plot_args_final$style.manager <- style_manager
           }
 
-          # Call plot.simulations
-          the_plotly_plot <- do.call(plot.simulations, c(plot_data$sim_list_or_simset, plot_args_final))
+          # Call plot.simulations_local
+          the_plotly_plot <- do.call(plot.simulations_local, c(plot_data$sim_list_or_simset, plot_args_final)) # Call local version
           req(the_plotly_plot)
 
           # --- DO NOT APPLY ggplot customizations ---
