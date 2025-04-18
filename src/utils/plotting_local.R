@@ -573,9 +573,7 @@ execute.plotly.plot_local <- function(prepared.plot.data,
 
     # Define the list structure
     # Initialize the plotly object as a list
-    # Initialize the plotly object as a list
     fig <- list(data = list(), layout = list())
-    fig$layout$annotations <- list() # Initialize annotations list earlier
 
 
     # Add labels for the y-axis and a title for the plot
@@ -884,8 +882,15 @@ execute.plotly.plot_local <- function(prepared.plot.data,
             xaxis_ref <- if (i == 1) "x" else paste0("x", i)
             yaxis_ref <- if (i == 1) "y" else paste0("y", i)
 
+            # Get facet title text
+            facet_title <- if (!is.null(facet.categories) && length(facet.categories) >= i) facet.categories[i] else ""
+            
             # Set axis titles and apply global year range (domains are handled by the grid)
-            xaxis_definition <- list(title = list(text = "Years", standoff = 5), anchor = yaxis_ref, automargin = TRUE) # Revert automargin
+            xaxis_definition <- list(
+                title = list(text = "Years", standoff = 5), 
+                anchor = yaxis_ref, 
+                automargin = TRUE
+            )
             if (!is.null(global_year_range)) {
                 xaxis_definition$range <- global_year_range
             }
@@ -893,25 +898,16 @@ execute.plotly.plot_local <- function(prepared.plot.data,
 
             # Ensure y.axis.labels exists and has enough elements
             y_axis_title <- if (!is.null(fig$y.axis.labels) && length(fig$y.axis.labels) >= i) fig$y.axis.labels[i] else ""
-            fig$layout[[yaxis_name]] <- list(title = list(text = y_axis_title, standoff = 10), anchor = xaxis_ref, automargin = TRUE) # Revert automargin
-
-            # Add annotations (facet titles), referencing the correct axes
-            # Ensure facet.categories exists and has enough elements
-            annotation_text <- if (!is.null(facet.categories) && length(facet.categories) >= i) facet.categories[i] else "" # Restore original text
-            # annotation_text <- paste("Facet", i) # DEBUG: Use simple placeholder text
-            fig$layout$annotations <- append(fig$layout$annotations, list(list(
-                text = annotation_text,
-                showarrow = FALSE,
-                xref = xaxis_ref, # Reference the axis ID for x positioning
-                yref = yaxis_ref, # Reference the axis ID for y positioning
-                x = 0.5, # Center the text relative to the subplot's x-axis domain
-                y = 1.05, # Position slightly above the top of the y-axis domain (reverted)
-                xanchor = "center",
-                yanchor = "bottom", # Anchor the bottom of the text at the specified y coordinate
-                font = list(
-                    size = 12 # Slightly smaller font for facet titles
-                )
-            )))
+            
+            # Add facet title directly to the y-axis title with HTML formatting
+            fig$layout[[yaxis_name]] <- list(
+                title = list(
+                    text = paste0("<span style='font-weight:bold; font-size:12px'>", facet_title, "</span><br>", y_axis_title),
+                    standoff = 10
+                ), 
+                anchor = xaxis_ref, 
+                automargin = TRUE
+            )
 
             # Update row/column tracking for next annotation's y calculation
             if (current_col == figures.per.row) {
@@ -924,16 +920,29 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         # Add overall plot title if needed (might interfere with facet titles)
         # fig$layout$title <- list(text = plot.title, y = 0.98) # Adjust y position if using annotations
     } else if (figure.count == 1) { # Single plot (no faceting or only one facet category)
-        # browser()
         # Use default xaxis/yaxis and apply global range
         y_axis_title_single <- if (!is.null(fig$y.axis.labels) && length(fig$y.axis.labels) >= 1) fig$y.axis.labels[1] else ""
-        xaxis_definition_single <- list(title = "Years", anchor = "y")
+        facet_title_single <- if (!is.null(facet.categories) && length(facet.categories) >= 1) facet.categories[1] else ""
+        
+        xaxis_definition_single <- list(
+            title = list(text = "Years", standoff = 5),
+            anchor = "y"
+        )
         if (!is.null(global_year_range)) {
             xaxis_definition_single$range <- global_year_range
         }
         fig$layout[["xaxis"]] <- xaxis_definition_single
-        fig$layout[["yaxis"]] <- list(title = y_axis_title_single, anchor = "x")
-        # Add title for single plot
+        
+        # Add facet title directly to the y-axis title with HTML formatting
+        fig$layout[["yaxis"]] <- list(
+            title = list(
+                text = paste0("<span style='font-weight:bold; font-size:12px'>", facet_title_single, "</span><br>", y_axis_title_single),
+                standoff = 10
+            ), 
+            anchor = "x"
+        )
+        
+        # Add main title for single plot
         fig$layout$title <- list(text = plot.title) # Set main title only for single plot case
     } else {
         # No figures to plot (e.g., empty data)
@@ -962,8 +971,15 @@ execute.plotly.plot_local <- function(prepared.plot.data,
 
 
     # browser()
-    # print(str(fig$layout$annotations)) # DEBUG removed
-    # print(fig)
+    # Print HTML structure of y-axis titles for debugging
+    cat("\nFacet title HTML examples:\n")
+    for (i in 1:min(figure.count, 3)) {
+        yaxis_name <- if (i == 1) "yaxis" else paste0("yaxis", i)
+        if (!is.null(fig$layout[[yaxis_name]]$title$text)) {
+            cat(paste0("Facet ", i, ": ", fig$layout[[yaxis_name]]$title$text, "\n"))
+        }
+    }
+    
     # Return the final plot object
     # Use tryCatch to handle potential errors during build, especially with complex layouts/data
     final_plot <- tryCatch(
