@@ -373,6 +373,12 @@ plot_panel_server <- function(id, settings) {
               store$clear_page_error_state(id)
               vis_manager$set_plot_status("ready")
               direct_error_message(NULL)
+              
+              # Send explicit plot rendered message
+              session$sendCustomMessage("plotRendered", list())
+              
+              # Explicitly hide loading overlay as a failsafe
+              session$sendCustomMessage("hideLoadingOverlay", list())
 
               the_plot
             },
@@ -382,6 +388,10 @@ plot_panel_server <- function(id, settings) {
               store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
               vis_manager$set_plot_status("error")
               direct_error_message(paste("Error:", err_msg))
+              
+              # Hide loading overlay on error
+              session$sendCustomMessage("hideLoadingOverlay", list())
+              
               NULL
             }
           ) # end tryCatch
@@ -455,6 +465,12 @@ plot_panel_server <- function(id, settings) {
           store$clear_page_error_state(id)
           vis_manager$set_plot_status("ready")
           direct_error_message(NULL)
+          
+          # Send explicit plot rendered message
+          session$sendCustomMessage("plotRendered", list())
+          
+          # Explicitly hide loading overlay as a failsafe
+          session$sendCustomMessage("hideLoadingOverlay", list())
 
           the_plotly_plot
         },
@@ -464,6 +480,10 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
+          
+          # Hide loading overlay on error
+          session$sendCustomMessage("hideLoadingOverlay", list())
+          
           NULL # Return empty plotly object on error?
         }
       ) # end tryCatch
@@ -505,8 +525,13 @@ plot_panel_server <- function(id, settings) {
       req(input$update_visualization > 0)
       req(input$visualization_state == "visible")
       req(input$display_type == "plot")
+      
+      # Show loading overlay immediately via JavaScript
+      session$sendCustomMessage("javascript", 
+        sprintf("if(window.showLoadingOverlay) { window.showLoadingOverlay('%s'); }", id))
 
-      # print(paste0("-[ PlotButton", id, " ]- Clicked.")) # Commented out
+      # Set loading status
+      vis_manager$set_plot_status("loading")
 
       new_settings <- isolate({
         outcomes <- input[[paste0("outcomes_", id)]]

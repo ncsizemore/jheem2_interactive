@@ -1,0 +1,59 @@
+/* immediate_loading.css */
+/* Styles for immediate loading indicator display */
+
+/* Global loading overlay */
+.global-loading-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 100000; /* Extremely high to ensure it's above everything */
+  background-color: rgba(255, 255, 255, 0.7);
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  min-width: 150px;
+  min-height: 150px;
+  /* Add transition for smoother appearance/disappearance */
+  transition: opacity 0.2s ease-out;
+}
+
+/* Loading spinner and content styles */
+.global-loading-overlay .loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.global-loading-overlay .loading-spinner {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 15px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Add a pulsing effect to the text */
+.global-loading-overlay span {
+  animation: pulse 1.5s infinite;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}

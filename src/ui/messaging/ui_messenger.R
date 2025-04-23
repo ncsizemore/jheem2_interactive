@@ -398,6 +398,31 @@ UIMessenger <- R6Class("UIMessenger",
             timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
           )
           self$session$sendCustomMessage("plotLoading", message_data)
+          
+          # Extract page ID from indicator ID
+          page_id <- sub("-visualization-loading_indicator", "", indicator_id)
+          
+          # Also show the global loading overlay
+          js_code <- sprintf(
+            "if($('#global-loading-overlay').length) {
+              const targetArea = $('.%s-container .main-panel-plot');
+              if (targetArea.length) {
+                const rect = targetArea[0].getBoundingClientRect();
+                $('#global-loading-overlay').css({
+                  'position': 'fixed',
+                  'top': rect.top + 'px',
+                  'left': rect.left + 'px',
+                  'width': rect.width + 'px',
+                  'height': (rect.height || 400) + 'px',
+                  'display': 'flex',
+                  'z-index': '10000'
+                });
+              }
+            }",
+            page_id
+          )
+          self$session$sendCustomMessage("javascript", js_code)
+          
           print(sprintf("[UI_MESSENGER] Sent plot loading message for %s", indicator_id))
           invisible(TRUE)
         },
@@ -423,6 +448,11 @@ UIMessenger <- R6Class("UIMessenger",
             timestamp = format(Sys.time(), "%H:%M:%S.%OS3")
           )
           self$session$sendCustomMessage("plotReady", message_data)
+          
+          # Use a direct custom message to hide our global overlay
+          self$session$sendCustomMessage("hideLoadingOverlay", list())
+          print("[UI_MESSENGER] Sent hide loading overlay message")
+          
           print(sprintf("[UI_MESSENGER] Sent plot ready message for %s", indicator_id))
           invisible(TRUE)
         },
