@@ -99,19 +99,19 @@ create_plot_panel <- function(id, type = "static") {
         tags$div(
           class = "panel-content",
           # Use uiOutput for dynamic plot rendering
-          uiOutput(ns("plot_output_ui")),
-          # Remove conditionalPanel, use shinyjs::show/hide instead
-          # Give the indicator div a specific ID for shinyjs targeting
-          tags$div(
-            id = ns("loading_indicator"), # Added ID
-            class = "loading-indicator",
-            style = "display: none;", # Start hidden
-            tags$div(
-              class = "loading-content",
-              tags$span(class = "loading-spinner"),
-              tags$span("Generating plot...")
-            )
-          ) # Removed hidden plot_status input as it's no longer needed for indicator
+          uiOutput(ns("plot_output_ui"))
+          # REMOVED: Old panel-specific loading indicator div
+          # tags$div(
+          #   id = ns("loading_indicator"), # Added ID
+          #   class = "loading-indicator",
+          #   style = "display: none;", # Start hidden
+          #   tags$div(
+          #     class = "loading-content",
+          #     tags$span(class = "loading-spinner"),
+          #     tags$span("Generating plot...")
+          #   )
+          # )
+          # Removed hidden plot_status input as it's no longer needed for indicator
           # Removed: tags$div(class = "hidden", textInput(ns("plot_status"), ...))
         )
       )
@@ -373,12 +373,12 @@ plot_panel_server <- function(id, settings) {
               store$clear_page_error_state(id)
               vis_manager$set_plot_status("ready")
               direct_error_message(NULL)
-              
+
               # Send explicit plot rendered message
               session$sendCustomMessage("plotRendered", list())
-              
-              # Explicitly hide loading overlay as a failsafe
-              session$sendCustomMessage("hideLoadingOverlay", list())
+
+              # REMOVED: Explicitly hide loading overlay as a failsafe
+              # session$sendCustomMessage("hideLoadingOverlay", list())
 
               the_plot
             },
@@ -388,10 +388,10 @@ plot_panel_server <- function(id, settings) {
               store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
               vis_manager$set_plot_status("error")
               direct_error_message(paste("Error:", err_msg))
-              
-              # Hide loading overlay on error
-              session$sendCustomMessage("hideLoadingOverlay", list())
-              
+
+              # REMOVED: Hide loading overlay on error (JS timeout will handle it)
+              # session$sendCustomMessage("hideLoadingOverlay", list())
+
               NULL
             }
           ) # end tryCatch
@@ -465,12 +465,12 @@ plot_panel_server <- function(id, settings) {
           store$clear_page_error_state(id)
           vis_manager$set_plot_status("ready")
           direct_error_message(NULL)
-          
+
           # Send explicit plot rendered message
           session$sendCustomMessage("plotRendered", list())
-          
-          # Explicitly hide loading overlay as a failsafe
-          session$sendCustomMessage("hideLoadingOverlay", list())
+
+          # REMOVED: Explicitly hide loading overlay as a failsafe
+          # session$sendCustomMessage("hideLoadingOverlay", list())
 
           the_plotly_plot
         },
@@ -480,10 +480,10 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
-          
-          # Hide loading overlay on error
-          session$sendCustomMessage("hideLoadingOverlay", list())
-          
+
+          # REMOVED: Hide loading overlay on error (JS timeout will handle it)
+          # session$sendCustomMessage("hideLoadingOverlay", list())
+
           NULL # Return empty plotly object on error?
         }
       ) # end tryCatch
@@ -525,12 +525,17 @@ plot_panel_server <- function(id, settings) {
       req(input$update_visualization > 0)
       req(input$visualization_state == "visible")
       req(input$display_type == "plot")
-      
-      # Show loading overlay immediately via JavaScript
-      session$sendCustomMessage("javascript", 
-        sprintf("if(window.showLoadingOverlay) { window.showLoadingOverlay('%s'); }", id))
 
-      # Set loading status
+      # Send message to JS to start the loading cycle/show overlay
+      session$sendCustomMessage("startPlotUpdate", list(
+        cycle = format(Sys.time(), "%H:%M:%S.%OS3")
+      ))
+
+      # REMOVED: Old way of showing overlay via direct JS call
+      # session$sendCustomMessage("javascript",
+      #   sprintf("if(window.showLoadingOverlay) { window.showLoadingOverlay('%s'); }", id))
+
+      # Set loading status (R side)
       vis_manager$set_plot_status("loading")
 
       new_settings <- isolate({

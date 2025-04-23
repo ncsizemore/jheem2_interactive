@@ -1,15 +1,15 @@
 // simulation_progress.js - Handles simulation progress display in UI
 
 // Wait for document ready
-$(document).ready(function() {
+$(document).ready(function () {
   const initTimestamp = new Date().toISOString();
   console.log(`[${initTimestamp}] Simulation progress module initialized`);
-  
+
   // Register custom message handlers for Shiny
-  Shiny.addCustomMessageHandler("simulation_progress_start", function(data) {
+  Shiny.addCustomMessageHandler("simulation_progress_start", function (data) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Simulation progress START received:`, data);
-    
+
     // Call the createOrUpdateProgressItem function
     try {
       console.log(`[${timestamp}] Ensuring container exists before creating progress item`);
@@ -20,18 +20,18 @@ $(document).ready(function() {
       console.error(`[${timestamp}] ERROR in simulation_progress_start handler:`, e);
     }
   });
-  
+
   // Register custom message handler for simulation progress updates
-  Shiny.addCustomMessageHandler("simulation_progress_update", function(data) {
+  Shiny.addCustomMessageHandler("simulation_progress_update", function (data) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Simulation progress UPDATE received:`, data);
-    
+
     try {
       // Ensure container exists
       ensureContainer();
-      
+
       // Process based on action type
-      switch(data.action) {
+      switch (data.action) {
         case "start":
           console.log(`[${timestamp}] Processing START action`);
           createOrUpdateProgressItem(data);
@@ -41,8 +41,15 @@ $(document).ready(function() {
           updateProgressItem(data);
           break;
         case "complete":
-          console.log(`[${timestamp}] Processing COMPLETE action`);
-          completeProgressItem(data);
+          console.log(`[${timestamp}] Processing COMPLETE action for ID: ${data.id}`);
+          // Since only custom simulations send completion messages, trigger overlay.
+          console.log(`[${timestamp}] Simulation complete. Triggering plot loading overlay.`);
+          if (window.showLoadingOverlay) {
+            window.showLoadingOverlay('custom'); // Assuming 'custom' context is appropriate
+          } else {
+            console.error(`[${timestamp}] window.showLoadingOverlay function not found!`);
+          }
+          completeProgressItem(data); // Still update the progress item UI
           break;
         case "error":
           console.log(`[${timestamp}] Processing ERROR action`);
@@ -55,12 +62,12 @@ $(document).ready(function() {
       console.error(`[${timestamp}] ERROR in simulation_progress_update handler:`, e);
     }
   });
-  
+
   // Register message handler for completion
-  Shiny.addCustomMessageHandler("simulation_progress_complete", function(data) {
+  Shiny.addCustomMessageHandler("simulation_progress_complete", function (data) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Simulation progress COMPLETE received:`, data);
-    
+
     try {
       ensureContainer();
       completeProgressItem(data);
@@ -68,12 +75,12 @@ $(document).ready(function() {
       console.error(`[${timestamp}] ERROR in simulation_progress_complete handler:`, e);
     }
   });
-  
+
   // Register message handler for errors
-  Shiny.addCustomMessageHandler("simulation_progress_error", function(data) {
+  Shiny.addCustomMessageHandler("simulation_progress_error", function (data) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Simulation progress ERROR received:`, data);
-    
+
     try {
       ensureContainer();
       errorProgressItem(data);
@@ -81,7 +88,7 @@ $(document).ready(function() {
       console.error(`[${timestamp}] ERROR in simulation_progress_error handler:`, e);
     }
   });
-  
+
   // Ensure container exists
   function ensureContainer() {
     const container = $('#simulation-progress-container');
@@ -89,7 +96,7 @@ $(document).ready(function() {
       $('body').append('<div id="simulation-progress-container" class="simulation-progress-container"></div>');
     }
   }
-  
+
   // Create or update a progress item
   function createOrUpdateProgressItem(data) {
     // Make sure we have a valid ID
@@ -97,16 +104,16 @@ $(document).ready(function() {
       console.error("ERROR: Missing ID in simulation data");
       return;
     }
-    
+
     // Ensure ID is string format
     const id = String(data.id);
-    
+
     // Check if item exists
     const progressItem = $(`#simulation-${id}`);
-    
+
     // Description default if not provided
     const description = data.description || "Running Intervention";
-    
+
     if (progressItem.length === 0) {
       // Create new progress item
       const newItem = `
@@ -119,14 +126,14 @@ $(document).ready(function() {
           </div>
         </div>
       `;
-      
+
       // Append the new item
       $('#simulation-progress-container').append(newItem);
-      
+
       // Add click handler for close button
-      $(`#simulation-${id} .progress-close`).on('click', function() {
+      $(`#simulation-${id} .progress-close`).on('click', function () {
         $(`#simulation-${id}`).addClass('fadeout');
-        setTimeout(function() {
+        setTimeout(function () {
           $(`#simulation-${id}`).remove();
         }, 300);
       });
@@ -137,25 +144,25 @@ $(document).ready(function() {
       progressItem.find('.simulation-progress-bar-inner').css('width', '5%');
     }
   }
-  
+
   // Update progress on an existing item
   function updateProgressItem(data) {
     // Ensure ID is string format
     const id = String(data.id);
-    
+
     // Check if element exists first
     const progressItem = $(`#simulation-${id}`);
-    
+
     // If element doesn't exist, create it first (might have missed start message)
     if (progressItem.length === 0) {
       createOrUpdateProgressItem(data);
-      
+
       // Get the newly created element
       const newItem = $(`#simulation-${id}`);
       if (newItem.length > 0) {
         // Update progress bar
         newItem.find('.simulation-progress-bar-inner').css('width', `${data.percent}%`);
-        
+
         // Display current/total if available
         if (data.current && data.total) {
           newItem.find('.simulation-progress-text').text(`Running simulation: ${data.current} of ${data.total} (${data.percent}%)`);
@@ -165,10 +172,10 @@ $(document).ready(function() {
       }
       return;
     }
-    
+
     // Update progress bar
     progressItem.find('.simulation-progress-bar-inner').css('width', `${data.percent}%`);
-    
+
     // Display current/total if available
     if (data.current && data.total) {
       progressItem.find('.simulation-progress-text').text(`Running simulation: ${data.current} of ${data.total} (${data.percent}%)`);
@@ -176,20 +183,20 @@ $(document).ready(function() {
       progressItem.find('.simulation-progress-text').text(`Running: ${data.percent}%`);
     }
   }
-  
+
   // Mark item as complete
   function completeProgressItem(data) {
     // Ensure ID is string format
     const id = String(data.id);
-    
+
     // Check if element exists first
     const progressItem = $(`#simulation-${id}`);
-    
+
     // If element doesn't exist, create it first (might have missed start message)
     if (progressItem.length === 0) {
       createOrUpdateProgressItem(data);
     }
-    
+
     // Get the element again after ensuring it exists
     const completingItem = $(`#simulation-${id}`);
     if (completingItem.length > 0) {
@@ -197,41 +204,41 @@ $(document).ready(function() {
       completingItem.addClass('complete');
       completingItem.find('.simulation-progress-text').text('Simulation complete');
       completingItem.find('.simulation-progress-bar-inner').css('width', '100%');
-      
+
       // Auto-remove after 5 seconds
-      setTimeout(function() {
+      setTimeout(function () {
         completingItem.addClass('fadeout');
-        setTimeout(function() {
+        setTimeout(function () {
           completingItem.remove();
         }, 300);
       }, 5000);
     }
   }
-  
+
   // Mark item as error
   function errorProgressItem(data) {
     // Ensure ID is string format
     const id = String(data.id);
-    
+
     // Check if element exists first
     const progressItem = $(`#simulation-${id}`);
-    
+
     // If element doesn't exist, create it first (might have missed start message)
     if (progressItem.length === 0) {
       createOrUpdateProgressItem(data);
     }
-    
+
     // Get the element again after ensuring it exists
     const errorItem = $(`#simulation-${id}`);
     if (errorItem.length > 0) {
       // Mark as error
       errorItem.addClass('error');
       errorItem.find('.simulation-progress-text').text(`Error: ${data.message}`);
-      
+
       // Auto-remove after 10 seconds
-      setTimeout(function() {
+      setTimeout(function () {
         errorItem.addClass('fadeout');
-        setTimeout(function() {
+        setTimeout(function () {
           errorItem.remove();
         }, 300);
       }, 10000);
