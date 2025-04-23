@@ -452,10 +452,10 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                 annotations = list(
                     list(
                         text = facet_name,
-                        x = 0.5,         # Center horizontally  
-                        y = 1.05,        # Slightly above the plot
-                        xref = "paper",  # Use paper coordinates
-                        yref = "paper",  # Use paper coordinates
+                        x = 0.5, # Center horizontally
+                        y = 1.05, # Slightly above the plot
+                        xref = "paper", # Use paper coordinates
+                        yref = "paper", # Use paper coordinates
                         showarrow = FALSE,
                         font = list(size = 12, weight = "bold"),
                         xanchor = "center",
@@ -468,7 +468,7 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                 yaxis = list(
                     title = list(text = y_axis_title, standoff = 10)
                 ),
-                margin = list(t = 30, b = 10, l = 50, r = 10)  # Add margin for title space
+                margin = list(t = 30, b = 10, l = 50, r = 10) # Add margin for title space
             )
 
         # Apply global year range if available
@@ -658,10 +658,11 @@ execute.plotly.plot_local <- function(prepared.plot.data,
             nrows = plot.rows,
             shareX = TRUE,
             shareY = FALSE,
-            titleX = FALSE,  # Keep FALSE to avoid title conflicts with annotations
+            titleX = FALSE, # Keep FALSE to avoid title conflicts with annotations
             titleY = TRUE,
-            margin = 0.08    # Increased margin between subplots for better title spacing
+            margin = 0.08 # Increased margin between subplots for better title spacing
         ) %>% layout(
+            title = list(text = plot.title), # Add main plot title
             showlegend = !hide.legend,
             legend = list(
                 orientation = "h",
@@ -671,14 +672,15 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                 traceorder = "normal",
                 itemsizing = "constant"
             ),
-            margin = list(t = 70, b = 80, l = 50, r = 20)  # Increased top margin for facet titles
+            margin = list(t = 70, b = 80, l = 50, r = 20) # Increased top margin for facet titles
         )
-        
+
         # Individual plots already have their own annotations
     } else if (length(plot_list) == 1) {
         # If only one plot, just add the main title
         # The plot created by create_facet_plot already has the title as annotation
         final_plot <- plot_list[[1]] %>% layout(
+            title = list(text = plot.title), # Add main plot title
             showlegend = !hide.legend,
             legend = list(
                 orientation = "h",
