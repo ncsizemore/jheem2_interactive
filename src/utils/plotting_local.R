@@ -1,6 +1,8 @@
 # We need access to the prepare.plot function from PLOTS_simplot.R
 
 library(plotly)
+# Assuming reshape2 is available, otherwise add library(reshape2)
+# library(reshape2) # Add if not loaded elsewhere
 
 # source("R/PLOTS_simplot.R")
 
@@ -36,6 +38,8 @@ plot.simulations_local <- function(...,
 
     simset <- list(...)[[1]]
 
+    # plot.data.validation might need to become local too if it's not accessible
+    # For now, assume it's available globally or sourced
     plot.data <- plot.data.validation(
         list(...),
         match.call(expand.dots = F)$...,
@@ -50,6 +54,8 @@ plot.simulations_local <- function(...,
     simset.list <- plot.data$simset.list
     outcomes <- plot.data$outcomes # Make sure outcomes is updated if validation modifies it
 
+    # Call the original prepare.plot function (ensure it's accessible)
+    # Make sure append.url is NOT set to T
     prepared.plot.data <- prepare.plot(simset.list,
         outcomes = outcomes,
         locations = NULL,
@@ -62,7 +68,10 @@ plot.simulations_local <- function(...,
         summary.type = summary.type,
         plot.year.lag.ratio = plot.year.lag.ratio,
         title = title,
+        # append.url = F, # Explicitly false or omitted
         data.manager = data.manager,
+        style.manager = style.manager, # Pass style manager
+        # show.data.pull.error = F, # Pass if needed
         debug = F
     )
 
@@ -80,6 +89,12 @@ plot.simulations_local <- function(...,
     )
 }
 
+# Removed prepare.plot_local function definition
+
+#--------------------------------------#
+#-- execute.plotly.plot_local function --#
+#--------------------------------------#
+
 execute.plotly.plot_local <- function(prepared.plot.data,
                                       outcomes = NULL,
                                       split.by = NULL,
@@ -96,7 +111,8 @@ execute.plotly.plot_local <- function(prepared.plot.data,
     df.truth <- prepared.plot.data$df.truth
     y.label <- prepared.plot.data$details$y.label
     plot.title <- prepared.plot.data$details$plot.title
-    outcome.metadata <- prepared.plot.data$details$outcome.metadata
+    outcome.metadata <- prepared.plot.data$details$outcome.metadata.list # Use list from details
+    sim.labels.list <- prepared.plot.data$details$sim.labels.list # Extract sim labels
 
     #-- PREPARE PLOT COLORS, SHADES, SHAPES, ETC. --#
     if (!is.null(df.sim)) {
@@ -118,7 +134,12 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         if (!"stratum" %in% names(df.truth)) df.truth[["stratum"]] <- "" # Ensure stratum exists for logic below
 
         # make some other columns
-        df.truth["location.type"] <- locations::get.location.type(df.truth$location)
+        # Assuming locations::get.location.type is available
+        if (requireNamespace("locations", quietly = TRUE) && "location" %in% names(df.truth)) {
+            df.truth["location.type"] <- locations::get.location.type(df.truth$location)
+        } else {
+            df.truth["location.type"] <- NA # Or handle missing dependency/column
+        }
         df.truth["shape.data.by"] <- df.truth[style.manager$shape.data.by]
         df.truth["color.data.by"] <- df.truth[style.manager$color.data.by]
         df.truth["shade.data.by"] <- df.truth[style.manager$shade.data.by]
@@ -127,7 +148,14 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         } else if (style.manager$shade.data.by == "stratum" && !is.null(df.truth$stratum) && all(df.truth$stratum == "")) {
             df.truth["color.and.shade.data.by"] <- df.truth["color.data.by"]
         } else {
-            df.truth["color.and.shade.data.by"] <- do.call(paste, c(df.truth["shade.data.by"], df.truth["color.data.by"], list(sep = "__")))
+            # Ensure columns exist before pasting
+            shade_col <- df.truth[[style.manager$shade.data.by]]
+            color_col <- df.truth[[style.manager$color.data.by]]
+            if (!is.null(shade_col) && !is.null(color_col)) {
+                df.truth["color.and.shade.data.by"] <- paste(shade_col, color_col, sep = "__")
+            } else {
+                df.truth["color.and.shade.data.by"] <- NA # Handle missing columns
+            }
         }
     }
 
@@ -137,6 +165,11 @@ execute.plotly.plot_local <- function(prepared.plot.data,
     if (!is.null(df.sim)) {
         # Ensure groupid exists
         if (!"groupid" %in% names(df.sim)) {
+            # Ensure required columns for interaction exist
+            req_cols <- c("outcome", "simset", "sim", "stratum")
+            missing_req <- setdiff(req_cols, names(df.sim))
+            if (length(missing_req) > 0) stop(paste("Missing columns required for groupid:", paste(missing_req, collapse = ", ")))
+
             df.sim$groupid <- interaction(df.sim$outcome, df.sim$simset, df.sim$sim, df.sim$stratum %||% "", sep = "_")
         }
 
@@ -329,11 +362,13 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         missing_cols <- setdiff(cols, names(df))
         if (length(missing_cols) > 0) {
             # Check if missing cols are generated facet.byX cols
+            # prepare.plot_local renames facet.by columns to facet.by1, facet.by2 etc.
+            # We need to use those generated names if they exist
             generated_facet_cols <- grep("^facet\\.by[0-9]+$", names(df), value = TRUE)
             original_facet_by_cols <- setdiff(cols, "outcome") # Get the original facet.by names requested
 
+            # Check if the number of generated cols matches the number requested
             if (length(original_facet_by_cols) > 0 && length(generated_facet_cols) == length(original_facet_by_cols)) {
-                # If prepare.plot likely renamed facet.by to facet.byX, use those
                 cols_to_interact <- c("outcome", generated_facet_cols)
                 # Final check if these generated columns actually exist
                 missing_generated <- setdiff(cols_to_interact, names(df))
@@ -341,14 +376,18 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                     stop(paste("Missing required generated faceting columns:", paste(missing_generated, collapse = ", ")))
                 }
             } else {
-                # If it's not the generated columns case, it's a real error
+                # If it's not the generated columns case, or numbers don't match, it's an error
                 stop(paste("Missing required faceting columns:", paste(missing_cols, collapse = ", ")))
             }
         } else {
-            # All original columns exist
+            # All original columns exist (e.g., if facet.by was NULL or only 'outcome')
             cols_to_interact <- cols
         }
         # Create interaction term using the determined columns
+        # Ensure columns exist before interaction
+        if (!all(cols_to_interact %in% names(df))) {
+            stop(paste("Interaction columns not found in data frame:", paste(setdiff(cols_to_interact, names(df)), collapse = ", ")))
+        }
         df[[new_col_name]] <- interaction(df[, cols_to_interact, drop = FALSE], sep = " | ")
         return(df)
     }
@@ -382,6 +421,7 @@ execute.plotly.plot_local <- function(prepared.plot.data,
     }
 
     # Ensure outcome.metadata names are accessible and match outcomes vector
+    # Use the outcome.metadata list directly from prepared.plot.data$details
     if (is.null(names(outcome.metadata)) || !all(outcomes %in% names(outcome.metadata))) {
         # Attempt to fix names if possible, otherwise warn
         if (length(outcome.metadata) == length(outcomes)) {
@@ -445,13 +485,56 @@ execute.plotly.plot_local <- function(prepared.plot.data,
 
     # Helper function for creating a single facet plot with all traces
     create_facet_plot <- function(facet_name, facet_data, truth_data, y_axis_title, hide.legend = FALSE) {
+        # --- Create Nice Facet Title ---
+        facet_components <- strsplit(as.character(facet_name), " | ", fixed = TRUE)[[1]]
+        nice_facet_components <- character(length(facet_components))
+
+        # First component is always outcome
+        outcome_component <- facet_components[1]
+        # Check if outcome component exists before accessing
+        if (outcome_component %in% names(outcome.metadata)) {
+            nice_facet_components[1] <- outcome.metadata[[outcome_component]]$display.name %||% outcome_component
+        } else {
+            # Fallback if outcome not in metadata (shouldn't happen ideally)
+            nice_facet_components[1] <- outcome_component
+        }
+
+        # Subsequent components are facet dimensions
+        if (length(facet_components) > 1) {
+            # Use labels from the first simset if available (list or named char vector), otherwise empty list/vector
+            labels_to_use <- if (!is.null(sim.labels.list) && length(sim.labels.list) > 0 &&
+                (is.list(sim.labels.list[[1]]) || (is.character(sim.labels.list[[1]]) && !is.null(names(sim.labels.list[[1]]))))) {
+                sim.labels.list[[1]]
+            } else {
+                character() # Use empty named character vector as default
+            }
+
+            label_names <- names(labels_to_use) # Get names once
+
+            for (i in 2:length(facet_components)) {
+                facet_value <- facet_components[i]
+                # Check if facet_value is valid before lookup
+                if (!is.na(facet_value) && nzchar(facet_value)) {
+                    # Use match for safer lookup by name
+                    matched_index <- match(facet_value, label_names)
+                    lookup_result <- if (!is.na(matched_index)) labels_to_use[matched_index] else NULL
+                    nice_facet_components[i] <- lookup_result %||% facet_value
+                } else {
+                    # Handle invalid facet_value (NA or empty string)
+                    nice_facet_components[i] <- facet_value # Keep original invalid value for now
+                }
+            }
+        }
+        nice_facet_title <- paste(nice_facet_components, collapse = " | ")
+        # --- End Nice Facet Title ---
+
         # Initialize plot with annotations instead of title
         p <- plot_ly() %>%
             layout(
                 # Use annotations for the title
                 annotations = list(
                     list(
-                        text = facet_name,
+                        text = nice_facet_title, # Use the generated nice title
                         x = 0.5, # Center horizontally
                         y = 1.05, # Slightly above the plot
                         xref = "paper", # Use paper coordinates
@@ -598,11 +681,9 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                         text = paste(
                             "Year:", point_data$year,
                             "<br>Value:", round(point_data$value, 2),
-                            if ("data.source" %in% names(point_data)) {
-                                paste("<br>Source:", point_data$data.source)
-                            } else {
-                                ""
-                            }
+                            if ("data.source" %in% names(point_data)) paste("<br>Source:", point_data$data.source) else "",
+                            # Add URL if available and not empty using ifelse for row-wise check
+                            ifelse("url" %in% names(point_data) & !is.na(point_data$url) & nzchar(point_data$url), paste("<br>URL:", point_data$url), "")
                         )
                     )
                 }
