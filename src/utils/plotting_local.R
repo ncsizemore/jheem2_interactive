@@ -1,6 +1,7 @@
 # We need access to the prepare.plot function from PLOTS_simplot.R
 
 library(plotly)
+library(yaml) # Added for reading config
 # Assuming reshape2 is available, otherwise add library(reshape2)
 # library(reshape2) # Add if not loaded elsewhere
 
@@ -33,8 +34,21 @@ plot.simulations_local <- function(...,
                                    data.manager = get.default.data.manager(),
                                    # style.manager = get.default.style.manager('plotly'),
                                    style.manager = get.default.style.manager(),
-                                   hide.legend = FALSE) {
+                                   hide.legend = FALSE) { # Removed config_path parameter
     plot.which <- "sim.and.data"
+
+    # Load configuration using centralized function
+    # Assuming get_component_config is available (sourced elsewhere, e.g., global.R)
+    viz_config <- tryCatch(get_component_config("visualization"), error = function(e) {
+        warning(paste("Error loading visualization config:", e$message))
+        NULL
+    })
+    config_labels <- if (!is.null(viz_config) && !is.null(viz_config$facet_labels)) {
+        viz_config$facet_labels
+    } else {
+        warning("facet_labels not found in visualization config or config failed to load.")
+        list() # Default to empty list
+    }
 
     simset <- list(...)[[1]]
 
@@ -85,7 +99,8 @@ plot.simulations_local <- function(...,
         n.facet.rows = n.facet.rows,
         style.manager = style.manager,
         debug = debug,
-        hide.legend = hide.legend
+        hide.legend = hide.legend,
+        config_labels = config_labels # Pass loaded labels
     )
 }
 
@@ -105,7 +120,8 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                                       n.facet.rows = NULL,
                                       style.manager = get.default.style.manager(),
                                       debug = F,
-                                      hide.legend = FALSE) {
+                                      hide.legend = FALSE,
+                                      config_labels = list()) { # Added config_labels parameter
     # Extract data from prepared.plot.data
     df.sim <- prepared.plot.data$df.sim
     df.truth <- prepared.plot.data$df.truth
@@ -484,10 +500,11 @@ execute.plotly.plot_local <- function(prepared.plot.data,
     }
 
     # Helper function for creating a single facet plot with all traces
-    create_facet_plot <- function(facet_name, facet_data, truth_data, y_axis_title, hide.legend = FALSE) {
+    create_facet_plot <- function(facet_name, facet_data, truth_data, y_axis_title, hide.legend = FALSE, config_labels = list()) { # Pass config_labels
         # --- Create Nice Facet Title ---
         facet_components <- strsplit(as.character(facet_name), " | ", fixed = TRUE)[[1]]
         nice_facet_components <- character(length(facet_components))
+        facet_dimension_names <- if (!is.null(facet.by)) facet.by else character(0) # Get original facet.by names
 
         # First component is always outcome
         outcome_component <- facet_components[1]
@@ -499,32 +516,39 @@ execute.plotly.plot_local <- function(prepared.plot.data,
             nice_facet_components[1] <- outcome_component
         }
 
-        # Subsequent components are facet dimensions
-        if (length(facet_components) > 1) {
-            # Use labels from the first simset if available (list or named char vector), otherwise empty list/vector
-            labels_to_use <- if (!is.null(sim.labels.list) && length(sim.labels.list) > 0 &&
-                (is.list(sim.labels.list[[1]]) || (is.character(sim.labels.list[[1]]) && !is.null(names(sim.labels.list[[1]]))))) {
-                sim.labels.list[[1]]
-            } else {
-                character() # Use empty named character vector as default
-            }
-
-            label_names <- names(labels_to_use) # Get names once
-
+        # Subsequent components are facet dimensions (use config_labels)
+        if (length(facet_components) > 1 && length(facet_dimension_names) == (length(facet_components) - 1)) {
             for (i in 2:length(facet_components)) {
+                dimension_index <- i - 1 # Index into facet_dimension_names
+                dimension_name <- facet_dimension_names[dimension_index]
                 facet_value <- facet_components[i]
-                # Check if facet_value is valid before lookup
-                if (!is.na(facet_value) && nzchar(facet_value)) {
-                    # Use match for safer lookup by name
-                    matched_index <- match(facet_value, label_names)
-                    lookup_result <- if (!is.na(matched_index)) labels_to_use[matched_index] else NULL
-                    nice_facet_components[i] <- lookup_result %||% facet_value
-                } else {
-                    # Handle invalid facet_value (NA or empty string)
-                    nice_facet_components[i] <- facet_value # Keep original invalid value for now
+
+                # Check if dimension exists in config_labels and value exists within that dimension
+                lookup_result <- NULL
+                if (dimension_name %in% names(config_labels) && facet_value %in% names(config_labels[[dimension_name]])) {
+                    lookup_result <- config_labels[[dimension_name]][[facet_value]]
                 }
+
+                # Fallback to sim.labels.list if not found in config (optional, but keeps outcome label logic)
+                if (is.null(lookup_result) && !is.null(sim.labels.list) && length(sim.labels.list) > 0) {
+                    labels_from_sim <- sim.labels.list[[1]] # Assuming first simset's labels
+                    if (is.character(labels_from_sim) && !is.null(names(labels_from_sim))) {
+                        matched_index <- match(facet_value, names(labels_from_sim))
+                        if (!is.na(matched_index)) {
+                            lookup_result <- labels_from_sim[matched_index]
+                        }
+                    }
+                }
+
+                # Use lookup result or fallback to original value
+                nice_facet_components[i] <- lookup_result %||% facet_value
             }
+        } else if (length(facet_components) > 1) {
+            # Fallback if dimension names don't align (shouldn't happen ideally)
+            warning("Mismatch between facet components and facet.by names. Using raw values.")
+            nice_facet_components[2:length(facet_components)] <- facet_components[2:length(facet_components)]
         }
+
         nice_facet_title <- paste(nice_facet_components, collapse = " | ")
         # --- End Nice Facet Title ---
 
@@ -719,8 +743,8 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         # Get y-axis title for this facet
         y_axis_title <- y_axis_labels[facet_name]
 
-        # Create the facet plot
-        plot_list[[facet_name]] <- create_facet_plot(facet_name, sim_data, truth_data, y_axis_title, hide.legend)
+        # Create the facet plot, passing config_labels
+        plot_list[[facet_name]] <- create_facet_plot(facet_name, sim_data, truth_data, y_axis_title, hide.legend, config_labels)
     }
 
     # Calculate layout grid and create final plot
