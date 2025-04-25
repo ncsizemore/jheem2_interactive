@@ -6,6 +6,10 @@
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   min-height: calc(100vh - 50px);
+  height: auto;
+  /* Allow growth */
+  overflow: visible;
+  /* Allow content overflow */
   background: var(--color-white);
 }
 

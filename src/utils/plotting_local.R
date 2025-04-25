@@ -11,6 +11,52 @@ library(yaml) # Added for reading config
 
 # source("R/DATA_MANAGER_data_manager.R")
 
+# Helper function to wrap long axis labels
+wrap_axis_label <- function(label, width = 25) {
+    if (is.null(label) || is.na(label) || nchar(label) <= width) {
+        return(label) # No need to wrap short labels
+    }
+
+    # If the label contains units in parentheses, handle them specially
+    if (grepl("\\(.*\\)$", label)) {
+        # Split into main text and units
+        main_text <- gsub("\\s*\\(.*\\)$", "", label)
+        units <- gsub("^.*\\((.*)\\)$", "(\\1)", label)
+
+        # Put units on next line
+        return(paste0(main_text, "<br>", units))
+    }
+
+    # For labels without parenthetical units, split at reasonable points
+    words <- strsplit(label, " ")[[1]]
+    if (length(words) <= 1) {
+        # No spaces to split on, so wrap in the middle
+        mid_point <- ceiling(nchar(label) / 2)
+        return(paste0(substr(label, 1, mid_point), "<br>", substr(label, mid_point + 1, nchar(label))))
+    }
+
+    # Try to split at a space
+    result <- ""
+    current_line <- words[1]
+
+    for (i in 2:length(words)) {
+        word <- words[i]
+        if (nchar(current_line) + nchar(word) + 1 <= width) {
+            current_line <- paste(current_line, word)
+        } else {
+            result <- paste0(result, current_line, "<br>")
+            current_line <- word
+        }
+    }
+
+    if (nchar(current_line) > 0) {
+        result <- paste0(result, current_line)
+    }
+
+    return(result)
+}
+
+
 #' @param ... One or more of either (1) jheem.simulation.set objects or (2) lists containing only jheem.simulation or jheem.simset objects
 #' @param outcomes A character vector of which simulation outcomes to plot
 #' @param split.by A character vector of dimensions for which to make different lines
@@ -549,7 +595,9 @@ execute.plotly.plot_local <- function(prepared.plot.data,
             nice_facet_components[2:length(facet_components)] <- facet_components[2:length(facet_components)]
         }
 
-        nice_facet_title <- paste(nice_facet_components, collapse = " | ")
+        nice_facet_title_raw <- paste(nice_facet_components, collapse = " | ")
+        # Wrap the title using the existing helper function (adjust width if needed)
+        nice_facet_title_wrapped <- wrap_axis_label(nice_facet_title_raw, width = 40) # Increased width slightly for titles
         # --- End Nice Facet Title ---
 
         # Initialize plot with annotations instead of title
@@ -558,7 +606,7 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                 # Use annotations for the title
                 annotations = list(
                     list(
-                        text = nice_facet_title, # Use the generated nice title
+                        text = nice_facet_title_wrapped, # Use the wrapped title
                         x = 0.5, # Center horizontally
                         y = 1.05, # Slightly above the plot
                         xref = "paper", # Use paper coordinates
@@ -573,9 +621,14 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                     title = list(text = "Years", standoff = 5)
                 ),
                 yaxis = list(
-                    title = list(text = y_axis_title, standoff = 10)
+                    title = list(
+                        text = wrap_axis_label(y_axis_title, width = 25), # Apply wrapping
+                        standoff = 10
+                    ),
+                    automargin = TRUE # Allow plotly to adjust margin for labels
                 ),
-                margin = list(t = 30, b = 10, l = 50, r = 10) # Add margin for title space
+                # Increased top margin for potentially wrapped facet titles
+                margin = list(t = 50, b = 10, l = 70, r = 10)
             )
 
         # Apply global year range if available
@@ -717,6 +770,16 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         return(p)
     }
 
+    # --- Load Facet Configuration ---
+    vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
+    facet_config <- vis_config$faceted_plots %||% list()
+
+    # Set defaults if not configured
+    min_facet_width <- facet_config$min_facet_width %||% 350 # Not used in height calc, but good practice
+    min_facet_height <- facet_config$min_facet_height %||% 250
+    max_columns <- facet_config$max_columns %||% 2
+    # --- End Facet Configuration ---
+
     # Create a list to hold individual facet plots
     plot_list <- list()
 
@@ -749,38 +812,44 @@ execute.plotly.plot_local <- function(prepared.plot.data,
 
     # Calculate layout grid and create final plot
     if (length(plot_list) > 1) {
-        # Calculate grid dimensions
-        if (!is.null(n.facet.rows) && is.numeric(n.facet.rows) && n.facet.rows > 0) {
-            plot.rows <- ceiling(n.facet.rows)
-        } else {
-            plot.rows <- ceiling(sqrt(length(plot_list)))
-        }
-        plot.cols <- ceiling(length(plot_list) / plot.rows)
+        # Use max_columns from config
+        plot.cols <- min(max_columns, length(plot_list))
+        # Calculate rows based on column count (Corrected calculation)
+        plot.rows <- ceiling(length(plot_list) / plot.cols)
 
-        # Combine plots with subplot - changed titleX to FALSE to avoid conflicts
+        # Simple height calculation - fixed height per facet row
+        # Add some buffer for title, legend, margins
+        subplot_height <- (plot.rows * min_facet_height) + 150 # Added 150px buffer
+
+        # Use fixed margin between subplots - Increased base value significantly (0.15 -> 0.3)
+        subplot_margin <- 0.3 / plot.rows # Adjust margin based on rows
+
+        # Combine plots with subplot
         final_plot <- subplot(
             plotlist = plot_list,
             nrows = plot.rows,
             shareX = TRUE,
-            shareY = FALSE,
-            titleX = FALSE, # Keep FALSE to avoid title conflicts with annotations
-            titleY = TRUE,
-            margin = 0.08 # Increased margin between subplots for better title spacing
+            shareY = FALSE, # Keep Y axes independent for different outcomes/scales
+            titleX = FALSE, # Individual plots have annotations
+            titleY = TRUE, # Show Y titles on left-most plots
+            margin = subplot_margin
         ) %>% layout(
-            title = list(text = plot.title), # Add main plot title
+            autosize = TRUE, # Tell plotly to try and fit container
+            title = list(text = plot.title),
+            height = subplot_height, # Set dynamic height
             showlegend = !hide.legend,
             legend = list(
                 orientation = "h",
-                y = -0.1,
+                y = 1.05, # Position above the plot
                 x = 0.5,
                 xanchor = "center",
+                yanchor = "bottom",
                 traceorder = "normal",
                 itemsizing = "constant"
             ),
-            margin = list(t = 70, b = 80, l = 50, r = 20) # Increased top margin for facet titles
+            # Adjust margins: Increased top for legend/title, further increased left margin
+            margin = list(t = 100, b = 50, l = 100, r = 20)
         )
-
-        # Individual plots already have their own annotations
     } else if (length(plot_list) == 1) {
         # If only one plot, just add the main title
         # The plot created by create_facet_plot already has the title as annotation

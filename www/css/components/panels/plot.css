@@ -1,16 +1,39 @@
 /* components/panels/plot.css */
 
 /* Plot panel specific styles */
+/* Allow main plot panel to expand vertically */
 .main-panel-plot:has(.shiny-panel-conditional:not([style*="display: none"])) {
     display: flex !important;
+    min-height: 600px;
+    height: auto !important;
+    /* Allow auto-sizing to larger heights */
+    flex-direction: column;
+    overflow: visible;
+    /* Crucial - prevents content from being clipped */
 }
 
 .main-panel-plot .panel-content {
     padding: var(--spacing-md);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    /* Allow auto-sizing */
+    min-height: 500px;
+    overflow: visible;
+    /* Critical - allows content to expand beyond container */
+    max-height: none !important;
+    /* Remove any max-height limitations */
 }
 
-.plot_holder {
-    position: relative;
-    width: 100%;
-    height: 100%;
+/* Ensure the plotly container can grow to its natural height */
+.plotly.html-widget {
+    height: auto !important;
+    /* Allow plot to determine its own height */
+    overflow: visible;
+}
+
+/* Ensure plotly legends are properly positioned */
+.js-plotly-plot .plotly .legend {
+    overflow: visible !important;
 }

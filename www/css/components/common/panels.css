@@ -6,7 +6,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: none;
   transition: all var(--transition-speed) ease;
-  overflow: hidden; /* Ensures content doesn't overflow rounded corners */
+  /* overflow: hidden; <-- REMOVED to allow content to determine height */
 }
 
 .panel-section:hover {
@@ -39,12 +39,18 @@
 .panel-content {
   padding: var(--spacing-lg);
   background: var(--color-white);
-  height: 100%;
-  overflow-y: auto;
+  min-height: 200px;
+  /* Minimum height */
+  height: auto !important;
+  /* Override any fixed heights */
+  overflow: visible;
+  /* Don't clip content */
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   border-bottom: 1px solid var(--theme-panel-border);
   border-left: 1px solid var(--theme-panel-border);
   border-right: 1px solid var(--theme-panel-border);
+  max-height: none !important;
+  /* Remove any max-height limitations */
 }
 
 .panel-content:focus-within {

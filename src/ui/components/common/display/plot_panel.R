@@ -165,8 +165,10 @@ plot_panel_server <- function(id, settings) {
       backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
 
       if (backend == "plotly") {
-        plotlyOutput(ns("mainPlotly"), height = "600px", width = "100%")
+        # Removed fixed height to allow dynamic sizing from plotly object
+        plotlyOutput(ns("mainPlotly"), width = "100%")
       } else {
+        # Keep ggplot height for now, assuming it behaves differently
         plotOutput(ns("mainPlot"), height = "600px", width = "100%")
       }
     })
