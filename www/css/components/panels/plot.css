@@ -37,3 +37,15 @@
 .js-plotly-plot .plotly .legend {
     overflow: visible !important;
 }
+
+/* GGPlotly specific styles */
+#ggplotly-container {
+    height: 700px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+#ggplotly-container .plotly.html-widget {
+    height: auto !important;
+    overflow: visible !important;
+}

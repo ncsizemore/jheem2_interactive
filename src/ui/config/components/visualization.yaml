@@ -1,7 +1,7 @@
 # src/ui/config/visualization.yaml - Visualization settings
 
 # NEW: Choose the plotting library
-plotting_backend: "plotly" # Options: "ggplot", "plotly" - Using improved plotly implementation
+plotting_backend: "ggplotly" # Options: "ggplot", "plotly", "ggplotly" - Using ggplot2 + plotly for consistent facet layouts
 
 # NEW: Specify the path to the Rdata file containing the data manager object
 # If null or file not found, will use get.default.data.manager()

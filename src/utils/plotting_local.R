@@ -603,6 +603,7 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         # Initialize plot with annotations instead of title
         p <- plot_ly() %>%
             layout(
+
                 # Use annotations for the title
                 annotations = list(
                     list(
@@ -625,7 +626,8 @@ execute.plotly.plot_local <- function(prepared.plot.data,
                         text = wrap_axis_label(y_axis_title, width = 25), # Apply wrapping
                         standoff = 10
                     ),
-                    automargin = TRUE # Allow plotly to adjust margin for labels
+                    automargin = TRUE, # Allow plotly to adjust margin for labels
+                    fixedrange = FALSE # Allow y-axis scaling
                 ),
                 # Increased top margin for potentially wrapped facet titles
                 margin = list(t = 50, b = 10, l = 70, r = 10)
@@ -821,8 +823,8 @@ execute.plotly.plot_local <- function(prepared.plot.data,
         # Add some buffer for title, legend, margins
         subplot_height <- (plot.rows * min_facet_height) + 150 # Added 150px buffer
 
-        # Use fixed margin between subplots - Increased base value significantly (0.15 -> 0.3)
-        subplot_margin <- 0.3 / plot.rows # Adjust margin based on rows
+        # Use vector margins for better control of spacing between subplots
+        subplot_margin <- c(0.05, 0.1, 0.05, 0.1) # top, right, bottom, left margins
 
         # Combine plots with subplot
         final_plot <- subplot(
@@ -830,8 +832,6 @@ execute.plotly.plot_local <- function(prepared.plot.data,
             nrows = plot.rows,
             shareX = TRUE,
             shareY = FALSE, # Keep Y axes independent for different outcomes/scales
-            titleX = FALSE, # Individual plots have annotations
-            titleY = TRUE, # Show Y titles on left-most plots
             margin = subplot_margin
         ) %>% layout(
             autosize = TRUE, # Tell plotly to try and fit container

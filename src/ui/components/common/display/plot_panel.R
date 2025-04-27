@@ -161,17 +161,24 @@ plot_panel_server <- function(id, settings) {
 
     # --- Dynamic UI for Plot Output ---
     output$plot_output_ui <- renderUI({
-      vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
-      backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
+    vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
+    backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
 
-      if (backend == "plotly") {
-        # Removed fixed height to allow dynamic sizing from plotly object
-        plotlyOutput(ns("mainPlotly"), width = "100%")
-      } else {
-        # Keep ggplot height for now, assuming it behaves differently
-        plotOutput(ns("mainPlot"), height = "600px", width = "100%")
-      }
-    })
+    if (backend == "plotly") {
+    # Removed fixed height to allow dynamic sizing from plotly object
+    plotlyOutput(ns("mainPlotly"), width = "100%")
+    } else if (backend == "ggplotly") {
+    # Use plotlyOutput for ggplotly with a scrollable container
+    tags$div(
+        id = ns("ggplotly-container"),
+          style = "height: 700px; overflow-y: auto;", # Fixed height container with scrolling
+        plotlyOutput(ns("mainGGPlotly"), width = "100%")
+      )
+    } else {
+      # Keep ggplot height for now, assuming it behaves differently
+      plotOutput(ns("mainPlot"), height = "600px", width = "100%")
+    }
+  })
 
     # --- Reactive Expression for Data Fetching and Preparation ---
     plot_data_reactive <- reactive({
@@ -491,6 +498,104 @@ plot_panel_server <- function(id, settings) {
       ) # end tryCatch
       return(generated_plotly_plot)
     }) # End renderPlotly
+
+    # --- GGPlotly Rendering ---
+    output$mainGGPlotly <- renderPlotly({
+      # Check visibility first
+      req(input$visualization_state == "visible", cancelOutput = TRUE)
+      req(input$display_type == "plot", cancelOutput = TRUE)
+
+      # Get prepared data
+      plot_data <- plot_data_reactive()
+
+      # Check for initial errors from reactive
+      if (isTRUE(plot_data$error)) {
+        sim_boundary$set_error(
+          message = plot_data$error_message,
+          type = plot_data$error_type,
+          severity = SEVERITY_LEVELS$ERROR
+        )
+        vis_manager$set_plot_status("error")
+        direct_error_message(paste("Error:", plot_data$error_message))
+        return(NULL)
+      }
+
+      # Check if backend is ggplotly
+      req(plot_data$backend == "ggplotly", cancelOutput = TRUE)
+
+      # Set loading status
+      vis_manager$set_plot_status("loading")
+
+      # Generate the plot
+      generated_ggplotly_plot <- tryCatch(
+        {
+          # Ensure required functions exist
+          req(
+            exists("create_style_manager_from_config") && is.function(create_style_manager_from_config),
+            exists("customize_plot_from_config") && is.function(customize_plot_from_config),
+            exists("simplot") && is.function(simplot)
+          )
+
+          # Get plot args from reactive data
+          plot_args_final <- plot_data$plot_args
+
+          # Add style manager for ggplot
+          style_manager <- create_style_manager_from_config(plot_data$vis_config)
+          if (!is.null(style_manager)) {
+            plot_args_final$style.manager <- style_manager
+          }
+
+          # Call simplot to get ggplot object
+          the_ggplot <- do.call(simplot, c(plot_data$sim_list_or_simset, plot_args_final))
+          req(the_ggplot)
+
+          # Apply ggplot customizations
+          the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config)
+          req(the_ggplot)
+
+          # Calculate height based on number of facets (if using facets)
+          calculated_height <- 600 # Default height
+          if (!is.null(plot_args_final$facet.by)) {
+            # Get facet layout data
+            facet_data <- ggplot2::ggplot_build(the_ggplot)$layout$layout
+            if (!is.null(facet_data)) {
+              num_facets <- nrow(facet_data)
+              rows_needed <- ceiling(num_facets / 2) # Fixed 2-column layout
+              pixels_per_row <- 250 # Estimated height per row
+              buffer_pixels <- 150 # Extra space for title, legend, etc.
+              calculated_height <- (rows_needed * pixels_per_row) + buffer_pixels
+            }
+          }
+
+          # Convert to plotly with explicit height
+          plotly_fig <- plotly::ggplotly(the_ggplot, 
+                                 height = calculated_height, 
+                                 tooltip = "text")
+
+          # Clear errors and set status
+          sim_boundary$clear()
+          plot_boundary$clear()
+          validation_boundary$clear()
+          store$clear_page_error_state(id)
+          vis_manager$set_plot_status("ready")
+          direct_error_message(NULL)
+
+          # Send explicit plot rendered message
+          session$sendCustomMessage("plotRendered", list())
+
+          plotly_fig
+        },
+        error = function(e) {
+          err_msg <- conditionMessage(e)
+          plot_boundary$set_error(message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
+          store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
+          vis_manager$set_plot_status("error")
+          direct_error_message(paste("Error:", err_msg))
+          NULL
+        }
+      ) # end tryCatch
+      return(generated_ggplotly_plot)
+    }) # End renderPlotly for ggplotly
 
     # --- Visibility Observer (Handles Reset Only) ---
     observeEvent(list(input$visualization_state, input$display_type),
