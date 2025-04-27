@@ -552,19 +552,24 @@ plot_panel_server <- function(id, settings) {
           # Apply ggplot customizations
           the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config)
           req(the_ggplot)
-
-          # Calculate height based on number of facets (if using facets)
-          calculated_height <- 600 # Default height
-          if (!is.null(plot_args_final$facet.by)) {
-            # Get facet layout data
-            facet_data <- ggplot2::ggplot_build(the_ggplot)$layout$layout
-            if (!is.null(facet_data)) {
-              num_facets <- nrow(facet_data)
-              rows_needed <- ceiling(num_facets / 2) # Fixed 2-column layout
-              pixels_per_row <- 250 # Estimated height per row
-              buffer_pixels <- 150 # Extra space for title, legend, etc.
-              calculated_height <- (rows_needed * pixels_per_row) + buffer_pixels
-            }
+          
+          # Force 2-column layout by explicitly modifying the facet
+          if (inherits(the_ggplot$facet, "FacetWrap")) {
+            # Directly modify the facet parameters to use 2 columns
+            the_ggplot$facet$params$ncol <- 2
+            
+            # Calculate rows based on number of panels
+            facet_layout <- ggplot2::ggplot_build(the_ggplot)$layout$layout
+            n_facets <- nrow(facet_layout)
+            n_rows <- ceiling(n_facets / 2)
+            
+            # Set calculated height based on number of rows
+            pixels_per_row <- 250 # Estimated height per row
+            buffer_pixels <- 150 # Extra space for title, legend, etc.
+            calculated_height <- (n_rows * pixels_per_row) + buffer_pixels
+          } else {
+            # Default height if no facets
+            calculated_height <- 600
           }
 
           # Convert to plotly with explicit height
