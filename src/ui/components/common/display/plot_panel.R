@@ -553,6 +553,38 @@ plot_panel_server <- function(id, settings) {
           the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config)
           req(the_ggplot)
           
+          # Add debugging for ribbon investigation
+          has_ribbon_geom <- FALSE
+          ribbon_data_list <- list()
+          ribbon_layers <- c()
+          
+          # Check if the plot contains ribbon geoms
+          if (length(the_ggplot$layers) > 0) {
+            for (i in 1:length(the_ggplot$layers)) {
+              if (inherits(the_ggplot$layers[[i]]$geom, "GeomRibbon")) {
+                has_ribbon_geom <- TRUE
+                print(paste("Found GeomRibbon in layer", i))
+                
+                # Try to extract ribbon data
+                ribbon_data <- suppressWarnings(ggplot2::layer_data(the_ggplot, i))
+                print("Ribbon columns:")
+                print(names(ribbon_data))
+                print("First few rows:")
+                print(head(ribbon_data))
+                
+                # Store ribbon data for later use
+                ribbon_data_list[[length(ribbon_data_list) + 1]] <- ribbon_data
+                ribbon_layers <- c(ribbon_layers, i)
+              }
+            }
+            
+            if (!has_ribbon_geom) {
+              print("No GeomRibbon found in plot layers")
+              print("Layer classes:")
+              print(sapply(the_ggplot$layers, function(x) class(x$geom)[1]))
+            }
+          }
+          
           # Force 2-column layout by explicitly modifying the facet
           if (inherits(the_ggplot$facet, "FacetWrap")) {
             # Directly modify the facet parameters to use 2 columns
@@ -571,11 +603,116 @@ plot_panel_server <- function(id, settings) {
             # Default height if no facets
             calculated_height <- 600
           }
+          
+          # If we found ribbon geometries, recreate them with standard geom_ribbon
+          if (has_ribbon_geom && length(ribbon_data_list) > 0) {
+            print("Recreating ribbons with standard geom_ribbon")
+            
+            # Get the build data from the ggplot object
+            build_data <- ggplot2::ggplot_build(the_ggplot)
+            
+            # Extract panel to facet variable mapping
+            panel_info <- build_data$layout$layout
+            print("Panel to facet mapping:")
+            print(head(panel_info))
+            
+            # Create a modified ggplot object without the problematic ribbon layers
+            modified_layers <- the_ggplot$layers
+            if (length(ribbon_layers) > 0) {
+              # Sort in descending order so we can remove from back to front
+              # without messing up the layer indices
+              ribbon_layers <- sort(ribbon_layers, decreasing = TRUE)
+              for (i in ribbon_layers) {
+                # Remove the NewGeomRibbon layer
+                if (i <= length(modified_layers)) {
+                  modified_layers <- modified_layers[-i]
+                }
+              }
+            }
+            
+            # Create a new ggplot with the modified layers
+            new_ggplot <- the_ggplot
+            new_ggplot$layers <- modified_layers
+            
+            # Process each ribbon dataset
+            for (i in 1:length(ribbon_data_list)) {
+              rb_data <- ribbon_data_list[[i]]
+              if (nrow(rb_data) > 0 && all(c("x", "ymin", "ymax", "PANEL", "group") %in% names(rb_data))) {
+                # For each panel and group combination (each unique ribbon)
+                for (panel_idx in unique(rb_data$PANEL)) {
+                  panel_ribbons <- rb_data[rb_data$PANEL == panel_idx, ]
+                  
+                  # Get the facet variables for this panel
+                  panel_row <- panel_info[panel_info$PANEL == panel_idx, ]
+                  
+                  # Only proceed if we can find the panel info
+                  if (nrow(panel_row) > 0) {
+                    # Extract facet variables from panel info
+                    facet_vars <- panel_row[, !names(panel_row) %in% c("PANEL", "ROW", "COL"), drop = FALSE]
+                    
+                    # Add facet variables to the ribbon data
+                    for (group_id in unique(panel_ribbons$group)) {
+                      group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
+                      
+                      # Create data with facet variables
+                      plot_data <- group_data
+                      for (var_name in names(facet_vars)) {
+                        plot_data[[var_name]] <- facet_vars[[var_name]][1]
+                      }
+                      
+                      # Get fill color
+                      fill_col <- "#D3D3D3"  # Default light gray
+                      if ("fill_ggnewscale_1" %in% names(plot_data)) {
+                        fill_col <- unique(plot_data$fill_ggnewscale_1)[1]
+                      }
+                      
+                      # Add standard geom_ribbon with facet variables
+                      new_ggplot <- new_ggplot + 
+                        ggplot2::geom_ribbon(
+                          data = plot_data,
+                          mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
+                          fill = fill_col,
+                          alpha = 0.2,
+                          inherit.aes = FALSE
+                        )
+                    }
+                  }
+                }
+              }
+            }
+            
+            # Use the modified ggplot for ggplotly conversion
+            the_ggplot <- new_ggplot
+            print("Successfully recreated ribbons")
+          }
 
           # Convert to plotly with explicit height
           plotly_fig <- plotly::ggplotly(the_ggplot, 
                                  height = calculated_height, 
-                                 tooltip = "text")
+                                 tooltip = c("x", "y", "fill", "colour"))
+          
+          # Debug the plotly object structure
+          print("Plotly traces:")
+          print(paste("Number of traces:", length(plotly_fig$x$data)))
+          
+          # Check for ribbon-like traces (fill traces have fill != 'none')
+          ribbon_traces <- sapply(plotly_fig$x$data, function(trace) {
+            !is.null(trace$fill) && trace$fill != "none"
+          })
+          
+          print(paste("Number of ribbon traces:", sum(ribbon_traces)))
+          
+          if (sum(ribbon_traces) > 0) {
+            print("First ribbon trace type:")
+            first_ribbon_idx <- which(ribbon_traces)[1]
+            print(plotly_fig$x$data[[first_ribbon_idx]]$type)
+            print("Fill direction:")
+            print(plotly_fig$x$data[[first_ribbon_idx]]$fill)
+          }
+          
+          if (has_ribbon_geom && sum(ribbon_traces) == 0) {
+            print("Warning: Ribbons found in ggplot but not in plotly conversion")
+          }
 
           # Clear errors and set status
           sim_boundary$clear()
