@@ -32,11 +32,10 @@ initialize_prerun_handlers <- function(input, output, session, plot_state, confi
     observeEvent(input$generate_projections_prerun, {
         print("[PRERUN] === Generate Button Event ===")
 
-        # Show loading overlay immediately via direct JavaScript
-        session$sendCustomMessage("javascript", 
-            "if(window.showLoadingOverlay) { window.showLoadingOverlay('prerun'); }")
+        # Send message to JS to show the plot progress indicator
+        session$sendCustomMessage("plot_progress_start", list(description = "Generating Projections"))
 
-        # Set loading status immediately
+        # Set loading status immediately (R-side state)
         vis_manager$set_plot_status("loading")
 
         # Get the current model status from the store

@@ -1,0 +1,101 @@
+/* Plot progress container - positions the indicator area */
+.plot-progress-container {
+    position: fixed;
+    bottom: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 500px;
+    /* Increased width */
+    z-index: var(--z-popover);
+    /* Ensure it's above most elements but below modals if necessary */
+}
+
+/* Plot progress item - the visible indicator card */
+.plot-progress-item {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    /* Increased padding */
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all var(--transition-speed) var(--transition-timing);
+    display: block;
+    /* Ensure it's visible when not display: none */
+}
+
+/* Title styling */
+.plot-progress-item h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    /* Increased bottom margin */
+    font-size: 1.1rem;
+    /* Increased font size */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+    /* Use standard text color */
+}
+
+/* Content area holding spinner and text */
+.plot-progress-content {
+    display: flex;
+    align-items: center;
+    /* Align spinner and text vertically */
+    gap: var(--spacing-md);
+    /* Increased gap */
+}
+
+/* Text styling */
+.plot-progress-text {
+    font-size: 0.9rem;
+    /* Increased font size */
+    color: var(--color-gray-700);
+    font-weight: 500;
+}
+
+/* Spinner styles (adapted from loading.css) */
+.plot-progress-item .loading-spinner {
+    display: inline-block;
+    width: 40px;
+    /* Increased spinner size */
+    height: 40px;
+    /* Increased spinner size */
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    /* Increased border */
+    border-radius: 50%;
+    border-top-color: var(--primary-color, #007bff);
+    animation: plot-spin 1s linear infinite;
+    /* Use unique animation name */
+}
+
+/* Spinner animation */
+@keyframes plot-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Fade out animation */
+.plot-progress-item.fadeout {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+
+/* Optional: Add styles for error/complete states if needed later */
+.plot-progress-item.error {
+    background-color: var(--color-error-bg);
+    border-color: var(--color-error);
+}
+
+/* No specific complete style needed as it just fades out */
+/*
+.plot-progress-item.complete {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+}
+*/

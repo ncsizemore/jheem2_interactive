@@ -396,8 +396,8 @@ plot_panel_server <- function(id, settings) {
               vis_manager$set_plot_status("ready")
               direct_error_message(NULL)
 
-              # Send explicit plot rendered message
-              session$sendCustomMessage("plotRendered", list())
+              # Send explicit plot complete message
+              session$sendCustomMessage("plot_progress_complete", list())
 
               # REMOVED: Explicitly hide loading overlay as a failsafe
               # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -413,8 +413,8 @@ plot_panel_server <- function(id, settings) {
               store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
               vis_manager$set_plot_status("error")
               direct_error_message(paste("Error:", err_msg))
-              # Send message to allow JS to hide overlay on error
-              session$sendCustomMessage("plotRendered", list())
+              # Send plot error message
+              session$sendCustomMessage("plot_progress_error", list(message = err_msg))
 
               # REMOVED: Hide loading overlay on error (JS timeout will handle it)
               # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -502,8 +502,8 @@ plot_panel_server <- function(id, settings) {
           vis_manager$set_plot_status("ready")
           direct_error_message(NULL)
 
-          # Send explicit plot rendered message
-          session$sendCustomMessage("plotRendered", list())
+          # Send explicit plot complete message
+          session$sendCustomMessage("plot_progress_complete", list())
 
           # REMOVED: Explicitly hide loading overlay as a failsafe
           # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -519,8 +519,8 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
-          # Send message to allow JS to hide overlay on error
-          session$sendCustomMessage("plotRendered", list())
+          # Send plot error message
+          session$sendCustomMessage("plot_progress_error", list(message = err_msg))
 
           # REMOVED: Hide loading overlay on error (JS timeout will handle it)
           # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -765,8 +765,8 @@ plot_panel_server <- function(id, settings) {
           vis_manager$set_plot_status("ready")
           direct_error_message(NULL)
 
-          # Send explicit plot rendered message
-          session$sendCustomMessage("plotRendered", list())
+          # Send explicit plot complete message
+          session$sendCustomMessage("plot_progress_complete", list())
 
           # Store the settings used for this successful render
           last_rendered_settings(current_settings)
@@ -779,8 +779,8 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
-          # Send message to allow JS to hide overlay on error
-          session$sendCustomMessage("plotRendered", list())
+          # Send plot error message
+          session$sendCustomMessage("plot_progress_error", list(message = err_msg))
           NULL
         }
       ) # end tryCatch
@@ -823,10 +823,8 @@ plot_panel_server <- function(id, settings) {
       req(input$visualization_state == "visible")
       req(input$display_type == "plot")
 
-      # Send message to JS to start the loading cycle/show overlay
-      session$sendCustomMessage("startPlotUpdate", list(
-        cycle = format(Sys.time(), "%H:%M:%S.%OS3")
-      ))
+      # Send message to JS to show the plot progress indicator
+      session$sendCustomMessage("plot_progress_start", list(description = "Updating Visualization"))
 
       # REMOVED: Old way of showing overlay via direct JS call
       # session$sendCustomMessage("javascript",
@@ -875,7 +873,7 @@ plot_panel_server <- function(id, settings) {
         # Compare with last rendered settings
         if (isTRUE(identical(new_settings, last_rendered_settings()))) {
           print(paste0("-[ PlotButton", id, " ]- Settings identical to last render. Skipping update."))
-          session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay immediately
+          session$sendCustomMessage("plot_progress_complete", list()) # Signal JS as complete immediately
           vis_manager$set_plot_status("ready") # Set status back to ready
           return() # Stop observer execution
         } else {
@@ -889,7 +887,7 @@ plot_panel_server <- function(id, settings) {
         # print(paste0("-[ PlotButton", id, " ]- Settings validation failed.")) # Commented out
         # Ensure overlay is hidden if validation fails *after* setting loading
         vis_manager$set_plot_status("ready") # Set back to ready if validation failed
-        session$sendCustomMessage("plotRendered", list()) # Also signal JS
+        session$sendCustomMessage("plot_progress_error", list(message = "Input validation failed")) # Signal JS error
       }
     })
 

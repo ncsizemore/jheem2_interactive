@@ -3,7 +3,8 @@
   position: fixed;
   bottom: var(--spacing-md);
   right: var(--spacing-md);
-  width: 400px;
+  width: 500px;
+  /* Increased width */
   z-index: var(--z-popover);
   max-height: 80vh;
   overflow-y: auto;
@@ -14,8 +15,10 @@
   background-color: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: 1.5rem;
+  /* Increased padding */
   margin-bottom: var(--spacing-md);
+  /* More space between items */
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: all var(--transition-speed) var(--transition-timing);
@@ -35,8 +38,10 @@
 
 /* Simulation title */
 .simulation-progress-item h4 {
-  margin: 0 0 var(--spacing-xs) 0;
-  font-size: var(--font-size-lg);
+  margin: 0 0 var(--spacing-sm) 0;
+  /* Increased bottom margin */
+  font-size: 1.1rem;
+  /* Increased font size */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -44,18 +49,22 @@
 
 /* Simulation text */
 .simulation-progress-text {
-  font-size: var(--font-size-md);
+  font-size: 0.9rem;
+  /* Increased size */
   color: var(--color-gray-700);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  /* Increased bottom margin */
   font-weight: 500;
 }
 
 /* Progress bar track */
 .simulation-progress-bar {
-  height: 10px;
+  height: 14px;
+  /* Taller progress bar */
   background-color: var(--color-gray-200);
   border-radius: var(--radius-sm);
-  margin-top: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  /* Increased top margin */
 }
 
 /* Progress bar fill */
@@ -82,7 +91,8 @@
   float: right;
   cursor: pointer;
   color: var(--color-gray-500);
-  font-size: var(--font-size-lg);
+  font-size: 1.2rem;
+  /* Larger close button */
   line-height: 1;
   margin-left: var(--spacing-sm);
   margin-right: var(--spacing-xs);

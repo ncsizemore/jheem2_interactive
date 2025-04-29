@@ -161,7 +161,7 @@ ui <- function() {
         type = "text/css",
         href = "css/components/feedback/simulation_progress.css"
       ),
-      
+
       # Load immediate loading CSS
       tags$link(
         rel = "stylesheet",
@@ -186,8 +186,10 @@ ui <- function() {
       tags$script(src = "js/interactions/simulation_progress.js"),
       # Load progress positioning script
       tags$script(src = "js/interactions/progress_positioning.js"),
-      # Load immediate loading script
-      tags$script(src = "js/interactions/immediate_loading.js"),
+      # Load plot progress script
+      tags$script(src = "js/interactions/plot_progress.js"),
+      # REMOVED: Obsolete immediate loading script
+      # tags$script(src = "js/interactions/immediate_loading.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
