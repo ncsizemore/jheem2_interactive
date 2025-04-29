@@ -151,6 +151,9 @@ plot_panel_server <- function(id, settings) {
       state_manager = vis_manager
     )
 
+    # Reactive value to store the settings used for the last successful plot render
+    last_rendered_settings <- reactiveVal(NULL)
+
     # Define reactive dependencies for cache key *outside* renderPlot
     current_settings_reactive <- reactive({
       control_manager$get_settings()
@@ -161,24 +164,24 @@ plot_panel_server <- function(id, settings) {
 
     # --- Dynamic UI for Plot Output ---
     output$plot_output_ui <- renderUI({
-    vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
-    backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
+      vis_config <- tryCatch(get_component_config("visualization"), error = function(e) NULL)
+      backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
 
-    if (backend == "plotly") {
-    # Removed fixed height to allow dynamic sizing from plotly object
-    plotlyOutput(ns("mainPlotly"), width = "100%")
-    } else if (backend == "ggplotly") {
-    # Use plotlyOutput for ggplotly with a scrollable container
-    tags$div(
-        id = ns("ggplotly-container"),
+      if (backend == "plotly") {
+        # Removed fixed height to allow dynamic sizing from plotly object
+        plotlyOutput(ns("mainPlotly"), width = "100%")
+      } else if (backend == "ggplotly") {
+        # Use plotlyOutput for ggplotly with a scrollable container
+        tags$div(
+          id = ns("ggplotly-container"),
           style = "height: 700px; overflow-y: auto;", # Fixed height container with scrolling
-        plotlyOutput(ns("mainGGPlotly"), width = "100%")
-      )
-    } else {
-      # Keep ggplot height for now, assuming it behaves differently
-      plotOutput(ns("mainPlot"), height = "600px", width = "100%")
-    }
-  })
+          plotlyOutput(ns("mainGGPlotly"), width = "100%")
+        )
+      } else {
+        # Keep ggplot height for now, assuming it behaves differently
+        plotOutput(ns("mainPlot"), height = "600px", width = "100%")
+      }
+    })
 
     # --- Reactive Expression for Data Fetching and Preparation ---
     plot_data_reactive <- reactive({
@@ -327,6 +330,16 @@ plot_panel_server <- function(id, settings) {
           req(input$visualization_state == "visible", cancelOutput = TRUE)
           req(input$display_type == "plot", cancelOutput = TRUE)
 
+          # --- Check if plot control settings have changed ---
+          current_settings <- current_settings_reactive() # Get current settings
+          req(current_settings) # Ensure settings are available
+          if (isTRUE(identical(current_settings, last_rendered_settings()))) {
+            print("[PLOT PANEL - ggplot] Plot settings identical to last render. Skipping re-render.")
+            session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay
+            req(FALSE, cancelOutput = TRUE) # Stop execution, keep cached plot
+          }
+          # --- End no-change check ---
+
           # Get prepared data
           plot_data <- plot_data_reactive()
 
@@ -389,6 +402,9 @@ plot_panel_server <- function(id, settings) {
               # REMOVED: Explicitly hide loading overlay as a failsafe
               # session$sendCustomMessage("hideLoadingOverlay", list())
 
+              # Store the settings used for this successful render
+              last_rendered_settings(current_settings)
+
               the_plot
             },
             error = function(e) {
@@ -397,6 +413,8 @@ plot_panel_server <- function(id, settings) {
               store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
               vis_manager$set_plot_status("error")
               direct_error_message(paste("Error:", err_msg))
+              # Send message to allow JS to hide overlay on error
+              session$sendCustomMessage("plotRendered", list())
 
               # REMOVED: Hide loading overlay on error (JS timeout will handle it)
               # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -420,6 +438,15 @@ plot_panel_server <- function(id, settings) {
       req(input$visualization_state == "visible", cancelOutput = TRUE)
       req(input$display_type == "plot", cancelOutput = TRUE)
 
+      # --- Check if plot control settings have changed ---
+      current_settings <- current_settings_reactive() # Get current settings
+      req(current_settings) # Ensure settings are available
+      if (isTRUE(identical(current_settings, last_rendered_settings()))) {
+        print("[PLOT PANEL - plotly] Plot settings identical to last render. Skipping re-render.")
+        session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay
+        req(FALSE, cancelOutput = TRUE) # Stop execution, keep cached plot
+      }
+      # --- End no-change check ---
       # Get prepared data
       plot_data <- plot_data_reactive()
 
@@ -481,6 +508,9 @@ plot_panel_server <- function(id, settings) {
           # REMOVED: Explicitly hide loading overlay as a failsafe
           # session$sendCustomMessage("hideLoadingOverlay", list())
 
+          # Store the settings used for this successful render
+          last_rendered_settings(current_settings)
+
           the_plotly_plot
         },
         error = function(e) {
@@ -489,6 +519,8 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
+          # Send message to allow JS to hide overlay on error
+          session$sendCustomMessage("plotRendered", list())
 
           # REMOVED: Hide loading overlay on error (JS timeout will handle it)
           # session$sendCustomMessage("hideLoadingOverlay", list())
@@ -504,6 +536,16 @@ plot_panel_server <- function(id, settings) {
       # Check visibility first
       req(input$visualization_state == "visible", cancelOutput = TRUE)
       req(input$display_type == "plot", cancelOutput = TRUE)
+
+      # --- Check if plot control settings have changed ---
+      current_settings <- current_settings_reactive() # Get current settings
+      req(current_settings) # Ensure settings are available
+      if (isTRUE(identical(current_settings, last_rendered_settings()))) {
+        print("[PLOT PANEL - ggplotly] Plot settings identical to last render. Skipping re-render.")
+        session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay
+        req(FALSE, cancelOutput = TRUE) # Stop execution, keep cached plot
+      }
+      # --- End no-change check ---
 
       # Get prepared data
       plot_data <- plot_data_reactive()
@@ -552,49 +594,49 @@ plot_panel_server <- function(id, settings) {
           # Apply ggplot customizations
           the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config)
           req(the_ggplot)
-          
+
           # Add debugging for ribbon investigation
           has_ribbon_geom <- FALSE
           ribbon_data_list <- list()
           ribbon_layers <- c()
-          
+
           # Check if the plot contains ribbon geoms
           if (length(the_ggplot$layers) > 0) {
             for (i in 1:length(the_ggplot$layers)) {
               if (inherits(the_ggplot$layers[[i]]$geom, "GeomRibbon")) {
                 has_ribbon_geom <- TRUE
                 print(paste("Found GeomRibbon in layer", i))
-                
+
                 # Try to extract ribbon data
                 ribbon_data <- suppressWarnings(ggplot2::layer_data(the_ggplot, i))
                 print("Ribbon columns:")
                 print(names(ribbon_data))
                 print("First few rows:")
                 print(head(ribbon_data))
-                
+
                 # Store ribbon data for later use
                 ribbon_data_list[[length(ribbon_data_list) + 1]] <- ribbon_data
                 ribbon_layers <- c(ribbon_layers, i)
               }
             }
-            
+
             if (!has_ribbon_geom) {
               print("No GeomRibbon found in plot layers")
               print("Layer classes:")
               print(sapply(the_ggplot$layers, function(x) class(x$geom)[1]))
             }
           }
-          
+
           # Force 2-column layout by explicitly modifying the facet
           if (inherits(the_ggplot$facet, "FacetWrap")) {
             # Directly modify the facet parameters to use 2 columns
             the_ggplot$facet$params$ncol <- 2
-            
+
             # Calculate rows based on number of panels
             facet_layout <- ggplot2::ggplot_build(the_ggplot)$layout$layout
             n_facets <- nrow(facet_layout)
             n_rows <- ceiling(n_facets / 2)
-            
+
             # Set calculated height based on number of rows
             pixels_per_row <- 250 # Estimated height per row
             buffer_pixels <- 150 # Extra space for title, legend, etc.
@@ -603,19 +645,19 @@ plot_panel_server <- function(id, settings) {
             # Default height if no facets
             calculated_height <- 600
           }
-          
+
           # If we found ribbon geometries, recreate them with standard geom_ribbon
           if (has_ribbon_geom && length(ribbon_data_list) > 0) {
             print("Recreating ribbons with standard geom_ribbon")
-            
+
             # Get the build data from the ggplot object
             build_data <- ggplot2::ggplot_build(the_ggplot)
-            
+
             # Extract panel to facet variable mapping
             panel_info <- build_data$layout$layout
             print("Panel to facet mapping:")
             print(head(panel_info))
-            
+
             # Create a modified ggplot object without the problematic ribbon layers
             modified_layers <- the_ggplot$layers
             if (length(ribbon_layers) > 0) {
@@ -629,11 +671,11 @@ plot_panel_server <- function(id, settings) {
                 }
               }
             }
-            
+
             # Create a new ggplot with the modified layers
             new_ggplot <- the_ggplot
             new_ggplot$layers <- modified_layers
-            
+
             # Process each ribbon dataset
             for (i in 1:length(ribbon_data_list)) {
               rb_data <- ribbon_data_list[[i]]
@@ -641,33 +683,33 @@ plot_panel_server <- function(id, settings) {
                 # For each panel and group combination (each unique ribbon)
                 for (panel_idx in unique(rb_data$PANEL)) {
                   panel_ribbons <- rb_data[rb_data$PANEL == panel_idx, ]
-                  
+
                   # Get the facet variables for this panel
                   panel_row <- panel_info[panel_info$PANEL == panel_idx, ]
-                  
+
                   # Only proceed if we can find the panel info
                   if (nrow(panel_row) > 0) {
                     # Extract facet variables from panel info
                     facet_vars <- panel_row[, !names(panel_row) %in% c("PANEL", "ROW", "COL"), drop = FALSE]
-                    
+
                     # Add facet variables to the ribbon data
                     for (group_id in unique(panel_ribbons$group)) {
                       group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
-                      
+
                       # Create data with facet variables
                       plot_data <- group_data
                       for (var_name in names(facet_vars)) {
                         plot_data[[var_name]] <- facet_vars[[var_name]][1]
                       }
-                      
+
                       # Get fill color
-                      fill_col <- "#D3D3D3"  # Default light gray
+                      fill_col <- "#D3D3D3" # Default light gray
                       if ("fill_ggnewscale_1" %in% names(plot_data)) {
                         fill_col <- unique(plot_data$fill_ggnewscale_1)[1]
                       }
-                      
+
                       # Add standard geom_ribbon with facet variables
-                      new_ggplot <- new_ggplot + 
+                      new_ggplot <- new_ggplot +
                         ggplot2::geom_ribbon(
                           data = plot_data,
                           mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
@@ -680,28 +722,29 @@ plot_panel_server <- function(id, settings) {
                 }
               }
             }
-            
+
             # Use the modified ggplot for ggplotly conversion
             the_ggplot <- new_ggplot
             print("Successfully recreated ribbons")
           }
 
           # Convert to plotly with explicit height
-          plotly_fig <- plotly::ggplotly(the_ggplot, 
-                                 height = calculated_height, 
-                                 tooltip = c("x", "y", "fill", "colour"))
-          
+          plotly_fig <- plotly::ggplotly(the_ggplot,
+            height = calculated_height,
+            tooltip = c("x", "y", "fill", "colour")
+          )
+
           # Debug the plotly object structure
           print("Plotly traces:")
           print(paste("Number of traces:", length(plotly_fig$x$data)))
-          
+
           # Check for ribbon-like traces (fill traces have fill != 'none')
           ribbon_traces <- sapply(plotly_fig$x$data, function(trace) {
             !is.null(trace$fill) && trace$fill != "none"
           })
-          
+
           print(paste("Number of ribbon traces:", sum(ribbon_traces)))
-          
+
           if (sum(ribbon_traces) > 0) {
             print("First ribbon trace type:")
             first_ribbon_idx <- which(ribbon_traces)[1]
@@ -709,7 +752,7 @@ plot_panel_server <- function(id, settings) {
             print("Fill direction:")
             print(plotly_fig$x$data[[first_ribbon_idx]]$fill)
           }
-          
+
           if (has_ribbon_geom && sum(ribbon_traces) == 0) {
             print("Warning: Ribbons found in ggplot but not in plotly conversion")
           }
@@ -725,6 +768,9 @@ plot_panel_server <- function(id, settings) {
           # Send explicit plot rendered message
           session$sendCustomMessage("plotRendered", list())
 
+          # Store the settings used for this successful render
+          last_rendered_settings(current_settings)
+
           plotly_fig
         },
         error = function(e) {
@@ -733,6 +779,8 @@ plot_panel_server <- function(id, settings) {
           store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
           vis_manager$set_plot_status("error")
           direct_error_message(paste("Error:", err_msg))
+          # Send message to allow JS to hide overlay on error
+          session$sendCustomMessage("plotRendered", list())
           NULL
         }
       ) # end tryCatch
@@ -824,11 +872,24 @@ plot_panel_server <- function(id, settings) {
       })
 
       if (!is.null(new_settings)) {
-        # print(paste0("-[ PlotButton", id, " ]- Updating control_manager ONLY...")) # Commented out
-        # str(new_settings) # Commented out
-        control_manager$update_settings(new_settings)
+        # Compare with last rendered settings
+        if (isTRUE(identical(new_settings, last_rendered_settings()))) {
+          print(paste0("-[ PlotButton", id, " ]- Settings identical to last render. Skipping update."))
+          session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay immediately
+          vis_manager$set_plot_status("ready") # Set status back to ready
+          return() # Stop observer execution
+        } else {
+          # Settings are different, proceed with update
+          # print(paste0("-[ PlotButton", id, " ]- Updating control_manager ONLY...")) # Commented out
+          # str(new_settings) # Commented out
+          control_manager$update_settings(new_settings)
+        }
       } else {
+        # Validation failed earlier
         # print(paste0("-[ PlotButton", id, " ]- Settings validation failed.")) # Commented out
+        # Ensure overlay is hidden if validation fails *after* setting loading
+        vis_manager$set_plot_status("ready") # Set back to ready if validation failed
+        session$sendCustomMessage("plotRendered", list()) # Also signal JS
       }
     })
 
