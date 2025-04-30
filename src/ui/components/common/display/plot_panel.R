@@ -758,11 +758,96 @@ plot_panel_server <- function(id, settings) {
             height = calculated_height,
             tooltip = c("x", "y", "fill", "colour")
           )
+          # --- Generalized Legend Simplification using plotly::style ---
+          print("[PLOT PANEL - ggplotly] Simplifying legend dynamically...")
+          tryCatch(
+            {
+              if (!is.null(plotly_fig$x$data) && length(plotly_fig$x$data) > 0) {
+                num_traces <- length(plotly_fig$x$data)
+                sim_names <- names(plot_data$sim_list_or_simset)
+
+                kept_items <- list() # Store {index: i, name: sim_name} for traces to keep/rename
+                indices_to_hide <- c()
+                sim_names_found <- character(0) # Track which sim_names we've kept a trace for
+
+                if (length(sim_names) >= 1) {
+                  for (i in 1:num_traces) {
+                    trace <- plotly_fig$x$data[[i]]
+                    trace_name <- trace$name
+
+                    # Default showlegend is TRUE if NULL
+                    show_legend_flag <- if (is.null(trace$showlegend)) TRUE else trace$showlegend
+
+                    # Skip traces already hidden (e.g., ribbons)
+                    if (!show_legend_flag) {
+                      next
+                    }
+
+                    is_sim_trace <- FALSE
+                    target_sim_name <- NULL
+
+                    # Check if trace name matches any sim_name pattern
+                    for (sim_name in sim_names) {
+                      # Pattern: Starts with "(," followed by the sim_name
+                      pattern_start <- paste0("(,", sim_name)
+                      # Use fixed=TRUE for literal matching, avoid regex issues with parentheses in sim_name
+                      if (startsWith(trace_name, pattern_start)) {
+                        is_sim_trace <- TRUE
+                        target_sim_name <- sim_name
+                        break # Found the sim_name for this trace
+                      }
+                    }
+
+                    if (is_sim_trace) {
+                      # Check if we already kept a trace for this simulation set
+                      if (!(target_sim_name %in% sim_names_found)) {
+                        # Keep this one
+                        kept_items[[length(kept_items) + 1]] <- list(index = i, name = target_sim_name)
+                        sim_names_found <- c(sim_names_found, target_sim_name)
+                      } else {
+                        # Duplicate simulation trace (different stratum), hide it
+                        indices_to_hide <- c(indices_to_hide, i)
+                      }
+                    } else {
+                      # Not a simulation trace (e.g., data points), hide it
+                      indices_to_hide <- c(indices_to_hide, i)
+                    }
+                  } # End trace loop
+
+                  # Apply styling: Rename kept traces
+                  if (length(kept_items) > 0) {
+                    for (item in kept_items) {
+                      plotly_fig <- plotly::style(plotly_fig, name = item$name, traces = item$index)
+                    }
+                    kept_indices_str <- paste(sapply(kept_items, `[[`, "index"), collapse = ", ")
+                    print(paste("[PLOT PANEL - ggplotly] Renamed legend entries for traces:", kept_indices_str))
+                  }
+
+                  # Apply styling: Hide other traces
+                  if (length(indices_to_hide) > 0) {
+                    plotly_fig <- plotly::style(plotly_fig, showlegend = FALSE, traces = indices_to_hide)
+                    print(paste("[PLOT PANEL - ggplotly] Hid legend entries for traces:", paste(indices_to_hide, collapse = ", ")))
+                  }
+                } else {
+                  print("[PLOT PANEL - ggplotly] No simulation set names found to simplify legend.")
+                }
+              } else {
+                print("[PLOT PANEL - ggplotly] No traces found to simplify legend.")
+              }
+            },
+            error = function(e) {
+              print(paste("[PLOT PANEL - ggplotly] Error during dynamic legend simplification:", conditionMessage(e)))
+            }
+          )
+          # --- End Generalized Legend Simplification ---
 
           # Debug the plotly object structure
           print("Plotly traces:")
           print(paste("Number of traces:", length(plotly_fig$x$data)))
 
+          # Remove overall legend title
+          plotly_fig$x$layout$legend$title$text <- NULL
+          print("[PLOT PANEL - ggplotly] Removed legend title.")
           # Check for ribbon-like traces (fill traces have fill != 'none')
           ribbon_traces <- sapply(plotly_fig$x$data, function(trace) {
             !is.null(trace$fill) && trace$fill != "none"
