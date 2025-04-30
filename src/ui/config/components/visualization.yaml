@@ -45,7 +45,7 @@ plot_customizations:
   # Facet customization
   facets:
     strip_background: "#F0F0F0"
-    strip_text_size: 11
+    strip_text_size: 8 # Further reduced size to help with potential clipping
 
 # Baseline simulations configuration
 baseline_simulations:

@@ -97,6 +97,9 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
     print("[PLOT_CUSTOMIZER] Setting panel spacing y: 1.5 lines")
     theme_args$panel.spacing.y <- ggplot2::unit(1.5, "lines")
 
+    # Add fixed top margin to push facet strips down slightly
+    print("[PLOT_CUSTOMIZER] Setting fixed plot margin (top=15pt)")
+    theme_args$plot.margin <- ggplot2::margin(t = 15, r = 10, b = 5, l = 10, unit = "pt")
     # Apply theme modifications
     if (length(theme_args) > 0) {
       print("[PLOT_CUSTOMIZER] Applying theme modifications")
@@ -145,10 +148,13 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
   if (!is.null(customizations$facets)) {
     theme_args <- list() # Re-initialize for facet-specific theme args
 
-    if (!is.null(customizations$facets$strip_background)) {
-      print(paste("[PLOT_CUSTOMIZER] Setting facet strip background:", customizations$facets$strip_background))
-      theme_args$strip.background <- ggplot2::element_rect(fill = customizations$facets$strip_background)
-    }
+    # Remove strip background to avoid empty boxes after manual text adjustment
+    print("[PLOT_CUSTOMIZER] Removing facet strip background (setting to element_blank)")
+    theme_args$strip.background <- ggplot2::element_blank()
+    # if (!is.null(customizations$facets$strip_background)) {
+    #   print(paste("[PLOT_CUSTOMIZER] Setting facet strip background:", customizations$facets$strip_background))
+    #   theme_args$strip.background <- ggplot2::element_rect(fill = customizations$facets$strip_background)
+    # }
 
     # Combine strip text size and margin settings
     strip_text_args <- list()
@@ -157,7 +163,7 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
 
     # Inherit existing properties
     strip_text_args$family <- existing_strip_text$family
-    strip_text_args$face <- existing_strip_text$face
+    strip_text_args$face <- "bold" # Make facet text bold
     strip_text_args$colour <- existing_strip_text$colour
     strip_text_args$hjust <- existing_strip_text$hjust
     strip_text_args$vjust <- existing_strip_text$vjust
@@ -170,13 +176,13 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
       strip_text_args$size <- customizations$facets$strip_text_size
     } else {
       # Decrease font size slightly if not explicitly set in config
-      strip_text_args$size <- existing_strip_text$size * 0.9 # Decrease by 10%
+      strip_text_args$size <- existing_strip_text$size * 0.75 # Decrease by 25%
       print(paste("[PLOT_CUSTOMIZER] Decreasing facet strip text size to:", strip_text_args$size))
     }
 
     # Apply dynamic margin based on number of lines
     base_vertical_margin <- 3 # Base margin in pt for 1 line
-    extra_margin_per_line <- 6 # Reduced extra margin per additional line
+    extra_margin_per_line <- 6 # Reverted extra margin per additional line
     dynamic_vertical_margin <- base_vertical_margin + max(0, num_facet_lines - 1) * extra_margin_per_line
     side_margin <- 10 # Keep increased Horizontal margin
 
@@ -185,6 +191,10 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
     strip_text_args$margin <- strip_text_margin
 
     # Increase line height for multi-line labels
+    strip_text_args$vjust <- 0 # Align text to top
+    print("[PLOT_CUSTOMIZER] Setting facet strip text vjust: 0")
+    strip_text_args$vjust <- 0 # Align text to top
+    print("[PLOT_CUSTOMIZER] Setting facet strip text vjust: 0")
     strip_text_args$lineheight <- 1.1
     print("[PLOT_CUSTOMIZER] Setting facet strip text lineheight: 1.1")
 
@@ -192,7 +202,7 @@ customize_plot_from_config <- function(plot, config, num_facet_lines = 1) { # Ad
     # Assign the combined element_text object
     theme_args$strip.text <- do.call(ggplot2::element_text, strip_text_args)
 
-    # Ensure strips are drawn outside panels
+    # Ensure strips are drawn outside panels (reverted from 'inside')
     theme_args$strip.placement <- "outside"
     print("[PLOT_CUSTOMIZER] Setting strip.placement: 'outside'")
 

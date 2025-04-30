@@ -660,7 +660,7 @@ plot_panel_server <- function(id, settings) {
 
             # Set calculated height based on number of rows
             pixels_per_row <- 250 # Estimated height per row
-            buffer_pixels <- 150 # Extra space for title, legend, etc.
+            buffer_pixels <- 250 # Increased extra space for title, legend, etc.
             calculated_height <- (n_rows * pixels_per_row) + buffer_pixels
           } else {
             # Default height if no facets
@@ -781,6 +781,27 @@ plot_panel_server <- function(id, settings) {
           if (has_ribbon_geom && sum(ribbon_traces) == 0) {
             print("Warning: Ribbons found in ggplot but not in plotly conversion")
           }
+          # --- Manual Adjustment for Facet Label Clipping ---
+          print("[PLOT PANEL - ggplotly] Attempting manual adjustment of facet label annotations...")
+          if (!is.null(plotly_fig$x$layout$annotations) && length(plotly_fig$x$layout$annotations) > 0) {
+            adjustment_offset <- 0.01 # Reduced shift down (1% of plot height)
+            adjusted_count <- 0
+            for (i in 1:length(plotly_fig$x$layout$annotations)) {
+              # Identify facet labels (heuristic: yanchor='bottom', yref='paper')
+              annotation <- plotly_fig$x$layout$annotations[[i]]
+              if (!is.null(annotation$yanchor) && annotation$yanchor == "bottom" &&
+                !is.null(annotation$yref) && annotation$yref == "paper") {
+                original_y <- annotation$y
+                plotly_fig$x$layout$annotations[[i]]$y <- original_y - adjustment_offset
+                adjusted_count <- adjusted_count + 1
+                # print(paste("Adjusted annotation", i, "y from", original_y, "to", plotly_fig$x$layout$annotations[[i]]$y))
+              }
+            }
+            print(paste("[PLOT PANEL - ggplotly] Manually adjusted y-coordinate for", adjusted_count, "facet label annotations."))
+          } else {
+            print("[PLOT PANEL - ggplotly] No annotations found to adjust.")
+          }
+          # --- End Manual Adjustment ---
 
           # Clear errors and set status
           sim_boundary$clear()
