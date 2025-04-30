@@ -32,7 +32,8 @@ parse_template <- function(template, values) {
   return(result)
 }
 
-create_style_manager_from_config <- function(vis_config) {
+# Add simplify_legend argument with a default, even if not used internally for now
+create_style_manager_from_config <- function(vis_config, simplify_legend = FALSE) {
   default_style_manager <- tryCatch(get.default.style.manager(), error = function(e) {
     warning("Default style manager error: ", e$message)
     NULL
@@ -98,21 +99,10 @@ create_plot_panel <- function(id, type = "static") {
         class = "panel-container",
         tags$div(
           class = "panel-content",
+          # Add UI output for the title
+          uiOutput(ns("plot_title_ui")),
           # Use uiOutput for dynamic plot rendering
           uiOutput(ns("plot_output_ui"))
-          # REMOVED: Old panel-specific loading indicator div
-          # tags$div(
-          #   id = ns("loading_indicator"), # Added ID
-          #   class = "loading-indicator",
-          #   style = "display: none;", # Start hidden
-          #   tags$div(
-          #     class = "loading-content",
-          #     tags$span(class = "loading-spinner"),
-          #     tags$span("Generating plot...")
-          #   )
-          # )
-          # Removed hidden plot_status input as it's no longer needed for indicator
-          # Removed: tags$div(class = "hidden", textInput(ns("plot_status"), ...))
         )
       )
     ),
@@ -183,6 +173,24 @@ plot_panel_server <- function(id, settings) {
       }
     })
 
+    # --- Reactive Expression for Plot Title ---
+    output$plot_title_ui <- renderUI({
+      plot_data <- plot_data_reactive() # Depends on the main reactive
+      req(!isTRUE(plot_data$error)) # Don't render title if data fetch failed
+
+      # Construct title based on location (mimicking simplot's default)
+      title_text <- "Plot" # Default
+      location <- plot_data$sim_settings$location
+      if (!is.null(location) && exists("get.location.name")) {
+        location_name <- tryCatch(get.location.name(location), error = function(e) location)
+        title_text <- paste0(location_name, " (", location, ")")
+      } else if (!is.null(location)) {
+        title_text <- location # Fallback if get.location.name doesn't exist
+      }
+
+      tags$h4(class = "plot-title", title_text) # Render as an h4 tag
+    })
+
     # --- Reactive Expression for Data Fetching and Preparation ---
     plot_data_reactive <- reactive({
       # Initial UI state checks - these need to be outside the reactive
@@ -210,14 +218,14 @@ plot_panel_server <- function(id, settings) {
       sim_state_check <- store$get_simulation(current_sim_id)
       if (is.null(sim_state_check) || sim_state_check$status == "error") {
         err_msg <- if (is.null(sim_state_check)) "No sim" else sim_state_check$error_message %||% "Sim error"
-        return(list(error = TRUE, error_message = err_msg, error_type = ERROR_TYPES$SIMULATION))
+        return(list(error = TRUE, error_message = err_msg, error_type = ERROR_TYPES$SIMULATION, sim_settings = NULL)) # Return NULL for sim_settings on error
       }
 
       # Get simulation data
       sim_state_data <- store$get_current_simulation_data(id)
       if (is.null(sim_state_data) || is.null(sim_state_data$simset)) {
         err_msg <- "No sim data."
-        return(list(error = TRUE, error_message = err_msg, error_type = ERROR_TYPES$PLOT))
+        return(list(error = TRUE, error_message = err_msg, error_type = ERROR_TYPES$PLOT, sim_settings = sim_state_check$settings)) # Return settings even on plot error
       }
 
       # Get baseline simulation if applicable
@@ -271,7 +279,7 @@ plot_panel_server <- function(id, settings) {
         } else {
           warning("get.default.data.manager function not found. Cannot set data manager.")
           # Handle error appropriately - maybe return error state from reactive?
-          return(list(error = TRUE, error_message = "Default data manager function not found.", error_type = ERROR_TYPES$PLOT))
+          return(list(error = TRUE, error_message = "Default data manager function not found.", error_type = ERROR_TYPES$PLOT, sim_settings = sim_settings))
         }
       }
       # Ensure data_manager_to_use is not NULL before proceeding
@@ -317,7 +325,8 @@ plot_panel_server <- function(id, settings) {
         vis_config = vis_config,
         backend = backend,
         plot_args = plot_args,
-        sim_list_or_simset = sim_list_or_simset
+        sim_list_or_simset = sim_list_or_simset,
+        sim_settings = sim_settings # Pass sim_settings for title generation
         # sim_state_check and sim_state_data are implicitly used above
       )
     })
@@ -537,18 +546,16 @@ plot_panel_server <- function(id, settings) {
       req(input$visualization_state == "visible", cancelOutput = TRUE)
       req(input$display_type == "plot", cancelOutput = TRUE)
 
-      # --- Check if plot control settings have changed ---
-      current_settings <- current_settings_reactive() # Get current settings
-      req(current_settings) # Ensure settings are available
-      if (isTRUE(identical(current_settings, last_rendered_settings()))) {
-        print("[PLOT PANEL - ggplotly] Plot settings identical to last render. Skipping re-render.")
-        session$sendCustomMessage("plotRendered", list()) # Signal JS to hide overlay
-        req(FALSE, cancelOutput = TRUE) # Stop execution, keep cached plot
-      }
+      # REMOVED: Check for identical settings to prevent re-render.
+      # We want the plot to re-render if the underlying data (sim_id) changes,
+      # even if the plot controls haven't.
       # --- End no-change check ---
 
       # Get prepared data
       plot_data <- plot_data_reactive()
+      # Get current settings for use later (e.g., in last_rendered_settings)
+      current_settings <- current_settings_reactive()
+      req(current_settings) # Ensure settings are available
 
       # Check for initial errors from reactive
       if (isTRUE(plot_data$error)) {
@@ -580,9 +587,12 @@ plot_panel_server <- function(id, settings) {
 
           # Get plot args from reactive data
           plot_args_final <- plot_data$plot_args
+          # Explicitly set title to NULL to prevent simplot from adding one # REMOVED THIS LINE
+          # print("[PLOT PANEL - ggplotly] Setting title = NULL in simplot args.") # REMOVED THIS LINE
 
-          # Add style manager for ggplot
-          style_manager <- create_style_manager_from_config(plot_data$vis_config)
+          # Add style manager for ggplot, passing simplify_legend flag
+          # simplify_flag <- length(plot_data$sim_list_or_simset) == 2 # simplify_legend not used currently
+          style_manager <- create_style_manager_from_config(plot_data$vis_config) # simplify_legend = simplify_flag)
           if (!is.null(style_manager)) {
             plot_args_final$style.manager <- style_manager
           }
@@ -591,8 +601,19 @@ plot_panel_server <- function(id, settings) {
           the_ggplot <- do.call(simplot, c(plot_data$sim_list_or_simset, plot_args_final))
           req(the_ggplot)
 
-          # Apply ggplot customizations
-          the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config)
+          # Force remove title potentially added by simplot
+          print("[PLOT PANEL - ggplotly] Forcing removal of plot title theme element.")
+          the_ggplot <- the_ggplot + theme(plot.title = element_blank()) # RE-ADD THIS LINE
+
+          # Calculate number of lines needed for facet labels
+          num_facet_lines <- 1 # Start with 1 for the outcome name
+          if (!is.null(plot_data$plot_args$facet.by)) {
+            num_facet_lines <- num_facet_lines + length(plot_data$plot_args$facet.by)
+          }
+          print(paste("[PLOT PANEL - ggplotly] Calculated num_facet_lines:", num_facet_lines))
+
+          # Apply ggplot customizations, passing the number of lines
+          the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config, num_facet_lines = num_facet_lines)
           req(the_ggplot)
 
           # Add debugging for ribbon investigation
@@ -697,21 +718,21 @@ plot_panel_server <- function(id, settings) {
                       group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
 
                       # Create data with facet variables
-                      plot_data <- group_data
+                      plot_data_for_ribbon <- group_data # Use a different name to avoid conflict
                       for (var_name in names(facet_vars)) {
-                        plot_data[[var_name]] <- facet_vars[[var_name]][1]
+                        plot_data_for_ribbon[[var_name]] <- facet_vars[[var_name]][1]
                       }
 
                       # Get fill color
                       fill_col <- "#D3D3D3" # Default light gray
-                      if ("fill_ggnewscale_1" %in% names(plot_data)) {
-                        fill_col <- unique(plot_data$fill_ggnewscale_1)[1]
+                      if ("fill_ggnewscale_1" %in% names(plot_data_for_ribbon)) {
+                        fill_col <- unique(plot_data_for_ribbon$fill_ggnewscale_1)[1]
                       }
 
                       # Add standard geom_ribbon with facet variables
                       new_ggplot <- new_ggplot +
                         ggplot2::geom_ribbon(
-                          data = plot_data,
+                          data = plot_data_for_ribbon,
                           mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
                           fill = fill_col,
                           alpha = 0.2,
@@ -727,6 +748,10 @@ plot_panel_server <- function(id, settings) {
             the_ggplot <- new_ggplot
             print("Successfully recreated ribbons")
           }
+
+          # Explicitly NULLify the title label before ggplotly conversion
+          print("[PLOT PANEL - ggplotly] Setting plot$labels$title to NULL before ggplotly()")
+          the_ggplot$labels$title <- NULL
 
           # Convert to plotly with explicit height
           plotly_fig <- plotly::ggplotly(the_ggplot,
