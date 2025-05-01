@@ -682,256 +682,273 @@ plot_panel_server <- function(id, settings) {
     }) # End renderPlotly
 
     # --- GGPlotly Rendering ---
-    output$mainGGPlotly <- renderPlotly({
-      # Check visibility first
-      req(input$visualization_state == "visible", cancelOutput = TRUE)
-      req(input$display_type == "plot", cancelOutput = TRUE)
+    output$mainGGPlotly <- bindCache( # Apply bindCache *around* renderPlotly
+      renderPlotly({
+        # Check visibility first
+        req(input$visualization_state == "visible", cancelOutput = TRUE)
+        req(input$display_type == "plot", cancelOutput = TRUE)
 
-      # REMOVED: Check for identical settings to prevent re-render.
-      # We want the plot to re-render if the underlying data (sim_id) changes,
-      # even if the plot controls haven't.
-      # --- End no-change check ---
+        # REMOVED: Check for identical settings to prevent re-render.
+        # We want the plot to re-render if the underlying data (sim_id) changes,
+        # even if the plot controls haven't.
+        # --- End no-change check ---
 
-      # Get prepared data
-      plot_data <- plot_data_reactive()
-      # Get current settings for use later (e.g., in last_rendered_settings)
-      current_settings <- current_settings_reactive()
-      req(current_settings) # Ensure settings are available
+        # Get prepared data
+        plot_data <- plot_data_reactive()
+        # Get current settings for use later (e.g., in last_rendered_settings)
+        current_settings <- current_settings_reactive()
+        req(current_settings) # Ensure settings are available
 
-      # Check for initial errors from reactive
-      if (isTRUE(plot_data$error)) {
-        sim_boundary$set_error(
-          message = plot_data$error_message,
-          type = plot_data$error_type,
-          severity = SEVERITY_LEVELS$ERROR
-        )
-        vis_manager$set_plot_status("error")
-        direct_error_message(paste("Error:", plot_data$error_message))
-        return(NULL)
-      }
-
-      # Check if backend is ggplotly
-      req(plot_data$backend == "ggplotly", cancelOutput = TRUE)
-
-      # Set loading status
-      vis_manager$set_plot_status("loading")
-
-      # Generate the plot
-      generated_ggplotly_plot <- tryCatch(
-        {
-          # Ensure required functions exist
-          req(
-            exists("create_style_manager_from_config") && is.function(create_style_manager_from_config),
-            exists("customize_plot_from_config") && is.function(customize_plot_from_config),
-            exists("simplot") && is.function(simplot)
+        # Check for initial errors from reactive
+        if (isTRUE(plot_data$error)) {
+          sim_boundary$set_error(
+            message = plot_data$error_message,
+            type = plot_data$error_type,
+            severity = SEVERITY_LEVELS$ERROR
           )
+          vis_manager$set_plot_status("error")
+          direct_error_message(paste("Error:", plot_data$error_message))
+          return(NULL)
+        }
 
-          # Get plot args from reactive data
-          plot_args_final <- plot_data$plot_args
-          # Explicitly set title to NULL to prevent simplot from adding one # REMOVED THIS LINE
-          # print("[PLOT PANEL - ggplotly] Setting title = NULL in simplot args.") # REMOVED THIS LINE
+        # Check if backend is ggplotly
+        req(plot_data$backend == "ggplotly", cancelOutput = TRUE)
 
-          # Add style manager for ggplot, passing simplify_legend flag
-          # simplify_flag <- length(plot_data$sim_list_or_simset) == 2 # simplify_legend not used currently
-          style_manager <- create_style_manager_from_config(plot_data$vis_config) # simplify_legend = simplify_flag)
-          if (!is.null(style_manager)) {
-            plot_args_final$style.manager <- style_manager
-          }
+        # Set loading status
+        vis_manager$set_plot_status("loading")
 
-          # Call simplot to get ggplot object
-          the_ggplot <- do.call(simplot, c(plot_data$sim_list_or_simset, plot_args_final))
-          req(the_ggplot)
+        # Generate the plot
+        generated_ggplotly_plot <- tryCatch(
+          {
+            # Ensure required functions exist
+            req(
+              exists("create_style_manager_from_config") && is.function(create_style_manager_from_config),
+              exists("customize_plot_from_config") && is.function(customize_plot_from_config),
+              exists("simplot") && is.function(simplot)
+            )
 
-          # Force remove title potentially added by simplot (handled by UI now)
-          the_ggplot <- the_ggplot + theme(plot.title = element_blank()) # RE-ADD THIS LINE
+            # Get plot args from reactive data
+            plot_args_final <- plot_data$plot_args
+            # Explicitly set title to NULL to prevent simplot from adding one # REMOVED THIS LINE
+            # print("[PLOT PANEL - ggplotly] Setting title = NULL in simplot args.") # REMOVED THIS LINE
 
-          # Calculate number of lines needed for facet labels
-          num_facet_lines <- 1 # Start with 1 for the outcome name
-          if (!is.null(plot_data$plot_args$facet.by)) {
-            num_facet_lines <- num_facet_lines + length(plot_data$plot_args$facet.by)
-          }
-          # print(paste("[PLOT PANEL - ggplotly] Calculated num_facet_lines:", num_facet_lines)) # Keep commented
-
-          # Apply ggplot customizations, passing the number of lines
-          the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config, num_facet_lines = num_facet_lines)
-          req(the_ggplot)
-
-          # Add debugging for ribbon investigation
-          has_ribbon_geom <- FALSE
-          ribbon_data_list <- list()
-          ribbon_layers <- c()
-
-          # Check if the plot contains ribbon geoms
-          if (length(the_ggplot$layers) > 0) {
-            for (i in 1:length(the_ggplot$layers)) {
-              if (inherits(the_ggplot$layers[[i]]$geom, "GeomRibbon")) {
-                has_ribbon_geom <- TRUE
-                # print(paste("Found GeomRibbon in layer", i)) # Keep commented
-
-                # Try to extract ribbon data
-                ribbon_data <- suppressWarnings(ggplot2::layer_data(the_ggplot, i))
-                # print("Ribbon columns:") # Keep commented
-                # print(names(ribbon_data)) # Keep commented
-                # print("First few rows:") # Keep commented
-                # print(head(ribbon_data)) # Keep commented
-
-                # Store ribbon data for later use
-                ribbon_data_list[[length(ribbon_data_list) + 1]] <- ribbon_data
-                ribbon_layers <- c(ribbon_layers, i)
-              }
+            # Add style manager for ggplot, passing simplify_legend flag
+            # simplify_flag <- length(plot_data$sim_list_or_simset) == 2 # simplify_legend not used currently
+            style_manager <- create_style_manager_from_config(plot_data$vis_config) # simplify_legend = simplify_flag)
+            if (!is.null(style_manager)) {
+              plot_args_final$style.manager <- style_manager
             }
 
-            if (!has_ribbon_geom) {
-              # print("No GeomRibbon found in plot layers") # Keep commented
-              # print("Layer classes:") # Keep commented
-              # print(sapply(the_ggplot$layers, function(x) class(x$geom)[1])) # Keep commented
+            # Call simplot to get ggplot object
+            the_ggplot <- do.call(simplot, c(plot_data$sim_list_or_simset, plot_args_final))
+            req(the_ggplot)
+
+            # Force remove title potentially added by simplot (handled by UI now)
+            the_ggplot <- the_ggplot + theme(plot.title = element_blank()) # RE-ADD THIS LINE
+
+            # Calculate number of lines needed for facet labels
+            num_facet_lines <- 1 # Start with 1 for the outcome name
+            if (!is.null(plot_data$plot_args$facet.by)) {
+              num_facet_lines <- num_facet_lines + length(plot_data$plot_args$facet.by)
             }
-          }
+            # print(paste("[PLOT PANEL - ggplotly] Calculated num_facet_lines:", num_facet_lines)) # Keep commented
 
-          # Force 2-column layout by explicitly modifying the facet
-          if (inherits(the_ggplot$facet, "FacetWrap")) {
-            # Directly modify the facet parameters to use 2 columns
-            the_ggplot$facet$params$ncol <- 2
+            # Apply ggplot customizations, passing the number of lines
+            the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config, num_facet_lines = num_facet_lines)
+            req(the_ggplot)
 
-            # Calculate rows based on number of panels
-            facet_layout <- ggplot2::ggplot_build(the_ggplot)$layout$layout
-            n_facets <- nrow(facet_layout)
-            n_rows <- ceiling(n_facets / 2)
+            # Add debugging for ribbon investigation
+            has_ribbon_geom <- FALSE
+            ribbon_data_list <- list()
+            ribbon_layers <- c()
 
-            # Set calculated height based on number of rows
-            pixels_per_row <- 250 # Estimated height per row
-            buffer_pixels <- 250 # Increased extra space for title, legend, etc.
-            calculated_height <- (n_rows * pixels_per_row) + buffer_pixels
-          } else {
-            # Default height if no facets
-            calculated_height <- 600
-          }
+            # Check if the plot contains ribbon geoms
+            if (length(the_ggplot$layers) > 0) {
+              for (i in 1:length(the_ggplot$layers)) {
+                if (inherits(the_ggplot$layers[[i]]$geom, "GeomRibbon")) {
+                  has_ribbon_geom <- TRUE
+                  # print(paste("Found GeomRibbon in layer", i)) # Keep commented
 
-          # If we found ribbon geometries, recreate them with standard geom_ribbon
-          if (has_ribbon_geom && length(ribbon_data_list) > 0) {
-            # print("Recreating ribbons with standard geom_ribbon") # Keep commented
+                  # Try to extract ribbon data
+                  ribbon_data <- suppressWarnings(ggplot2::layer_data(the_ggplot, i))
+                  # print("Ribbon columns:") # Keep commented
+                  # print(names(ribbon_data)) # Keep commented
+                  # print("First few rows:") # Keep commented
+                  # print(head(ribbon_data)) # Keep commented
 
-            # Get the build data from the ggplot object
-            build_data <- ggplot2::ggplot_build(the_ggplot)
-
-            # Extract panel to facet variable mapping
-            panel_info <- build_data$layout$layout
-            # print("Panel to facet mapping:") # Keep commented
-            # print(head(panel_info)) # Keep commented
-
-            # Create a modified ggplot object without the problematic ribbon layers
-            modified_layers <- the_ggplot$layers
-            if (length(ribbon_layers) > 0) {
-              # Sort in descending order so we can remove from back to front
-              # without messing up the layer indices
-              ribbon_layers <- sort(ribbon_layers, decreasing = TRUE)
-              for (i in ribbon_layers) {
-                # Remove the NewGeomRibbon layer
-                if (i <= length(modified_layers)) {
-                  modified_layers <- modified_layers[-i]
+                  # Store ribbon data for later use
+                  ribbon_data_list[[length(ribbon_data_list) + 1]] <- ribbon_data
+                  ribbon_layers <- c(ribbon_layers, i)
                 }
               }
+
+              if (!has_ribbon_geom) {
+                # print("No GeomRibbon found in plot layers") # Keep commented
+                # print("Layer classes:") # Keep commented
+                # print(sapply(the_ggplot$layers, function(x) class(x$geom)[1])) # Keep commented
+              }
             }
 
-            # Create a new ggplot with the modified layers
-            new_ggplot <- the_ggplot
-            new_ggplot$layers <- modified_layers
+            # Force 2-column layout by explicitly modifying the facet
+            if (inherits(the_ggplot$facet, "FacetWrap")) {
+              # Directly modify the facet parameters to use 2 columns
+              the_ggplot$facet$params$ncol <- 2
 
-            # Process each ribbon dataset
-            for (i in 1:length(ribbon_data_list)) {
-              rb_data <- ribbon_data_list[[i]]
-              if (nrow(rb_data) > 0 && all(c("x", "ymin", "ymax", "PANEL", "group") %in% names(rb_data))) {
-                # For each panel and group combination (each unique ribbon)
-                for (panel_idx in unique(rb_data$PANEL)) {
-                  panel_ribbons <- rb_data[rb_data$PANEL == panel_idx, ]
+              # Calculate rows based on number of panels
+              facet_layout <- ggplot2::ggplot_build(the_ggplot)$layout$layout
+              n_facets <- nrow(facet_layout)
+              n_rows <- ceiling(n_facets / 2)
 
-                  # Get the facet variables for this panel
-                  panel_row <- panel_info[panel_info$PANEL == panel_idx, ]
+              # Set calculated height based on number of rows
+              pixels_per_row <- 250 # Estimated height per row
+              buffer_pixels <- 250 # Increased extra space for title, legend, etc.
+              calculated_height <- (n_rows * pixels_per_row) + buffer_pixels
+            } else {
+              # Default height if no facets
+              calculated_height <- 600
+            }
 
-                  # Only proceed if we can find the panel info
-                  if (nrow(panel_row) > 0) {
-                    # Extract facet variables from panel info
-                    facet_vars <- panel_row[, !names(panel_row) %in% c("PANEL", "ROW", "COL"), drop = FALSE]
+            # If we found ribbon geometries, recreate them with standard geom_ribbon
+            if (has_ribbon_geom && length(ribbon_data_list) > 0) {
+              # print("Recreating ribbons with standard geom_ribbon") # Keep commented
 
-                    # Add facet variables to the ribbon data
-                    for (group_id in unique(panel_ribbons$group)) {
-                      group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
+              # Get the build data from the ggplot object
+              build_data <- ggplot2::ggplot_build(the_ggplot)
 
-                      # Create data with facet variables
-                      plot_data_for_ribbon <- group_data # Use a different name to avoid conflict
-                      for (var_name in names(facet_vars)) {
-                        plot_data_for_ribbon[[var_name]] <- facet_vars[[var_name]][1]
+              # Extract panel to facet variable mapping
+              panel_info <- build_data$layout$layout
+              # print("Panel to facet mapping:") # Keep commented
+              # print(head(panel_info)) # Keep commented
+
+              # Create a modified ggplot object without the problematic ribbon layers
+              modified_layers <- the_ggplot$layers
+              if (length(ribbon_layers) > 0) {
+                # Sort in descending order so we can remove from back to front
+                # without messing up the layer indices
+                ribbon_layers <- sort(ribbon_layers, decreasing = TRUE)
+                for (i in ribbon_layers) {
+                  # Remove the NewGeomRibbon layer
+                  if (i <= length(modified_layers)) {
+                    modified_layers <- modified_layers[-i]
+                  }
+                }
+              }
+
+              # Create a new ggplot with the modified layers
+              new_ggplot <- the_ggplot
+              new_ggplot$layers <- modified_layers
+
+              # Process each ribbon dataset
+              for (i in 1:length(ribbon_data_list)) {
+                rb_data <- ribbon_data_list[[i]]
+                if (nrow(rb_data) > 0 && all(c("x", "ymin", "ymax", "PANEL", "group") %in% names(rb_data))) {
+                  # For each panel and group combination (each unique ribbon)
+                  for (panel_idx in unique(rb_data$PANEL)) {
+                    panel_ribbons <- rb_data[rb_data$PANEL == panel_idx, ]
+
+                    # Get the facet variables for this panel
+                    panel_row <- panel_info[panel_info$PANEL == panel_idx, ]
+
+                    # Only proceed if we can find the panel info
+                    if (nrow(panel_row) > 0) {
+                      # Extract facet variables from panel info
+                      facet_vars <- panel_row[, !names(panel_row) %in% c("PANEL", "ROW", "COL"), drop = FALSE]
+
+                      # Add facet variables to the ribbon data
+                      for (group_id in unique(panel_ribbons$group)) {
+                        group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
+
+                        # Create data with facet variables
+                        plot_data_for_ribbon <- group_data # Use a different name to avoid conflict
+                        for (var_name in names(facet_vars)) {
+                          plot_data_for_ribbon[[var_name]] <- facet_vars[[var_name]][1]
+                        }
+
+                        # Get fill color
+                        fill_col <- "#D3D3D3" # Default light gray
+                        if ("fill_ggnewscale_1" %in% names(plot_data_for_ribbon)) {
+                          fill_col <- unique(plot_data_for_ribbon$fill_ggnewscale_1)[1]
+                        }
+
+                        # Add standard geom_ribbon with facet variables
+                        new_ggplot <- new_ggplot +
+                          ggplot2::geom_ribbon(
+                            data = plot_data_for_ribbon,
+                            mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
+                            fill = fill_col,
+                            alpha = 0.2,
+                            inherit.aes = FALSE
+                          )
                       }
-
-                      # Get fill color
-                      fill_col <- "#D3D3D3" # Default light gray
-                      if ("fill_ggnewscale_1" %in% names(plot_data_for_ribbon)) {
-                        fill_col <- unique(plot_data_for_ribbon$fill_ggnewscale_1)[1]
-                      }
-
-                      # Add standard geom_ribbon with facet variables
-                      new_ggplot <- new_ggplot +
-                        ggplot2::geom_ribbon(
-                          data = plot_data_for_ribbon,
-                          mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
-                          fill = fill_col,
-                          alpha = 0.2,
-                          inherit.aes = FALSE
-                        )
                     }
                   }
                 }
               }
+
+              # Use the modified ggplot for ggplotly conversion
+              the_ggplot <- new_ggplot
+              # print("Successfully recreated ribbons") # Keep commented
             }
 
-            # Use the modified ggplot for ggplotly conversion
-            the_ggplot <- new_ggplot
-            # print("Successfully recreated ribbons") # Keep commented
+            # Explicitly NULLify the title label before ggplotly conversion
+            # print("[PLOT PANEL - ggplotly] Setting plot$labels$title to NULL before ggplotly()") # Keep commented
+            the_ggplot$labels$title <- NULL
+
+            # Convert to plotly with explicit height
+            plotly_fig <- plotly::ggplotly(the_ggplot,
+              height = calculated_height,
+              tooltip = "all" # c("x", "y", "fill", "colour")
+            )
+
+            # Apply Plotly workarounds using helper functions
+            plotly_fig <- simplify_plotly_legend(plotly_fig, names(plot_data$sim_list_or_simset))
+            plotly_fig <- adjust_plotly_facet_labels(plotly_fig, adjustment_offset = 0.01)
+
+            # GGPLOTLY OVERRIDE: Manually position legend at the top for ggplotly backend,
+            # overriding the theme setting from visualization.yaml which may not translate correctly.
+            # Position legend at the top, horizontally
+            plotly_fig <- plotly_fig %>% layout(legend = list(
+              orientation = "h", # Horizontal layout
+              yanchor = "bottom", # Anchor legend bottom to y position
+              y = 1.02, # Position slightly above plot area (adjust as needed)
+              xanchor = "center", # Anchor legend center to x position
+              x = 0.5 # Center horizontally
+            ))
+
+            # Clear errors and set status
+            sim_boundary$clear()
+            plot_boundary$clear()
+            validation_boundary$clear()
+            store$clear_page_error_state(id)
+            vis_manager$set_plot_status("ready")
+            direct_error_message(NULL)
+
+            # Send explicit plot complete message
+            session$sendCustomMessage("plot_progress_complete", list())
+
+            # Store the settings used for this successful render
+            last_rendered_settings(current_settings)
+
+            plotly_fig
+          },
+          error = function(e) {
+            err_msg <- conditionMessage(e)
+            plot_boundary$set_error(message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
+            store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
+            vis_manager$set_plot_status("error")
+            direct_error_message(paste("Error:", err_msg))
+            # Send plot error message
+            session$sendCustomMessage("plot_progress_error", list(message = err_msg))
+            NULL
           }
-
-          # Explicitly NULLify the title label before ggplotly conversion
-          # print("[PLOT PANEL - ggplotly] Setting plot$labels$title to NULL before ggplotly()") # Keep commented
-          the_ggplot$labels$title <- NULL
-
-          # Convert to plotly with explicit height
-          plotly_fig <- plotly::ggplotly(the_ggplot,
-            height = calculated_height,
-            tooltip = c("x", "y", "fill", "colour")
-          )
-
-          # Apply Plotly workarounds using helper functions
-          plotly_fig <- simplify_plotly_legend(plotly_fig, names(plot_data$sim_list_or_simset))
-          plotly_fig <- adjust_plotly_facet_labels(plotly_fig, adjustment_offset = 0.01)
-
-          # Clear errors and set status
-          sim_boundary$clear()
-          plot_boundary$clear()
-          validation_boundary$clear()
-          store$clear_page_error_state(id)
-          vis_manager$set_plot_status("ready")
-          direct_error_message(NULL)
-
-          # Send explicit plot complete message
-          session$sendCustomMessage("plot_progress_complete", list())
-
-          # Store the settings used for this successful render
-          last_rendered_settings(current_settings)
-
-          plotly_fig
-        },
-        error = function(e) {
-          err_msg <- conditionMessage(e)
-          plot_boundary$set_error(message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
-          store$update_page_error_state(id, has_error = TRUE, message = err_msg, type = ERROR_TYPES$PLOT, severity = SEVERITY_LEVELS$ERROR)
-          vis_manager$set_plot_status("error")
-          direct_error_message(paste("Error:", err_msg))
-          # Send plot error message
-          session$sendCustomMessage("plot_progress_error", list(message = err_msg))
-          NULL
-        }
-      ) # end tryCatch
-      return(generated_ggplotly_plot)
-    }) # End renderPlotly for ggplotly
+        ) # end tryCatch
+        return(generated_ggplotly_plot)
+      }), # End renderPlotly expression
+      # Cache key arguments for bindCache:
+      id,
+      current_settings_reactive(),
+      current_sim_id_reactive()
+    ) # End bindCache
 
     # --- Visibility Observer (Handles Reset Only) ---
     observeEvent(list(input$visualization_state, input$display_type),

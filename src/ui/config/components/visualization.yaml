@@ -33,7 +33,7 @@ plot_customizations:
     background_color: "#FFFFFF"
     grid_color: "#E5E5E5"
     text_size: 12
-    legend_position: "bottom"
+    legend_position: "bottom" # Default for ggplot; may be overridden by backend (e.g., ggplotly in plot_panel.R)
     legend_direction: "horizontal"
   
   # Axis formatting
