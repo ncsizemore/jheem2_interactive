@@ -7,6 +7,7 @@ library(ggplot2)
 source("src/data/loaders/baseline_loader.R")
 source("src/ui/components/common/display/plot_customizer.R")
 source("src/utils/plotting_local.R") # Source the local Plotly functions
+source("src/utils/simplot_local_mods.R") # Source local simplot modifications
 # Assuming config loader is sourced elsewhere or available
 # source("src/ui/config/load_config.R")
 # Assuming visualization manager is sourced elsewhere
@@ -739,8 +740,8 @@ plot_panel_server <- function(id, settings) {
               plot_args_final$style.manager <- style_manager
             }
 
-            # Call simplot to get ggplot object
-            the_ggplot <- do.call(simplot, c(plot_data$sim_list_or_simset, plot_args_final))
+            # Call LOCAL simplot to get ggplot object
+            the_ggplot <- do.call(simplot_local, c(plot_data$sim_list_or_simset, plot_args_final))
             req(the_ggplot)
 
             # Force remove title potentially added by simplot (handled by UI now)
@@ -808,87 +809,8 @@ plot_panel_server <- function(id, settings) {
               calculated_height <- 600
             }
 
-            # If we found ribbon geometries, recreate them with standard geom_ribbon
-            if (has_ribbon_geom && length(ribbon_data_list) > 0) {
-              # print("Recreating ribbons with standard geom_ribbon") # Keep commented
-
-              # Get the build data from the ggplot object
-              build_data <- ggplot2::ggplot_build(the_ggplot)
-
-              # Extract panel to facet variable mapping
-              panel_info <- build_data$layout$layout
-              # print("Panel to facet mapping:") # Keep commented
-              # print(head(panel_info)) # Keep commented
-
-              # Create a modified ggplot object without the problematic ribbon layers
-              modified_layers <- the_ggplot$layers
-              if (length(ribbon_layers) > 0) {
-                # Sort in descending order so we can remove from back to front
-                # without messing up the layer indices
-                ribbon_layers <- sort(ribbon_layers, decreasing = TRUE)
-                for (i in ribbon_layers) {
-                  # Remove the NewGeomRibbon layer
-                  if (i <= length(modified_layers)) {
-                    modified_layers <- modified_layers[-i]
-                  }
-                }
-              }
-
-              # Create a new ggplot with the modified layers
-              new_ggplot <- the_ggplot
-              new_ggplot$layers <- modified_layers
-
-              # Process each ribbon dataset
-              for (i in 1:length(ribbon_data_list)) {
-                rb_data <- ribbon_data_list[[i]]
-                if (nrow(rb_data) > 0 && all(c("x", "ymin", "ymax", "PANEL", "group") %in% names(rb_data))) {
-                  # For each panel and group combination (each unique ribbon)
-                  for (panel_idx in unique(rb_data$PANEL)) {
-                    panel_ribbons <- rb_data[rb_data$PANEL == panel_idx, ]
-
-                    # Get the facet variables for this panel
-                    panel_row <- panel_info[panel_info$PANEL == panel_idx, ]
-
-                    # Only proceed if we can find the panel info
-                    if (nrow(panel_row) > 0) {
-                      # Extract facet variables from panel info
-                      facet_vars <- panel_row[, !names(panel_row) %in% c("PANEL", "ROW", "COL"), drop = FALSE]
-
-                      # Add facet variables to the ribbon data
-                      for (group_id in unique(panel_ribbons$group)) {
-                        group_data <- panel_ribbons[panel_ribbons$group == group_id, ]
-
-                        # Create data with facet variables
-                        plot_data_for_ribbon <- group_data # Use a different name to avoid conflict
-                        for (var_name in names(facet_vars)) {
-                          plot_data_for_ribbon[[var_name]] <- facet_vars[[var_name]][1]
-                        }
-
-                        # Get fill color
-                        fill_col <- "#D3D3D3" # Default light gray
-                        if ("fill_ggnewscale_1" %in% names(plot_data_for_ribbon)) {
-                          fill_col <- unique(plot_data_for_ribbon$fill_ggnewscale_1)[1]
-                        }
-
-                        # Add standard geom_ribbon with facet variables
-                        new_ggplot <- new_ggplot +
-                          ggplot2::geom_ribbon(
-                            data = plot_data_for_ribbon,
-                            mapping = ggplot2::aes(x = x, ymin = ymin, ymax = ymax),
-                            fill = fill_col,
-                            alpha = 0.2,
-                            inherit.aes = FALSE
-                          )
-                      }
-                    }
-                  }
-                }
-              }
-
-              # Use the modified ggplot for ggplotly conversion
-              the_ggplot <- new_ggplot
-              # print("Successfully recreated ribbons") # Keep commented
-            }
+            # --- REMOVED Manual Ribbon Recreation Loop ---
+            # This is no longer needed as execute_simplot_local now uses standard geom_ribbon.
 
             # Explicitly NULLify the title label before ggplotly conversion
             # print("[PLOT PANEL - ggplotly] Setting plot$labels$title to NULL before ggplotly()") # Keep commented
@@ -897,7 +819,7 @@ plot_panel_server <- function(id, settings) {
             # Convert to plotly with explicit height
             plotly_fig <- plotly::ggplotly(the_ggplot,
               height = calculated_height,
-              tooltip = "all" # c("x", "y", "fill", "colour")
+              tooltip = "text" # Use the 'text' aesthetic from simplot_local
             )
 
             # Apply Plotly workarounds using helper functions
