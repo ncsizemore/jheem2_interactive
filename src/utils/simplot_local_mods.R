@@ -821,6 +821,7 @@ execute_simplot_local <- function(prepared.plot.data,
                 sprintf("%s", as.character(current_year))
             }
 
+            # --- Data Hover Text generation removed - will be done in aes() ---
             # Base text: Year and Value
             # Ensure 'value' column exists (it should, derived from value.mean/median or directly)
             current_value <- if ("value" %in% names(df.sim)) df.sim$value[j] else NA
@@ -1064,11 +1065,25 @@ execute_simplot_local <- function(prepared.plot.data,
             rv <- rv + ggplot2::geom_point(data = df.truth, ggplot2::aes(
                 x = year, y = value,
                 fill = color.and.shade.data.by, # fill
-                shape = shape.data.by
+                shape = shape.data.by,
+                # Generate hover text directly in aes()
+                text = paste0(
+                    "Year: ", ifelse(is.numeric(year) & !is.na(year), ifelse(year == floor(year), sprintf("%d", year), sprintf("%.1f", year)), sprintf("%s", as.character(year))),
+                    "\nValue: ", sprintf("%.2f", round(value, 2)),
+                    ifelse(!is.na(source), sprintf("\nSource: %s", source), "")
+                )
             ))
         } else {
             # Why is this plotting all black fill, even though we remade the fill scale?? (in Melissa's outcome="new" simplot call)
-            rv <- rv + ggplot2::geom_point(data = df.truth, ggplot2::aes(x = year, y = value, size = "size", fill = color.and.shade.data.by, shape = shape.data.by), show.legend = F) +
+            rv <- rv + ggplot2::geom_point(data = df.truth, ggplot2::aes(
+                x = year, y = value, size = "size", fill = color.and.shade.data.by, shape = shape.data.by,
+                # Generate hover text directly in aes()
+                text = paste0(
+                    "Year: ", ifelse(is.numeric(year) & !is.na(year), ifelse(year == floor(year), sprintf("%d", year), sprintf("%.1f", year)), sprintf("%s", as.character(year))),
+                    "\nValue: ", sprintf("%.2f", round(value, 2)),
+                    ifelse(!is.na(source), sprintf("\nSource: %s", source), "")
+                )
+            ), show.legend = F) +
                 ggplot2::scale_size_manual(values = c(size = 2))
         }
 
