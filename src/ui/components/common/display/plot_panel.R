@@ -159,6 +159,72 @@ adjust_plotly_facet_labels <- function(plotly_fig, adjustment_offset = 0.01) {
 }
 
 # --- End Helper Functions ---
+# --- Helper Function for Creating Custom Facet Labeller ---
+
+#' Create a Labeller Function for Facets
+#'
+#' Generates a labeller function compatible with ggplot2::facet_wrap that uses
+#' provided mappings to translate internal facet values to user-friendly labels.
+#' It handles the renaming of facet variables (e.g., 'sex' to 'facet.by1')
+#' done by simplot_local.
+#'
+#' @param label_mappings A nested list structure from visualization config,
+#'   e.g., list(sex=list(male="Male", female="Female"), risk=list(...)).
+#' @param original_facet_vars A character vector of the original facet variable
+#'   names passed to simplot_local (e.g., c("sex", "risk")).
+#' @return A function suitable for the `labeller` argument of `facet_wrap`.
+#'         Returns NULL if label_mappings is NULL.
+create_custom_facet_labeller <- function(label_mappings, original_facet_vars) {
+  if (is.null(label_mappings)) {
+    return(NULL)
+  }
+
+  # The actual labeller function ggplot2 calls
+  labeller_func <- function(labels_df) {
+    # labels_df is a data frame where columns are the facet variables
+    # as used in the facet_wrap formula (e.g., outcome.display.name, facet.by1)
+    # and rows are the unique combinations of their values.
+
+    mapped_labels_df <- labels_df # Start with original labels
+
+    # --- Map outcome.display.name (Optional - if mappings exist) ---
+    # Example: if you had mappings for outcome names themselves
+    # if ("outcome.display.name" %in% names(labels_df) && !is.null(label_mappings[["outcome"]])) {
+    #   mapped_labels_df$outcome.display.name <- sapply(labels_df$outcome.display.name, function(val) {
+    #     label_mappings[["outcome"]][[as.character(val)]] %||% as.character(val)
+    #   })
+    # }
+
+    # --- Map facet.by1, facet.by2, etc. using original_facet_vars ---
+    if (!is.null(original_facet_vars) && length(original_facet_vars) > 0) {
+      for (i in seq_along(original_facet_vars)) {
+        original_var_name <- original_facet_vars[i] # e.g., "sex"
+        generated_col_name <- paste0("facet.by", i) # e.g., "facet.by1"
+
+        # Check if the generated column exists in the labels dataframe
+        # and if we have mappings for the original variable name
+        if (generated_col_name %in% names(labels_df) &&
+          !is.null(label_mappings[[original_var_name]])) {
+          # Apply the mapping lookup to each value in the column
+          mapped_labels_df[[generated_col_name]] <- sapply(
+            labels_df[[generated_col_name]],
+            function(val) {
+              # Lookup: label_mappings$sex$`msm` -> "MSM"
+              # Fallback to original value if no mapping found
+              label_mappings[[original_var_name]][[as.character(val)]] %||% as.character(val)
+            }
+          )
+        }
+      }
+    }
+    return(mapped_labels_df)
+  }
+
+  # Return the function ggplot2 needs
+  return(labeller_func)
+}
+
+# --- End Helper Function ---
 
 parse_template <- function(template, values) {
   if (is.null(template) || length(template) == 0) {
@@ -777,6 +843,15 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
             style_manager <- create_style_manager_from_config(plot_data$vis_config) # simplify_legend = simplify_flag)
             if (!is.null(style_manager)) {
               plot_args_final$style.manager <- style_manager
+            }
+
+            # NEW: Create and add the custom facet labeller
+            custom_labeller <- create_custom_facet_labeller(
+              label_mappings = plot_data$vis_config$facet_labels,
+              original_facet_vars = plot_data$plot_args$facet.by
+            )
+            if (!is.null(custom_labeller)) {
+              plot_args_final$facet_labeller <- custom_labeller
             }
 
             # Call LOCAL simplot to get ggplot object

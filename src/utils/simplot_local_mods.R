@@ -33,6 +33,7 @@ simplot_local <- function(...,
                           data.manager = get.default.data.manager(),
                           style.manager = get.default.style.manager(),
                           show.data.pull.error = F,
+                          facet_labeller = NULL, # NEW: Optional labeller function
                           debug = F) {
     plot.data <- plot.data.validation(
         list(...),
@@ -76,6 +77,7 @@ simplot_local <- function(...,
         plot.year.lag.ratio = plot.year.lag.ratio,
         n.facet.rows = n.facet.rows,
         style.manager = style.manager,
+        facet_labeller = facet_labeller, # Pass down the labeller
         debug = debug
     )
 }
@@ -790,6 +792,7 @@ execute_simplot_local <- function(prepared.plot.data,
                                   plot.year.lag.ratio = F,
                                   n.facet.rows = NULL,
                                   style.manager = get.default.style.manager(),
+                                  facet_labeller = NULL, # NEW: Optional labeller function
                                   debug = F) {
     if (debug) browser()
     # browser()
@@ -1115,9 +1118,15 @@ execute_simplot_local <- function(prepared.plot.data,
     }
     if (!is.null(df.sim) || !is.null(df.truth)) {
         if (!is.null(n.facet.rows)) {
-            rv <- rv + ggplot2::facet_wrap(facet.formula, scales = "free_y", nrow = n.facet.rows)
+            # Add labeller if provided
+            facet_args <- list(facet.formula, scales = "free_y", nrow = n.facet.rows)
+            if (!is.null(facet_labeller)) facet_args$labeller <- facet_labeller
+            rv <- rv + do.call(ggplot2::facet_wrap, facet_args)
         } else {
-            rv <- rv + ggplot2::facet_wrap(facet.formula, scales = "free_y")
+            # Add labeller if provided
+            facet_args <- list(facet.formula, scales = "free_y")
+            if (!is.null(facet_labeller)) facet_args$labeller <- facet_labeller
+            rv <- rv + do.call(ggplot2::facet_wrap, facet_args)
         }
     }
     # browser()

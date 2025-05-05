@@ -89,8 +89,8 @@ facet_labels:
     "55+ years": "55+ years"
   race:
     "black": "Black"
-    "hispanic": "Hispanic/Latino"
-    "other": "Other/Multiple races"
+    "hispanic": "Hispanic"
+    "other": "Other"
   sex:
     "heterosexual_male": "Heterosexual male"
     "msm": "MSM"
@@ -99,3 +99,7 @@ facet_labels:
     "never_IDU": "Never PWID"
     "active_IDU": "Active PWID"
     "IDU_in_remission": "PWID in remission"
+    "heterosexual": "Heterosexual"
+    "idu": "PWID"
+    "msm": "MSM"
+    "msm_idu": "MSM/PWID"
