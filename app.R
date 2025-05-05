@@ -448,7 +448,9 @@ server <- function(input, output, session) {
     "prerun",
     settings = reactive({
       get_control_settings(input, "prerun")
-    })
+    }),
+    # Pass the scenario options from the globally loaded config
+    scenario_options_config = PRERUN_CONFIG$selectors$scenario$options
   )
 
   table_panel_server(

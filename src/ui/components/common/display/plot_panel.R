@@ -256,7 +256,8 @@ create_plot_panel <- function(id, type = "static") {
   )
 }
 
-plot_panel_server <- function(id, settings) {
+# Add scenario_options_config argument with a default NULL
+plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     store <- get_store()
@@ -335,19 +336,19 @@ plot_panel_server <- function(id, settings) {
 
     # --- Reactive Expression for Data Fetching and Preparation ---
     plot_data_reactive <- reactive({
-      # --- Load Full Page Config ---
-      # Ensure get_page_complete_config is available
-      req(exists("get_page_complete_config") && is.function(get_page_complete_config))
-      page_config <- tryCatch(
-        {
-          get_page_complete_config(id) # Load config based on current page id
-        },
-        error = function(e) {
-          warning(paste("Error loading page config for", id, ":", e$message))
-          NULL
-        }
-      )
-      req(page_config) # Stop if config loading failed
+      # --- Load Full Page Config --- REMOVED - Use global PRERUN_CONFIG/CUSTOM_CONFIG ---
+      # # Ensure get_page_complete_config is available
+      # req(exists("get_page_complete_config") && is.function(get_page_complete_config))
+      # page_config <- tryCatch(
+      #   {
+      #     get_page_complete_config(id) # Load config based on current page id
+      #   },
+      #   error = function(e) {
+      #     warning(paste("Error loading page config for", id, ":", e$message))
+      #     NULL
+      #   }
+      # )
+      # req(page_config) # Stop if config loading failed
 
       # Initial UI state checks - these need to be outside the reactive
       # as they depend on input$ values directly related to visibility.
@@ -459,20 +460,20 @@ plot_panel_server <- function(id, settings) {
           # For prerun page, use the scenario name from the loaded simulation's settings
           selected_scenario_value <- sim_state_check$settings$scenario # Get scenario ID from stored settings
           if (!is.null(selected_scenario_value) && nzchar(selected_scenario_value)) {
-            # Find the display label using the loaded page_config (loaded earlier in reactive)
-            scenario_options <- page_config$selectors$scenario$options # Access options from pre-loaded config
-            if (!is.null(scenario_options)) {
+            # Find the display label using the passed scenario_options_config
+            # scenario_options_config should be PRERUN_CONFIG$selectors$scenario$options
+            if (!is.null(scenario_options_config)) {
               # Options are named lists: key=id, value=list(id=..., label=...)
-              option_match <- scenario_options[[selected_scenario_value]]
+              option_match <- scenario_options_config[[selected_scenario_value]]
               if (!is.null(option_match) && !is.null(option_match$label)) {
                 intervention_label <- option_match$label
               } else {
-                # Fallback if direct key lookup fails (shouldn't happen with current yaml)
+                # Fallback if direct key lookup fails
                 warning(paste("Could not find display label for scenario value:", selected_scenario_value))
                 intervention_label <- selected_scenario_value # Fallback to value
               }
             } else {
-              warning("Could not find scenario options in loaded page config.")
+              warning("Scenario options config was not passed to plot_panel_server.")
               intervention_label <- selected_scenario_value # Fallback
             }
           } else {
@@ -480,17 +481,8 @@ plot_panel_server <- function(id, settings) {
             # Keep default "Intervention" (already set above)
           }
         } else {
-          # For other pages (e.g., custom), use template or default
-          location_val <- sim_settings$location %||% "Current"
-          template_values <- list(location = location_val)
-          # Use vis_config for baseline simulation label templates if available
-          if (!is.null(vis_config$baseline_simulations)) {
-            intervention_label_template <- vis_config$baseline_simulations$intervention_label %||% "Intervention ({location})"
-            if (exists("parse_template")) {
-              intervention_label <- parse_template(intervention_label_template, template_values)
-            }
-          }
-          # If still default, keep it as "Intervention"
+          # For other pages (e.g., custom), always use "Intervention"
+          intervention_label <- "Intervention"
         }
 
         # Determine Baseline Label - Force to "Baseline"
