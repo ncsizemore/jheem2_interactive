@@ -335,6 +335,20 @@ plot_panel_server <- function(id, settings) {
 
     # --- Reactive Expression for Data Fetching and Preparation ---
     plot_data_reactive <- reactive({
+      # --- Load Full Page Config ---
+      # Ensure get_page_complete_config is available
+      req(exists("get_page_complete_config") && is.function(get_page_complete_config))
+      page_config <- tryCatch(
+        {
+          get_page_complete_config(id) # Load config based on current page id
+        },
+        error = function(e) {
+          warning(paste("Error loading page config for", id, ":", e$message))
+          NULL
+        }
+      )
+      req(page_config) # Stop if config loading failed
+
       # Initial UI state checks - these need to be outside the reactive
       # as they depend on input$ values directly related to visibility.
       # We'll check them inside the render functions instead.
@@ -439,21 +453,53 @@ plot_panel_server <- function(id, settings) {
       # Prepare sim list or single simset
       sim_list_or_simset <- NULL
       if (!is.null(baseline_simset)) {
-        location_val <- sim_settings$location %||% "Current"
-        template_values <- list(location = location_val)
-        baseline_label <- "Baseline"
-        intervention_label <- "Intervention"
-        if (!is.null(vis_config$baseline_simulations)) {
-          baseline_label <- vis_config$baseline_simulations$default_label %||% baseline_label
-          intervention_label_template <- vis_config$baseline_simulations$intervention_label %||% "Intervention ({location})"
-          if (exists("parse_template")) {
-            baseline_label <- parse_template(baseline_label, template_values)
-            intervention_label <- parse_template(intervention_label_template, template_values)
+        # Determine Intervention Label Dynamically
+        intervention_label <- "Intervention" # Default
+        if (id == "prerun") {
+          # For prerun page, use the scenario name from the loaded simulation's settings
+          selected_scenario_value <- sim_state_check$settings$scenario # Get scenario ID from stored settings
+          if (!is.null(selected_scenario_value) && nzchar(selected_scenario_value)) {
+            # Find the display label using the loaded page_config (loaded earlier in reactive)
+            scenario_options <- page_config$selectors$scenario$options # Access options from pre-loaded config
+            if (!is.null(scenario_options)) {
+              # Options are named lists: key=id, value=list(id=..., label=...)
+              option_match <- scenario_options[[selected_scenario_value]]
+              if (!is.null(option_match) && !is.null(option_match$label)) {
+                intervention_label <- option_match$label
+              } else {
+                # Fallback if direct key lookup fails (shouldn't happen with current yaml)
+                warning(paste("Could not find display label for scenario value:", selected_scenario_value))
+                intervention_label <- selected_scenario_value # Fallback to value
+              }
+            } else {
+              warning("Could not find scenario options in loaded page config.")
+              intervention_label <- selected_scenario_value # Fallback
+            }
+          } else {
+            warning("Scenario value not found in loaded simulation settings. Using default label.")
+            # Keep default "Intervention" (already set above)
           }
+        } else {
+          # For other pages (e.g., custom), use template or default
+          location_val <- sim_settings$location %||% "Current"
+          template_values <- list(location = location_val)
+          # Use vis_config for baseline simulation label templates if available
+          if (!is.null(vis_config$baseline_simulations)) {
+            intervention_label_template <- vis_config$baseline_simulations$intervention_label %||% "Intervention ({location})"
+            if (exists("parse_template")) {
+              intervention_label <- parse_template(intervention_label_template, template_values)
+            }
+          }
+          # If still default, keep it as "Intervention"
         }
+
+        # Determine Baseline Label - Force to "Baseline"
+        baseline_label <- "Baseline"
+
+        # Create the list with determined labels
         sim_list <- list()
         sim_list[[baseline_label]] <- baseline_simset
-        sim_list[[intervention_label]] <- sim_state_data$simset
+        sim_list[[intervention_label]] <- sim_state_data$simset # Use determined label
         sim_list_or_simset <- sim_list
       } else {
         sim_list_or_simset <- list(sim_state_data$simset) # Pass as a list even if single
