@@ -730,6 +730,7 @@ plot_panel_server <- function(id, settings) {
 
             # Get plot args from reactive data
             plot_args_final <- plot_data$plot_args
+            plot_args_final$append.url <- TRUE # Add append.url argument
             # Explicitly set title to NULL to prevent simplot from adding one # REMOVED THIS LINE
             # print("[PLOT PANEL - ggplotly] Setting title = NULL in simplot args.") # REMOVED THIS LINE
 

@@ -1068,9 +1068,11 @@ execute_simplot_local <- function(prepared.plot.data,
                 shape = shape.data.by,
                 # Generate hover text directly in aes()
                 text = paste0(
-                    "Year: ", ifelse(is.numeric(year) & !is.na(year), ifelse(year == floor(year), sprintf("%d", year), sprintf("%.1f", year)), sprintf("%s", as.character(year))),
-                    "\nValue: ", sprintf("%.2f", round(value, 2)),
-                    ifelse(!is.na(source), sprintf("\nSource: %s", source), "")
+                    "Year: ", ifelse(is.numeric(.data$year) & !is.na(.data$year), ifelse(.data$year == floor(.data$year), sprintf("%d", .data$year), sprintf("%.1f", .data$year)), sprintf("%s", as.character(.data$year))),
+                    "\nValue: ", sprintf("%.2f", round(.data$value, 2)),
+                    ifelse(!is.na(.data$source), sprintf("\nSource: %s", .data$source), ""),
+                    # Add URL if url value is not NA (assuming column exists if append.url=T)
+                    ifelse(!is.na(.data$url), sprintf("\nURL: %s", .data$url), "")
                 )
             ))
         } else {
@@ -1079,9 +1081,11 @@ execute_simplot_local <- function(prepared.plot.data,
                 x = year, y = value, size = "size", fill = color.and.shade.data.by, shape = shape.data.by,
                 # Generate hover text directly in aes()
                 text = paste0(
-                    "Year: ", ifelse(is.numeric(year) & !is.na(year), ifelse(year == floor(year), sprintf("%d", year), sprintf("%.1f", year)), sprintf("%s", as.character(year))),
-                    "\nValue: ", sprintf("%.2f", round(value, 2)),
-                    ifelse(!is.na(source), sprintf("\nSource: %s", source), "")
+                    "Year: ", ifelse(is.numeric(.data$year) & !is.na(.data$year), ifelse(.data$year == floor(.data$year), sprintf("%d", .data$year), sprintf("%.1f", .data$year)), sprintf("%s", as.character(.data$year))),
+                    "\nValue: ", sprintf("%.2f", round(.data$value, 2)),
+                    ifelse(!is.na(.data$source), sprintf("\nSource: %s", .data$source), ""),
+                    # Add URL if url value is not NA (assuming column exists if append.url=T)
+                    ifelse(!is.na(.data$url), sprintf("\nURL: %s", .data$url), "")
                 )
             ), show.legend = F) +
                 ggplot2::scale_size_manual(values = c(size = 2))
