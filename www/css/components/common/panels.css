@@ -39,7 +39,8 @@
 .panel-content {
   padding: var(--spacing-lg);
   background: var(--color-white);
-  min-height: 200px;
+  min-height: auto;
+  /* Allow shrinking based on content */
   /* Minimum height */
   height: auto !important;
   /* Override any fixed heights */

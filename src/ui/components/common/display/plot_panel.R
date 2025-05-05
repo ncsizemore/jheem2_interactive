@@ -304,7 +304,7 @@ create_plot_panel <- function(id, type = "static") {
         ns("display_type")
       ),
       tags$div(
-        class = "panel-container",
+        class = "panel-container panel-section", # Added panel-section for card styling
         tags$div(
           class = "panel-content",
           # Add UI output for the title

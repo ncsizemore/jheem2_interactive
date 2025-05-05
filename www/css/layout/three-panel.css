@@ -19,6 +19,8 @@
   position: relative;
   margin: var(--spacing-sm);
   transition: all var(--transition-speed) ease;
+  align-self: start;
+  /* Prevent vertical stretching */
 }
 
 .left-panel {
