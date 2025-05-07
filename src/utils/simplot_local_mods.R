@@ -1,3 +1,5 @@
+library(tidyr)
+library(dplyr)
 #' @title Plot Simulations And Data
 #' @param ... One or more jheem.simulation.set objects and at most one character vector of outcomes (as an alternative to the 'outcomes' argument)
 #' @param corresponding.data.outcomes Specify directly which data outcomes should be plotted against simulation outcomes. Must be NULL or a character vector with outcomes as names; all of those outcomes must be present in either the 'outcomes' argument or in '...'"
@@ -209,17 +211,17 @@ simplot.data.only <- function(outcomes,
 
     # @ validate locations
 
-    prepared.plot.data <- prepare.plot(
+    prepared.plot.data <- prepare.plot( # Should this be prepare_plot_local? Assuming original was prepare.plot
         simset.list = NULL,
         outcomes = outcomes,
         locations = locations,
-        corresponding.data.outcomes = corresponding.data.outcomes,
+        corresponding.data.outcomes = corresponding.data.outcomes, # This variable is not defined in this scope, might be a bug in original
         split.by = split.by,
         facet.by = facet.by,
         dimension.values = dimension.values,
         target.ontology = target.ontology,
         plot.which = "data.only",
-        summary.type = summary.type,
+        summary.type = summary.type, # This variable is not defined in this scope, might be a bug in original
         plot.year.lag.ratio = plot.year.lag.ratio,
         title = title,
         append.url = append.url,
@@ -228,12 +230,12 @@ simplot.data.only <- function(outcomes,
         show.data.pull.error = show.data.pull.error,
         debug = debug
     )
-    execute.simplot(prepared.plot.data,
+    execute.simplot(prepared.plot.data, # Should this be execute_simplot_local?
         outcomes = outcomes,
         split.by = split.by,
         facet.by = facet.by,
-        plot.which = plot.which,
-        summary.type = summary.type,
+        plot.which = plot.which, # This variable is not defined in this scope, might be a bug in original
+        summary.type = summary.type, # This variable is not defined in this scope, might be a bug in original
         plot.year.lag.ratio = plot.year.lag.ratio,
         n.facet.rows = n.facet.rows,
         style.manager = style.manager,
@@ -307,13 +309,10 @@ prepare_plot_local <- function(simset.list = NULL,
         stop(paste0(error.prefix, "'target.ontology' must be NULL, an ontology, or a list of ontologies with outcomes as names"))
     }
 
-    # Must supply a target ontology if using simplot.data.only, because otherwise multiple outcomes won't be alignable...?
-
     if (!identical(plot.year.lag.ratio, T) && !identical(plot.year.lag.ratio, F)) {
         stop(paste0(error.prefix, "'plot.year.lag.ratio' must be either T or F"))
     }
 
-    # if *plot.year.lag.ratio* is true, we can have only one outcome
     if (plot.year.lag.ratio && length(outcomes) > 1) {
         stop(paste0(error.prefix, "only one outcome can be used with 'plot.year.lag.ratio'"))
     }
@@ -330,13 +329,6 @@ prepare_plot_local <- function(simset.list = NULL,
         stop(paste0(error.prefix, "'show.data.pull.error' must be either T or F"))
     }
 
-    # Get the real-world outcome names
-    # - eventually we're going to want to pull this from info about the likelihood if the sim notes which likelihood was used on it
-    # - what we'll do now will be the back-up to above
-    #   sim$outcome.metadata[[outcome]]$corresponding.observed.outcome
-    # sims do not all have each outcome because of sub-versions
-
-
     #-- GET OUTCOME METADATA ----
     if (plot.which == "data.only") {
         outcome.metadata.list <- lapply(outcomes, function(outcome) {
@@ -344,38 +336,38 @@ prepare_plot_local <- function(simset.list = NULL,
         })
     } else {
         outcome.metadata.list <- lapply(outcomes, function(outcome) {
-            i <- 1
-            while (i <= length(simset.list)) {
-                if (outcome %in% names(simset.list[[i]]$outcome.metadata)) {
-                    return(simset.list[[i]]$outcome.metadata[[outcome]])
+            idx <- 1 # Use idx to avoid conflict with outer loop variable i if this function is nested
+            while (idx <= length(simset.list)) {
+                if (outcome %in% names(simset.list[[idx]]$outcome.metadata)) {
+                    return(simset.list[[idx]]$outcome.metadata[[outcome]])
                 } else {
-                    i <- i + 1
+                    idx <- idx + 1
                 }
             }
-            stop(paste0(error.prefix, "Consult Andrew: this simplot bug shouldn't happen"))
+            stop(paste0(error.prefix, "Metadata not found for outcome '", outcome, "' in any provided simset."))
         })
     }
     names(outcome.metadata.list) <- outcomes
 
-    # likelihoods need to share their outcome for sim and data, and think about what joint likelihoods. One simulation has one (usually joint) likelihood (instructions)
+    # Determine corresponding data outcomes
     if (plot.which == "data.only") {
         outcomes.for.data <- setNames(outcomes, outcomes)
     } else {
-        outcomes.for.data <- sapply(outcomes, function(outcome) {
-            if (outcome %in% names(corresponding.data.outcomes)) {
-                return(corresponding.data.outcomes[[outcome]])
+        outcomes.for.data <- sapply(outcomes, function(outcome_val) {
+            if (outcome_val %in% names(corresponding.data.outcomes)) {
+                return(corresponding.data.outcomes[[outcome_val]])
             }
-            corresponding.observed.outcome <- NULL
-            i <- 1
-            while (i <= length(simset.list)) {
-                if (outcome %in% names(simset.list[[i]]$outcome.metadata)) {
-                    corresponding.observed.outcome <- simset.list[[i]]$outcome.metadata[[outcome]]$corresponding.observed.outcome
+            co_outcome <- NULL
+            j <- 1
+            while (j <= length(simset.list)) {
+                if (outcome_val %in% names(simset.list[[j]]$outcome.metadata)) {
+                    co_outcome <- simset.list[[j]]$outcome.metadata[[outcome_val]]$corresponding.observed.outcome
                     break
                 } else {
-                    i <- i + 1
+                    j <- j + 1
                 }
             }
-            corresponding.observed.outcome
+            co_outcome
         })
     }
 
@@ -383,21 +375,32 @@ prepare_plot_local <- function(simset.list = NULL,
         outcome.ontologies <- NULL
     } else {
         outcome.ontologies <- lapply(outcomes, function(outcome) {
-            if (is.null(target.ontology) || FALSE) {
-                outcome.ontology <- NULL
-            }
-            i <- 1
-            while (i <= length(simset.list)) {
-                if (outcome %in% names(simset.list[[i]]$outcome.ontologies)) {
-                    outcome.ontology <- simset.list[[i]]$outcome.ontologies[[outcome]]
+            # if (is.null(target.ontology) || FALSE) { # Original logic was confusing here
+            #     outcome.ontology <- NULL
+            # }
+            # The above seems to always make outcome.ontology NULL if target.ontology is NULL.
+            # Let's try to get from simset first.
+            outcome.ontology <- NULL # Initialize
+            idx <- 1
+            while (idx <= length(simset.list)) {
+                if (outcome %in% names(simset.list[[idx]]$outcome.ontologies)) {
+                    outcome.ontology <- simset.list[[idx]]$outcome.ontologies[[outcome]]
                     break
                 } else {
-                    i <- i + 1
+                    idx <- idx + 1
                 }
             }
-            if (is.null(outcome.ontology)) {
-                stop(paste0("No outcome ontology found for outcome '", outcome, "'"))
-            } # Shouldn't happen
+            if (is.null(outcome.ontology)) { # Fallback or error if not found
+                # If target.ontology is a list, try to use the one for this outcome
+                if (is.list(target.ontology) && outcome %in% names(target.ontology)) {
+                    outcome.ontology <- target.ontology[[outcome]]
+                } else if (!is.list(target.ontology) && !is.null(target.ontology)) {
+                    # If target.ontology is a single ontology, use it for all
+                    outcome.ontology <- target.ontology
+                } else {
+                    stop(paste0("No outcome ontology found for outcome '", outcome, "' and no suitable global target.ontology provided."))
+                }
+            }
             outcome.ontology
         })
     }
@@ -406,14 +409,13 @@ prepare_plot_local <- function(simset.list = NULL,
         outcome.locations <- locations
     } else {
         outcome.locations <- lapply(outcomes, function(outcome) {
-            locations.this.outcome <- unique(unlist(lapply(simset.list, function(simset) {
+            unique(unlist(lapply(simset.list, function(simset) {
                 simset$outcome.location.mapping$get.observed.locations(outcome, simset$location)
             })))
         })
-        names(outcome.locations) <- outcomes.for.data
+        names(outcome.locations) <- outcomes.for.data # names should align with data being pulled
     }
 
-    # Get sim labels (like "MSM/PWID" instead of "msm_idu")
     if (plot.which != "data.only") {
         sim.labels.list <- lapply(simset.list, function(simset) {
             simset$metadata$labels
@@ -422,153 +424,178 @@ prepare_plot_local <- function(simset.list = NULL,
         sim.labels.list <- NULL
     }
 
-
     #-- MAKE A DATA FRAME WITH ALL THE REAL-WORLD DATA ----
-
-    outcome.mappings <- list() # note: not all outcomes will have corresponding data outcomes
+    outcome.mappings <- list()
     source.metadata.list <- list()
     if (append.url) append.attributes <- "url" else append.attributes <- NULL
 
     df.truth <- NULL
-    for (i in seq_along(outcomes.for.data))
-    {
+    for (i in seq_along(outcomes.for.data)) {
         if (plot.which != "sim.only" && !is.null(outcomes.for.data[[i]])) {
             outcome.data <- tryCatch(
                 {
-                    # browser()
-                    if (!is.null(target.ontology) && !is.list(target.ontology)) {
-                        result <- data.manager$pull(
-                            outcome = outcomes.for.data[[i]],
-                            dimension.values = c(dimension.values, list(location = outcome.locations[[i]])),
-                            keep.dimensions = c("year", "location", facet.by, split.by), #' year' can never be in facet.by
-                            target.ontology = target.ontology,
-                            allow.mapping.from.target.ontology = F,
-                            append.attributes = append.attributes,
-                            na.rm = T,
-                            debug = F
-                        )
-                    } else if (is.list(target.ontology) && outcomes.for.data[[i]] %in% names(target.ontology)) {
-                        result <- data.manager$pull(
-                            outcome = outcomes.for.data[[i]],
-                            dimension.values = c(dimension.values, list(location = outcome.locations[[i]])),
-                            keep.dimensions = c("year", "location", facet.by, split.by), #' year' can never be in facet.by
-                            target.ontology = target.ontology[[outcomes.for.data[[i]]]],
-                            allow.mapping.from.target.ontology = F,
-                            append.attributes = append.attributes,
-                            na.rm = T,
-                            debug = F
-                        )
-                    } else if (plot.which == "sim.and.data") {
-                        result <- data.manager$pull(
-                            outcome = outcomes.for.data[[i]],
-                            dimension.values = c(dimension.values, list(location = outcome.locations[[i]])),
-                            keep.dimensions = c("year", "location", facet.by, split.by), #' year' can never be in facet.by
-                            target.ontology = outcome.ontologies[[i]],
-                            allow.mapping.from.target.ontology = T,
-                            append.attributes = append.attributes,
-                            na.rm = T,
-                            debug = F
-                        )
-                    } else { # See if we really want this or not
-                        result <- data.manager$pull(
-                            outcome = outcomes.for.data[[i]],
-                            dimension.values = c(dimension.values, list(location = outcome.locations[[i]])),
-                            keep.dimensions = c("year", "location", facet.by, split.by), #' year' can never be in facet.by
-                            target.ontology = NULL,
-                            append.attributes = append.attributes,
-                            na.rm = T,
-                            debug = F
-                        )
+                    current_target_ontology <- NULL
+                    if (!is.null(target.ontology)) {
+                        if (is.list(target.ontology) && outcomes.for.data[[i]] %in% names(target.ontology)) {
+                            current_target_ontology <- target.ontology[[outcomes.for.data[[i]]]]
+                        } else if (!is.list(target.ontology)) {
+                            current_target_ontology <- target.ontology
+                        }
                     }
+                    # If no specific target.ontology, use the one from simset (outcome.ontologies[[i]])
+                    if (is.null(current_target_ontology) && plot.which == "sim.and.data" && i <= length(outcome.ontologies)) {
+                        current_target_ontology <- outcome.ontologies[[i]]
+                    }
+
+                    data.manager$pull(
+                        outcome = outcomes.for.data[[i]],
+                        dimension.values = c(dimension.values, list(location = outcome.locations[[outcomes.for.data[[i]]]])), # Use named access for outcome.locations
+                        keep.dimensions = c("year", "location", facet.by, split.by),
+                        target.ontology = current_target_ontology,
+                        allow.mapping.from.target.ontology = (plot.which == "sim.and.data"), # Only allow if comparing with sim
+                        append.attributes = append.attributes,
+                        na.rm = T,
+                        debug = F # Keep debug off for general use
+                    )
                 },
                 error = function(e) {
                     if (show.data.pull.error) {
-                        stop(paste0(error.prefix, e))
+                        stop(paste0(error.prefix, e$message))
                     } else {
                         NULL
                     }
                 }
             )
+
             if (!is.null(attr(outcome.data, "mapping"))) {
                 outcome.mappings <- c(outcome.mappings, list(attr(outcome.data, "mapping")))
             } else {
                 outcome.mappings <- c(outcome.mappings, list(NULL))
             }
+
             if (!is.null(outcome.data)) {
-                # If the scale is proportion, multiply data by 100 to match the "%" symbol the label will have
                 if (data.manager$outcome.info[[outcomes.for.data[[i]]]]$metadata$display.as.percent) {
                     outcome.data <- outcome.data * 100
                 }
-
-                # If we have multiple outcomes that may map differently (for example, with years), the factor levels unavoidably determined by the first outcome for reshape2::melt may not be valid for subsequent outcomes
                 one.df.outcome <- reshape2::melt(outcome.data, na.rm = T, as.is = T)
 
                 if (append.url) {
-                    one.df.outcome <- cbind(one.df.outcome, reshape2::melt(attr(outcome.data, "url"), na.rm = T, as.is = T))
-                    colnames(one.df.outcome)[ncol(one.df.outcome)] <- "url"
+                    one.df.outcome$data_url <- NA_character_
+                    url_attribute <- attr(outcome.data, "url")
+
+                    if (!is.null(url_attribute)) {
+                        melt_error_message <- NULL
+                        melted_url_data <- "MELT_NOT_RUN_OR_FAILED_PRE_ASSIGN"
+
+                        melted_url_data <- tryCatch(
+                            reshape2::melt(url_attribute, na.rm = T, as.is = T),
+                            error = function(e) {
+                                melt_error_message <<- paste("Error during melt of url_attribute:", e$message)
+                                NULL
+                            }
+                        )
+
+                        # --- Start Debug Block for melt result ---
+                        print(paste("--- Debugging melt for outcome:", outcomes.for.data[[i]], "---"))
+                        if (!is.null(melt_error_message)) {
+                            print(melt_error_message)
+                        }
+                        print("Value/structure of melted_url_data after tryCatch:")
+                        if (identical(melted_url_data, "MELT_NOT_RUN_OR_FAILED_PRE_ASSIGN")) {
+                            print("Melt was not attempted or tryCatch block had an issue before assignment to melted_url_data.")
+                        } else if (is.null(melted_url_data)) {
+                            print("melted_url_data is NULL (melt likely failed and error handler returned NULL).")
+                        } else {
+                            print("melted_url_data is not NULL. Structure:")
+                            str(melted_url_data)
+                        }
+                        # To inspect further if needed, uncomment the browser() call below
+                        # browser()
+                        # --- End Debug Block ---
+
+                        if (!is.null(melted_url_data) && inherits(melted_url_data, "data.frame") && "value" %in% names(melted_url_data)) {
+                            if (nrow(one.df.outcome) == nrow(melted_url_data)) {
+                                one.df.outcome$data_url <- as.character(melted_url_data$value)
+                            } else {
+                                warning(paste("Row mismatch (melted URL vs outcome) for:", outcomes.for.data[[i]], ". URLs may be misaligned. Melted URL rows:", nrow(melted_url_data), "Outcome rows:", nrow(one.df.outcome)))
+                            }
+                        } else if (is.list(url_attribute) && (is.null(dim(url_attribute)) || length(dim(url_attribute)) == 1)) {
+                            url_vector <- unlist(url_attribute)
+                            if (length(url_vector) == nrow(one.df.outcome)) {
+                                one.df.outcome$data_url <- as.character(url_vector)
+                            } else {
+                                warning(paste("Length mismatch (unlisted URL attribute vs outcome rows) for:", outcomes.for.data[[i]], ". Length URL:", length(url_vector), "Length Df:", nrow(one.df.outcome)))
+                            }
+                        } else {
+                            if (is.null(melt_error_message) && !identical(melted_url_data, "MELT_NOT_RUN_OR_FAILED_PRE_ASSIGN") && !is.null(melted_url_data)) {
+                                warning(paste("URL attribute for", outcomes.for.data[[i]], "has an unexpected structure or melt failed to produce 'value' column. data_url remains NA."))
+                            }
+                        }
+                    }
                 }
 
-                # Check that we don't have year ranges if we are trying to do the year lag ratio thing
                 if (!any(sapply(one.df.outcome$year, is.year.range))) {
                     one.df.outcome$year <- as.numeric(one.df.outcome$year)
                 } else if (plot.year.lag.ratio) {
                     stop(paste0(error.prefix, "cannot use 'plot.year.lag.ratio' when data is in year ranges"))
                 }
 
-                # Add the source info to the source metadata list
                 sources.this.outcome <- unique(one.df.outcome$source)
                 source.metadata.list <- c(source.metadata.list, data.manager$source.info[setdiff(sources.this.outcome, names(source.metadata.list))])
 
-                corresponding.outcome <- names(outcomes.for.data)[[i]]
-                one.df.outcome["outcome"] <- corresponding.outcome
-                one.df.outcome["outcome.display.name"] <- outcome.metadata.list[[corresponding.outcome]]$display.name
+                corresponding_outcome_name <- names(outcomes.for.data)[i] # Get the original outcome name
+                one.df.outcome["outcome"] <- corresponding_outcome_name
+                one.df.outcome["outcome.display.name"] <- outcome.metadata.list[[corresponding_outcome_name]]$display.name
+
+                # Ensure column consistency before rbind
+                if (!is.null(df.truth) && nrow(df.truth) > 0) {
+                    missing_cols_in_new <- setdiff(names(df.truth), names(one.df.outcome))
+                    if (length(missing_cols_in_new) > 0) {
+                        one.df.outcome[missing_cols_in_new] <- NA
+                    }
+                    missing_cols_in_main <- setdiff(names(one.df.outcome), names(df.truth))
+                    if (length(missing_cols_in_main) > 0) {
+                        df.truth[missing_cols_in_main] <- NA
+                    }
+                    one.df.outcome <- one.df.outcome[, names(df.truth), drop = FALSE] # Reorder
+                }
                 df.truth <- rbind(df.truth, one.df.outcome)
             }
         } else {
             outcome.mappings <- c(outcome.mappings, list(NULL))
         }
     }
-    if (!is.null(df.truth)) {
-        # make whatever column corresponds to split by actually be called "stratum" and same for facet.by.
-        if (!is.null(split.by)) names(df.truth)[names(df.truth) == split.by] <- "stratum"
+
+    if (!is.null(df.truth) && nrow(df.truth) > 0) {
+        if (!is.null(split.by) && split.by %in% names(df.truth)) names(df.truth)[names(df.truth) == split.by] <- "stratum"
         if (!is.null(facet.by)) {
-            for (i in seq_along(facet.by)) {
-                names(df.truth)[names(df.truth) == facet.by[i]] <- paste0("facet.by", i)
+            for (j in seq_along(facet.by)) { # Use j to avoid conflict
+                if (facet.by[j] %in% names(df.truth)) names(df.truth)[names(df.truth) == facet.by[j]] <- paste0("facet.by", j)
             }
         }
-        # if (!is.null(facet.by)) names(df.truth)[names(df.truth)==facet.by] = "facet.by" ##########################
-
-        # if there is no 'stratum' because no split, then we should fill it with ""
-        if (!("stratum" %in% names(df.truth))) df.truth["stratum"] <- rep("", nrow(df.truth))
-
-        # sort the split.by column alphabetically so that when we assign colors, it will be the same for sim.
-        if (!is.null(split.by)) {
-            df.truth <- df.truth[order(df.truth$stratum), ]
-        }
+        if (!("stratum" %in% names(df.truth))) df.truth["stratum"] <- ""
+        if ("stratum" %in% names(df.truth)) df.truth <- df.truth[order(df.truth$stratum), ]
     }
-    names(outcome.mappings) <- outcomes
+    names(outcome.mappings) <- outcomes # This should use original outcome names
 
     #-- MAKE A DATA FRAME WITH THE SIMULATION DATA ----
-
     df.sim <- NULL
     if (plot.which != "data.only") {
-        for (outcome in outcomes) {
+        for (outcome_val_sim in outcomes) { # Use outcome_val_sim
             keep.dimensions <- c("year", facet.by, split.by)
-            for (i in seq_along(simset.list)) {
-                simset <- simset.list[[i]]
-                if (!is.null(outcome.mappings[[outcome]])) {
-                    mapping.this.outcome <- outcome.mappings[[outcome]]
-                } # case when target ontology is NULL or is a list but doesn't include this outcome
-                else if (is.list(target.ontology)) {
-                    mapping.this.outcome <- get.ontology.mapping(outcome.ontologies[[i]], target.ontology[[outcome]])
-                } else if (!is.null(target.ontology)) {
-                    mapping.this.outcome <- get.ontology.mapping(outcome.ontologies[[i]], target.ont)
-                } else {
-                    mapping.this.outcome <- NULL
+            for (k in seq_along(simset.list)) { # Use k
+                simset <- simset.list[[k]]
+                mapping.this.outcome <- NULL
+                if (!is.null(outcome.mappings[[outcome_val_sim]])) {
+                    mapping.this.outcome <- outcome.mappings[[outcome_val_sim]]
+                } else if (is.list(target.ontology) && outcome_val_sim %in% names(target.ontology)) { # Check if outcome_val_sim is in target.ontology list
+                    mapping.this.outcome <- get.ontology.mapping(outcome.ontologies[[outcome_val_sim]], target.ontology[[outcome_val_sim]])
+                } else if (!is.null(target.ontology) && !is.list(target.ontology)) { # Check if target.ontology is a single ontology
+                    mapping.this.outcome <- get.ontology.mapping(outcome.ontologies[[outcome_val_sim]], target.ontology)
                 }
-                # browser()
+
                 simset.data.this.outcome <- simset$get(
-                    outcomes = outcome,
+                    outcomes = outcome_val_sim,
                     dimension.values = dimension.values,
                     keep.dimensions = keep.dimensions,
                     drop.single.outcome.dimension = T,
@@ -578,12 +605,10 @@ prepare_plot_local <- function(simset.list = NULL,
 
                 if (is.null(simset.data.this.outcome)) next
 
-                # If the scale is proportion, multiply data by 100 to match the "%" symbol the label will have
-                if (simset.list[[i]][["outcome.metadata"]][[outcome]]$display.as.percent) {
+                if (simset.list[[k]][["outcome.metadata"]][[outcome_val_sim]]$display.as.percent) {
                     simset.data.this.outcome <- simset.data.this.outcome * 100
                 }
 
-                # If we have multiple outcomes that may map differently (for example, with years), the factor levels unavoidably determined by the first outcome for reshape2::melt may not be valid for subsequent outcomes
                 one.df.sim.this.outcome <- reshape2::melt(simset.data.this.outcome, na.rm = T)
                 one.df.sim.this.outcome <- as.data.frame(lapply(one.df.sim.this.outcome, function(col) {
                     if (is.factor(col)) {
@@ -593,181 +618,191 @@ prepare_plot_local <- function(simset.list = NULL,
                     }
                 }))
 
-                one.df.sim.this.outcome["simset"] <- names(simset.list)[[i]]
-                one.df.sim.this.outcome["outcome"] <- outcome
-                one.df.sim.this.outcome["linewidth"] <- 1 / (style.manager$linewidth.slope * log10(simset$n.sim) + 1) # # used to be 1/sqrt() have style manager create this later?
-                one.df.sim.this.outcome["alpha"] <- one.df.sim.this.outcome["linewidth"] # same comment as above; USED to be 20 * this
+                one.df.sim.this.outcome["simset"] <- names(simset.list)[[k]]
+                one.df.sim.this.outcome["outcome"] <- outcome_val_sim
+                one.df.sim.this.outcome["linewidth"] <- 1 / (style.manager$linewidth.slope * log10(simset$n.sim) + 1)
+                one.df.sim.this.outcome["alpha"] <- one.df.sim.this.outcome["linewidth"]
+                one.df.sim.this.outcome["outcome.display.name"] <- outcome.metadata.list[[outcome_val_sim]]$display.name
 
-                # Make a "outcome.long.name" column so that the facet.by can present it instead of the short name
-                one.df.sim.this.outcome["outcome.display.name"] <- outcome.metadata.list[[outcome]]$display.name
-
+                # Ensure column consistency before rbind for df.sim
+                if (!is.null(df.sim) && nrow(df.sim) > 0) {
+                    missing_cols_in_new <- setdiff(names(df.sim), names(one.df.sim.this.outcome))
+                    if (length(missing_cols_in_new) > 0) {
+                        one.df.sim.this.outcome[missing_cols_in_new] <- NA
+                    }
+                    missing_cols_in_main <- setdiff(names(one.df.sim.this.outcome), names(df.sim))
+                    if (length(missing_cols_in_main) > 0) {
+                        df.sim[missing_cols_in_main] <- NA
+                    }
+                    one.df.sim.this.outcome <- one.df.sim.this.outcome[, names(df.sim), drop = FALSE] # Reorder
+                }
                 df.sim <- rbind(df.sim, one.df.sim.this.outcome)
             }
         }
 
-        # Pivot wider to convert column "metric" to columns "value.mean", "value.lower", "value.upper" or such
-        if (summary.type != "individual.simulation") {
-            df.sim <- reshape(df.sim, direction = "wide", idvar = names(df.sim)[!(names(df.sim) %in% c("metric", "value"))], timevar = "metric")
+        if (summary.type != "individual.simulation" && !is.null(df.sim) && nrow(df.sim) > 0) {
+            # Ensure 'metric' and 'value' columns exist before reshape
+            if ("metric" %in% names(df.sim) && "value" %in% names(df.sim)) {
+                id_vars <- names(df.sim)[!(names(df.sim) %in% c("metric", "value"))]
+                # Ensure id_vars are not empty and exist in df.sim
+                id_vars <- intersect(id_vars, names(df.sim))
+                if (length(id_vars) > 0) {
+                    df.sim <- reshape(df.sim, direction = "wide", idvar = id_vars, timevar = "metric")
+                } else {
+                    warning("Not enough identifying variables for reshape (wide) of df.sim.")
+                }
+            } else {
+                warning("Missing 'metric' or 'value' column in df.sim for summary type, skipping reshape.")
+            }
             if (!is.null(df.sim[["value.mean"]])) df.sim$value <- df.sim$value.mean
             if (!is.null(df.sim[["value.median"]])) df.sim$value <- df.sim$value.median
         }
-        # browser()
-        # make whatever column corresponds to split by actually be called "stratum" and same for facet.by.
-        if (!is.null(split.by)) df.sim["stratum"] <- df.sim[split.by]
-        if (!is.null(facet.by)) {
-            for (i in seq_along(facet.by)) {
-                df.sim[paste0("facet.by", i)] <- df.sim[facet.by[i]]
+
+        if (!is.null(df.sim) && nrow(df.sim) > 0) {
+            if (!is.null(split.by) && split.by %in% names(df.sim)) df.sim["stratum"] <- df.sim[split.by]
+            if (!is.null(facet.by)) {
+                for (j in seq_along(facet.by)) { # Use j
+                    if (facet.by[j] %in% names(df.sim)) df.sim[paste0("facet.by", j)] <- df.sim[facet.by[j]]
+                }
             }
-        }
-        # df.sim["facet.by"] = df.sim[facet.by]
+            if (!("stratum" %in% names(df.sim))) df.sim["stratum"] <- ""
+            if ("simset" %in% names(df.sim)) df.sim$simset <- factor(df.sim$simset)
+            if ("sim" %in% names(df.sim)) df.sim$sim <- factor(df.sim$sim)
 
-        # if we don't have a 'stratum' col because no split, make an empty one
-        if (!("stratum" %in% names(df.sim))) df.sim["stratum"] <- rep("", nrow(df.sim))
+            # Construct groupid correctly for each row
+            df.sim$groupid <- paste(
+                df.sim$outcome %||% "NA_o",
+                df.sim$simset %||% "NA_ss",
+                df.sim$sim %||% "NA_s",
+                df.sim$stratum %||% "NA_st",
+                sep = "_"
+            )
 
-        df.sim$simset <- factor(df.sim$simset)
-        df.sim$sim <- factor(df.sim$sim)
-        df.sim$groupid <- paste0(df.sim$outcome, "_", df.sim$simset, "_", df.sim$sim, "_", df.sim$stratum)
-
-        # sort split by alphabetically to line it up with df.truth when colors are picked
-        if (!is.null(split.by)) {
-            df.sim <- df.sim[order(df.sim$stratum), ]
+            if ("stratum" %in% names(df.sim)) df.sim <- df.sim[order(df.sim$stratum), ]
         }
     }
 
     #-- YEAR LAG RATIO #----
     if (plot.year.lag.ratio) {
-        # browser()
-        ## We will take log of values, then difference, then exponentiate result
-        if (!is.null(df.truth)) {
+        if (!is.null(df.truth) && nrow(df.truth) > 0) {
             df.truth$value <- log(df.truth$value)
-            if (!is.null(split.by)) {
-                if (!is.null(facet.by)) {
-                    df.truth[["stratum"]] <- do.call(paste, c(
-                        list(df.truth$stratum),
-                        lapply(seq_along(facet.by), function(i) {
-                            df.truth[[paste0("facet.by", i)]]
-                        }),
-                        list(sep = "__")
-                    ))
+            # Combine facet.by and split.by into stratum for lag calculation
+            temp_stratum_truth <- rep("", nrow(df.truth))
+            if (!is.null(split.by) && "stratum" %in% names(df.truth)) temp_stratum_truth <- df.truth$stratum
+
+            facet_components_truth <- character()
+            if (!is.null(facet.by)) {
+                for (k_facet in seq_along(facet.by)) { # Use k_facet
+                    col_name <- paste0("facet.by", k_facet)
+                    if (col_name %in% names(df.truth)) facet_components_truth <- cbind(facet_components_truth, df.truth[[col_name]])
                 }
-            } else if (!is.null(facet.by)) {
-                df.truth[["stratum"]] <- do.call(paste, c(
-                    lapply(seq_along(facet.by), function(i) {
-                        df.truth[[paste0("facet.by", i)]]
-                    }),
-                    list(sep = "__")
-                ))
-            } else {
-                df.truth[["stratum"]] <- rep(0, nrow(df.truth))
             }
+            if (ncol(facet_components_truth) > 0) temp_stratum_truth <- paste(temp_stratum_truth, apply(facet_components_truth, 1, paste, collapse = "_"), sep = "_")
+
+            df.truth[["temp_lag_stratum"]] <- temp_stratum_truth
+
             truth.lag.indices <- generate_lag_matrix_indices(
                 as.integer(as.factor(df.truth$year)),
                 as.integer(as.factor(df.truth$location)),
-                as.integer(as.factor(df.truth$stratum)),
+                as.integer(as.factor(df.truth$temp_lag_stratum)),
                 as.integer(as.factor(df.truth$source)),
                 nrow(df.truth)
             )
             truth.n.lag.pairs <- length(truth.lag.indices) / 2
 
-            truth.lag.values <- apply_lag_to_vector(df.truth$value, truth.lag.indices, rep(0, truth.n.lag.pairs), truth.n.lag.pairs)
-            truth.rows.to.keep <- truth.lag.indices[rep(c(T, F), truth.n.lag.pairs)] + 1 # add one because CPP is zero-indexed
-            df.truth <- df.truth[truth.rows.to.keep, ]
-            df.truth$value <- exp(truth.lag.values)
-
-            # Remove NAs or Infs generated in this process
-            df.truth <- df.truth[!is.na(df.truth$value) & !is.infinite(df.truth$value), ]
-
-            # If we end up with 0 rows, we need to consider the df.truth to be NULL
+            if (truth.n.lag.pairs > 0) {
+                truth.lag.values <- apply_lag_to_vector(df.truth$value, truth.lag.indices, rep(0, truth.n.lag.pairs), truth.n.lag.pairs)
+                truth.rows.to.keep <- truth.lag.indices[rep(c(T, F), truth.n.lag.pairs)] + 1
+                df.truth <- df.truth[truth.rows.to.keep, ]
+                df.truth$value <- exp(truth.lag.values)
+                df.truth <- df.truth[!is.na(df.truth$value) & !is.infinite(df.truth$value), ]
+            } else {
+                df.truth <- df.truth[0, ] # Empty if no pairs
+            }
+            df.truth$temp_lag_stratum <- NULL # remove helper
             if (nrow(df.truth) == 0) df.truth <- NULL
         }
-        if (!is.null(df.sim)) {
+        if (!is.null(df.sim) && nrow(df.sim) > 0) {
             df.sim$value <- log(df.sim$value)
             if (!is.null(df.sim$value.lower) && !is.null(df.sim$value.upper)) {
                 df.sim$value.lower <- log(df.sim$value.lower)
                 df.sim$value.upper <- log(df.sim$value.upper)
             }
-            if (!is.null(split.by)) {
-                if (!is.null(facet.by)) {
-                    df.sim[["stratum"]] <- do.call(paste, c(
-                        list(df.sim$stratum),
-                        lapply(seq_along(facet.by), function(i) {
-                            df.sim[[paste0("facet.by", i)]]
-                        }),
-                        list(sep = "__")
-                    ))
+
+            temp_stratum_sim <- rep("", nrow(df.sim))
+            if (!is.null(split.by) && "stratum" %in% names(df.sim)) temp_stratum_sim <- df.sim$stratum
+
+            facet_components_sim <- character()
+            if (!is.null(facet.by)) {
+                for (k_facet_sim in seq_along(facet.by)) {
+                    col_name_sim <- paste0("facet.by", k_facet_sim)
+                    if (col_name_sim %in% names(df.sim)) facet_components_sim <- cbind(facet_components_sim, df.sim[[col_name_sim]])
                 }
-            } else if (!is.null(facet.by)) {
-                df.sim[["stratum"]] <- do.call(paste, c(
-                    lapply(seq_along(facet.by), function(i) {
-                        df.sim[[paste0("facet.by", i)]]
-                    }),
-                    list(sep = "__")
-                ))
-            } else {
-                df.sim[["stratum"]] <- rep(0, nrow(df.sim))
             }
-            # browser()
+            if (ncol(facet_components_sim) > 0) temp_stratum_sim <- paste(temp_stratum_sim, apply(facet_components_sim, 1, paste, collapse = "_"), sep = "_")
+            df.sim[["temp_lag_stratum"]] <- temp_stratum_sim
+
             sim.lag.indices <- generate_lag_matrix_indices(
                 as.integer(as.factor(df.sim$year)),
                 as.integer(as.factor(df.sim$sim)),
-                as.integer(as.factor(df.sim$stratum)),
+                as.integer(as.factor(df.sim$temp_lag_stratum)),
                 as.integer(as.factor(df.sim$simset)),
                 nrow(df.sim)
             )
             sim.n.lag.pairs <- length(sim.lag.indices) / 2
 
-            sim.lag.values <- apply_lag_to_vector(df.sim$value, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
-            sim.rows.to.keep <- sim.lag.indices[rep(c(T, F), sim.n.lag.pairs)] + 1 # add one because CPP is zero-indexed
+            if (sim.n.lag.pairs > 0) {
+                sim.lag.values <- apply_lag_to_vector(df.sim$value, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
+                sim.rows.to.keep <- sim.lag.indices[rep(c(T, F), sim.n.lag.pairs)] + 1
 
-
-            if (!is.null(df.sim$value.lower) && !is.null(df.sim$value.upper)) {
-                sim.lower.lag.values <- apply_lag_to_vector(df.sim$value.lower, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
-                sim.upper.lag.values <- apply_lag_to_vector(df.sim$value.upper, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
+                if (!is.null(df.sim$value.lower) && !is.null(df.sim$value.upper)) {
+                    sim.lower.lag.values <- apply_lag_to_vector(df.sim$value.lower, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
+                    sim.upper.lag.values <- apply_lag_to_vector(df.sim$value.upper, sim.lag.indices, rep(0, sim.n.lag.pairs), sim.n.lag.pairs)
+                }
+                df.sim <- df.sim[sim.rows.to.keep, ]
+                df.sim$value <- exp(sim.lag.values)
+                if (!is.null(df.sim$value.lower) && !is.null(df.sim$value.upper)) {
+                    df.sim$value.lower <- exp(sim.lower.lag.values)
+                    df.sim$value.upper <- exp(sim.upper.lag.values)
+                }
+                df.sim <- df.sim[!is.na(df.sim$value) & !is.infinite(df.sim$value), ]
+            } else {
+                df.sim <- df.sim[0, ] # Empty if no pairs
             }
-
-            df.sim <- df.sim[sim.rows.to.keep, ]
-            df.sim$value <- exp(sim.lag.values)
-
-            if (!is.null(df.sim$value.lower) && !is.null(df.sim$value.upper)) {
-                df.sim$value.lower <- exp(sim.lower.lag.values)
-                df.sim$value.upper <- exp(sim.upper.lag.values)
-            }
-
-            # Remove NAs or Infs generated in this process. Won't bother doing this for value.lower and upper... hopefully fine
-            df.sim <- df.sim[!is.na(df.sim$value) & !is.infinite(df.sim$value), ]
-
-            # If we end up with 0 rows, we need to consider the df.sim to be NULL
-            if (length(df.sim) == 0) df.sim <- NULL
+            df.sim$temp_lag_stratum <- NULL # remove helper
+            if (nrow(df.sim) == 0) df.sim <- NULL
         }
     }
 
     #-- PACKAGE AND RETURN ----
     if (plot.which == "data.only") {
-        y.label <- sapply(outcomes, function(outcome) {
+        y.label_val <- sapply(outcomes, function(outcome) {
             data.manager$outcome.info[[outcome]]$metadata$units
         })
     } else {
-        y.label <- paste0(sapply(outcomes, function(outcome) {
+        y.label_val <- paste0(sapply(outcomes, function(outcome) {
             simset.list[[1]][["outcome.metadata"]][[outcome]][["units"]]
         }), collapse = "/")
     }
     if (plot.year.lag.ratio) {
-        y.label <- paste0("Log difference in ", y.label)
+        y.label_val <- paste0("Log difference in ", y.label_val)
     }
-    if (title == "location" && plot.which == "data.only") {
-        plot.title <- paste0(get.location.name(locations[[1]]), " (", locations[[1]], ")") # need to check we've got valid location
-    } else if (title == "location") {
-        plot.title <- paste0(get.location.name(simset.list[[1]]$location), " (", simset.list[[1]]$location, ")")
-    } else {
-        plot.title <- title
+
+    plot.title_val <- title # Default
+    if (title == "location") {
+        if (plot.which == "data.only" && !is.null(locations) && length(locations) > 0) {
+            plot.title_val <- paste0(get.location.name(locations[[1]]), " (", locations[[1]], ")")
+        } else if (!is.null(simset.list) && length(simset.list) > 0) {
+            plot.title_val <- paste0(get.location.name(simset.list[[1]]$location), " (", simset.list[[1]]$location, ")")
+        }
     }
-    # browser()
+
     return(list(
         df.sim = df.sim,
         df.truth = df.truth,
         details = list(
-            y.label = y.label,
-            plot.title = plot.title,
+            y.label = y.label_val,
+            plot.title = plot.title_val,
             outcome.metadata.list = outcome.metadata.list,
             source.metadata.list = source.metadata.list,
             sim.labels.list = sim.labels.list
@@ -775,14 +810,6 @@ prepare_plot_local <- function(simset.list = NULL,
     ))
 }
 
-#' Execute Simplot
-#' A utility that performs the plot-rendering half of the simplot operation
-#' for applicationslike webtools that need the step to be separate.
-#' @inheritParams simplot
-#' @param prepared.plot.data The named list output by "prepare.plot"
-#' @param n.facet.rows An optional argument to specify how many rows the figure should facet plots into
-#' @value A ggplot object
-#' @export
 execute_simplot_local <- function(prepared.plot.data,
                                   outcomes = NULL,
                                   split.by = NULL,
@@ -795,7 +822,6 @@ execute_simplot_local <- function(prepared.plot.data,
                                   facet_labeller = NULL, # NEW: Optional labeller function
                                   debug = F) {
     if (debug) browser()
-    # browser()
     #-- UNPACK DATA --#
     df.sim <- prepared.plot.data$df.sim
     df.truth <- prepared.plot.data$df.truth
@@ -803,34 +829,30 @@ execute_simplot_local <- function(prepared.plot.data,
     plot.title <- prepared.plot.data$details$plot.title
 
     #-- PREPARE PLOT COLORS, SHADES, SHAPES, ETC. --#
-
     if (!is.null(df.sim)) {
-        df.sim["linetype.sim.by"] <- df.sim[style.manager$linetype.sim.by]
-        df.sim["shape.sim.by"] <- df.sim[style.manager$shape.sim.by]
-        df.sim["color.sim.by"] <- df.sim[style.manager$color.sim.by]
+        # Fully reverted to original package logic for direct assignment
+        # This assumes df.sim contains columns named by style.manager$xxx.sim.by values (e.g., "simset")
+        # and that these source columns exist.
+        df.sim["linetype.sim.by"] <- df.sim[[style.manager$linetype.sim.by]]
+        df.sim["shape.sim.by"] <- df.sim[[style.manager$shape.sim.by]]
+        df.sim["color.sim.by"] <- df.sim[[style.manager$color.sim.by]]
+        if (!is.null(df.sim) && "color.sim.by" %in% names(df.sim) && is.factor(df.sim$color.sim.by)) {
+            df.sim$color.sim.by <- as.character(df.sim$color.sim.by)
+        }
     }
-    # --- START: Add CI Hover Text ---
-    if (!is.null(df.sim)) {
-        # Check if CI columns exist and we are plotting a summary type
+
+    if (!is.null(df.sim) && nrow(df.sim) > 0) {
         has_ci_cols <- all(c("value.lower", "value.upper") %in% names(df.sim))
         plot_summary <- summary.type != "individual.simulation"
-
         df.sim$ci_hover_text <- sapply(1:nrow(df.sim), function(j) {
-            # Robust year formatting
             current_year <- df.sim$year[j]
             year_fmt <- if (is.numeric(current_year) && !is.na(current_year)) {
                 if (current_year == floor(current_year)) sprintf("%d", current_year) else sprintf("%.1f", current_year)
             } else {
                 sprintf("%s", as.character(current_year))
             }
-
-            # --- Data Hover Text generation removed - will be done in aes() ---
-            # Base text: Year and Value
-            # Ensure 'value' column exists (it should, derived from value.mean/median or directly)
             current_value <- if ("value" %in% names(df.sim)) df.sim$value[j] else NA
             base_text <- sprintf("Year: %s\nValue: %.2f", year_fmt, round(current_value, 2))
-
-            # Add CI if available and applicable
             ci_text <- ""
             if (plot_summary && has_ci_cols) {
                 lower_ci <- df.sim$value.lower[j]
@@ -842,324 +864,222 @@ execute_simplot_local <- function(prepared.plot.data,
             paste0(base_text, ci_text)
         })
     }
-    # --- END: Add CI Hover Text ---
 
     if (!is.null(df.truth)) {
-        # make some other columns
+        # make some other columns (Original Package Logic)
+        # This assumes 'location' and columns named by style.manager$xxx.data.by exist in df.truth
         df.truth["location.type"] <- locations::get.location.type(df.truth$location)
-        df.truth["shape.data.by"] <- df.truth[style.manager$shape.data.by]
-        df.truth["color.data.by"] <- df.truth[style.manager$color.data.by]
-        df.truth["shade.data.by"] <- df.truth[style.manager$shade.data.by]
+        df.truth["shape.data.by"] <- df.truth[[style.manager$shape.data.by]]
+        df.truth["color.data.by"] <- df.truth[[style.manager$color.data.by]]
+        df.truth["shade.data.by"] <- df.truth[[style.manager$shade.data.by]]
+
         if (style.manager$color.data.by == "stratum" && !is.null(df.truth$stratum) && all(df.truth$stratum == "")) {
-            df.truth["color.and.shade.data.by"] <- df.truth["shade.data.by"]
+            df.truth["color.and.shade.data.by"] <- df.truth[["shade.data.by"]]
         } else if (style.manager$shade.data.by == "stratum" && !is.null(df.truth$stratum) && all(df.truth$stratum == "")) {
-            df.truth["color.and.shade.data.by"] <- df.truth["color.data.by"]
+            df.truth["color.and.shade.data.by"] <- df.truth[["color.data.by"]]
         } else {
-            df.truth["color.and.shade.data.by"] <- do.call(paste, c(df.truth["shade.data.by"], df.truth["color.data.by"], list(sep = "__")))
+            # Original logic assumes 'shade.data.by' and 'color.data.by' columns were successfully created above for the paste
+            df.truth["color.and.shade.data.by"] <- do.call(paste, c(df.truth[["shade.data.by"]], df.truth[["color.data.by"]], list(sep = "__")))
         }
     }
 
-    ## COLORS
     colors.for.sim <- NULL
     color.data.primary.colors <- NULL
+    sim.color.groups <- if (!is.null(df.sim) && "color.sim.by" %in% names(df.sim)) sort(unique(df.sim$color.sim.by)) else character(0)
+    data.color.groups <- if (!is.null(df.truth) && "color.data.by" %in% names(df.truth)) sort(unique(df.truth$color.data.by)) else character(0)
 
-    sim.color.groups <- sort(unique(df.sim$color.sim.by))
-    data.color.groups <- sort(unique(df.truth$color.data.by))
-
-    # if coloring by the same thing, use the same palette (defaulting to SIM's palette) unless one is missing
     if (style.manager$color.sim.by == style.manager$color.data.by) {
         all.color.groups <- sort(union(sim.color.groups, data.color.groups))
-
-        if (!is.null(df.sim)) {
-            all.colors <- style.manager$get.sim.colors(length(all.color.groups))
-        } else if (!is.null(df.truth)) {
-            all.colors <- style.manager$get.data.colors(length(all.color.groups))
-        } else {
-            all.colors <- NULL
-        } # doesn't matter?
-
-        names(all.colors) <- all.color.groups
-        colors.for.sim <- all.colors[sim.color.groups]
-        color.data.primary.colors <- all.colors[data.color.groups]
-    }
-
-    # otherwise, assign colors individually
-    else {
-        if (!is.null(df.sim)) {
+        if (length(all.color.groups) > 0) {
+            all.colors <- if (!is.null(df.sim) && nrow(df.sim) > 0) style.manager$get.sim.colors(length(all.color.groups)) else if (!is.null(df.truth) && nrow(df.truth) > 0) style.manager$get.data.colors(length(all.color.groups)) else NULL
+            if (!is.null(all.colors)) names(all.colors) <- all.color.groups
+            colors.for.sim <- all.colors[sim.color.groups]
+            color.data.primary.colors <- all.colors[data.color.groups]
+        }
+    } else {
+        if (length(sim.color.groups) > 0) {
             colors.for.sim <- style.manager$get.sim.colors(length(sim.color.groups))
             names(colors.for.sim) <- sim.color.groups
         }
-        if (!is.null(df.truth)) {
+        if (length(data.color.groups) > 0) {
             color.data.primary.colors <- style.manager$get.data.colors(length(data.color.groups))
             names(color.data.primary.colors) <- data.color.groups
         }
     }
 
-    ## RIBBON COLOR
     color.ribbon.by <- NULL
-    if (!is.null(df.sim)) {
+    if (!is.null(df.sim) && nrow(df.sim) > 0 && !is.null(colors.for.sim) && length(colors.for.sim) > 0) { # Added checks
         color.ribbon.by <- ggplot2::alpha(colors.for.sim, style.manager$alpha.ribbon)
     }
 
-    ## SHADES FOR DATA
     color.data.shaded.colors <- NULL
-    if (!is.null(df.truth)) {
+    if (!is.null(df.truth) && nrow(df.truth) > 0 && !is.null(color.data.primary.colors) && length(color.data.primary.colors) > 0) {
+        unique_shades <- if ("shade.data.by" %in% names(df.truth)) unique(df.truth$shade.data.by) else ""
         color.data.shaded.colors <- unlist(lapply(color.data.primary.colors, function(prim.color) {
-            style.manager$get.shades(base.color = prim.color, length(unique(df.truth$shade.data.by)))
+            style.manager$get.shades(base.color = prim.color, length(unique_shades))
         }))
-        # This can lead to problems if we have either of these being "" because then we'll get an underscore that won't match the actual column values in the data frame
-        if (identical(unique(df.truth$color.data.by), "")) {
-            names(color.data.shaded.colors) <- unique(df.truth$shade.data.by)
+
+        unique_colors_for_names <- if ("color.data.by" %in% names(df.truth)) unique(df.truth$color.data.by) else ""
+        if (identical(unique_colors_for_names, "")) {
+            if (length(color.data.shaded.colors) == length(unique_shades)) names(color.data.shaded.colors) <- unique_shades
         } else {
-            names(color.data.shaded.colors) <- do.call(paste, c(expand.grid(unique(df.truth$shade.data.by), unique(df.truth$color.data.by)), list(sep = "__")))
+            # Ensure expand.grid inputs are not empty
+            grid_df1 <- if (length(unique_shades) > 0) unique_shades else ""
+            grid_df2 <- if (length(unique_colors_for_names) > 0) unique_colors_for_names else ""
+            expanded_names <- do.call(paste, c(expand.grid(grid_df1, grid_df2), list(sep = "__")))
+            if (length(color.data.shaded.colors) == length(expanded_names)) names(color.data.shaded.colors) <- expanded_names
         }
     }
 
-    ## SHAPES
     shapes.for.data <- NULL
     shapes.for.sim <- NULL
-    if (!is.null(df.truth)) {
-        shapes.for.data <- style.manager$get.shapes(length(unique(df.truth$shape.data.by)))
-        names(shapes.for.data) <- unique(df.truth$shape.data.by)
+    if (!is.null(df.truth) && "shape.data.by" %in% names(df.truth)) {
+        unique_shapes_data <- unique(df.truth$shape.data.by)
+        if (length(unique_shapes_data) > 0) {
+            shapes.for.data <- style.manager$get.shapes(length(unique_shapes_data))
+            names(shapes.for.data) <- unique_shapes_data
+        }
     }
-    if (!is.null(df.sim)) {
-        shapes.for.sim <- style.manager$get.shapes(length(unique(df.sim$shape.sim.by)))
-        names(shapes.for.sim) <- unique(df.sim$shape.sim.by)
+    if (!is.null(df.sim) && "shape.sim.by" %in% names(df.sim)) {
+        unique_shapes_sim <- unique(df.sim$shape.sim.by)
+        if (length(unique_shapes_sim) > 0) {
+            shapes.for.sim <- style.manager$get.shapes(length(unique_shapes_sim))
+            names(shapes.for.sim) <- unique_shapes_sim
+        }
     }
     all.shapes.for.scale <- c(shapes.for.data, shapes.for.sim)
+    all.shapes.for.scale <- all.shapes.for.scale[!duplicated(names(all.shapes.for.scale))] # Ensure unique names
 
-    ## LINETYPES
     linetypes.for.sim <- NULL
-    if (!is.null(df.sim)) {
-        linetypes.for.sim <- style.manager$get.linetypes(length(unique(df.sim$linetype.sim.by)))
-        names(linetypes.for.sim) <- unique(df.sim$linetype.sim.by)
+    if (!is.null(df.sim) && "linetype.sim.by" %in% names(df.sim)) {
+        unique_linetypes <- unique(df.sim$linetype.sim.by)
+        if (length(unique_linetypes) > 0) {
+            linetypes.for.sim <- style.manager$get.linetypes(length(unique_linetypes))
+            names(linetypes.for.sim) <- unique_linetypes
+        }
     }
 
-    ## GROUPS
-    # break df.sim into two data frames, one for outcomes where the sim will be lines and the other for where it will be points
     df.sim.groupids.one.member <- NULL
     df.sim.groupids.many.members <- NULL
-    if (!is.null(df.sim)) {
+    if (!is.null(df.sim) && nrow(df.sim) > 0 && "groupid" %in% names(df.sim)) {
         groupids.with.one.member <- setdiff(unique(df.sim$groupid), df.sim$groupid[which(duplicated(df.sim$groupid))])
-        df.sim$groupid_has_one_member <- with(df.sim, groupid %in% groupids.with.one.member)
+        df.sim$groupid_has_one_member <- df.sim$groupid %in% groupids.with.one.member
         df.sim.groupids.one.member <- subset(df.sim, groupid_has_one_member)
         df.sim.groupids.many.members <- subset(df.sim, !groupid_has_one_member)
     }
 
-    #-- MAKE THE PLOT --#
-    # browser()
     rv <- ggplot2::ggplot()
     rv <- rv +
         ggplot2::labs(y = y.label) +
         ggplot2::ggtitle(plot.title) +
         ggplot2::scale_alpha(guide = "none")
 
-
     if (!plot.year.lag.ratio) {
         rv <- rv + ggplot2::scale_y_continuous(limits = c(0, NA), labels = scales::comma)
     } else {
         rv <- rv + ggplot2::scale_y_continuous(labels = scales::comma)
     }
-    # browser()
 
     # SIM ELEMENTS
-    if (!is.null(df.sim)) {
-        # Note: the key to avoiding warning messages about scale is to only add a scale if it is used by the data frames that are actually plotted.
 
-        # PLOT
-        if (!is.null(split.by)) {
+    if (!is.null(df.sim.groupids.many.members) && nrow(df.sim.groupids.many.members) > 0) {
+        aes_map_line <- ggplot2::aes(x = year, y = value, group = groupid, text = ci_hover_text, alpha = alpha, linewidth = linewidth)
+        if ("linetype.sim.by" %in% names(df.sim.groupids.many.members)) aes_map_line$linetype <- sym("linetype.sim.by")
+        if ("color.sim.by" %in% names(df.sim.groupids.many.members) && (!is.null(split.by) || style.manager$color.sim.by == "simset")) aes_map_line$color <- sym("color.sim.by")
+
+        rv <- rv + ggplot2::geom_line(data = df.sim.groupids.many.members, mapping = aes_map_line)
+        if (!is.null(linetypes.for.sim) && length(linetypes.for.sim) > 0) rv <- rv + ggplot2::scale_linetype_manual(name = "sim linetype", values = linetypes.for.sim, breaks = names(linetypes.for.sim))
+        if ("linewidth" %in% names(df.sim)) rv <- rv + ggplot2::scale_linewidth(NULL, range = c(min(df.sim$linewidth, na.rm = T), 1), guide = "none")
+    }
+    if (!is.null(df.sim.groupids.one.member) && nrow(df.sim.groupids.one.member) > 0) {
+        aes_map_point_sim <- ggplot2::aes(x = year, y = value, text = ci_hover_text)
+        if ("shape.sim.by" %in% names(df.sim.groupids.one.member)) aes_map_point_sim$shape <- sym("shape.sim.by")
+        if ("color.sim.by" %in% names(df.sim.groupids.one.member)) aes_map_point_sim$fill <- sym("color.sim.by") # Points use fill for color with some shapes
+
+        rv <- rv + ggplot2::geom_point(data = df.sim.groupids.one.member, mapping = aes_map_point_sim, size = 2, show.legend = F) # Fixed size
+        if (!is.null(shapes.for.sim) && length(shapes.for.sim) > 0) rv <- rv + ggplot2::scale_shape_manual(name = "sim shape", values = shapes.for.sim)
+    }
+    if (!is.null(colors.for.sim) && length(colors.for.sim) > 0) {
+        if (!is.null(split.by) || style.manager$color.sim.by == "simset") { # Add color scale if split or coloring by simset
             rv <- rv + ggplot2::scale_color_manual(name = "sim color", values = colors.for.sim)
-            has.added.color.scale <- T
-            if (nrow(df.sim.groupids.many.members) > 0) {
-                rv <- rv + ggplot2::geom_line(data = df.sim.groupids.many.members, ggplot2::aes(
-                    x = year, y = value, group = groupid,
-                    linetype = linetype.sim.by,
-                    color = color.sim.by,
-                    linewidth = linewidth,
-                    alpha = alpha,
-                    text = ci_hover_text # Added hover text mapping
-                ))
-            }
-            if (nrow(df.sim.groupids.one.member) > 0) {
-                rv <- rv +
-                    ggplot2::geom_point(data = df.sim.groupids.one.member, ggplot2::aes(
-                        x = year, y = value,
-                        size = size,
-                        fill = color.sim.by,
-                        shape = shape.sim.by,
-                        text = ci_hover_text # Added hover text mapping
-                    ), show.legend = F) +
-
-                    ggplot2::scale_size_manual(values = c(size = 2))
-            }
-            # RIBBON REMOVED (will be added later)
-            # if (summary.type != "individual.simulation") {
-            #     rv <- rv + ggplot2::geom_ribbon( ... )
-            #     rv <- rv + ggplot2::scale_fill_manual(name = "sim color", values = colors.for.sim)
-            # }
-        } else {
-            if (nrow(df.sim.groupids.many.members) > 0) {
-                if (style.manager$color.sim.by == "simset") {
-                    rv <- rv + ggplot2::geom_line(data = df.sim.groupids.many.members, ggplot2::aes(
-                        x = year, y = value, group = groupid,
-                        linetype = linetype.sim.by,
-                        color = color.sim.by,
-                        linewidth = linewidth,
-                        alpha = alpha,
-                        text = ci_hover_text # Added hover text mapping
-                    ))
-                } else {
-                    rv <- rv + ggplot2::geom_line(data = df.sim.groupids.many.members, ggplot2::aes(
-                        x = year, y = value, group = groupid,
-                        linetype = linetype.sim.by,
-                        linewidth = linewidth,
-                        alpha = alpha,
-                        text = ci_hover_text # Added hover text mapping
-                    ))
-                }
-            }
-            if (nrow(df.sim.groupids.one.member) > 0) {
-                rv <- rv +
-                    ggplot2::geom_point(data = df.sim.groupids.one.member, ggplot2::aes(
-                        x = year, y = value,
-                        size = size,
-                        fill = color.sim.by,
-                        shape = shape.sim.by,
-                        text = ci_hover_text # Added hover text mapping
-                    )) +
-                    ggplot2::scale_size_manual(values = c(size = 2))
-            }
-
-            # RIBBON REMOVED (will be added later)
-            # if (summary.type != "individual.simulation") {
-            #     rv <- rv + ggplot2::geom_ribbon( ... )
-            #     # Remove the fill scale since we don't have more than one sim ribbon color
-            #     if (style.manager$color.sim.by == "stratum") {
-            #         rv <- rv + ggplot2::guides(fill = "none")
-            #     }
-            # }
-        }
-        if (nrow(df.sim.groupids.many.members) > 0) { #  && summary.type == 'individual.simulation' used to have this... why? We can have lines with individual sims too
-            rv <- rv + ggplot2::scale_linetype_manual(name = "sim linetype", values = linetypes.for.sim, breaks = names(linetypes.for.sim))
-            rv <- rv + ggplot2::scale_linewidth(NULL, range = c(min(df.sim$linewidth), 1), guide = "none")
-        }
-        if (nrow(df.sim.groupids.one.member) > 0) {
-            rv <- rv + ggplot2::scale_fill_manual(name = "sim color", values = colors.for.sim)
-            rv <- rv + ggplot2::scale_shape_manual(name = "sim shape", values = shapes.for.sim)
-        }
-        if (style.manager$color.sim.by == "simset") {
-            rv <- rv + ggplot2::scale_color_manual(name = "sim color", values = colors.for.sim)
-            rv <- rv + ggplot2::scale_fill_manual(name = "sim color", values = colors.for.sim)
+            # rv <- rv + ggplot2::scale_fill_manual(name = "sim color", values = colors.for.sim, guide = "none") # Removed this line - let's see if color scale applies to fill or if ribbon needs its own fill scale added later
         }
     }
-    # browser()
+
+
+
     # DATA ELEMENTS
-    if (!is.null(df.truth)) {
-        # if we already have a shape scale, clear it before adding new points
-        if (!is.null(df.sim.groupids.one.member) && nrow(df.sim.groupids.one.member) > 0) {
-            rv <- rv + ggnewscale::new_scale("shape")
+    if (!is.null(df.truth) && nrow(df.truth) > 0) {
+        if (!is.null(df.sim.groupids.one.member) && nrow(df.sim.groupids.one.member) > 0 && !is.null(shapes.for.sim) && length(shapes.for.sim) > 0) {
+            # If sim points also used shapes, need new scale for data shapes
+            if (!is.null(shapes.for.data) && length(shapes.for.data) > 0) rv <- rv + ggnewscale::new_scale("shape")
         }
-        rv <- rv + ggnewscale::new_scale_fill() + ggplot2::scale_fill_manual(values = color.data.shaded.colors) # We're changing the scale because the data fills differently
-
-        rv <- rv + ggplot2::guides(fill = ggplot2::guide_legend("data color", override.aes = list(shape = 21)))
-
-        # PLOT
-        if (!is.null(split.by)) {
-            rv <- rv + ggplot2::geom_point(data = df.truth, ggplot2::aes(
-                x = year, y = value,
-                fill = color.and.shade.data.by, # fill
-                shape = shape.data.by,
-                # Generate hover text directly in aes()
-                text = paste0(
-                    "Year: ", ifelse(is.numeric(.data$year) & !is.na(.data$year), ifelse(.data$year == floor(.data$year), sprintf("%d", .data$year), sprintf("%.1f", .data$year)), sprintf("%s", as.character(.data$year))),
-                    "\nValue: ", sprintf("%.2f", round(.data$value, 2)),
-                    ifelse(!is.na(.data$source), sprintf("\nSource: %s", .data$source), ""),
-                    # Add URL if url value is not NA (assuming column exists if append.url=T)
-                    ifelse(!is.na(.data$url), sprintf("\nURL: %s", .data$url), "")
-                )
-            ))
-        } else {
-            # Why is this plotting all black fill, even though we remade the fill scale?? (in Melissa's outcome="new" simplot call)
-            rv <- rv + ggplot2::geom_point(data = df.truth, ggplot2::aes(
-                x = year, y = value, size = "size", fill = color.and.shade.data.by, shape = shape.data.by,
-                # Generate hover text directly in aes()
-                text = paste0(
-                    "Year: ", ifelse(is.numeric(.data$year) & !is.na(.data$year), ifelse(.data$year == floor(.data$year), sprintf("%d", .data$year), sprintf("%.1f", .data$year)), sprintf("%s", as.character(.data$year))),
-                    "\nValue: ", sprintf("%.2f", round(.data$value, 2)),
-                    ifelse(!is.na(.data$source), sprintf("\nSource: %s", .data$source), ""),
-                    # Add URL if url value is not NA (assuming column exists if append.url=T)
-                    ifelse(!is.na(.data$url), sprintf("\nURL: %s", .data$url), "")
-                )
-            ), show.legend = F) +
-                ggplot2::scale_size_manual(values = c(size = 2))
+        if (!is.null(color.data.shaded.colors) && length(color.data.shaded.colors) > 0) {
+            rv <- rv + ggnewscale::new_scale_fill()
+            rv <- rv + ggplot2::scale_fill_manual(name = "data color", values = color.data.shaded.colors, guide = ggplot2::guide_legend(override.aes = list(shape = 21)))
         }
 
-        # Now create the shape scale, either for the first time or the second time
-        if (!is.null(df.sim.groupids.one.member) && nrow(df.sim.groupids.one.member) > 0) {
-            rv <- rv + ggplot2::scale_shape_manual(name = "data shape", values = all.shapes.for.scale)
-        } else {
-            rv <- rv + ggplot2::scale_shape_manual(name = "data shape", values = all.shapes.for.scale)
-        }
+        aes_map_point_data <- ggplot2::aes(x = year, y = value)
+        hover_text_truth <- paste0(
+            "Year: ", ifelse(is.numeric(df.truth$year) & !is.na(df.truth$year), ifelse(df.truth$year == floor(df.truth$year), sprintf("%d", df.truth$year), sprintf("%.1f", df.truth$year)), sprintf("%s", as.character(df.truth$year))),
+            "\nValue: ", sprintf("%.2f", round(df.truth$value, 2)),
+            ifelse("source" %in% names(df.truth) & !is.na(df.truth$source), sprintf("\nSource: %s", df.truth$source), ""),
+            ifelse("data_url" %in% names(df.truth) & !is.na(df.truth$data_url), sprintf("\nURL: %s", df.truth$data_url), "")
+        )
+        aes_map_point_data$text <- hover_text_truth
+        if ("color.and.shade.data.by" %in% names(df.truth)) aes_map_point_data$fill <- sym("color.and.shade.data.by")
+        if ("shape.data.by" %in% names(df.truth)) aes_map_point_data$shape <- sym("shape.data.by")
+
+        show_legend_data <- is.null(split.by) # Show legend for data points only if no split.by for sim
+        rv <- rv + ggplot2::geom_point(data = df.truth, mapping = aes_map_point_data, size = 2, show.legend = show_legend_data)
+
+        if (!is.null(all.shapes.for.scale) && length(all.shapes.for.scale) > 0) rv <- rv + ggplot2::scale_shape_manual(name = "data shape", values = all.shapes.for.scale)
     }
 
-    #----
-    # If don't have a split.by, and thus only 1 color for sim, probably, then remove legend for it.
     if (style.manager$color.sim.by == "stratum" && is.null(split.by)) {
-        rv <- rv + ggplot2::guides(color = "none")
+        # browser() # DEBUG: Before SIM ELEMENTS plotting # Removed this line
+        rv <- rv + ggplot2::guides(color = "none") # Hide sim color legend if no actual split
     }
-    # browser()
+
     #-- FACET --#
-    if (is.null(facet.by)) {
-        facet.formula <- as.formula("~outcome.display.name")
-    } else {
-        facet.formula <- as.formula(paste0("~outcome.display.name + ", paste(sapply(seq_along(facet.by), function(i) {
-            paste0("facet.by", i)
-        }), collapse = " + ")))
+    facet_vars <- "outcome.display.name"
+    if (!is.null(facet.by)) {
+        valid_facet_cols <- paste0("facet.by", seq_along(facet.by))
+        # Ensure these columns actually exist in one of the dataframes if they are to be used
+        # This check is simplified; a more robust check would see if they exist in df.sim or df.truth if those are non-NULL
+        # For now, assume they are created if facet.by is set.
+        facet_vars <- c(facet_vars, valid_facet_cols)
     }
-    if (!is.null(df.sim) || !is.null(df.truth)) {
-        if (!is.null(n.facet.rows)) {
-            # Add labeller if provided
-            facet_args <- list(facet.formula, scales = "free_y", nrow = n.facet.rows)
-            if (!is.null(facet_labeller)) facet_args$labeller <- facet_labeller
-            rv <- rv + do.call(ggplot2::facet_wrap, facet_args)
-        } else {
-            # Add labeller if provided
-            facet_args <- list(facet.formula, scales = "free_y")
-            if (!is.null(facet_labeller)) facet_args$labeller <- facet_labeller
-            rv <- rv + do.call(ggplot2::facet_wrap, facet_args)
-        }
+
+    # Check if data exists for faceting
+    can_facet <- FALSE
+    if (!is.null(df.sim) && nrow(df.sim) > 0 && all(facet_vars %in% names(df.sim))) can_facet <- TRUE
+    if (!can_facet && !is.null(df.truth) && nrow(df.truth) > 0 && all(facet_vars %in% names(df.truth))) can_facet <- TRUE
+
+    if (can_facet) {
+        facet.formula <- as.formula(paste0("~", paste(facet_vars, collapse = " + ")))
+        facet_args <- list(facet.formula, scales = "free_y")
+        if (!is.null(n.facet.rows)) facet_args$nrow <- n.facet.rows
+        if (!is.null(facet_labeller)) facet_args$labeller <- facet_labeller
+        rv <- rv + do.call(ggplot2::facet_wrap, facet_args)
     }
-    # browser()
+
+
     # --- START: Add ggplotly-compatible ribbons ---
     if (!is.null(df.sim.groupids.many.members) && nrow(df.sim.groupids.many.members) > 0 && summary.type != "individual.simulation" && all(c("value.lower", "value.upper") %in% names(df.sim.groupids.many.members))) {
-        # print("[DEBUG execute_simplot_local] Adding separate geom_ribbon layer.") # Keep commented
+        aes_map_ribbon <- ggplot2::aes(x = year, ymin = value.lower, ymax = value.upper, group = groupid)
+        if ("color.sim.by" %in% names(df.sim.groupids.many.members)) aes_map_ribbon$fill <- sym("color.sim.by")
+
         rv <- rv + ggplot2::geom_ribbon(
             data = df.sim.groupids.many.members,
-            mapping = ggplot2::aes(
-                x = year,
-                ymin = value.lower,
-                ymax = value.upper,
-                group = groupid,
-                fill = color.sim.by # Map fill aesthetic
-            ),
-            alpha = style.manager$alpha.ribbon, # Set alpha directly
-            inherit.aes = FALSE # Prevent inheriting other aesthetics
+            mapping = aes_map_ribbon,
+            alpha = style.manager$alpha.ribbon,
+            inherit.aes = FALSE
         )
-
-        # Re-add the fill scale associated with the ribbon
-        # Ensure colors.for.sim is available in this scope (it should be, defined ~line 852)
-        if (!is.null(colors.for.sim)) {
-            # print("[DEBUG execute_simplot_local] Adding scale_fill_manual for ribbon.") # Keep commented
-            rv <- rv + ggplot2::scale_fill_manual(name = "sim color", values = colors.for.sim)
-
-            # Conditionally remove the fill guide if coloring by stratum and it's effectively constant (no split.by)
-            # This logic was originally around line 1011
-            if (style.manager$color.sim.by == "stratum" && is.null(split.by)) {
-                # print("[DEBUG execute_simplot_local] Removing fill guide for stratum color.") # Keep commented
-                rv <- rv + ggplot2::guides(fill = "none")
-            }
-        } else {
-            # print("[DEBUG execute_simplot_local] colors.for.sim is NULL, skipping scale_fill_manual for ribbon.") # Keep commented
+        # Add the fill scale specifically for the ribbon AFTER the geom_ribbon
+        # Based on interactive testing, do NOT use ggnewscale here.
+        if (!is.null(colors.for.sim) && length(colors.for.sim) > 0 && "color.sim.by" %in% names(df.sim.groupids.many.members)) {
+            rv <- rv + ggplot2::scale_fill_manual(name = "sim fill", values = colors.for.sim, guide = "none")
         }
     }
     # --- END: Add ggplotly-compatible ribbons ---
@@ -1167,4 +1087,42 @@ execute_simplot_local <- function(prepared.plot.data,
     if (plot.year.lag.ratio) rv <- rv + ggplot2::xlab("latter year")
 
     rv
+}
+
+# plot.simulations_local is a wrapper around simplot_local for the plotly backend in plot_panel
+# It's kept separate to mirror the structure of the original jheem package's plotting functions
+plot.simulations_local <- function(...,
+                                   outcomes = NULL,
+                                   facet.by = NULL, # plot.simulations only has facet.by, not split.by
+                                   dimension.values = list(),
+                                   target.ontology = NULL,
+                                   plot.which = c("sim.and.data", "sim.only")[1],
+                                   summary.type = c("individual.simulation", "mean.and.interval", "median.and.interval")[1],
+                                   title = "location",
+                                   append.url = F, # Added to match simplot_local
+                                   data.manager = get.default.data.manager(),
+                                   style.manager = get.default.style.manager(),
+                                   show.data.pull.error = F,
+                                   debug = F) {
+    # Call simplot_local, mapping arguments.
+    # plot.simulations in the package does not have n.facet.rows or facet_labeller,
+    # so those are not passed here. split.by is also not an arg for plot.simulations.
+    simplot_local(...,
+        outcomes = outcomes,
+        corresponding.data.outcomes = NULL, # plot.simulations doesn't have this
+        split.by = NULL, # plot.simulations does not split lines, only facets
+        facet.by = facet.by,
+        dimension.values = dimension.values,
+        target.ontology = target.ontology,
+        plot.which = plot.which,
+        summary.type = summary.type,
+        plot.year.lag.ratio = FALSE, # plot.simulations does not do year lag ratio
+        title = title,
+        append.url = append.url,
+        data.manager = data.manager,
+        style.manager = style.manager,
+        show.data.pull.error = show.data.pull.error,
+        debug = debug,
+        facet_labeller = NULL # Not used by plot.simulations
+    )
 }
