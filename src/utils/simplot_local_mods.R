@@ -1,5 +1,50 @@
 library(tidyr)
 library(dplyr)
+
+# --- Helper Function for URL Attribute Handling ---
+
+#' Determine Safe Attributes to Append During Data Pull
+#'
+#' This function checks if URL attributes should be appended based on the global
+#' append.url flag and whether the specific data outcome is known to cause errors
+#' when the 'url' attribute is requested from data.manager$pull.
+#'
+#' @param append_url_flag Logical indicating if URLs are generally desired.
+#' @param data_outcome_name The specific name of the data outcome being pulled.
+#' @return Character vector of attributes to append (currently only "url" or NULL).
+#'         Returns NULL if append_url_flag is FALSE or if the outcome is problematic.
+get_safe_append_attributes <- function(append_url_flag, data_outcome_name) {
+    # List of data outcomes known to cause 'arr must be array/matrix' error
+    # when append.attributes = 'url' is used with data.manager$pull
+    # (Based on debugging session 2025-05-08)
+    problematic_url_outcomes <- c(
+        "awareness",
+        "suppression",
+        "proportion.tested",
+        "oahs.suppression",
+        "adap.suppression"
+    )
+
+    # Handle potential NA in append_url_flag, treat NA as FALSE
+    safe_append_url_flag <- isTRUE(append_url_flag)
+
+    # Check if the outcome name is valid and not in the problematic list
+    is_problematic <- FALSE # Default to not problematic
+    # Ensure data_outcome_name is a single, non-NA string before checking %in%
+    if (!is.null(data_outcome_name) && is.character(data_outcome_name) && length(data_outcome_name) == 1 && !is.na(data_outcome_name)) {
+        is_problematic <- data_outcome_name %in% problematic_url_outcomes
+    }
+
+    if (safe_append_url_flag && !is_problematic) {
+        return("url")
+    } else {
+        return(NULL)
+    }
+}
+
+# --- End Helper Function ---
+
+
 #' @title Plot Simulations And Data
 #' @param ... One or more jheem.simulation.set objects and at most one character vector of outcomes (as an alternative to the 'outcomes' argument)
 #' @param corresponding.data.outcomes Specify directly which data outcomes should be plotted against simulation outcomes. Must be NULL or a character vector with outcomes as names; all of those outcomes must be present in either the 'outcomes' argument or in '...'"
@@ -427,11 +472,14 @@ prepare_plot_local <- function(simset.list = NULL,
     #-- MAKE A DATA FRAME WITH ALL THE REAL-WORLD DATA ----
     outcome.mappings <- list()
     source.metadata.list <- list()
-    if (append.url) append.attributes <- "url" else append.attributes <- NULL
-
+    # append.attributes will be determined inside the loop using the helper function
     df.truth <- NULL
     for (i in seq_along(outcomes.for.data)) {
-        if (plot.which != "sim.only" && !is.null(outcomes.for.data[[i]])) {
+        # Determine attributes to append safely using the helper function
+        current_data_outcome_name_for_pull <- outcomes.for.data[[i]]
+        append.attributes <- get_safe_append_attributes(append.url, current_data_outcome_name_for_pull)
+
+        if (plot.which != "sim.only" && !is.null(current_data_outcome_name_for_pull)) {
             outcome.data <- tryCatch(
                 {
                     current_target_ontology <- NULL
@@ -479,7 +527,8 @@ prepare_plot_local <- function(simset.list = NULL,
                 }
                 one.df.outcome <- reshape2::melt(outcome.data, na.rm = T, as.is = T)
 
-                if (append.url) {
+                # Use isTRUE() to handle potential NA in append.url
+                if (isTRUE(append.url)) {
                     one.df.outcome$data_url <- NA_character_
                     url_attribute <- attr(outcome.data, "url")
 
