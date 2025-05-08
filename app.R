@@ -12,6 +12,23 @@ library(httr2) # Required for API calls
 library(promises) # For asynchronous operations
 library(future) # For background processing
 
+# Helper function to get a specific query parameter
+getQueryParam <- function(queryString, paramName) {
+  if (is.null(queryString) || queryString == "") {
+    return(NULL)
+  }
+  # Remove leading '?'
+  queryString <- sub("^\\?", "", queryString)
+  params <- strsplit(queryString, "&")[[1]]
+  for (p in params) {
+    pair <- strsplit(p, "=")[[1]]
+    if (length(pair) == 2 && URLdecode(pair[1]) == paramName) {
+      return(URLdecode(pair[2]))
+    }
+  }
+  return(NULL)
+}
+
 # Initialize remote logging if enabled
 # source("src/utils/logging.R")
 # initialize_logging()
@@ -302,6 +319,26 @@ server <- function(input, output, session) {
   # multisession works on all platforms; multicore is faster but Linux/macOS only (and not in RStudio)
   future::plan(multisession)
   print("[APP] Future plan set to multisession")
+
+  # Observe the clientData$url_search once to set initial tab if specified
+  observeEvent(session$clientData$url_search,
+    {
+      queryString <- session$clientData$url_search
+      initial_tab_param <- getQueryParam(queryString, "initial_tab") # Using the helper
+
+      # Ensure initial_tab_param is one of the valid tab values ("prerun" or "custom")
+      # Add other valid tab values from your navbarPage if they exist
+      valid_tabs <- c("prerun", "custom", "contact_us") # Added contact_us as an example, review your tabs
+
+      if (!is.null(initial_tab_param) && initial_tab_param %in% valid_tabs) {
+        print(paste0("[APP Server] URL parameter 'initial_tab' found: ", initial_tab_param, ". Switching tab."))
+        updateNavbarPage(session, "main_nav", selected = initial_tab_param)
+      } else if (!is.null(initial_tab_param)) {
+        print(paste0("[APP Server] URL parameter 'initial_tab' has invalid value: ", initial_tab_param))
+      }
+    },
+    once = TRUE
+  ) # `once = TRUE` ensures this runs only one time when the session starts
 
   # Create error boundary for model loading
   model_boundary <- create_error_boundary(
