@@ -375,35 +375,32 @@ prepare_plot_local <- function(simset.list = NULL,
     if (plot.which == "data.only") {
         outcome.ontologies <- NULL
     } else {
+        # Match package logic: outcome.ontologies are derived *only* from simset.list.
+        # The target.ontology function argument is used later in pull/get decisions for the 'to.ontology' part of a mapping.
         outcome.ontologies <- lapply(outcomes, function(outcome) {
-            # if (is.null(target.ontology) || FALSE) { # Original logic was confusing here
-            #     outcome.ontology <- NULL
-            # }
-            # The above seems to always make outcome.ontology NULL if target.ontology is NULL.
-            # Let's try to get from simset first.
-            outcome.ontology <- NULL # Initialize
+            outcome.ontology.val <- NULL
             idx <- 1
             while (idx <= length(simset.list)) {
-                if (outcome %in% names(simset.list[[idx]]$outcome.ontologies)) {
-                    outcome.ontology <- simset.list[[idx]]$outcome.ontologies[[outcome]]
+                # Check if simset.list[[idx]]$outcome.ontologies itself is not NULL
+                if (!is.null(simset.list[[idx]]$outcome.ontologies) &&
+                    outcome %in% names(simset.list[[idx]]$outcome.ontologies)) {
+                    outcome.ontology.val <- simset.list[[idx]]$outcome.ontologies[[outcome]]
                     break
                 } else {
                     idx <- idx + 1
                 }
             }
-            if (is.null(outcome.ontology)) { # Fallback or error if not found
-                # If target.ontology is a list, try to use the one for this outcome
-                if (is.list(target.ontology) && outcome %in% names(target.ontology)) {
-                    outcome.ontology <- target.ontology[[outcome]]
-                } else if (!is.list(target.ontology) && !is.null(target.ontology)) {
-                    # If target.ontology is a single ontology, use it for all
-                    outcome.ontology <- target.ontology
-                } else {
-                    stop(paste0("No outcome ontology found for outcome '", outcome, "' and no suitable global target.ontology provided."))
-                }
+            # Package version stops if not found. Replicating this.
+            # This ensures that if an outcome is expected to have an ontology defined in the simset, it must be present.
+            if (is.null(outcome.ontology.val)) {
+                stop(paste0(
+                    error.prefix, "No entry in any simset$outcome.ontologies for outcome '", outcome,
+                    "'. This is required when plot.which is not 'data.only'."
+                ))
             }
-            outcome.ontology
+            outcome.ontology.val
         })
+        names(outcome.ontologies) <- outcomes # Ensure the list is named by outcome
     }
 
     if (plot.which == "data.only") {
