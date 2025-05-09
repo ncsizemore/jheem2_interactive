@@ -36,7 +36,7 @@ create_table_panel <- function(id) {
                     tags$div(
                         style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;", # Added margin-bottom
                         tags$h5("Data Table"), # Example title, can be made dynamic or removed
-                        downloadButton(ns("downloadTable"), label = icon("download"), title = "Download Table Data (CSV)", class = "btn-jheem-primary")
+                        downloadButton(ns("downloadTable"), label = NULL, title = "Download Table Data (CSV)", class = "btn-jheem-primary")
                     ),
                     tableOutput(ns("mainTable")),
                     tags$div(
@@ -598,60 +598,58 @@ table_panel_server <- function(id, settings) {
                 if (!is.null(sim_settings_for_file) && !is.null(sim_settings_for_file$location)) {
                     location <- sim_settings_for_file$location
                 }
-
-                current_table_settings <- current_settings_reactive() # Settings from controls
-                first_outcome <- "unknown_outcome"
-                if (!is.null(current_table_settings$outcomes) && length(current_table_settings$outcomes) > 0) {
-                    first_outcome <- current_table_settings$outcomes[1]
-                }
-
-                # Sanitize components for filename
                 location_clean <- gsub("[^A-Za-z0-9_-]", "_", location)
-                first_outcome_clean <- gsub("[^A-Za-z0-9_-]", "_", first_outcome)
 
                 scenario_name_clean <- ""
                 if (id == "prerun" && !is.null(sim_settings_for_file$scenario)) {
-                    # Attempt to get scenario label if scenario_options_config is available
-                    # This assumes scenario_options_config is passed to table_panel_server if needed,
-                    # or we rely on the scenario ID directly.
-                    # For now, let's use the scenario ID from settings.
-                    # A more robust solution might involve accessing PRERUN_CONFIG like in plot_panel.
-                    # However, plot_panel_server receives scenario_options_config directly.
-                    # Let's assume sim_settings_for_file$scenario is the scenario ID/name.
-                    # We need scenario_options_config to get the label.
-                    # For simplicity here, we'll just use the scenario ID if available.
-                    # A better approach would be to pass scenario_options_config to table_panel_server
-                    # similar to how it's done for plot_panel_server.
-
-                    # Simplified: use scenario value directly from settings
                     scenario_val <- sim_settings_for_file$scenario
                     if (!is.null(scenario_val) && nzchar(scenario_val)) {
-                        # Try to get the label from PRERUN_CONFIG if available globally
                         prerun_scenario_options <- NULL
                         if (exists("PRERUN_CONFIG") && !is.null(PRERUN_CONFIG$selectors$scenario$options)) {
                             prerun_scenario_options <- PRERUN_CONFIG$selectors$scenario$options
                         }
-
                         if (!is.null(prerun_scenario_options) && !is.null(prerun_scenario_options[[scenario_val]]$label)) {
                             scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", prerun_scenario_options[[scenario_val]]$label)
                         } else {
-                            scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", scenario_val) # Fallback to scenario id
+                            scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", scenario_val)
                         }
                     }
+                } else if (id == "custom") {
+                    scenario_name_clean <- "CustomSim" # Placeholder for custom scenarios
                 }
-                # For custom, adding detailed intervention params to filename is complex; deferring for now.
+
+                current_table_settings <- current_settings_reactive()
+
+                facets_clean <- "NoFacets"
+                if (!is.null(current_table_settings$facet.by) && length(current_table_settings$facet.by) > 0) {
+                    facets_clean <- paste(sapply(current_table_settings$facet.by, function(f) gsub("[^A-Za-z0-9_-]", "_", f)), collapse = "-")
+                }
+
+                summary_type_clean <- "NoSummary"
+                if (!is.null(current_table_settings$summary.type) && nzchar(current_table_settings$summary.type)) {
+                    summary_type_clean <- gsub("[^A-Za-z0-9_-]", "_", current_table_settings$summary.type)
+                }
 
                 timestamp <- format(Sys.time(), "%H%M%S")
-                base_filename <- paste0(
-                    "jheem_table_",
-                    id, "_",
-                    location_clean, "_",
-                    first_outcome_clean
+
+                filename_parts <- c(
+                    "jheem_table",
+                    id,
+                    location_clean
                 )
                 if (nzchar(scenario_name_clean)) {
-                    base_filename <- paste0(base_filename, "_", scenario_name_clean)
+                    filename_parts <- c(filename_parts, scenario_name_clean)
                 }
-                filename_final <- paste0(base_filename, "_", Sys.Date(), "_", timestamp, ".csv")
+                filename_parts <- c(
+                    filename_parts,
+                    facets_clean,
+                    summary_type_clean,
+                    Sys.Date(),
+                    timestamp
+                )
+
+                filename_final <- paste(filename_parts, collapse = "_")
+                filename_final <- paste0(filename_final, ".csv")
 
                 filename_final
             },

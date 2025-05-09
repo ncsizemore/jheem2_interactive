@@ -1209,55 +1209,84 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
       }
 
       # Construct dynamic filename
-      current_plot_data <- plot_data_reactive() # Get data used for plot
+      current_plot_data <- plot_data_reactive()
       current_plot_settings <- current_settings_reactive()
 
       location <- "unknown_location"
       if (!is.null(current_plot_data$sim_settings) && !is.null(current_plot_data$sim_settings$location)) {
         location <- current_plot_data$sim_settings$location
       }
-
-      first_outcome <- "unknown_outcome"
-      if (!is.null(current_plot_settings$outcomes) && length(current_plot_settings$outcomes) > 0) {
-        first_outcome <- current_plot_settings$outcomes[1]
-      }
-
-      # Sanitize components for filename
       location_clean <- gsub("[^A-Za-z0-9_-]", "_", location)
-      first_outcome_clean <- gsub("[^A-Za-z0-9_-]", "_", first_outcome)
 
       scenario_name_clean <- ""
-      if (id == "prerun" && !is.null(current_plot_data$sim_list_or_simset)) {
-        # For prerun, the intervention label was derived and used as a name in sim_list_or_simset
-        # It's often the second element if baseline is present.
+      if (id == "prerun") {
+        # Logic to get scenario name for prerun (from intervention_label in plot_data_reactive)
+        # This relies on sim_list_or_simset being named appropriately
         sim_names <- names(current_plot_data$sim_list_or_simset)
-        if (length(sim_names) > 1 && sim_names[1] == "Baseline") { # Assuming baseline is first
-          scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", sim_names[2]) # Use the intervention label
-        } else if (length(sim_names) == 1) {
+        if (length(sim_names) > 1 && sim_names[1] == "Baseline" && !is.null(sim_names[2])) {
+          scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", sim_names[2])
+        } else if (length(sim_names) == 1 && !is.null(sim_names[1])) {
+          # If only one simset, it might be the intervention itself
           scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", sim_names[1])
+        } else {
+          # Fallback if names are not as expected, try to get from settings$scenario
+          if (!is.null(current_plot_data$sim_settings$scenario) && nzchar(current_plot_data$sim_settings$scenario)) {
+            # Try to get the label from PRERUN_CONFIG if available globally
+            prerun_scenario_options <- NULL
+            if (exists("PRERUN_CONFIG") && !is.null(PRERUN_CONFIG$selectors$scenario$options)) {
+              prerun_scenario_options <- PRERUN_CONFIG$selectors$scenario$options
+            }
+            scenario_val <- current_plot_data$sim_settings$scenario
+            if (!is.null(prerun_scenario_options) && !is.null(prerun_scenario_options[[scenario_val]]$label)) {
+              scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", prerun_scenario_options[[scenario_val]]$label)
+            } else {
+              scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", scenario_val) # Fallback to scenario id
+            }
+          }
         }
+      } else if (id == "custom") {
+        scenario_name_clean <- "CustomSim" # Placeholder for custom scenarios
+        # TODO: Later, extract key custom intervention parameters here
+        # For example, date ranges if available in current_plot_data$sim_settings or current_plot_settings
       }
-      # For custom, adding detailed intervention params to filename is complex; deferring for now.
+
+      facets_clean <- "NoFacets"
+      if (!is.null(current_plot_settings$facet.by) && length(current_plot_settings$facet.by) > 0) {
+        facets_clean <- paste(sapply(current_plot_settings$facet.by, function(f) gsub("[^A-Za-z0-9_-]", "_", f)), collapse = "-")
+      }
+
+      summary_type_clean <- "NoSummary"
+      if (!is.null(current_plot_settings$summary.type) && nzchar(current_plot_settings$summary.type)) {
+        summary_type_clean <- gsub("[^A-Za-z0-9_-]", "_", current_plot_settings$summary.type)
+      }
 
       timestamp <- format(Sys.time(), "%H%M%S")
-      base_filename <- paste0(
-        "jheem_plot_",
-        id, "_",
-        location_clean, "_",
-        first_outcome_clean
+
+      filename_parts <- c(
+        "jheem_plot",
+        id,
+        location_clean
       )
       if (nzchar(scenario_name_clean)) {
-        base_filename <- paste0(base_filename, "_", scenario_name_clean)
+        filename_parts <- c(filename_parts, scenario_name_clean)
       }
-      filename_final <- paste0(base_filename, "_", Sys.Date(), "_", timestamp, ".png")
+      filename_parts <- c(
+        filename_parts,
+        facets_clean,
+        summary_type_clean,
+        Sys.Date(),
+        timestamp
+      )
 
+      # Construct base filename WITHOUT .png extension
+      base_filename <- paste(filename_parts, collapse = "_")
 
       # Send message to JavaScript handler
       session$sendCustomMessage("downloadPlotly", list(
         plotId = plot_output_id,
-        filename = filename_final,
-        scale = 2 # Add scale for higher resolution
-        # format = 'png' # Can add format option here later
+        filename = base_filename, # JS will add .png based on format
+        scale = 2,
+        format = "png" # Explicitly tell JS the format for extension
       ))
     })
   }) # END moduleServer
