@@ -34,6 +34,8 @@ create_table_panel <- function(id) {
                 tags$div(
                     class = "panel-content",
                     tableOutput(ns("mainTable")),
+                    # Add download button below the table
+                    downloadButton(ns("downloadTable"), "Download Table Data (CSV)", class = "btn-download"),
                     tags$div(
                         class = "pagination-controls",
                         tags$div(
@@ -581,5 +583,33 @@ table_panel_server <- function(id, settings) {
                 last_table_error_state(current)
             }
         })
+
+        # --- Download Handler for Table Data ---
+        output$downloadTable <- downloadHandler(
+            filename = function() {
+                paste0("jheem_table_data_", id, "_", Sys.Date(), ".csv")
+            },
+            content = function(file) {
+                # Access the full data from the reactive expression
+                data_to_download <- full_formatted_data()$data
+
+                if (!is.null(data_to_download) && nrow(data_to_download) > 0) {
+                    tryCatch(
+                        {
+                            write.csv(data_to_download, file, row.names = FALSE, na = "")
+                        },
+                        error = function(e) {
+                            showNotification(paste("Error downloading table data:", e$message), type = "error")
+                            # Create an empty file to prevent Shiny error if write fails
+                            file.create(file)
+                        }
+                    )
+                } else {
+                    showNotification("No table data available to download.", type = "warning")
+                    # Create an empty file to prevent Shiny error
+                    file.create(file)
+                }
+            }
+        )
     }) # END moduleServer
 }

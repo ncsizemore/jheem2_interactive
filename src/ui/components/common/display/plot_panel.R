@@ -310,7 +310,9 @@ create_plot_panel <- function(id, type = "static") {
           # Add UI output for the title
           uiOutput(ns("plot_title_ui")),
           # Use uiOutput for dynamic plot rendering
-          uiOutput(ns("plot_output_ui"))
+          uiOutput(ns("plot_output_ui")),
+          # Add client-side download button
+          actionButton(ns("downloadPlotClient"), "Download Plot", class = "btn-download")
         )
       )
     ),
@@ -1179,6 +1181,40 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
 
         last_error_state(current)
       }
+    })
+
+    # --- Client-side Plot Download Handler ---
+    observeEvent(input$downloadPlotClient, {
+      req(input$downloadPlotClient > 0) # Ensure button was actually clicked
+      # browser() # Pause execution here for debugging - REMOVING FOR NOW
+
+      # Determine the active plot output ID based on backend
+      vis_config <- tryCatch(get_component_config("visualization"), error = function(e) {
+        warning(paste("Error getting visualization config:", e$message))
+        NULL
+      })
+      backend <- vis_config$plotting_backend %||% "ggplot" # Default to ggplot
+
+      plot_output_id <- NULL
+      if (backend == "plotly") {
+        plot_output_id <- ns("mainPlotly")
+      } else if (backend == "ggplotly") {
+        plot_output_id <- ns("mainGGPlotly")
+      } else {
+        # Backend is ggplot, cannot download via Plotly.js
+        showNotification("Plot download is only available for Plotly backends.", type = "warning")
+        return()
+      }
+
+      # Construct filename (can be made more dynamic later)
+      filename <- paste0("jheem_plot_", id, "_", Sys.Date(), ".png") # Default to png
+
+      # Send message to JavaScript handler
+      session$sendCustomMessage("downloadPlotly", list(
+        plotId = plot_output_id,
+        filename = filename
+        # format = 'png' # Can add format, width, height options here later
+      ))
     })
   }) # END moduleServer
 }

@@ -207,6 +207,8 @@ ui <- function() {
       tags$script(src = "js/interactions/plot_progress.js"),
       # REMOVED: Obsolete immediate loading script
       # tags$script(src = "js/interactions/immediate_loading.js"),
+      # Load Plotly download helper script
+      tags$script(src = "js/plotly_download.js"),
       tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"),
       tags$script(src = "https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"),
       tags$script("console.log('Dependencies loaded');"),
