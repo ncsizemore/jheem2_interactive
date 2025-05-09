@@ -1,0 +1,45 @@
+/* www/css/components/buttons/common_buttons.css */
+
+/* General Primary Action Button Style (inspired by generate.css) */
+.btn-jheem-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+    color: var(--color-white) !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.2rem !important;
+    /* Slightly less padding than generate for non-full-width buttons */
+    border-radius: var(--radius-md) !important;
+    border: none !important;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25) !important;
+    /* Assuming similar color context from generate.css */
+    transition: all 0.3s ease !important;
+    text-align: center !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+    font-size: var(--font-size-sm) !important;
+    /* Slightly smaller font for general use */
+    text-decoration: none !important;
+    /* Ensure links styled as buttons look right */
+    display: inline-block;
+    /* For proper padding and alignment */
+    cursor: pointer;
+    /* width: 100% !important; REMOVED for non-full-width by default */
+}
+
+.btn-jheem-primary:hover {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3) !important;
+    color: var(--color-white) !important;
+    /* Ensure text color remains on hover */
+}
+
+.btn-jheem-primary:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+    /* Corrected box_shadow to box-shadow */
+}
+
+.btn-jheem-primary:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 4px 6px rgba(37, 99, 235, 0.2) !important;
+}

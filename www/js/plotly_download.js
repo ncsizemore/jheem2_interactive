@@ -15,17 +15,16 @@ $(document).on("shiny:connected", function (event) {
         }
 
         if (message.plotId && message.filename) {
-            const plotElement = document.getElementById(message.plotId); // This is our main container
+            const plotElement = document.getElementById(message.plotId);
 
             if (plotElement) {
-                // We assume plotElement (the one with the ID from Shiny, which also has js-plotly-plot class) 
-                // is the correct one to pass to Plotly.downloadImage.
                 console.log("Using plot element for download:", plotElement);
                 const downloadOptions = {
                     format: message.format || 'png',
                     width: message.width || null,
                     height: message.height || null,
-                    filename: message.filename
+                    filename: message.filename,
+                    scale: message.scale || 1 // Use provided scale or default to 1
                 };
                 console.log("Calling Plotly.downloadImage with options:", downloadOptions);
                 Plotly.downloadImage(plotElement, downloadOptions)

@@ -25,6 +25,7 @@
 @import 'components/controls/custom_inputs.css';
 
 @import 'components/buttons/generate.css';
+@import 'components/buttons/common_buttons.css';
 
 @import 'components/feedback/errors.css';
 @import 'components/feedback/notifications.css';

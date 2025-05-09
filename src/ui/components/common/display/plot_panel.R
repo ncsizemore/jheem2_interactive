@@ -307,12 +307,14 @@ create_plot_panel <- function(id, type = "static") {
         class = "panel-container panel-section", # Added panel-section for card styling
         tags$div(
           class = "panel-content",
-          # Add UI output for the title
-          uiOutput(ns("plot_title_ui")),
+          # Add UI output for the title and download button container
+          tags$div(
+            style = "display: flex; justify-content: space-between; align-items: center;",
+            uiOutput(ns("plot_title_ui")),
+            actionButton(ns("downloadPlotClient"), label = icon("download"), title = "Download Plot", class = "btn-jheem-primary")
+          ),
           # Use uiOutput for dynamic plot rendering
-          uiOutput(ns("plot_output_ui")),
-          # Add client-side download button
-          actionButton(ns("downloadPlotClient"), "Download Plot", class = "btn-download")
+          uiOutput(ns("plot_output_ui"))
         )
       )
     ),
@@ -1206,14 +1208,56 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
         return()
       }
 
-      # Construct filename (can be made more dynamic later)
-      filename <- paste0("jheem_plot_", id, "_", Sys.Date(), ".png") # Default to png
+      # Construct dynamic filename
+      current_plot_data <- plot_data_reactive() # Get data used for plot
+      current_plot_settings <- current_settings_reactive()
+
+      location <- "unknown_location"
+      if (!is.null(current_plot_data$sim_settings) && !is.null(current_plot_data$sim_settings$location)) {
+        location <- current_plot_data$sim_settings$location
+      }
+
+      first_outcome <- "unknown_outcome"
+      if (!is.null(current_plot_settings$outcomes) && length(current_plot_settings$outcomes) > 0) {
+        first_outcome <- current_plot_settings$outcomes[1]
+      }
+
+      # Sanitize components for filename
+      location_clean <- gsub("[^A-Za-z0-9_-]", "_", location)
+      first_outcome_clean <- gsub("[^A-Za-z0-9_-]", "_", first_outcome)
+
+      scenario_name_clean <- ""
+      if (id == "prerun" && !is.null(current_plot_data$sim_list_or_simset)) {
+        # For prerun, the intervention label was derived and used as a name in sim_list_or_simset
+        # It's often the second element if baseline is present.
+        sim_names <- names(current_plot_data$sim_list_or_simset)
+        if (length(sim_names) > 1 && sim_names[1] == "Baseline") { # Assuming baseline is first
+          scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", sim_names[2]) # Use the intervention label
+        } else if (length(sim_names) == 1) {
+          scenario_name_clean <- gsub("[^A-Za-z0-9_-]", "_", sim_names[1])
+        }
+      }
+      # For custom, adding detailed intervention params to filename is complex; deferring for now.
+
+      timestamp <- format(Sys.time(), "%H%M%S")
+      base_filename <- paste0(
+        "jheem_plot_",
+        id, "_",
+        location_clean, "_",
+        first_outcome_clean
+      )
+      if (nzchar(scenario_name_clean)) {
+        base_filename <- paste0(base_filename, "_", scenario_name_clean)
+      }
+      filename_final <- paste0(base_filename, "_", Sys.Date(), "_", timestamp, ".png")
+
 
       # Send message to JavaScript handler
       session$sendCustomMessage("downloadPlotly", list(
         plotId = plot_output_id,
-        filename = filename
-        # format = 'png' # Can add format, width, height options here later
+        filename = filename_final,
+        scale = 2 # Add scale for higher resolution
+        # format = 'png' # Can add format option here later
       ))
     })
   }) # END moduleServer
