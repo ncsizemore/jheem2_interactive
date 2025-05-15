@@ -3,7 +3,7 @@
 
 # This function will return a tagList of UI elements that are common
 # to both prerun and custom applications.
-create_common_ui_shell <- function(app_title = "JHEEM Application", ...) {
+create_common_ui_shell <- function(app_title = "JHEEM Application", ..., initial_overlay_hidden = FALSE) {
     # Ensure necessary UI-related packages/functions are available
     # shinyjs::useShinyjs() should be called once per UI.
     # Other sourced scripts from common_startup.R might provide functions used here.
@@ -73,7 +73,7 @@ create_common_ui_shell <- function(app_title = "JHEEM Application", ...) {
                 style = "height:100%;", # Ensure body tag takes full height
 
                 # Model status indicator (assuming create_model_status_ui is available via common_startup.R)
-                create_model_status_ui(),
+                create_model_status_ui(start_hidden = initial_overlay_hidden),
 
                 # Download progress container (rendered by download_manager in server logic)
                 uiOutput("download_progress_container"),

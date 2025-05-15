@@ -22,10 +22,20 @@ print("Loading PRERUN page config for app_prerun.R...")
 PRERUN_CONFIG <- get_page_complete_config("prerun")
 print("PRERUN_CONFIG loaded.")
 
+# Determine if the loading overlay should be hidden from the start
+# This is true if the configuration explicitly says not to load the full model spec.
+app_prerun_start_overlay_hidden <- FALSE
+if (!is.null(PRERUN_CONFIG$execution) &&
+    !is.null(PRERUN_CONFIG$execution$requires_full_model_load) &&
+    PRERUN_CONFIG$execution$requires_full_model_load == FALSE) {
+    app_prerun_start_overlay_hidden <- TRUE
+}
+
 # UI for Prerun App
 ui_prerun <- function() {
     create_common_ui_shell(
         app_title = "JHEEM Prerun Scenarios",
+        initial_overlay_hidden = app_prerun_start_overlay_hidden, # Pass the flag
         tags$div(
             class = "container-fluid", # Mimic Bootstrap container
             tags$div(
@@ -42,6 +52,9 @@ ui_prerun <- function() {
 # Server for Prerun App
 server_prerun <- function(input, output, session) {
     common_logic <- initialize_common_server_logic(input, output, session)
+
+    # For app_prerun, we conditionally load the full model spec based on config.
+    # The actual loading is triggered later by session$onFlushed.
 
     # Specific prerun initializations
     plot_state_prerun <- reactiveVal(NULL) # Dedicated plot_state for this app instance
@@ -66,7 +79,13 @@ server_prerun <- function(input, output, session) {
         })
     )
 
-    # Conditional model specification loading after UI is flushed
+    # Conditional model specification loading after UI is flushed is currently bypassed for app_prerun.
+    # The model status is set to "loaded" unconditionally at the start of this server function.
+    # If future prerun scenarios require conditional loading of the model spec,
+    # the PRERUN_CONFIG$execution$requires_full_model_load flag can be used,
+    # and the logic below (or similar) would need to be reinstated and the unconditional
+    # setting of status to "loaded" above would need to be removed or made conditional.
+    #
     session$onFlushed(function() {
         should_load_model <- TRUE # Default to load
         if (!is.null(PRERUN_CONFIG$execution) &&
@@ -81,8 +100,9 @@ server_prerun <- function(input, output, session) {
             common_logic$model_status$load_model_spec()
         } else {
             message("[APP_PRERUN] UI rendered. Skipping model specification load based on PRERUN_CONFIG.")
-            # Optionally, update model status to indicate spec is not loaded by design
-            # common_logic$model_status$set_status("not_loaded_by_design", "Model specification not loaded as per Prerun configuration.")
+            # The call to get_store()$update_model_state(status = "loaded", ...) was here
+            # but is now done unconditionally at the start of server_prerun.
+            message("[APP_PRERUN] Model status was pre-set to 'loaded'.")
         }
     })
 }

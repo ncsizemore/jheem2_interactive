@@ -2,12 +2,18 @@
 
 #' Create model status UI component
 #' @return Shiny UI component
-create_model_status_ui <- function() {
+#' @param start_hidden Boolean, if TRUE, the overlay starts with the 'hidden' class.
+create_model_status_ui <- function(start_hidden = FALSE) {
+    # Determine initial class based on start_hidden
+    initial_class <- "model-loading-overlay"
+    if (start_hidden) {
+        initial_class <- paste(initial_class, "hidden")
+    }
+
     # Create a full page overlay for loading
     div(
         id = "model-loading-overlay",
-        # Make overlay visible by default by removing 'hidden' class
-        class = "model-loading-overlay",
+        class = initial_class,
         div(
             class = "model-loading-content",
             div(class = "model-spinner"),
