@@ -41,6 +41,8 @@ httr::set_config(httr::timeout(600))
 rsconnect::deployApp(
   appDir = "/Users/nicholas/Documents/jheem/code/jheem2_interactive",
   appName = "ryan-white-prerun", # Changed appName
+  appMode = "shiny",
+  appPrimaryDoc = "app_prerun.R",
   account = "jheem",
   appFiles = c(
     "app_prerun.R", # Changed app file
@@ -61,6 +63,8 @@ httr::set_config(httr::timeout(600))
 rsconnect::deployApp(
   appDir = "/Users/nicholas/Documents/jheem/code/jheem2_interactive",
   appName = "ryan-white-custom", # Changed appName
+  appMode = "shiny",
+  appPrimaryDoc = "app_custom.R",
   account = "jheem",
   appFiles = c(
     "app_custom.R", # Changed app file
