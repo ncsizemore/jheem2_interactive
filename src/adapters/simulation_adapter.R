@@ -251,6 +251,9 @@ SimulationAdapter <- R6::R6Class(
                             original_base_simset <- simset
                             print("[SIMULATION_ADAPTER ASYNC] Stored original base simulation for baseline comparison")
 
+                            # DEBUG: Examine everything right before running the intervention
+                            browser()
+
                             # Create progress callback (remains the same, uses dual approach)
                             progress_callback <- function(index, total, done) {
                                 percent <- 0

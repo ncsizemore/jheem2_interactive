@@ -38,6 +38,9 @@ simplot_local <- function(...,
                           show.data.pull.error = F,
                           facet_labeller = NULL, # NEW: Optional labeller function
                           debug = F) {
+    # DEBUG: Examine the input parameters to simplot_local
+    browser()
+                          
     plot.data <- plot.data.validation(
         list(...),
         match.call(expand.dots = F)$...,

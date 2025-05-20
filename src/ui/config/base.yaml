@@ -1,13 +1,13 @@
 # Application-wide settings
 application:
-  name: "JHEEM2"
+  name: "JHEEM2 - State Level"
   version: "2.0.0"
-  title: "JHEEM 2 - Ryan White Program"
+  title: "JHEEM 2 - Ryan White Program (State Level Analysis)"
   defaults:
     selected_tab: 'prerun'
 
 # Simulation directory configuration
-simulation_root: "simulations/ryan-white"  # Root directory for simulation files
+simulation_root: "simulations/ryan-white-state-level"  # Root directory for state-level simulation files
 
 # Model specification settings
 model_specification:

@@ -858,9 +858,15 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
               plot_args_final$facet_labeller <- custom_labeller
             }
 
+            # DEBUG: Examine plot args and data before simplot is called
+            browser()
+            
             # Call LOCAL simplot to get ggplot object
             the_ggplot <- do.call(simplot_local, c(plot_data$sim_list_or_simset, plot_args_final))
             req(the_ggplot)
+            
+            # DEBUG: Examine generated ggplot object
+            browser()
 
             # Force remove title potentially added by simplot (handled by UI now)
             the_ggplot <- the_ggplot + theme(plot.title = element_blank()) # RE-ADD THIS LINE
@@ -875,6 +881,9 @@ plot_panel_server <- function(id, settings, scenario_options_config = NULL) {
             # Apply ggplot customizations, passing the number of lines
             the_ggplot <- customize_plot_from_config(the_ggplot, plot_data$vis_config, num_facet_lines = num_facet_lines)
             req(the_ggplot)
+
+            # DEBUG: Examine plot layers and data before ggplotly conversion
+            browser()
 
             # Add debugging for ribbon investigation
             has_ribbon_geom <- FALSE
