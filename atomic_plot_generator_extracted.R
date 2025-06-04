@@ -221,6 +221,19 @@ generate_atomic_plot <- function() {
       libdir = if (!args$selfcontained) "lib" else NULL
     )
     
+    # ----- 9.5. Save the plot as JSON for API consumption -----
+    json_path <- paste0(tools::file_path_sans_ext(output_path), ".json")
+    log_to_file(sprintf("Saving plotly JSON to: %s", json_path), args$debug)
+    
+    # Extract the plotly data and layout
+    plotly_json <- list(
+      data = plotly_fig$x$data,
+      layout = plotly_fig$x$layout
+    )
+    
+    # Save as JSON
+    writeLines(toJSON(plotly_json, auto_unbox = TRUE, pretty = TRUE), json_path)
+    
     # ----- 10. Save metadata -----
     log_to_file("Generating metadata", args$debug)
     metadata <- list(
