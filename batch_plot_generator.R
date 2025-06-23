@@ -70,6 +70,7 @@ parser$add_argument("--register-db", action = "store_true", default = FALSE, hel
 parser$add_argument("--s3-bucket", type = "character", default = "prerun-plots-bucket-local", help = "S3 bucket name")
 parser$add_argument("--api-gateway-id", type = "character", help = "API Gateway ID for database registration")
 parser$add_argument("--api-base-url", type = "character", help = "Full API base URL (alternative to api-gateway-id)")
+parser$add_argument("--json-only", action = "store_true", default = FALSE, help = "Generate only JSON files (skip HTML output for production)")
 
 # Parse arguments
 args <- parser$parse_args()
@@ -160,7 +161,11 @@ generate_paths <- function(city, scenario, outcome, statistic, facet_spec, outpu
 
 # Check if plot already exists
 plot_exists <- function(paths) {
-  file.exists(paths$json) && file.exists(paths$html)
+  if (args$json_only) {
+    return(file.exists(paths$json))
+  } else {
+    return(file.exists(paths$json) && file.exists(paths$html))
+  }
 }
 
 # Upload plot to S3
@@ -329,13 +334,15 @@ generate_single_plot <- function(city, scenario, outcome, statistic, facet_spec,
       # Generate output paths
       paths <- generate_paths(city, scenario, outcome, statistic, facet_spec, output_dir)
 
-      # Save HTML
-      htmlwidgets::saveWidget(
-        render_result$plotly_fig,
-        file = paths$html,
-        selfcontained = FALSE,
-        libdir = "lib"
-      )
+      # Save HTML (only if not json-only mode)
+      if (!args$json_only) {
+        htmlwidgets::saveWidget(
+          render_result$plotly_fig,
+          file = paths$html,
+          selfcontained = FALSE,
+          libdir = "lib"
+        )
+      }
 
       # Save JSON
       plotly_json <- list(
