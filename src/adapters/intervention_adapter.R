@@ -324,9 +324,22 @@ create_custom_intervention <- function(settings, session_id = NULL) {
       )
       
       # Create intervention
-      result <- do.call(create.intervention, args)
+      intervention_obj <- do.call(create.intervention, args)
       print("Successfully created combined intervention")
-      result
+      
+      # Calculate simulation timing parameters for extending the simulation
+      # Use 2025 (simset end) as simulation start, not the intervention effect start time
+      start_year <- 2025  # Start simulation from simset's end year
+      end_year <- if (settings$dates$end == "never") 2030 else format_date_to_numeric(settings$dates$end)
+      
+      print(paste("Simulation timing: start_year =", start_year, ", end_year =", end_year))
+      
+      # Return both intervention and timing parameters
+      list(
+        intervention = intervention_obj,
+        start_year = start_year,
+        end_year = end_year
+      )
     }, error = function(e) {
       warning(paste("Error creating combined intervention:", e$message))
       jheem2:::get.null.intervention()

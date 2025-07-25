@@ -8,11 +8,11 @@
 
 dynamic_outcomes: true
 
-# Direct file path (highest precedence)
-outcomes_file: "simulations/ryan-white/prerun/C.12580/cessation.Rdata"
+# Direct file path (highest precedence) - using cdct-w file for outcome selection
+outcomes_file: "simulations/cdct-w/final.ehe.state-80/CA/cdct-w_final.ehe.state-80_CA_noint.Rdata"
 
 # Default location and scenario for pattern-based approach
-default_location: "C.12580"
+default_location: "CA"
 default_scenario: "cessation"
 
 # Optional mapping for specific outcome display names
@@ -21,13 +21,13 @@ default_scenario: "cessation"
 # Otherwise, a default name is generated (e.g., 'diagnosed.prevalence' -> 'Diagnosed Prevalence')
 outcome_display_names:
   new: "New Diagnoses"
-  rw.clients: "Ryan White Clients"
-  adap.clients: "ADAP Clients"
-  oahs.clients: "OAHS Clients"
+  cdc.funded.tests: "CDC-Funded Tests"
+  cdc.funded.diagnoses: "CDC-Funded Diagnoses"
   prep.uptake: "PrEP Uptake"
-  non.adap.clients: "Non-ADAP Clients" # Added
-  adap.proportion: "ADAP Proportion"   # Added
-  oahs.suppression: "OAHS Suppression" # Added
+  # Ryan White specific outcomes (not applicable to CDC testing)
+  # rw.clients: "Ryan White Clients"
+  # adap.clients: "ADAP Clients"
+  # oahs.clients: "OAHS Clients"
   adap.suppression: "ADAP Suppression" # Added
   awareness: "Awareness of HIV Status" # Added
   testing: "Proportion Tested"         # Added
@@ -96,47 +96,27 @@ plot_controls:
         label: "Knowledge of Status"
         description: "Proportion of PLWH aware of their status"
         
-      # Ryan White clients
-      rw_clients:
-        id: "rw.clients"
-        label: "Ryan White Clients"
-        description: "Number of Ryan White clients"
+      # CDC Testing specific outcomes
+      cdc_funded_tests:
+        id: "cdc.funded.tests"
+        label: "CDC-Funded Tests"
+        description: "Number of CDC-funded HIV tests"
         
-      # ADAP clients
-      adap_clients:
-        id: "adap.clients"
-        label: "ADAP Clients"
-        description: "Number of ADAP clients"
+      cdc_funded_diagnoses:
+        id: "cdc.funded.diagnoses"
+        label: "CDC-Funded Diagnoses" 
+        description: "Number of HIV diagnoses from CDC-funded testing"
         
-      # Non-ADAP clients
-      non_adap_clients:
-        id: "non.adap.clients"
-        label: "Non-ADAP Clients"
-        description: "Number of non-ADAP clients"
-        
-      # OAHS clients
-      oahs_clients:
-        id: "oahs.clients"
-        label: "OAHS Clients"
-        description: "Number of OAHS clients"
-        
-      # ADAP proportion
-      adap_proportion:
-        id: "adap.proportion"
-        label: "ADAP Proportion"
-        description: "Proportion of ADAP clients"
-        
-      # OAHS suppression
-      oahs_suppression:
-        id: "oahs.suppression"
-        label: "OAHS Viral Suppression"
-        description: "Viral suppression rate among OAHS clients"
-        
-      # ADAP suppression
-      adap_suppression:
-        id: "adap.suppression"
-        label: "ADAP Viral Suppression"
-        description: "Viral suppression rate among ADAP clients"
+      # Ryan White specific outcomes (commented out for CDC testing app)
+      # rw_clients:
+      #   id: "rw.clients"
+      #   label: "Ryan White Clients"
+      #   description: "Number of Ryan White clients"
+      #   
+      # adap_clients:
+      #   id: "adap.clients"
+      #   label: "ADAP Clients"
+      #   description: "Number of ADAP clients"
 
   stratification:
     type: "choices-select"

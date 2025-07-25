@@ -1,35 +1,35 @@
 # config/pages/prerun.yaml - Pre-run page specific settings
-# Updated for Ryan White branch
+# Updated for CDC Testing branch
 
 # Selector configurations
 selectors:
   scenario:
     type: "select"
     input_style: "choices"
-    label: "Funding Scenario"
-    description: "Select whether Ryan White funding is briefly interrupted, completely ceases, or interrupted for an extended period"
+    label: "Testing Scenario"
+    description: "Select the impact scenario for CDC-funded HIV testing"
     show_label: false
     show_description: false
     placeholder: "Select a scenario..."
-    value: "cessation"  # Default to cessation scenario
+    value: "cdct.end"  # Default to cessation scenario
     options:
-      brief_interruption:
-        id: "brief_interruption"
+      cdct.bintr:
+        id: "cdct.bintr"
         label: "Brief Interruption"
-        description: "Ryan White funding is briefly interrupted"
-      cessation:
-        id: "cessation"
-        label: "Cessation"
-        description: "Ryan White funding completely ceases"
-      prolonged_interruption:
-        id: "prolonged_interruption"
+        description: "CDC testing is briefly interrupted"
+      cdct.pintr:
+        id: "cdct.pintr"
         label: "Prolonged Interruption"
-        description: "Ryan White funding is interrupted for an extended period"
+        description: "CDC testing is interrupted for an extended period"
+      cdct.end:
+        id: "cdct.end"
+        label: "Testing Cessation"
+        description: "CDC-funded HIV testing completely ends"
 
-# Simulation file configuration
+# Simulation file configuration - pointing directly to cdct-w files
 prerun_simulations:
   provider: "local"  # Options: "local", "onedrive" - change to "onedrive" to use OneDrive
-  file_pattern: "prerun/{location}/{scenario}.Rdata"
+  file_pattern: "cdct-w/final.ehe.state-80/{location}/cdct-w_final.ehe.state-80_{location}_{scenario}.Rdata"
   config_file: "src/data/providers/onedrive_resources/onedrive_sharing_links.json"  # Path to sharing links file
 
 

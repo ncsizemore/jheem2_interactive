@@ -63,15 +63,17 @@ baseline_simulations:
     enabled: true
     # Use provider from page config
     use_provider: true
-    # Specify the baseline file pattern (uses default if not specified)
-    # file_pattern: "alternate/path/{location}_baseline.Rdata"  # Uncomment to override
+    # Use cdct-w noint files for prerun baseline comparison too
+    file_pattern: "cdct-w/final.ehe.state-80/{location}/cdct-w_final.ehe.state-80_{location}_noint.Rdata"
     
   custom:
     enabled: true
-    # For custom, we can choose to reuse the base simulation
-    reuse_base_simset: true
-    # Or load a different one if reuse_base_simset is false
-    # file_pattern: "special/baseline/{location}.Rdata"  # Uncomment to override
+    # Use provider from page config
+    use_provider: true
+    # For CDC testing, we need separate baselines: cdct-ws for execution, cdct-w for plotting
+    reuse_base_simset: false
+    # Load cdct-w noint files for plotting comparison (extends to 2030)
+    file_pattern: "cdct-w/final.ehe.state-80/{location}/cdct-w_final.ehe.state-80_{location}_noint.Rdata"
 
 # Faceted plot configuration
 faceted_plots:

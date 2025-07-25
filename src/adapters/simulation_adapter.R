@@ -242,14 +242,28 @@ SimulationAdapter <- R6::R6Class(
                         # For custom mode, run intervention
                         if (mode == "custom") {
                             print("Creating intervention...")
-                            intervention <- create_intervention(settings, mode)
-                            print("Created intervention:")
-                            str(intervention)
+                            intervention_result <- create_intervention(settings, mode)
+                            print("Created intervention result:")
+                            str(intervention_result)
+                            
+                            # Extract intervention and timing parameters
+                            if (is.list(intervention_result) && "intervention" %in% names(intervention_result)) {
+                                intervention <- intervention_result$intervention
+                                start_year <- intervention_result$start_year
+                                end_year <- intervention_result$end_year
+                                print(paste("Extracted timing: start_year =", start_year, ", end_year =", end_year))
+                            } else {
+                                # Fallback for backward compatibility
+                                intervention <- intervention_result
+                                start_year <- NULL
+                                end_year <- NULL
+                                print("Using legacy intervention format (no timing parameters)")
+                            }
+                            
                             runner <- SimulationRunner$new(provider)
 
-                            # Store a copy of the original base simulation for comparison
-                            original_base_simset <- simset
-                            print("[SIMULATION_ADAPTER ASYNC] Stored original base simulation for baseline comparison")
+                            # Note: baseline loading for plot comparison is now handled by visualization.yaml config
+                            print("[SIMULATION_ADAPTER ASYNC] Using visualization config for baseline comparison")
 
                             # Create progress callback (remains the same, uses dual approach)
                             progress_callback <- function(index, total, done) {
@@ -280,8 +294,15 @@ SimulationAdapter <- R6::R6Class(
                                 }
                             }
 
-                            # Run intervention with progress tracking
-                            simset <- runner$run_intervention(intervention = intervention, simset = simset, progress_callback = progress_callback)
+                            # Run intervention with progress tracking and timing parameters
+                            print(paste("Calling runner with: start_year =", start_year, ", end_year =", end_year))
+                            simset <- runner$run_intervention(
+                                intervention = intervention, 
+                                simset = simset, 
+                                start_year = start_year,
+                                end_year = end_year,
+                                progress_callback = progress_callback
+                            )
                         }
 
                         # Handle simulation completion (remains the same, uses dual approach)
@@ -298,9 +319,6 @@ SimulationAdapter <- R6::R6Class(
 
                         # Update state with results and final progress
                         update_data <- list(results = list(simset = simset, transformed = NULL), status = "complete")
-                        if (mode == "custom" && exists("original_base_simset")) {
-                            update_data$original_base_simset <- original_base_simset
-                        }
                         if (!is.null(final_progress)) {
                             update_data$progress <- final_progress
                         }

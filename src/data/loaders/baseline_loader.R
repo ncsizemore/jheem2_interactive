@@ -5,6 +5,7 @@
 #' @param settings Settings to determine appropriate baseline (needs location)
 #' @return Baseline simulation set or NULL if not available/enabled
 load_baseline_simulation <- function(page_id, settings) {
+  
   # Check if we have a cached version already
   # Use a simple global variable to track loaded baselines by location
   if (!exists(".BASELINE_CACHE", envir = .GlobalEnv)) {
@@ -114,7 +115,6 @@ load_baseline_simulation <- function(page_id, settings) {
     "[BASELINE] Using provider: %s with file pattern: %s",
     provider_type, file_pattern
   ))
-
   # Create provider
   provider <- NULL
   if (provider_type == "local") {
@@ -142,7 +142,6 @@ load_baseline_simulation <- function(page_id, settings) {
   "[BASELINE] Loading baseline simulation for location: %s",
   settings$location
   ))
-
   baseline_simset <- provider$load_simset(baseline_settings)
 
   # Just log success instead of trying to set names

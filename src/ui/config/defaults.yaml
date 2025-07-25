@@ -41,22 +41,22 @@ sections:
     description: "Select the geographic area for the model"
     selectors: ["location"]
   scenario:
-    title: "Funding Scenario"
-    description: "Select whether Ryan White funding is briefly interrupted, completely ceases, or interrupted for an extended period"
+    title: "Testing Scenario"
+    description: "Select the impact scenario for CDC-funded HIV testing"
     selectors: ["scenario"]
   timing:
     title: "Programs Change Timeline"
-    description: "Define when Ryan White programs end and when they begin to return"
+    description: "Define when CDC testing programs end and when they begin to return"
   components:
-    title: "Viral Suppression Loss"
-    description: "Configure viral suppression loss for each recipient group"
+    title: "CDC Testing Parameters"
+    description: "Configure the level and timing of CDC testing reductions"
 
 # Panel configurations
 panels:
   left:
     id: "intervention-panel"
-    header: "Ryan White Funding Impact"
-    description: "Explore the impact of changes to Ryan White program funding on HIV transmission and viral suppression."
+    header: "CDC Testing Impact"
+    description: "Explore the impact of changes to CDC-funded HIV testing on HIV transmission and viral suppression."
     width: 300
     collapsible: true
     defaultVisible: true
@@ -88,111 +88,66 @@ selectors:
   location:
     type: "select"
     label: "Location"
-    description: "Select the geographic area for the model"
+    description: "Select the state for the CDC testing impact analysis"
     show_label: false
     show_description: false
-    placeholder: "Select a location..."
-    value: "C.12580"  # Default to Baltimore-Columbia-Towson, MD
+    placeholder: "Select a state..."
+    value: "CA"  # Default to California
     options:
-      atlanta:
-        id: "C.12060"
-        label: "Atlanta-Sandy Springs-Roswell, GA"
-      austin:
-        id: "C.12420"
-        label: "Austin-Round Rock, TX"
-      baltimore:
-        id: "C.12580"
-        label: "Baltimore-Columbia-Towson, MD"
-      baton_rouge:
-        id: "C.12940"
-        label: "Baton Rouge, LA"
-      boston:
-        id: "C.14460"
-        label: "Boston-Cambridge-Newton, MA-NH"
-      charlotte:
-        id: "C.16740"
-        label: "Charlotte-Concord-Gastonia, NC-SC"
-      chicago:
-        id: "C.16980"
-        label: "Chicago-Naperville-Elgin, IL-IN-WI"
-      #cincinnati:
-      #  id: "C.17140"
-      #  label: "Cincinnati, OH-KY-IN"
-      cleveland:
-        id: "C.17460"
-        label: "Cleveland-Elyria, OH"
-      columbus:
-        id: "C.18140"
-        label: "Columbus, OH"
-      dallas:
-        id: "C.19100"
-        label: "Dallas-Fort Worth-Arlington, TX"
-      detroit:
-        id: "C.19820"
-        label: "Detroit-Warren-Dearborn, MI"
-      houston:
-        id: "C.26420"
-        label: "Houston-The Woodlands-Sugar Land, TX"
-      indianapolis:
-        id: "C.26900"
-        label: "Indianapolis-Carmel-Anderson, IN"
-      jacksonville:
-        id: "C.27260"
-        label: "Jacksonville, FL"
-      las_vegas:
-        id: "C.29820"
-        label: "Las Vegas-Henderson-Paradise, NV"
-      los_angeles:
-        id: "C.31080"
-        label: "Los Angeles-Long Beach-Anaheim, CA"
-      memphis:
-        id: "C.32820"
-        label: "Memphis, TN-MS-AR"
-      miami:
-        id: "C.33100"
-        label: "Miami-Fort Lauderdale-West Palm Beach, FL"
-      new_orleans:
-        id: "C.35380"
-        label: "New Orleans-Metairie, LA"
+      alabama:
+        id: "AL"
+        label: "Alabama"
+      arizona:
+        id: "AZ"
+        label: "Arizona"
+      california:
+        id: "CA"
+        label: "California"
+      florida:
+        id: "FL"
+        label: "Florida"
+      georgia:
+        id: "GA"
+        label: "Georgia"
+      illinois:
+        id: "IL"
+        label: "Illinois"
+      kentucky:
+        id: "KY"
+        label: "Kentucky"
+      louisiana:
+        id: "LA"
+        label: "Louisiana"
+      maryland:
+        id: "MD"
+        label: "Maryland"
+      missouri:
+        id: "MO"
+        label: "Missouri"
+      mississippi:
+        id: "MS"
+        label: "Mississippi"
       new_york:
-        id: "C.35620"
-        label: "New York-Newark-Jersey City, NY-NJ-PA"
-      orlando:
-        id: "C.36740"
-        label: "Orlando-Kissimmee-Sanford, FL"
-      philadelphia:
-        id: "C.37980"
-        label: "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"
-      phoenix:
-        id: "C.38060"
-        label: "Phoenix-Mesa-Scottsdale, AZ"
-      riverside:
-        id: "C.40140"
-        label: "Riverside-San Bernardino-Ontario, CA"
-      sacramento:
-        id: "C.40900"
-        label: "Sacramento-Roseville-Arden-Arcade, CA"
-      #st_louis:
-      #  id: "C.41180"
-      #  label: "St. Louis, MO-IL"
-      san_antonio:
-        id: "C.41700"
-        label: "San Antonio-New Braunfels, TX"
-      san_diego:
-        id: "C.41740"
-        label: "San Diego-Carlsbad, CA"
-      san_francisco:
-        id: "C.41860"
-        label: "San Francisco-Oakland-Hayward, CA"
-      seattle:
-        id: "C.42660"
-        label: "Seattle-Tacoma-Bellevue, WA"
-      tampa:
-        id: "C.45300"
-        label: "Tampa-St. Petersburg-Clearwater, FL"
+        id: "NY"
+        label: "New York"
+      ohio:
+        id: "OH"
+        label: "Ohio"
+      south_carolina:
+        id: "SC"
+        label: "South Carolina"
+      tennessee:
+        id: "TN"
+        label: "Tennessee"
+      texas:
+        id: "TX"
+        label: "Texas"
       washington:
-        id: "C.47900"
-        label: "Washington-Arlington-Alexandria, DC-VA-MD-WV"
+        id: "WA"
+        label: "Washington"
+      wisconsin:
+        id: "WI"
+        label: "Wisconsin"
 
 
 # Model dimension mappings - used for translating UI to model values

@@ -66,6 +66,7 @@ SimulationRunner <- R6::R6Class(
           }
           
           # Run the intervention with the listener
+          #browser()
           intervention$run(simset,
                           start.year = start_year,
                           end.year = end_year,

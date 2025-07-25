@@ -2,19 +2,19 @@
 application:
   name: "JHEEM2"
   version: "2.0.0"
-  title: "JHEEM 2 - Ryan White Program"
+  title: "JHEEM 2 - CDC Testing Analysis"
   defaults:
     selected_tab: 'prerun'
 
 # Simulation directory configuration
-simulation_root: "simulations/ryan-white"  # Root directory for simulation files
+simulation_root: "simulations"  # Root directory for simulation files
 
 # Model specification settings
 model_specification:
-  name: "ryan_white"
-  main_file: "ryan_white_specification.R"
-  development_path: "../jheem_analyses/applications/ryan_white/"
-  deployment_path: "external/jheem_analyses/applications/ryan_white/"
+  name: "cdc_testing"
+  main_file: "cdc_testing_specification.R"
+  development_path: "../jheem_analyses/applications/cdc_testing/"
+  deployment_path: "external/jheem_analyses/applications/cdc_testing/"
 
 # Theme configuration
 theme:

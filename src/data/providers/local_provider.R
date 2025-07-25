@@ -129,9 +129,9 @@ LocalProvider <- R6::R6Class(
             # Strip the braces
             selector_names <- gsub("[{}]", "", placeholders)
             
-            # For custom mode, we only expect location
+            # For custom mode, we only expect location (can appear multiple times)
             if (self$mode == "custom") {
-                if (!identical(selector_names, "location")) {
+                if (!all(selector_names == "location")) {
                     stop("Custom mode file pattern should only contain {location}")
                 }
             } else {
@@ -152,9 +152,9 @@ LocalProvider <- R6::R6Class(
                 }
             }
             
-            # Replace each placeholder
+            # Replace each placeholder (handle duplicates by using unique selector names)
             filename <- self$config$file_pattern
-            for (selector in selector_names) {
+            for (selector in unique(selector_names)) {
                 value <- settings[[selector]]
                 if (is.null(value)) {
                     stop(sprintf("No value provided for required selector: %s", selector))

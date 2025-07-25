@@ -2,7 +2,7 @@
 MODEL_CONFIG <- list(
   # Whether this model uses WHOLE.POPULATION for all interventions
   use_whole_population = TRUE,
-  
+
   # Whether this model supports targeting demographic subgroups
   supports_subgroup_targeting = FALSE
 )
@@ -46,14 +46,14 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
   if (is.function(quantity_name)) {
     quantity_name <- quantity_name(group_id, suffix)
   }
-  
+
   # Add suffix if provided
   if (!is.null(suffix) && !grepl(paste0("\\.", suffix, "\\."), quantity_name)) {
     # Only add suffix if it's not already part of the quantity name
     quantity_name <- gsub("\\.$", paste0(".", suffix, "."), quantity_name)
     quantity_name <- gsub("\\.$", "", quantity_name) # Remove trailing dot if any
   }
-  
+
   # Apply transformation if provided
   effect_value <- if (!is.null(transform) && is.function(transform)) {
     transform(value)
@@ -63,65 +63,65 @@ create_standard_effect <- function(quantity_name, scale, start_time, end_time, v
   } else {
     value
   }
-  
+
   # Convert to numeric
   start_time_num <- suppressWarnings(as.numeric(start_time))
-  
+
   # Check if this is a temporary or permanent effect
-  is_temporary <- !is.null(end_time) && 
-                  !is.na(end_time) && 
-                  end_time != "" && 
-                  end_time != "never"
-  
+  is_temporary <- !is.null(end_time) &&
+    !is.na(end_time) &&
+    end_time != "" &&
+    end_time != "never"
+
   # Print debug info
   print(paste("Creating", ifelse(is_temporary, "TEMPORARY", "PERMANENT"), "effect:"))
   print(paste("  Quantity:", quantity_name))
   print(paste("  Start time:", start_time_num))
   print(paste("  End time:", ifelse(is_temporary, as.numeric(end_time), "N/A")))
   print(paste("  Effect value:", effect_value))
-  
+
   # Create appropriate effect based on type
   if (is_temporary) {
     # For temporary effects, use the Ryan White pattern with start/end times
     end_time_num <- suppressWarnings(as.numeric(end_time))
-    
+
     # Calculate recovery period in years (default to 3 months if not specified)
     recovery_years <- if (!is.null(recovery_duration)) {
       recovery_months <- as.numeric(recovery_duration)
       print(paste("  Using recovery duration of", recovery_months, "months"))
-      recovery_months / 12  # Convert months to years
+      recovery_months / 12 # Convert months to years
     } else {
       print("  Using default recovery duration of 3 months")
-      0.25  # Default 3 months (1/4 year)
+      0.25 # Default 3 months (1/4 year)
     }
-    
+
     print(paste("  Creating temporary effect ending at", end_time_num, "with recovery duration of", recovery_years, "years"))
-    
+
     # Create effect with array of values and times
     create.intervention.effect(
       quantity.name = quantity_name,
       start.time = start_time_num,
-      end.time = end_time_num + recovery_years,  # Add recovery duration
-      effect.values = c(effect_value, effect_value),  # Same value at both time points
+      end.time = end_time_num + recovery_years, # Add recovery duration
+      effect.values = c(effect_value, effect_value), # Same value at both time points
       apply.effects.as = "value",
       scale = scale,
-      times = c(start_time_num + 0.3, end_time_num),  # Implementation time and return start time
+      times = c(start_time_num + 0.3, end_time_num), # Implementation time and return start time
       allow.values.less.than.otherwise = TRUE,
       allow.values.greater.than.otherwise = FALSE
     )
   } else {
     # For permanent effects, use the simpler pattern
     print("  Creating permanent effect (never returns)")
-    
+
     create.intervention.effect(
       quantity.name = quantity_name,
       start.time = start_time_num,
       effect.values = effect_value,
       apply.effects.as = "value",
       scale = scale,
-      times = start_time_num + 0.3,  # Ryan White uses +0.3 from start time
-      allow.values.less.than.otherwise = TRUE,  # RW specific
-      allow.values.greater.than.otherwise = FALSE  # RW specific
+      times = start_time_num + 0.3, # Ryan White uses +0.3 from start time
+      allow.values.less.than.otherwise = TRUE, # RW specific
+      allow.values.greater.than.otherwise = FALSE # RW specific
     )
   }
 }
@@ -151,57 +151,80 @@ get_effect_config <- function(intervention_type, group_id = NULL) {
 #' @return Proportion value
 percentage_to_proportion <- function(value) value / 100
 
-#' Model effect configurations
+#' Model effect configurations for CDC Testing model
 MODEL_EFFECTS <- list(
-  # Generic suppression_loss effect that works for any group
-  suppression_loss = list(
+  # CDC testing reduction effect for whole population
+  # Controls how much CDC-funded testing is reduced
+  testing_reduction = list(
     quantity_name = function(group_id, suffix = NULL) {
-      # Base effect name based on group_id
-      base_name <- if (group_id == "adap") {
-        "adap.suppression"
-      } else if (group_id == "oahs") {
-        "oahs.suppression"
-      } else if (group_id == "other") {
-        "rw.support.suppression"
-      } else {
-        stop(paste("Unknown group ID for suppression_loss:", group_id))
-      }
-      
-      # Add suffix if provided
-      if (!is.null(suffix)) {
-        paste0(base_name, ".", suffix, ".effect")
-      } else {
-        paste0(base_name, ".effect")
-      }
+      # CDC testing uses cdc.effect for the whole population
+      "cdc.effect"
     },
     scale = "proportion",
     value_field = "value",
     create = function(start_time, end_time, value, group_id, recovery_duration = NULL) {
-      # Create both expansion and nonexpansion effects
-      expansion_effect <- create_standard_effect(
-        quantity_name = MODEL_EFFECTS$suppression_loss$quantity_name,
-        scale = MODEL_EFFECTS$suppression_loss$scale,
-        start_time = start_time,
-        end_time = end_time,
-        value = value,
-        group_id = group_id,
-        recovery_duration = recovery_duration,
-        suffix = "expansion"
+      # Convert percentage reduction to cdc.effect value
+      # If 100% reduction -> cdc.effect = 0 (no CDC testing)
+      # If 50% reduction -> cdc.effect = 0.5 (half CDC testing)
+      # If 0% reduction -> cdc.effect = 1 (full CDC testing)
+      cdc_effect_value <- 1 - (value / 100)
+
+      print(paste("CDC Testing Effect: Converting", value, "% reduction to cdc.effect =", cdc_effect_value))
+
+      # Create single CDC effect using the same pattern as working CDC interventions
+      cdc_effect <- create.intervention.effect(
+        quantity.name = "cdc.effect",
+        start.time = start_time,
+        effect.values = cdc_effect_value,
+        times = start_time + 0.25, # Use CDC testing pattern
+        scale = "proportion",
+        apply.effects.as = "value",
+        allow.values.less.than.otherwise = TRUE,
+        allow.values.greater.than.otherwise = FALSE
       )
-      
-      nonexpansion_effect <- create_standard_effect(
-        quantity_name = MODEL_EFFECTS$suppression_loss$quantity_name,
-        scale = MODEL_EFFECTS$suppression_loss$scale,
-        start_time = start_time,
-        end_time = end_time,
-        value = value,
-        group_id = group_id,
-        recovery_duration = recovery_duration,
-        suffix = "nonexpansion"
+
+      # Return a list with single effect for consistency with intervention adapter
+      list(cdc_effect)
+    }
+  ),
+
+  # Proportion tested regardless of CDC funding
+  # Controls what fraction continue testing without CDC programs
+  proportion_tested_regardless = list(
+    quantity_name = function(group_id, suffix = NULL) {
+      # Maps to the proportion.tested.regardless parameter
+      "proportion.tested.regardless"
+    },
+    scale = "proportion",
+    value_field = "value",
+    create = function(start_time, end_time, value, group_id, recovery_duration = NULL) {
+      # Convert percentage to proportion
+      # 50% -> 0.5, 25% -> 0.25, etc.
+      proportion_value <- value / 100
+
+      print(paste("Proportion Tested Regardless: Converting", value, "% to proportion =", proportion_value))
+
+      # This effect should be active from the beginning of the simulation
+      # Use simset's start year to avoid timing conflicts
+      proportion_effect <- create.intervention.effect(
+        quantity.name = "proportion.tested.regardless",
+        start.time = 2015,  # Match simset's from.year
+        effect.values = proportion_value,
+        times = 2015.25,  # Slight offset from start time
+        scale = "proportion",
+        apply.effects.as = "value",
+        allow.values.less.than.otherwise = TRUE,
+        allow.values.greater.than.otherwise = TRUE
       )
-      
-      # Return a list of both effects
-      list(expansion_effect, nonexpansion_effect)
+
+      # Return a list with single effect for consistency with intervention adapter
+      list(proportion_effect)
     }
   )
+
+  # NOTE: suppression_loss effects removed - they are not applicable to the CDC testing model
+  # The CDC testing model (cdct specification) does not define Ryan White-specific quantities like:
+  # - adap.suppression.expansion.effect
+  # - oahs.suppression.expansion.effect
+  # - rw.support.suppression.expansion.effect
 )
