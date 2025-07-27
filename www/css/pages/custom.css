@@ -175,6 +175,50 @@ input[type="number"] {
     margin-top: 0.5rem;
 }
 
+/* Date Dropdown Fixes */
+/* Fix visibility and styling for month/year dropdown options */
+.month-select .choices__list--dropdown,
+.year-select .choices__list--dropdown {
+    z-index: 9999 !important; /* Ensure dropdowns appear above other elements */
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+/* Improve readability of dropdown options */
+.month-select .choices__item--choice,
+.year-select .choices__item--choice {
+    color: #333 !important;
+    background: white !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Hover state for dropdown options */
+.month-select .choices__item--choice:hover,
+.year-select .choices__item--choice:hover,
+.month-select .choices__item--choice.is-highlighted,
+.year-select .choices__item--choice.is-highlighted {
+    background: #f8f9fa !important;
+    color: #333 !important;
+}
+
+/* Ensure dropdown container has proper positioning */
+.month-select .choices,
+.year-select .choices {
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+/* Fix for dropdown being cut off */
+.month-year-container {
+    position: relative;
+    z-index: 1;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .subgroup-panel {

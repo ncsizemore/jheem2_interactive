@@ -15,16 +15,16 @@ selectors:
     options:
       cdct.bintr:
         id: "cdct.bintr"
-        label: "Brief Interruption"
-        description: "CDC testing is briefly interrupted"
+        label: "Brief Interruption of CDC Testing"
+        description: "CDC-funded testing programs are temporarily reduced"
       cdct.pintr:
         id: "cdct.pintr"
-        label: "Prolonged Interruption"
-        description: "CDC testing is interrupted for an extended period"
+        label: "Prolonged Interruption of CDC Testing"
+        description: "CDC-funded testing programs are reduced for an extended period"
       cdct.end:
         id: "cdct.end"
-        label: "Testing Cessation"
-        description: "CDC-funded HIV testing completely ends"
+        label: "Complete Cessation of CDC Testing"
+        description: "All CDC-funded HIV testing programs are permanently ended"
 
 # Simulation file configuration - pointing directly to cdct-w files
 prerun_simulations:

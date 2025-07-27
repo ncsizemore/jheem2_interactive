@@ -171,8 +171,8 @@ interventions:
   components:
     testing_reduction:
       type: "numeric"
-      label: "% reduction in CDC-funded testing"
-      description: "Percentage reduction in CDC-funded HIV testing programs"
+      label: "Reduction in CDC-funded testing (percent)"
+      description: "Percentage by which CDC-funded HIV testing programs are reduced"
       placeholder: "Enter percentage..."
       min: 0
       max: 100
@@ -182,8 +182,8 @@ interventions:
     
     proportion_tested_regardless:
       type: "numeric"
-      label: "% who continue testing without CDC funding"
-      description: "Percentage of people who get tested even without CDC-funded programs"
+      label: "People who continue testing without CDC funding (percent)"
+      description: "Percentage of people who continue to get HIV tests even without CDC-funded programs"
       placeholder: "Enter percentage..."
       min: 0
       max: 100

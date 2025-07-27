@@ -302,11 +302,11 @@ ui <- function() {
         tabPanel(
           title = "Contact Us",
           value = "contact_us",
-          make_tab_popover( # Use contact_config for popover
-            "contact_us",
-            title = contact_config$popover$title,
-            content = contact_config$popover$content
-          ),
+         # make_tab_popover( # Use contact_config for popover
+          #  "contact_us",
+          #  title = contact_config$popover$title,
+          #  content = contact_config$popover$content
+          #),
           # Pass the already loaded contact_config to the page creation function
           create_contact_page(contact_config)
         )

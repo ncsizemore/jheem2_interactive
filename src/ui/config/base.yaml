@@ -13,7 +13,7 @@ simulation_root: "simulations"  # Root directory for simulation files
 model_specification:
   name: "cdc_testing"
   main_file: "cdc_testing_specification.R"
-  development_path: "../jheem_analyses/applications/cdc_testing/"
+  development_path: "external/jheem_analyses/applications/cdc_testing/"
   deployment_path: "external/jheem_analyses/applications/cdc_testing/"
 
 # Theme configuration
