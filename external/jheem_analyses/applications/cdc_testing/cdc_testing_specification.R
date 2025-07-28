@@ -1,7 +1,7 @@
 
-source('../jheem_analyses/applications/ehe/ehe_specification.R')
-source('../jheem_analyses/applications/cdc_testing/cdc_testing_parameters.R')
-source('../jheem_analyses/applications/cdc_testing/odds_ratio_estimation.R')
+source('external/jheem_analyses/applications/EHE/ehe_specification.R')
+source('external/jheem_analyses/applications/cdc_testing/cdc_testing_parameters.R')
+source('external/jheem_analyses/applications/cdc_testing/odds_ratio_estimation.R')
 
 
 CDCT.SPECIFICATION = create.jheem.specification(version='cdct',

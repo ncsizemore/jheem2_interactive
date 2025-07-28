@@ -1,0 +1,10 @@
+name: cdc-testing
+title:
+username: jheem
+account: jheem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15128375
+bundleId: 10682316
+url: https://jheem.shinyapps.io/cdc-testing/
+version: 1

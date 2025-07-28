@@ -78,3 +78,22 @@ rsconnect::deployApp(
   forceUpdate = TRUE,
   lint = FALSE
 )
+
+
+rsconnect::deployApp(
+  appDir = "/Users/nicholas/Documents/jheem/code/jheem2_interactive",
+  appName = "cdc-testing",
+  account = "jheem",
+  appFiles = c(
+    "app.R",
+    ".Renviron",
+    "deployment/deployment_dependencies.R",
+    list.files("src", recursive = TRUE, full.names = TRUE),
+    list.files("www", recursive = TRUE, full.names = TRUE),
+    list.files("external/jheem_analyses", recursive = TRUE, full.names = TRUE),
+    list.files("simulations/cdct-w", recursive = TRUE, full.names = TRUE),
+    list.files("simulations/cdct-ws", recursive = TRUE, full.names = TRUE)
+  ),
+  forceUpdate = TRUE,
+  lint = FALSE
+)
